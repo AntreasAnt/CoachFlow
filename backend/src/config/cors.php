@@ -11,6 +11,9 @@
  * with trusted domains to enhance security.
  */
 
+require_once(__DIR__ . '/../bootstrap.php'); // Load environment variables
+require_once(__DIR__ . '/AppConfig.php'); // Load application configuration
+
 // Define allowed origins (update for production)
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -32,7 +35,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 
-$allowedOrigins = ["http://localhost:517311111111", "http://localhost:5174"];
+$allowedOrigins = [AppConfig::getFrontendUrl()];
 
 // Get the origin of the request
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';

@@ -3,12 +3,19 @@
 .env.local
 .env.production
 .env.staging
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+frontend/.env.staging
 
 # Vendor directory
 vendor/
 
 # Composer files
 composer.phar
+
+# Node modules
+node_modules/
 
 # IDE files
 .vscode/
@@ -24,3 +31,7 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Build outputs
+dist/
+build/

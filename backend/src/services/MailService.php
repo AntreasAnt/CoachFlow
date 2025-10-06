@@ -12,6 +12,7 @@
 
 require_once(__DIR__ . '/../bootstrap.php'); // Load environment variables
 require_once(__DIR__ . '/../config/MailConfig.php');
+require_once(__DIR__ . '/../config/AppConfig.php');
 
 class MailService
 {
@@ -134,7 +135,7 @@ class MailService
     public function sendPasswordResetEmail($userEmail, $resetToken)
     {
         try {
-            $resetUrl = MailConfig::FRONTEND_URL . "/new-password?token={$resetToken}&email={$userEmail}";
+            $resetUrl = AppConfig::getFrontendUrl() . "/new-password?token={$resetToken}&email={$userEmail}";
 
             $email = new \SendGrid\Mail\Mail();
             $email->setFrom(MailConfig::FROM_EMAIL, MailConfig::FROM_NAME);

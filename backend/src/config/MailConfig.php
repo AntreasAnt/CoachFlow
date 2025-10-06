@@ -16,8 +16,4 @@ class MailConfig
     // Email Sender Information
     const FROM_EMAIL = 'coachflow.inbox@gmail.com';
     const FROM_NAME = 'CoachFlow';
-
-    public const FRONTEND_URL = 'http://localhost:5174';
-
-
 }
