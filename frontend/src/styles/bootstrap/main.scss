@@ -1,0 +1,51 @@
+// COLORS
+$white:    #ffffff;
+$black:    #111111;
+
+$primary:   #000000; // cobalt blue (main accent)
+$secondary: #ffffff; // lighter blue for hovers/links
+$success:   #10B981; // green for success
+$danger:    #EF4444; // red for errors
+$light:     #F3F4F6; // light gray backgrounds
+$dark:      #1F2937; // dark gray for text/nav
+
+// FONTS
+$font-family-sans-serif: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+$headings-font-family:   'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+$headings-font-weight:   600;
+
+// TYPOGRAPHY FIXES
+strong, b {
+  font-weight: bold !important;
+}
+em, i {
+  font-style: italic !important;
+}
+
+// BUTTON STYLES
+.btn-primary {
+  color: $white !important;
+  background-color: $primary !important;
+  border-radius: 0.75rem !important; // smoother radius
+  padding: 0.5rem 1.5rem !important;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.btn-secondary {
+  color: $white !important;
+  background-color: $secondary !important;
+  border-radius: 0.75rem !important;
+  padding: 0.5rem 1.5rem !important;
+  font-weight: 500;
+}
+
+// SMALL TEXT
+.small {
+  font-size: 0.9rem !important;
+  color: $dark !important;
+}
+
+// IMPORT BOOTSTRAP LAST
+@import "bootstrap/scss/bootstrap";

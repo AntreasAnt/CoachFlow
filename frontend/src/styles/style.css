@@ -1,0 +1,192 @@
+
+
+/*COLORS - Bootstrap Style Variables*/
+:root {
+  /* Core Colors */
+  --white: #ffffff;
+  --black: #111111;
+  
+  /* Theme Colors */
+  --primary: #000000; /* cobalt blue (main accent) */
+  --secondary: #ffffff; /* lighter blue for hovers/links */
+  --success: #10B981; /* green for success */
+  --danger: #EF4444; /* red for errors */
+  --light: #F3F4F6; /* light gray backgrounds */
+  --dark: #1F2937; /* dark gray for text/nav */
+  
+  /* Typography */
+  --font-family-sans-serif: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --headings-font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+  --headings-font-weight: 600;
+}
+
+
+/*IMPORT ALL THE FONTS*/
+@font-face {
+  font-family: "Montserrat";
+  src: url("../assets/fonts/Montserrat-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("../assets/fonts/Montserrat-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("../assets/fonts/Montserrat-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("../assets/fonts/Montserrat-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("../assets/fonts/Montserrat-Black.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--headings-font-family);
+  font-weight: var(--headings-font-weight);
+}
+
+p,
+body {
+  font-family: var(--font-family-sans-serif);
+  font-weight: 400;
+}
+
+/* TYPOGRAPHY FIXES */
+strong, b {
+  font-weight: bold !important;
+}
+
+em, i {
+  font-style: italic !important;
+}
+
+/* BUTTON STYLES */
+.btn-primary {
+  color: var(--white) !important;
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  border-radius: 0.75rem !important; /* smoother radius */
+  padding: 0.5rem 1.5rem !important;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.btn-primary:hover {
+  background-color: var(--dark) !important;
+  border-color: var(--dark) !important;
+}
+
+.btn-secondary {
+  color: var(--dark) !important;
+  background-color: var(--secondary) !important;
+  border-color: var(--secondary) !important;
+  border-radius: 0.75rem !important;
+  padding: 0.5rem 1.5rem !important;
+  font-weight: 500;
+}
+
+.btn-secondary:hover {
+  background-color: var(--light) !important;
+  border-color: var(--light) !important;
+}
+
+/* SMALL TEXT */
+.small {
+  font-size: 0.9rem !important;
+  color: var(--dark) !important;
+}
+
+/*INPUT FIELDS*/
+
+      /* Hide Bootstrap validation icons while keeping colors */
+      .form-control.is-valid,
+      .form-control.is-invalid {
+        background-image: none !important;
+        padding-right: 0.75rem !important;
+      }
+      
+      /* For password fields with eye icons, add padding */
+      .form-control.password-field {
+        padding-right: 3rem !important;
+      }
+
+
+
+/*NAVBAR*/
+
+/* Enable dropdown on hover */
+nav {
+  z-index: 999;
+}
+
+.nav-item.dropdown:hover .dropdown-menu {
+  display: block;
+  margin-top: 0; /* Ensures smooth positioning */
+}
+
+/* Optional: Add a smooth transition */
+.dropdown-menu {
+  transition: all 0.3s ease-in-out;
+}
+
+
+
+
+/* SIDEBAR */
+
+.nav-link-custom {
+  position: relative;
+  display: inline-block;
+
+  transition: all 0.3s ease;
+}
+
+.nav-link-custom:hover {
+  color: #f8f9fa; 
+  transform: scale(1.03); 
+  transition: all 0.3s ease;
+}
+
+.nav-link-custom::before {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 1px;
+  background-color: #f8f9fa95;
+  bottom: 0;
+  left: 100%;
+  transition: all 0.3s ease;
+}
+
+.nav-link-custom:hover::before {
+  width: 100%;
+  left: 0;
+  transition: all 0.3s ease;
+}
+
+
+
+
