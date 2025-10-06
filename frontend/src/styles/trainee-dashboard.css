@@ -1,5 +1,13 @@
 /* Trainee Dashboard Specific Styles */
 
+.footer-menu{
+  margin:20px 40px;
+  border-radius: 20px;
+/*add shadow and make it blury*/
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(100px);
+background-color: rgba(255, 255, 255, 0.612);
+}
 .hover-shadow {
   transition: all 0.3s ease;
 }
@@ -25,10 +33,12 @@
 /* Bottom Navigation Enhancements */
 .fixed-bottom {
   z-index: 1030;
+  transition: all 0.3s ease ;
+
 }
 
 .fixed-bottom .btn:hover {
-  background-color: rgba(13, 110, 253, 0.1);
+scale:1.1;
 }
 
 /* Message Bubbles */

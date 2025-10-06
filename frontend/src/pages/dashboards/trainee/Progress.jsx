@@ -1,29 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BACKEND_ROUTES_API } from '../../../config/config';
 
 const Progress = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  
-  const [workoutHistory] = useState([
-    { date: '2024-10-06', type: 'Upper Body', duration: 45, exercises: 6 },
-    { date: '2024-10-04', type: 'Lower Body', duration: 50, exercises: 5 },
-    { date: '2024-10-02', type: 'Cardio', duration: 30, exercises: 3 },
-    { date: '2024-09-30', type: 'Upper Body', duration: 42, exercises: 6 },
-    { date: '2024-09-28', type: 'Full Body', duration: 55, exercises: 8 }
-  ]);
+  const [workoutHistory, setWorkoutHistory] = useState([]);
+  const [bodyMeasurements, setBodyMeasurements] = useState([]);
+  const [personalRecords, setPersonalRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [bodyMeasurements] = useState([
-    { date: '2024-10-01', weight: 75.2, bodyFat: 15.2, muscle: 62.1 },
-    { date: '2024-09-15', weight: 74.8, bodyFat: 15.8, muscle: 61.5 },
-    { date: '2024-09-01', weight: 74.1, bodyFat: 16.2, muscle: 60.8 },
-    { date: '2024-08-15', weight: 73.5, bodyFat: 16.8, muscle: 60.2 }
-  ]);
+  useEffect(() => {
+    fetchProgressData();
+  }, []);
 
-  const [personalRecords] = useState([
-    { exercise: 'Bench Press', weight: 85, date: '2024-10-01', improvement: '+5kg' },
-    { exercise: 'Squats', weight: 120, date: '2024-09-28', improvement: '+10kg' },
-    { exercise: 'Deadlift', weight: 140, date: '2024-09-25', improvement: '+15kg' },
-    { exercise: 'Pull-ups', reps: 12, date: '2024-10-04', improvement: '+2 reps' }
-  ]);
+  const fetchProgressData = async () => {
+    try {
+      setLoading(true);
+      
+      const response = await fetch(`${BACKEND_ROUTES_API}GetProgressData.php`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch progress data');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setWorkoutHistory([]); // No workout history from progress endpoint
+        setBodyMeasurements(data.bodyMeasurements);
+        setPersonalRecords(data.personalRecords);
+      } else {
+        throw new Error(data.message || 'Failed to load progress data');
+      }
+
+    } catch (err) {
+      console.error('Error fetching progress data:', err);
+      setError('Failed to load progress data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const renderOverview = () => (
     <div>
@@ -274,28 +296,52 @@ const Progress = () => {
 
   return (
     <div className="container-fluid px-4 py-3">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="mb-0">Progress Tracking</h4>
-        <div className="btn-group" role="group">
-          <button
-            className={`btn ${activeTab === 'overview' ? 'btn-primary' : 'btn-outline-primary'}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            Overview
+      {/* Error State */}
+      {error && (
+        <div className="alert alert-danger" role="alert">
+          <i className="bi bi-exclamation-triangle me-2"></i>
+          {error}
+          <button className="btn btn-sm btn-outline-danger ms-3" onClick={fetchProgressData}>
+            Try Again
           </button>
-          <button
-            className={`btn ${activeTab === 'workouts' ? 'btn-primary' : 'btn-outline-primary'}`}
-            onClick={() => setActiveTab('workouts')}
-          >
-            Workouts
-          </button>
-          <button
-            className={`btn ${activeTab === 'measurements' ? 'btn-primary' : 'btn-outline-primary'}`}
-            onClick={() => setActiveTab('measurements')}
-          >
-            Measurements
-          </button>
-          <button
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3 text-muted">Loading your progress...</p>
+        </div>
+      )}
+
+      {/* Main Content */}
+      {!loading && !error && (
+        <>
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <h4 className="mb-0">Progress Tracking</h4>
+            <div className="btn-group" role="group">
+              <button
+                className={`btn ${activeTab === 'overview' ? 'btn-primary' : 'btn-outline-primary'}`}
+                onClick={() => setActiveTab('overview')}
+              >
+                Overview
+              </button>
+              <button
+                className={`btn ${activeTab === 'workouts' ? 'btn-primary' : 'btn-outline-primary'}`}
+                onClick={() => setActiveTab('workouts')}
+              >
+                Workouts
+              </button>
+              <button
+                className={`btn ${activeTab === 'measurements' ? 'btn-primary' : 'btn-outline-primary'}`}
+                onClick={() => setActiveTab('measurements')}
+              >
+                Measurements
+              </button>
+              <button
             className={`btn ${activeTab === 'records' ? 'btn-primary' : 'btn-outline-primary'}`}
             onClick={() => setActiveTab('records')}
           >
@@ -308,6 +354,8 @@ const Progress = () => {
       {activeTab === 'workouts' && renderWorkouts()}
       {activeTab === 'measurements' && renderMeasurements()}
       {activeTab === 'records' && renderRecords()}
+        </>
+      )}
     </div>
   );
 };

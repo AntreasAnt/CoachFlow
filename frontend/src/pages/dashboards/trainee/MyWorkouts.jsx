@@ -1,57 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BACKEND_ROUTES_API } from '../../../config/config';
 
 const MyWorkouts = () => {
   const [activeView, setActiveView] = useState('plans'); // plans, create, log
-  const [workoutPlans, setWorkoutPlans] = useState([
-    {
-      id: 1,
-      name: "Upper Body Strength",
-      exercises: [
-        { name: "Bench Press", sets: 3, reps: "8-10", type: "reps" },
-        { name: "Pull-ups", sets: 3, reps: "6-8", type: "reps" },
-        { name: "Shoulder Press", sets: 3, reps: "10-12", type: "reps" },
-        { name: "Plank", sets: 3, reps: "30 seconds", type: "time" }
-      ],
-      lastPerformed: "2 days ago"
-    },
-    {
-      id: 2,
-      name: "Lower Body Power",
-      exercises: [
-        { name: "Squats", sets: 4, reps: "8-10", type: "reps" },
-        { name: "Deadlifts", sets: 3, reps: "5-6", type: "reps" },
-        { name: "Lunges", sets: 3, reps: "12 each leg", type: "reps" },
-        { name: "Wall Sit", sets: 3, reps: "45 seconds", type: "time" }
-      ],
-      lastPerformed: "4 days ago"
-    }
-  ]);
+  const [workoutPlans, setWorkoutPlans] = useState([]);
+  const [workoutHistory, setWorkoutHistory] = useState([]);
+  const [prebuiltExercises, setPrebuiltExercises] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [workoutHistory, setWorkoutHistory] = useState([
-    {
-      id: 1,
-      date: "2024-10-04",
-      planName: "Upper Body Strength",
-      duration: 45,
-      exercises: [
-        { name: "Bench Press", sets: [{ reps: 8, weight: 70 }, { reps: 8, weight: 70 }, { reps: 6, weight: 75 }] },
-        { name: "Pull-ups", sets: [{ reps: 6 }, { reps: 5 }, { reps: 4 }] }
-      ]
-    }
-  ]);
+  useEffect(() => {
+    fetchWorkoutData();
+  }, []);
 
-  const prebuiltExercises = [
-    { name: "Bench Press", category: "Chest", equipment: "Barbell" },
-    { name: "Squats", category: "Legs", equipment: "Barbell" },
-    { name: "Pull-ups", category: "Back", equipment: "Pull-up Bar" },
-    { name: "Shoulder Press", category: "Shoulders", equipment: "Dumbbells" },
-    { name: "Deadlifts", category: "Back", equipment: "Barbell" },
-    { name: "Push-ups", category: "Chest", equipment: "Bodyweight" },
-    { name: "Lunges", category: "Legs", equipment: "Bodyweight" },
-    { name: "Plank", category: "Core", equipment: "Bodyweight" },
-    { name: "Bicep Curls", category: "Arms", equipment: "Dumbbells" },
-    { name: "Tricep Dips", category: "Arms", equipment: "Bench" }
-  ];
+  const fetchWorkoutData = async () => {
+    try {
+      setLoading(true);
+      
+      const response = await fetch(`${BACKEND_ROUTES_API}GetWorkoutData.php`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch workout data');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setWorkoutPlans(data.workoutPlans);
+        setWorkoutHistory(data.recentSessions);
+        setPrebuiltExercises(data.premiumPlans);
+      } else {
+        throw new Error(data.message || 'Failed to load workout data');
+      }
+
+    } catch (err) {
+      console.error('Error fetching workout data:', err);
+      setError('Failed to load workout data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const [newPlan, setNewPlan] = useState({
     name: '',
@@ -113,25 +107,16 @@ const MyWorkouts = () => {
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-start mb-3">
                   <h5 className="card-title">{plan.name}</h5>
-                  <span className="badge bg-light text-dark">{plan.exercises.length} exercises</span>
+                  <span className="badge bg-light text-dark">{plan.exercises?.length || 0} exercises</span>
                 </div>
                 
                 <div className="mb-3">
-                  <small className="text-muted">Exercises:</small>
-                  <ul className="list-unstyled mb-0 mt-1">
-                    {plan.exercises.slice(0, 3).map((exercise, index) => (
-                      <li key={index} className="small text-muted">
-                        • {exercise.name} - {exercise.sets} sets x {exercise.reps}
-                      </li>
-                    ))}
-                    {plan.exercises.length > 3 && (
-                      <li className="small text-muted">• +{plan.exercises.length - 3} more exercises</li>
-                    )}
-                  </ul>
+                  <small className="text-muted">Description:</small>
+                  <p className="small text-muted mb-0 mt-1">{plan.description || 'No description available'}</p>
                 </div>
 
                 <div className="mb-3">
-                  <small className="text-muted">Last performed: {plan.lastPerformed}</small>
+                  <small className="text-muted">Last performed: {plan.last_performed || 'Never'}</small>
                 </div>
 
                 <div className="d-flex gap-2">
@@ -170,8 +155,8 @@ const MyWorkouts = () => {
                 <div key={workout.id} className="border-bottom py-3">
                   <div className="d-flex justify-content-between align-items-center">
                     <div>
-                      <h6 className="mb-1">{workout.planName}</h6>
-                      <small className="text-muted">{workout.date} • {workout.duration} minutes</small>
+                      <h6 className="mb-1">{workout.plan_name}</h6>
+                      <small className="text-muted">{workout.session_date} • {workout.duration_minutes} minutes</small>
                     </div>
                     <button className="btn btn-outline-primary btn-sm">View Details</button>
                   </div>
@@ -212,20 +197,20 @@ const MyWorkouts = () => {
                 />
               </div>
 
-              <h6 className="mb-3">Select Exercises</h6>
+              <h6 className="mb-3">Premium Workout Plans</h6>
               <div className="row">
-                {prebuiltExercises.map((exercise, index) => (
+                {prebuiltExercises.map((plan, index) => (
                   <div key={index} className="col-md-6 mb-2">
                     <div 
                       className="card card-hover border-1 cursor-pointer"
-                      onClick={() => addExerciseToPlan(exercise)}
+                      onClick={() => addExerciseToPlan(plan)}
                     >
                       <div className="card-body py-2">
                         <div className="d-flex justify-content-between align-items-center">
                           <div>
-                            <small className="fw-bold">{exercise.name}</small>
+                            <small className="fw-bold">{plan.title}</small>
                             <br />
-                            <small className="text-muted">{exercise.category} • {exercise.equipment}</small>
+                            <small className="text-muted">{plan.category} • {plan.difficulty_level} • ${plan.price}</small>
                           </div>
                           <i className="bi bi-plus-circle text-primary"></i>
                         </div>
@@ -461,9 +446,35 @@ const MyWorkouts = () => {
 
   return (
     <div className="container-fluid px-4 py-3">
-      {activeView === 'plans' && renderPlansView()}
-      {activeView === 'create' && renderCreateView()}
-      {activeView === 'log' && renderLogView()}
+      {/* Error State */}
+      {error && (
+        <div className="alert alert-danger" role="alert">
+          <i className="bi bi-exclamation-triangle me-2"></i>
+          {error}
+          <button className="btn btn-sm btn-outline-danger ms-3" onClick={fetchWorkoutData}>
+            Try Again
+          </button>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3 text-muted">Loading your workouts...</p>
+        </div>
+      )}
+
+      {/* Main Content */}
+      {!loading && !error && (
+        <>
+          {activeView === 'plans' && renderPlansView()}
+          {activeView === 'create' && renderCreateView()}
+          {activeView === 'log' && renderLogView()}
+        </>
+      )}
     </div>
   );
 };

@@ -1,45 +1,102 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BACKEND_ROUTES_API } from '../../../config/config';
 
 const Meals = () => {
-  const [todaysMeals, setTodaysMeals] = useState([
-    {
-      id: 1,
-      type: 'Breakfast',
-      foods: [
-        { name: 'Oatmeal', calories: 150, protein: 5, carbs: 27, fat: 3 },
-        { name: 'Banana', calories: 105, protein: 1, carbs: 27, fat: 0 }
-      ],
-      time: '08:00'
-    },
-    {
-      id: 2,
-      type: 'Lunch',
-      foods: [],
-      time: '12:30'
-    }
-  ]);
-
-  const [dailyGoals] = useState({
+  const [todaysMeals, setTodaysMeals] = useState({
+    breakfast: [],
+    lunch: [],
+    dinner: [],
+    snack: []
+  });
+  const [dailyGoals, setDailyGoals] = useState({
     calories: 2200,
     protein: 165,
     carbs: 275,
     fat: 73
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchMealsData();
+  }, []);
+
+  const fetchMealsData = async () => {
+    try {
+      setLoading(true);
+      
+      const response = await fetch(`${BACKEND_ROUTES_API}GetTodaysMeals.php`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch meals data');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setTodaysMeals(data.meals);
+        setDailyGoals(data.nutritionGoals);
+      } else {
+        throw new Error(data.message || 'Failed to load meals');
+      }
+
+    } catch (err) {
+      console.error('Error fetching meals data:', err);
+      setError('Failed to load meals data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const calculateTotals = () => {
     let totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
-    todaysMeals.forEach(meal => {
-      meal.foods.forEach(food => {
-        totals.calories += food.calories;
-        totals.protein += food.protein;
-        totals.carbs += food.carbs;
-        totals.fat += food.fat;
+    
+    Object.values(todaysMeals).forEach(mealArray => {
+      mealArray.forEach(food => {
+        totals.calories += food.calories || 0;
+        totals.protein += food.protein || 0;
+        totals.carbs += food.carbs || 0;
+        totals.fat += food.fat || 0;
       });
     });
+    
     return totals;
   };
 
   const totals = calculateTotals();
+
+  if (loading) {
+    return (
+      <div className="container-fluid px-4 py-3">
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3 text-muted">Loading your nutrition data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container-fluid px-4 py-3">
+        <div className="alert alert-danger" role="alert">
+          <i className="bi bi-exclamation-triangle me-2"></i>
+          {error}
+          <button className="btn btn-sm btn-outline-danger ms-3" onClick={fetchMealsData}>
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container-fluid px-4 py-3">
@@ -72,7 +129,7 @@ const Meals = () => {
           <div className="card border-0 shadow-sm text-center">
             <div className="card-body">
               <div className="fs-1 mb-2">💪</div>
-              <h5>{totals.protein}g/{dailyGoals.protein}g</h5>
+              <h5>{Math.round(totals.protein)}g/{dailyGoals.protein}g</h5>
               <p className="text-muted small mb-0">Protein</p>
               <div className="progress mt-2" style={{ height: '4px' }}>
                 <div 
@@ -87,7 +144,7 @@ const Meals = () => {
           <div className="card border-0 shadow-sm text-center">
             <div className="card-body">
               <div className="fs-1 mb-2">🍞</div>
-              <h5>{totals.carbs}g/{dailyGoals.carbs}g</h5>
+              <h5>{Math.round(totals.carbs)}g/{dailyGoals.carbs}g</h5>
               <p className="text-muted small mb-0">Carbs</p>
               <div className="progress mt-2" style={{ height: '4px' }}>
                 <div 
@@ -102,7 +159,7 @@ const Meals = () => {
           <div className="card border-0 shadow-sm text-center">
             <div className="card-body">
               <div className="fs-1 mb-2">🥑</div>
-              <h5>{totals.fat}g/{dailyGoals.fat}g</h5>
+              <h5>{Math.round(totals.fat)}g/{dailyGoals.fat}g</h5>
               <p className="text-muted small mb-0">Fat</p>
               <div className="progress mt-2" style={{ height: '4px' }}>
                 <div 
@@ -118,21 +175,21 @@ const Meals = () => {
       {/* Meals */}
       <div className="row">
         <div className="col-lg-8">
-          {todaysMeals.map(meal => (
-            <div key={meal.id} className="card border-0 shadow-sm mb-3">
+          {Object.entries(todaysMeals).map(([mealType, foods]) => (
+            <div key={mealType} className="card border-0 shadow-sm mb-3">
               <div className="card-header bg-white">
                 <div className="d-flex justify-content-between align-items-center">
-                  <h6 className="mb-0">{meal.type} - {meal.time}</h6>
+                  <h6 className="mb-0">{mealType.charAt(0).toUpperCase() + mealType.slice(1)}</h6>
                   <button className="btn btn-outline-primary btn-sm">
                     <i className="bi bi-plus"></i> Add Food
                   </button>
                 </div>
               </div>
               <div className="card-body">
-                {meal.foods.length === 0 ? (
+                {foods.length === 0 ? (
                   <div className="text-center py-3">
                     <i className="bi bi-plus-circle text-muted fs-1"></i>
-                    <p className="text-muted mt-2">No foods logged for {meal.type.toLowerCase()}</p>
+                    <p className="text-muted mt-2">No foods logged for {mealType}</p>
                   </div>
                 ) : (
                   <div className="table-responsive">
@@ -140,6 +197,7 @@ const Meals = () => {
                       <thead>
                         <tr>
                           <th>Food</th>
+                          <th>Amount</th>
                           <th>Calories</th>
                           <th>Protein</th>
                           <th>Carbs</th>
@@ -148,9 +206,10 @@ const Meals = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {meal.foods.map((food, index) => (
+                        {foods.map((food, index) => (
                           <tr key={index}>
                             <td>{food.name}</td>
+                            <td>{food.amount}</td>
                             <td>{food.calories}</td>
                             <td>{food.protein}g</td>
                             <td>{food.carbs}g</td>

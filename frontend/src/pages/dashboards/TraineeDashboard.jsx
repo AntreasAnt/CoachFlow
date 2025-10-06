@@ -63,7 +63,7 @@ const TraineeDashboard = () => {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed-bottom bg-white border-top shadow-lg">
+      <nav className="fixed-bottom footer-menu">
         <div className="container-fluid">
           <div className="row">
             <div className="col">

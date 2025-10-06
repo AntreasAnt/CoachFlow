@@ -1,73 +1,89 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { BACKEND_ROUTES_API } from '../../../config/config';
 
 const HomePage = () => {
-  const prebuiltPlans = [
-    {
-      id: 1,
-      title: "Beginner's Strength",
-      description: "Perfect for those starting their fitness journey",
-      duration: "8 weeks",
-      price: "$29.99",
-      rating: 4.8,
-      coach: "Coach Mike",
-      image: "💪"
-    },
-    {
-      id: 2,
-      title: "Weight Loss Challenge",
-      description: "High-intensity workouts to burn fat fast",
-      duration: "12 weeks",
-      price: "$49.99",
-      rating: 4.9,
-      coach: "Coach Sarah",
-      image: "🔥"
-    },
-    {
-      id: 3,
-      title: "Muscle Building Pro",
-      description: "Advanced program for serious muscle gains",
-      duration: "16 weeks",
-      price: "$79.99",
-      rating: 4.7,
-      coach: "Coach Alex",
-      image: "🏋️"
-    }
-  ];
+  const [prebuiltPlans, setPrebuiltPlans] = useState([]);
+  const [popularCoaches, setPopularCoaches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const popularCoaches = [
-    {
-      id: 1,
-      name: "Coach Mike",
-      specialization: "Strength Training",
-      rating: 4.9,
-      clients: 150,
-      price: "$50/session",
-      avatar: "👨‍💼"
-    },
-    {
-      id: 2,
-      name: "Coach Sarah",
-      specialization: "Weight Loss",
-      rating: 4.8,
-      clients: 200,
-      price: "$45/session",
-      avatar: "👩‍💼"
-    },
-    {
-      id: 3,
-      name: "Coach Alex",
-      specialization: "Bodybuilding",
-      rating: 4.7,
-      clients: 120,
-      price: "$60/session",
-      avatar: "👨‍🏫"
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch premium plans and popular coaches in parallel
+      const [plansResponse, coachesResponse] = await Promise.all([
+        fetch(`${BACKEND_ROUTES_API}GetPremiumPlans.php`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }),
+        fetch(`${BACKEND_ROUTES_API}GetPopularCoaches.php`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        })
+      ]);
+
+      if (!plansResponse.ok || !coachesResponse.ok) {
+        throw new Error('Failed to fetch data');
+      }
+
+      const plansData = await plansResponse.json();
+      const coachesData = await coachesResponse.json();
+
+      if (plansData.success) {
+        setPrebuiltPlans(plansData.plans);
+      }
+
+      if (coachesData.success) {
+        setPopularCoaches(coachesData.coaches);
+      }
+
+    } catch (err) {
+      console.error('Error fetching homepage data:', err);
+      setError('Failed to load data. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   return (
     <div className="container-fluid px-4 py-3">
-      {/* Welcome Section */}
-      <div className="row mb-4">
+      {/* Error State */}
+      {error && (
+        <div className="alert alert-danger" role="alert">
+          <i className="bi bi-exclamation-triangle me-2"></i>
+          {error}
+          <button className="btn btn-sm btn-outline-danger ms-3" onClick={fetchData}>
+            Try Again
+          </button>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3 text-muted">Loading your fitness dashboard...</p>
+        </div>
+      )}
+
+      {/* Main Content */}
+      {!loading && (
+        <>
+          {/* Welcome Section */}
+          <div className="row mb-4">
         <div className="col-12">
           <div className="bg-gradient-primary text-white rounded p-4" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
             <div className="row align-items-center">
@@ -200,6 +216,8 @@ const HomePage = () => {
           </div>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

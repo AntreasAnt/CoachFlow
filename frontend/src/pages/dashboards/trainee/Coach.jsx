@@ -1,81 +1,104 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BACKEND_ROUTES_API } from '../../../config/config';
 
 const Coach = () => {
   const [hasCoach, setHasCoach] = useState(true); // Change to false to show coach search
-  
-  const [currentCoach] = useState({
-    name: "Coach Mike Johnson",
-    specialization: "Strength Training & Bodybuilding",
-    rating: 4.9,
-    experience: "8 years",
-    clients: 150,
-    avatar: "👨‍💼",
-    price: "$50/session",
-    certifications: ["NASM-CPT", "CSCS", "Precision Nutrition L1"],
-    bio: "Passionate fitness coach with 8+ years of experience helping clients achieve their strength and physique goals. Specialized in powerlifting, bodybuilding, and functional movement patterns."
-  });
+  const [currentCoach, setCurrentCoach] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [availableCoaches, setAvailableCoaches] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [messages] = useState([
-    {
-      id: 1,
-      from: "coach",
-      message: "Great job on yesterday's workout! I noticed you increased your bench press weight. Keep up the excellent work!",
-      timestamp: "2 hours ago",
-      read: true
-    },
-    {
-      id: 2,
-      from: "trainee",
-      message: "Thank you! I felt really strong yesterday. Should I increase the weight again next session?",
-      timestamp: "1 hour ago",
-      read: true
-    },
-    {
-      id: 3,
-      from: "coach",
-      message: "Let's see how you feel during the warm-up sets. If they feel easy, we can add 2.5kg more.",
-      timestamp: "30 minutes ago",
-      read: false
+  useEffect(() => {
+    fetchCoachData();
+  }, []);
+
+  const fetchCoachData = async () => {
+    try {
+      setLoading(true);
+      
+      const response = await fetch(`${BACKEND_ROUTES_API}GetCoachData.php`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch coach data');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setCurrentCoach(data.currentCoach);
+        setMessages(data.messages);
+        setAvailableCoaches(data.availableCoaches);
+      } else {
+        throw new Error(data.message || 'Failed to load coach data');
+      }
+
+    } catch (err) {
+      console.error('Error fetching coach data:', err);
+      setError('Failed to load coach data. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
-  const [availableCoaches] = useState([
-    {
-      id: 1,
-      name: "Coach Sarah Wilson",
-      specialization: "Weight Loss & Conditioning",
-      rating: 4.8,
-      experience: "6 years",
-      clients: 200,
-      avatar: "👩‍💼",
-      price: "$45/session",
-      verified: true
-    },
-    {
-      id: 2,
-      name: "Coach Alex Thompson",
-      specialization: "Bodybuilding & Nutrition",
-      rating: 4.7,
-      experience: "10 years",
-      clients: 120,
-      avatar: "👨‍🏫",
-      price: "$60/session",
-      verified: true
-    },
-    {
-      id: 3,
-      name: "Coach Emma Davis",
-      specialization: "Functional Training",
-      rating: 4.9,
-      experience: "5 years",
-      clients: 85,
-      avatar: "👩‍🏫",
-      price: "$40/session",
-      verified: true
+  const handleSendMessage = () => {
+    if (newMessage.trim()) {
+      const newMsg = {
+        sender: 'trainee',
+        message: newMessage,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages([...messages, newMsg]);
+      setNewMessage('');
     }
-  ]);
+  };
 
-  const renderCurrentCoach = () => (
+  if (loading) {
+    return (
+      <div className="container-fluid px-4 py-3">
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3 text-muted">Loading coach data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container-fluid px-4 py-3">
+        <div className="alert alert-danger" role="alert">
+          <i className="bi bi-exclamation-triangle me-2"></i>
+          {error}
+          <button className="btn btn-sm btn-outline-danger ms-3" onClick={fetchCoachData}>
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const renderCurrentCoach = () => {
+    if (!currentCoach) {
+      return (
+        <div className="text-center py-4">
+          <i className="bi bi-person-plus text-muted fs-1"></i>
+          <p className="text-muted mt-2">No coach assigned yet</p>
+          <button className="btn btn-primary">Find a Coach</button>
+        </div>
+      );
+    }
+
+    return (
     <div>
       {/* Coach Profile */}
       <div className="row mb-4">
@@ -87,19 +110,19 @@ const Coach = () => {
                   <div className="fs-1 mb-2">{currentCoach.avatar}</div>
                   <div className="d-flex align-items-center justify-content-center">
                     <i className="bi bi-star-fill text-warning me-1"></i>
-                    <span className="fw-bold">{currentCoach.rating}</span>
+                    <span className="fw-bold">{currentCoach.average_rating}</span>
                   </div>
                 </div>
                 <div className="flex-grow-1">
                   <div className="d-flex justify-content-between align-items-start mb-2">
                     <div>
                       <h4 className="mb-1">{currentCoach.name}</h4>
-                      <p className="text-muted mb-2">{currentCoach.specialization}</p>
+                      <p className="text-muted mb-2">{currentCoach.specializations}</p>
                     </div>
                     <div className="text-end">
                       <span className="badge bg-success mb-2">Active</span>
                       <br />
-                      <span className="fw-bold text-primary">{currentCoach.price}</span>
+                      <span className="fw-bold text-primary">${currentCoach.hourly_rate}/hr</span>
                     </div>
                   </div>
                   
@@ -108,23 +131,23 @@ const Coach = () => {
                   <div className="row mb-3">
                     <div className="col-md-4">
                       <small className="text-muted">Experience</small>
-                      <p className="fw-bold mb-0">{currentCoach.experience}</p>
+                      <p className="fw-bold mb-0">{currentCoach.experience_years} years</p>
                     </div>
                     <div className="col-md-4">
                       <small className="text-muted">Total Clients</small>
-                      <p className="fw-bold mb-0">{currentCoach.clients}</p>
+                      <p className="fw-bold mb-0">{currentCoach.total_clients}</p>
                     </div>
                     <div className="col-md-4">
                       <small className="text-muted">Rating</small>
-                      <p className="fw-bold mb-0">{currentCoach.rating}/5.0</p>
+                      <p className="fw-bold mb-0">{currentCoach.average_rating}/5.0</p>
                     </div>
                   </div>
                   
                   <div className="mb-3">
                     <small className="text-muted">Certifications</small>
                     <div className="mt-1">
-                      {currentCoach.certifications.map((cert, index) => (
-                        <span key={index} className="badge bg-light text-dark me-2">{cert}</span>
+                      {currentCoach.certifications && currentCoach.certifications.split(',').map((cert, index) => (
+                        <span key={index} className="badge bg-light text-dark me-2">{cert.trim()}</span>
                       ))}
                     </div>
                   </div>
@@ -228,7 +251,8 @@ const Coach = () => {
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
   const renderCoachSearch = () => (
     <div>
