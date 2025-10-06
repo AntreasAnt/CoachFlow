@@ -32,7 +32,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 
-$allowedOrigins = ["http://localhost:5173", "http://localhost:5174"];
+$allowedOrigins = ["http://localhost:517311111111", "http://localhost:5174"];
 
 // Get the origin of the request
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
