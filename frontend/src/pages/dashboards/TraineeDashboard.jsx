@@ -67,59 +67,89 @@ const TraineeDashboard = () => {
         <div className="container-fluid">
           <div className="row">
             <div className="col">
-              <button
-                className={`btn w-100 py-3 border-0 ${activeTab === 'home' ? 'text-primary' : 'text-muted'}`}
-                onClick={() => setActiveTab('home')}
-              >
-                <div className="d-flex flex-column align-items-center">
-                  <i className={`bi bi-house${activeTab === 'home' ? '-fill' : ''} fs-5`}></i>
-                  <small className="mt-1">Home</small>
-                </div>
-              </button>
+              <div className={activeTab === 'home' ? 'nav-item-active' : ''}>
+                <button
+                  className={`btn w-100 py-2 border-0 ${
+                    activeTab === 'home' 
+                      ? 'text-primary nav-btn-active' 
+                      : 'text-muted'
+                  }`}
+                  onClick={() => setActiveTab('home')}
+                >
+                  <div className="d-flex flex-column align-items-center">
+                    <i className={`bi bi-house${activeTab === 'home' ? '-fill' : ''} fs-5`}></i>
+                    <small className="mt-1 fw-${activeTab === 'home' ? 'bold' : 'normal'}">Home</small>
+                  </div>
+                </button>
+              </div>
             </div>
             <div className="col">
-              <button
-                className={`btn w-100 py-3 border-0 ${activeTab === 'workouts' ? 'text-primary' : 'text-muted'}`}
-                onClick={() => setActiveTab('workouts')}
-              >
-                <div className="d-flex flex-column align-items-center">
-                  <i className={`bi bi-lightning${activeTab === 'workouts' ? '-fill' : ''} fs-5`}></i>
-                  <small className="mt-1">Workouts</small>
-                </div>
-              </button>
+              <div className={activeTab === 'workouts' ? 'nav-item-active' : ''}>
+                <button
+                  className={`btn w-100 py-2 border-0 ${
+                    activeTab === 'workouts' 
+                      ? 'text-primary nav-btn-active' 
+                      : 'text-muted'
+                  }`}
+                  onClick={() => setActiveTab('workouts')}
+                >
+                  <div className="d-flex flex-column align-items-center">
+                    <i className={`bi bi-lightning${activeTab === 'workouts' ? '-fill' : ''} fs-5`}></i>
+                    <small className="mt-1 fw-${activeTab === 'workouts' ? 'bold' : 'normal'}">Workouts</small>
+                  </div>
+                </button>
+              </div>
             </div>
             <div className="col">
-              <button
-                className={`btn w-100 py-3 border-0 ${activeTab === 'meals' ? 'text-primary' : 'text-muted'}`}
-                onClick={() => setActiveTab('meals')}
-              >
-                <div className="d-flex flex-column align-items-center">
-                  <i className={`bi bi-apple fs-5`}></i>
-                  <small className="mt-1">Meals</small>
-                </div>
-              </button>
+              <div className={activeTab === 'meals' ? 'nav-item-active' : ''}>
+                <button
+                  className={`btn w-100 py-2 border-0 ${
+                    activeTab === 'meals' 
+                      ? 'text-primary nav-btn-active' 
+                      : 'text-muted'
+                  }`}
+                  onClick={() => setActiveTab('meals')}
+                >
+                  <div className="d-flex flex-column align-items-center">
+                    <i className={`bi bi-apple fs-5`}></i>
+                    <small className="mt-1 fw-${activeTab === 'meals' ? 'bold' : 'normal'}">Meals</small>
+                  </div>
+                </button>
+              </div>
             </div>
             <div className="col">
-              <button
-                className={`btn w-100 py-3 border-0 ${activeTab === 'progress' ? 'text-primary' : 'text-muted'}`}
-                onClick={() => setActiveTab('progress')}
-              >
-                <div className="d-flex flex-column align-items-center">
-                  <i className={`bi bi-graph-up${activeTab === 'progress' ? '-arrow' : ''} fs-5`}></i>
-                  <small className="mt-1">Progress</small>
-                </div>
-              </button>
+              <div className={activeTab === 'progress' ? 'nav-item-active' : ''}>
+                <button
+                  className={`btn w-100 py-2 border-0 ${
+                    activeTab === 'progress' 
+                      ? 'text-primary nav-btn-active' 
+                      : 'text-muted'
+                  }`}
+                  onClick={() => setActiveTab('progress')}
+                >
+                  <div className="d-flex flex-column align-items-center">
+                    <i className={`bi bi-graph-up${activeTab === 'progress' ? '-arrow' : ''} fs-5`}></i>
+                    <small className="mt-1 fw-${activeTab === 'progress' ? 'bold' : 'normal'}">Progress</small>
+                  </div>
+                </button>
+              </div>
             </div>
             <div className="col">
-              <button
-                className={`btn w-100 py-3 border-0 ${activeTab === 'coach' ? 'text-primary' : 'text-muted'}`}
-                onClick={() => setActiveTab('coach')}
-              >
-                <div className="d-flex flex-column align-items-center">
-                  <i className={`bi bi-person${activeTab === 'coach' ? '-fill' : ''} fs-5`}></i>
-                  <small className="mt-1">Coach</small>
-                </div>
-              </button>
+              <div className={activeTab === 'coach' ? 'nav-item-active' : ''}>
+                <button
+                  className={`btn w-100 py-2 border-0 ${
+                    activeTab === 'coach' 
+                      ? 'text-primary nav-btn-active' 
+                      : 'text-muted'
+                  }`}
+                  onClick={() => setActiveTab('coach')}
+                >
+                  <div className="d-flex flex-column align-items-center">
+                    <i className={`bi bi-person${activeTab === 'coach' ? '-fill' : ''} fs-5`}></i>
+                    <small className="mt-1 fw-${activeTab === 'coach' ? 'bold' : 'normal'}">Coach</small>
+                  </div>
+                </button>
+              </div>
             </div>
           </div>
         </div>
