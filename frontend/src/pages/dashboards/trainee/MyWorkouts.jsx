@@ -253,19 +253,6 @@ const MyWorkouts = () => {
     setActiveView('log');
   };
 
-  const cancelWorkout = () => {
-    if (window.confirm('Are you sure you want to cancel this workout? All progress will be lost.')) {
-      setActiveWorkout(null);
-      setIsWorkoutTimerRunning(false);
-      setWorkoutTimer(0);
-      setCurrentExerciseIndex(0);
-      setCurrentSetIndex(0);
-      setWorkoutLogs([]);
-      setCurrentSetData({ weight: '', reps: '', rpe: '', notes: '' });
-      setActiveView('plans');
-    }
-  };
-
   const completeSet = () => {
     if (!activeWorkout || !currentSetData.reps) {
       alert('Please enter the number of reps completed');
@@ -320,62 +307,6 @@ const MyWorkouts = () => {
     } else {
       // Workout completed
       finishWorkout();
-    }
-  };
-
-  const finishWorkout = async () => {
-    if (workoutLogs.length === 0) {
-      alert('Please complete at least one set before finishing the workout');
-      return;
-    }
-
-    try {
-      const workoutDuration = Math.floor(workoutTimer / 60); // Convert to minutes
-      
-      // Save workout session
-      const sessionResponse = await fetch(`${BACKEND_ROUTES_API}CreateWorkoutSession.php`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          workoutPlanId: activeWorkout.id,
-          planName: activeWorkout.name,
-          duration: workoutDuration,
-          rating: null
-        })
-      });
-
-      if (sessionResponse.ok) {
-        const sessionData = await sessionResponse.json();
-        if (sessionData.success) {
-          // Save exercise logs
-          const logResponse = await fetch(`${BACKEND_ROUTES_API}SaveWorkoutLogs.php`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              sessionId: sessionData.sessionId,
-              logs: workoutLogs
-            })
-          });
-
-          if (logResponse.ok) {
-            alert('Workout completed successfully!');
-            setActiveWorkout(null);
-            setIsWorkoutTimerRunning(false);
-            setWorkoutTimer(0);
-            setActiveView('plans');
-            fetchWorkoutData(); // Refresh data
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Error finishing workout:', err);
-      alert('Error saving workout. Please try again.');
     }
   };
 
@@ -519,6 +450,60 @@ const MyWorkouts = () => {
       }
     } catch (err) {
       console.error('Error fetching workout details:', err);
+    }
+  };
+
+  // Cancel workout function
+  const cancelWorkout = () => {
+    setActiveWorkout(null);
+    setIsWorkoutTimerRunning(false);
+    setWorkoutTimer(0);
+    setCurrentExerciseIndex(0);
+    setCurrentSetIndex(0);
+    setWorkoutLogs([]);
+    setCurrentSetData({ weight: '', reps: '', rpe: '', notes: '' });
+    setShowCancelWorkoutModal(false);
+    setActiveView('plans');
+  };
+
+  // Finish workout function
+  const finishWorkout = async () => {
+    try {
+      // Save workout session
+      const sessionResponse = await fetch(`${BACKEND_ROUTES_API}SaveWorkoutSession.php`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          workoutPlanId: activeWorkout.id,
+          planName: activeWorkout.name,
+          duration: Math.floor(workoutTimer / 60), // Convert to minutes
+          exercises: workoutLogs
+        })
+      });
+
+      if (sessionResponse.ok) {
+        setSuccessMessage('Workout completed successfully!');
+        setShowSuccessModal(true);
+        setShowFinishWorkoutModal(false);
+        
+        // Reset workout state
+        setActiveWorkout(null);
+        setIsWorkoutTimerRunning(false);
+        setWorkoutTimer(0);
+        setCurrentExerciseIndex(0);
+        setCurrentSetIndex(0);
+        setWorkoutLogs([]);
+        setCurrentSetData({ weight: '', reps: '', rpe: '', notes: '' });
+        setActiveView('plans');
+        
+        // Refresh data
+        fetchWorkoutData();
+      }
+    } catch (err) {
+      console.error('Error finishing workout:', err);
     }
   };
 
@@ -1202,7 +1187,7 @@ const MyWorkouts = () => {
 
                 <button 
                   className="btn btn-success w-100 mt-3"
-                  onClick={finishWorkout}
+                  onClick={() => setShowFinishWorkoutModal(true)}
                   disabled={workoutLogs.length === 0}
                 >
                   <i className="bi bi-check-circle me-2"></i>
@@ -1410,6 +1395,125 @@ const MyWorkouts = () => {
     </div>
   );
 
+  // Cancel Workout Modal
+  const CancelWorkoutModal = () => (
+    <div className={`modal fade ${showCancelWorkoutModal ? 'show d-block' : ''}`} style={{ backgroundColor: showCancelWorkoutModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
+      <div className="modal-dialog">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">Cancel Workout</h5>
+            <button 
+              type="button" 
+              className="btn-close" 
+              onClick={() => setShowCancelWorkoutModal(false)}
+            ></button>
+          </div>
+          <div className="modal-body">
+            <p>Are you sure you want to cancel this workout?</p>
+            <p className="text-muted small">All progress will be lost and cannot be recovered.</p>
+          </div>
+          <div className="modal-footer">
+            <button 
+              type="button" 
+              className="btn btn-secondary" 
+              onClick={() => setShowCancelWorkoutModal(false)}
+            >
+              Continue Workout
+            </button>
+            <button 
+              type="button" 
+              className="btn btn-danger" 
+              onClick={cancelWorkout}
+            >
+              Cancel Workout
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Finish Workout Modal
+  const FinishWorkoutModal = () => (
+    <div className={`modal fade ${showFinishWorkoutModal ? 'show d-block' : ''}`} style={{ backgroundColor: showFinishWorkoutModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
+      <div className="modal-dialog">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">Finish Workout</h5>
+            <button 
+              type="button" 
+              className="btn-close" 
+              onClick={() => setShowFinishWorkoutModal(false)}
+            ></button>
+          </div>
+          <div className="modal-body">
+            <p>Great job! You're about to finish your workout.</p>
+            <div className="workout-summary">
+              <div className="row">
+                <div className="col-6">
+                  <strong>Duration:</strong> {formatTime(workoutTimer)}
+                </div>
+                <div className="col-6">
+                  <strong>Sets Completed:</strong> {workoutLogs.length}
+                </div>
+              </div>
+            </div>
+            <p className="text-muted small mt-3">This will save your workout and all logged sets.</p>
+          </div>
+          <div className="modal-footer">
+            <button 
+              type="button" 
+              className="btn btn-secondary" 
+              onClick={() => setShowFinishWorkoutModal(false)}
+            >
+              Continue Workout
+            </button>
+            <button 
+              type="button" 
+              className="btn btn-success" 
+              onClick={finishWorkout}
+            >
+              Finish Workout
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Success Modal
+  const SuccessModal = () => (
+    <div className={`modal fade ${showSuccessModal ? 'show d-block' : ''}`} style={{ backgroundColor: showSuccessModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
+      <div className="modal-dialog">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">
+              <i className="bi bi-check-circle-fill text-success me-2"></i>
+              Success!
+            </h5>
+            <button 
+              type="button" 
+              className="btn-close" 
+              onClick={() => setShowSuccessModal(false)}
+            ></button>
+          </div>
+          <div className="modal-body">
+            <p>{successMessage}</p>
+          </div>
+          <div className="modal-footer">
+            <button 
+              type="button" 
+              className="btn btn-primary" 
+              onClick={() => setShowSuccessModal(false)}
+            >
+              Awesome!
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const ExerciseSelectionModal = () => (
     <div className={`modal fade ${showExerciseModal ? 'show d-block' : ''}`} style={{ backgroundColor: showExerciseModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
       <div className="modal-dialog">
@@ -1543,6 +1647,9 @@ const MyWorkouts = () => {
       <EditModal />
       <WorkoutDetailsModal />
       <ExerciseSelectionModal />
+      <CancelWorkoutModal />
+      <FinishWorkoutModal />
+      <SuccessModal />
     </div>
   );
 };
