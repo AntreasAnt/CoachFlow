@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { BACKEND_ROUTES_API } from '../../../config/config';
+import APIClient from '../../../utils/APIClient';
 
 const Meals = () => {
   const [todaysMeals, setTodaysMeals] = useState({
     breakfast: [],
     lunch: [],
     dinner: [],
-    snack: []
+    snacks: []
   });
   const [dailyGoals, setDailyGoals] = useState({
     calories: 2200,
@@ -25,23 +26,14 @@ const Meals = () => {
     try {
       setLoading(true);
       
-      const response = await fetch(`${BACKEND_ROUTES_API}GetTodaysMeals.php`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch meals data');
-      }
-
-      const data = await response.json();
+      const data = await APIClient.get(`${BACKEND_ROUTES_API}GetTodaysMeals.php`);
 
       if (data.success) {
         setTodaysMeals(data.meals);
-        setDailyGoals(data.nutritionGoals);
+        // Use provided nutrition goals or fallback to defaults
+        if (data.nutritionGoals) {
+          setDailyGoals(data.nutritionGoals);
+        }
       } else {
         throw new Error(data.message || 'Failed to load meals');
       }
@@ -67,6 +59,11 @@ const Meals = () => {
     });
     
     return totals;
+  };
+
+  const calculateProgress = (current, goal) => {
+    if (!goal || goal === 0) return 0;
+    return Math.min((current / goal) * 100, 100);
   };
 
   const totals = calculateTotals();
@@ -119,7 +116,7 @@ const Meals = () => {
               <div className="progress mt-2" style={{ height: '4px' }}>
                 <div 
                   className="progress-bar bg-danger" 
-                  style={{ width: `${Math.min((totals.calories / dailyGoals.calories) * 100, 100)}%` }}
+                  style={{ width: `${calculateProgress(totals.calories, dailyGoals.calories)}%` }}
                 ></div>
               </div>
             </div>
@@ -134,7 +131,7 @@ const Meals = () => {
               <div className="progress mt-2" style={{ height: '4px' }}>
                 <div 
                   className="progress-bar bg-success" 
-                  style={{ width: `${Math.min((totals.protein / dailyGoals.protein) * 100, 100)}%` }}
+                  style={{ width: `${calculateProgress(totals.protein, dailyGoals.protein)}%` }}
                 ></div>
               </div>
             </div>
@@ -149,7 +146,7 @@ const Meals = () => {
               <div className="progress mt-2" style={{ height: '4px' }}>
                 <div 
                   className="progress-bar bg-warning" 
-                  style={{ width: `${Math.min((totals.carbs / dailyGoals.carbs) * 100, 100)}%` }}
+                  style={{ width: `${calculateProgress(totals.carbs, dailyGoals.carbs)}%` }}
                 ></div>
               </div>
             </div>
@@ -164,7 +161,7 @@ const Meals = () => {
               <div className="progress mt-2" style={{ height: '4px' }}>
                 <div 
                   className="progress-bar bg-info" 
-                  style={{ width: `${Math.min((totals.fat / dailyGoals.fat) * 100, 100)}%` }}
+                  style={{ width: `${calculateProgress(totals.fat, dailyGoals.fat)}%` }}
                 ></div>
               </div>
             </div>

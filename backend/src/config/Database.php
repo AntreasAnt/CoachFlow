@@ -22,11 +22,25 @@ if (!defined(constant_name: 'APP_RUNNING')) exit('No direct script access');
 
 class Database
 {
-    private $host = "localhost";
-    private $dbName = "trainers-all-in-one";
-    private $username = "root";
-    private $password = "";
+    private $host;
+    private $dbName;
+    private $username;
+    private $password;
+    private $charset;
+    private $port;
+    private $socket;
     private $conn;
+
+    public function __construct() {
+        // Load database configuration from environment variables with fallbacks
+        $this->host = $_ENV['DB_HOST'] ?? 'localhost';
+        $this->dbName = $_ENV['DB_NAME'] ?? 'trainers-all-in-one';
+        $this->username = $_ENV['DB_USER'] ?? 'root';
+        $this->password = $_ENV['DB_PASS'] ?? '';
+        $this->charset = $_ENV['DB_CHARSET'] ?? 'utf8mb4';
+        $this->port = $_ENV['DB_PORT'] ?? 3306;
+        $this->socket = $_ENV['DB_SOCKET'] ?? '/Applications/XAMPP/xamppfiles/var/mysql/mysql.sock';
+    }
 
     /**
      * Establishes a database connection.
@@ -43,7 +57,7 @@ class Database
             mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
             try {
-                $this->conn = new \mysqli($this->host, $this->username, $this->password);
+                $this->conn = new \mysqli($this->host, $this->username, $this->password, '', $this->port, $this->socket);
 
                 // First check if we can connect to MySQL
                 if ($this->conn->connect_error) {
@@ -56,7 +70,7 @@ class Database
                 }
 
                 // Set charset
-                $this->conn->set_charset("utf8mb4");
+                $this->conn->set_charset($this->charset);
             } catch (\Exception $e) {
                 die("Database Error: " . $e->getMessage());
             }

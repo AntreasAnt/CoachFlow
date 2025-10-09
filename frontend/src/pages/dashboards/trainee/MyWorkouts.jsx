@@ -82,13 +82,7 @@ const MyWorkouts = () => {
     try {
       setLoading(true);
       
-      const response = await APIClient.get(`${BACKEND_ROUTES_API}GetWorkoutData.php`);
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch workout data');
-      }
-
-      const data = await response.json();
+      const data = await APIClient.get(`${BACKEND_ROUTES_API}GetWorkoutData.php`);
 
       if (data.success) {
         setWorkoutPlans(data.workoutPlans);
@@ -185,11 +179,11 @@ const MyWorkouts = () => {
   // Plan management functions
   const deletePlan = async (planId) => {
     try {
-      const response = await APIClient.delete(`${BACKEND_ROUTES_API}DeleteWorkoutPlan.php`, {
+      const data = await APIClient.delete(`${BACKEND_ROUTES_API}DeleteWorkoutPlan.php`, {
         body: JSON.stringify({ planId })
       });
 
-      if (response.ok) {
+      if (data.success) {
         setWorkoutPlans(prev => prev.filter(plan => plan.id !== planId));
         setShowDeleteModal(false);
         setPlanToDelete(null);
@@ -201,9 +195,9 @@ const MyWorkouts = () => {
 
   const editPlan = async (updatedPlan) => {
     try {
-      const response = await APIClient.put(`${BACKEND_ROUTES_API}UpdateWorkoutPlan.php`, updatedPlan);
+      const data = await APIClient.put(`${BACKEND_ROUTES_API}UpdateWorkoutPlan.php`, updatedPlan);
 
-      if (response.ok) {
+      if (data.success) {
         setWorkoutPlans(prev => prev.map(plan => 
           plan.id === updatedPlan.id ? updatedPlan : plan
         ));
@@ -333,7 +327,7 @@ const MyWorkouts = () => {
     if (!newExercise.name) return;
 
     try {
-      const response = await APIClient.post(`${BACKEND_ROUTES_API}CreateCustomExercise.php`, {
+      const data = await APIClient.post(`${BACKEND_ROUTES_API}CreateCustomExercise.php`, {
         name: newExercise.name,
         category: newExercise.category,
         muscle_group: newExercise.muscle_group,
@@ -341,25 +335,22 @@ const MyWorkouts = () => {
         instructions: newExercise.instructions
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          // Clear the form
-          setNewExercise({ 
-            name: '', 
-            muscle_group: '',
-            category: 'strength',
-            equipment: '',
-            instructions: ''
-          });
-          
-          // Refresh exercises list to include the new custom exercise
-          fetchWorkoutData();
-          
-          // Show success modal
-          setSuccessMessage('Exercise added to your library successfully!');
-          setShowSuccessModal(true);
-        }
+      if (data.success) {
+        // Clear the form
+        setNewExercise({ 
+          name: '', 
+          muscle_group: '',
+          category: 'strength',
+          equipment: '',
+          instructions: ''
+        });
+        
+        // Refresh exercises list to include the new custom exercise
+        fetchWorkoutData();
+        
+        // Show success modal
+        setSuccessMessage('Exercise added to your library successfully!');
+        setShowSuccessModal(true);
       }
     } catch (err) {
       console.error('Error creating custom exercise:', err);
@@ -369,15 +360,12 @@ const MyWorkouts = () => {
   const savePlan = async () => {
     if (newPlan.name && newPlan.exercises.length > 0) {
       try {
-        const response = await APIClient.post(`${BACKEND_ROUTES_API}CreateWorkoutPlan.php`, newPlan);
+        const data = await APIClient.post(`${BACKEND_ROUTES_API}CreateWorkoutPlan.php`, newPlan);
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            fetchWorkoutData(); // Refresh the data
-            setNewPlan({ name: '', description: '', exercises: [] });
-            setActiveView('plans');
-          }
+        if (data.success) {
+          fetchWorkoutData(); // Refresh the data
+          setNewPlan({ name: '', description: '', exercises: [] });
+          setActiveView('plans');
         }
       } catch (err) {
         console.error('Error saving plan:', err);
@@ -402,14 +390,11 @@ const MyWorkouts = () => {
 
   const viewWorkoutDetails = async (workoutId) => {
     try {
-      const response = await APIClient.get(`${BACKEND_ROUTES_API}GetWorkoutDetails.php?sessionId=${workoutId}`);
+      const data = await APIClient.get(`${BACKEND_ROUTES_API}GetWorkoutDetails.php?sessionId=${workoutId}`);
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setSelectedWorkoutDetails(data.workoutDetails);
-          setShowWorkoutDetails(true);
-        }
+      if (data.success) {
+        setSelectedWorkoutDetails(data.workoutDetails);
+        setShowWorkoutDetails(true);
       }
     } catch (err) {
       console.error('Error fetching workout details:', err);
@@ -433,14 +418,14 @@ const MyWorkouts = () => {
   const finishWorkout = async () => {
     try {
       // Save workout session
-      const sessionResponse = await APIClient.post(`${BACKEND_ROUTES_API}SaveWorkoutSession.php`, {
+      const sessionData = await APIClient.post(`${BACKEND_ROUTES_API}SaveWorkoutSession.php`, {
         workoutPlanId: activeWorkout.id,
         planName: activeWorkout.name,
         duration: Math.floor(workoutTimer / 60), // Convert to minutes
         exercises: workoutLogs
       });
 
-      if (sessionResponse.ok) {
+      if (sessionData.success) {
         setSuccessMessage('Workout completed successfully!');
         setShowSuccessModal(true);
         setShowFinishWorkoutModal(false);

@@ -25,31 +25,47 @@ class APIClient {
       ?.split('=')[1];
   }
 
-  // Convenience methods
+  // Convenience methods that return parsed JSON
   static async get(url, options = {}) {
-    return this.fetch(url, { method: 'GET', ...options });
+    const response = await this.fetch(url, { method: 'GET', ...options });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    return response.json();
   }
 
   static async post(url, data, options = {}) {
-    return this.fetch(url, {
+    const response = await this.fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...options.headers },
       body: JSON.stringify(data),
       ...options
     });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    return response.json();
   }
 
   static async put(url, data, options = {}) {
-    return this.fetch(url, {
+    const response = await this.fetch(url, {
       method: 'PUT', 
       headers: { 'Content-Type': 'application/json', ...options.headers },
       body: JSON.stringify(data),
       ...options
     });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    return response.json();
   }
 
   static async delete(url, options = {}) {
-    return this.fetch(url, { method: 'DELETE', ...options });
+    const response = await this.fetch(url, { method: 'DELETE', ...options });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    return response.json();
   }
 }
 

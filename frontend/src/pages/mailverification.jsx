@@ -110,7 +110,7 @@ function MailVerification() {
       if (data.success) {
         // Store user data in localStorage or context
         localStorage.setItem("user", JSON.stringify(data.user));
-        navigate("/");
+        navigate("/login");
       } else if (data.success === false) {
         setErrors(data.message || "Verification failed");
       } else {
