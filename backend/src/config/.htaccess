@@ -1,0 +1,9 @@
+# Deny direct access to all PHP files in the config directory
+<Files "*.php">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# Additional security measures
+Options -Indexes
+Options -ExecCGI

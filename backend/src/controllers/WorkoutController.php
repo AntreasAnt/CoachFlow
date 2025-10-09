@@ -8,6 +8,7 @@
  * - Managing premium workout plans
  * - Handling workout progress tracking
  */
+if (!defined(constant_name: 'APP_RUNNING')) exit('No direct script access');
 
 require_once '../models/WorkoutModel.php';
 require_once '../config/Auth.php';

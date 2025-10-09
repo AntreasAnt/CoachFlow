@@ -3,10 +3,10 @@
 // It includes validation for various fields such as username, email, password, phone, country code, and birthday.
 // Additionally, it creates a new user and sends a confirmation email.
 
+if (!defined('APP_RUNNING')) exit('No direct script access');
 
 include_once("../models/UserModel.php"); // Include the UserModel class for database interaction
 require(__DIR__ . '/NotificationController.php'); // Include the NotificationController to handle email notifications
-
 
 class UserController extends UserModel
 {

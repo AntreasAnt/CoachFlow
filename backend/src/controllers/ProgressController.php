@@ -8,6 +8,7 @@
  * - Managing body measurements and weight tracking
  * - Calculating progress trends and statistics
  */
+if (!defined(constant_name: 'APP_RUNNING')) exit('No direct script access');
 
 require_once '../models/ProgressModel.php';
 require_once '../config/Auth.php';

@@ -9,6 +9,9 @@
  * - Handling coach marketplace
  */
 
+if (!defined(constant_name: 'APP_RUNNING')) exit('No direct script access');
+
+
 require_once '../models/CoachModel.php';
 require_once '../config/Auth.php';
 

@@ -1,4 +1,5 @@
 <?php
+if (!defined(constant_name: 'APP_RUNNING')) exit('No direct script access');
 
 /**
  * NutritionController Class
@@ -10,7 +11,7 @@
  */
 
 require_once '../models/NutritionModel.php';
-require_once '../config/Auth.php';
+
 
 class NutritionController
 {

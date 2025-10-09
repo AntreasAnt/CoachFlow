@@ -1,5 +1,11 @@
 <?php
 
+// Prevent direct access to this file
+if (basename($_SERVER['PHP_SELF']) === basename(__FILE__)) {
+    http_response_code(403);
+    die('Direct access to this file is not allowed.');
+}
+
 include_once("../config/cors.php");
 
 /**

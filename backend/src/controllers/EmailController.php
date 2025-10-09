@@ -1,4 +1,7 @@
 <?php
+
+if (!defined(constant_name: 'APP_RUNNING')) exit('No direct script access');
+
 require_once __DIR__ . '/../models/EmailModel.php';
 require_once __DIR__ . '/../config/cors.php';
 require_once(__DIR__ . '/../../vendor/autoload.php'); // Autoload external libraries

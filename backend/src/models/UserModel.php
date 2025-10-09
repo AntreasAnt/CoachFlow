@@ -1,4 +1,5 @@
 <?php
+if (!defined('APP_RUNNING')) exit('No direct script access');
 
 /**
  * UserModel Class
@@ -11,6 +12,7 @@
  */
 
 require_once '../config/Database.php';
+
 
 class UserModel
 {

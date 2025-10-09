@@ -4,6 +4,8 @@
 // It is responsible for generating a confirmation token, saving it, and sending a confirmation email to the user.
 // It also handles token verification when the user submits the token for validation.
 
+if (!defined(constant_name: 'APP_RUNNING')) exit('No direct script access');
+
 require(__DIR__ . '/../services/MailService.php'); // Include the MailService class for sending emails
 require_once(__DIR__ . '/../../vendor/autoload.php'); // Autoload vendor classes, usually for external libraries
 require_once(__DIR__ . '/../config/MailConfig.php'); // Include configuration for mail service

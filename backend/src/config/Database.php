@@ -1,5 +1,11 @@
 <?php
 
+// Prevent direct access to this file
+if (basename($_SERVER['PHP_SELF']) === basename(__FILE__)) {
+    http_response_code(403);
+    die('Direct access to this file is not allowed.');
+}
+
 /**
  * Database Connection Class
  * 
@@ -12,6 +18,7 @@
  * 
  * Ensure the database credentials are correctly set before deployment.
  */
+if (!defined(constant_name: 'APP_RUNNING')) exit('No direct script access');
 
 class Database
 {

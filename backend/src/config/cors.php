@@ -1,5 +1,11 @@
 <?php
 
+// Prevent direct access to this file
+if (basename($_SERVER['PHP_SELF']) === basename(__FILE__)) {
+    http_response_code(403);
+    die('Direct access to this file is not allowed.');
+}
+
 /**
  * CORS Configuration File
  * 
@@ -12,6 +18,7 @@
  */
 
 require_once(__DIR__ . '/../bootstrap.php'); // Load environment variables
+
 require_once(__DIR__ . '/AppConfig.php'); // Load application configuration
 
 // Define allowed origins (update for production)

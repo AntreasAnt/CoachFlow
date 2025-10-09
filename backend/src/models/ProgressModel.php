@@ -1,4 +1,5 @@
 <?php
+if (!defined('APP_RUNNING')) exit('No direct script access');
 
 /**
  * ProgressModel Class
@@ -10,6 +11,7 @@
  */
 
 require_once '../config/Database.php';
+
 
 class ProgressModel
 {
