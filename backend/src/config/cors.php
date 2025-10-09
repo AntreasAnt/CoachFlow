@@ -1,9 +1,8 @@
 <?php
 
-// Prevent direct access to this file
-if (basename($_SERVER['PHP_SELF']) === basename(__FILE__)) {
-    http_response_code(403);
-    die('Direct access to this file is not allowed.');
+// Define APP_RUNNING to allow access to controllers and models
+if (!defined('APP_RUNNING')) {
+    define('APP_RUNNING', true);
 }
 
 /**
@@ -64,6 +63,27 @@ header("Access-Control-Allow-Headers: Content-Type, Authorization");
 // Ensure responses are sent in JSON format with UTF-8 encoding
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Credentials: true");
+
+// Content Security Policy Headers
+header("Content-Security-Policy: " . 
+    "default-src 'self'; " .
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; " .
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; " .
+    "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; " .
+    "img-src 'self' data: https: blob:; " .
+    "connect-src 'self' " . AppConfig::getFrontendUrl() . " " . AppConfig::getBackendUrl() . "; " .
+    "frame-ancestors 'none'; " .
+    "base-uri 'self'; " .
+    "form-action 'self'"
+);
+
+// Additional Security Headers
+header("X-Content-Type-Options: nosniff");
+header("X-Frame-Options: DENY");
+header("X-XSS-Protection: 1; mode=block");
+header("Referrer-Policy: strict-origin-when-cross-origin");
+header("Permissions-Policy: camera=(), microphone=(), geolocation=()");
+
 // Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     header("HTTP/1.1 200 OK");
