@@ -2,6 +2,7 @@
 
 require_once '../config/cors.php';
 require_once '../config/Auth.php';
+require_once __DIR__ . '/../security/verify_csrf.php';
 require_once '../controllers/WorkoutController.php';
 
 // Only allow POST requests
@@ -10,6 +11,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Method not allowed']);
     exit();
 }
+
+// Check CSRF protection
+verifyCsrf();
 
 // Check authentication
 checkAuth(['trainee', 'trainer']);

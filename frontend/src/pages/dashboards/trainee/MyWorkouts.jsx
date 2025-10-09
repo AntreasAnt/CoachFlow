@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BACKEND_ROUTES_API } from '../../../config/config';
+import APIClient from '../../../utils/APIClient';
 
 const MyWorkouts = () => {
   const [activeView, setActiveView] = useState('plans'); // plans, create, log
@@ -81,13 +82,7 @@ const MyWorkouts = () => {
     try {
       setLoading(true);
       
-      const response = await fetch(`${BACKEND_ROUTES_API}GetWorkoutData.php`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
+      const response = await APIClient.get(`${BACKEND_ROUTES_API}GetWorkoutData.php`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch workout data');
@@ -190,12 +185,7 @@ const MyWorkouts = () => {
   // Plan management functions
   const deletePlan = async (planId) => {
     try {
-      const response = await fetch(`${BACKEND_ROUTES_API}DeleteWorkoutPlan.php`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await APIClient.delete(`${BACKEND_ROUTES_API}DeleteWorkoutPlan.php`, {
         body: JSON.stringify({ planId })
       });
 
@@ -211,14 +201,7 @@ const MyWorkouts = () => {
 
   const editPlan = async (updatedPlan) => {
     try {
-      const response = await fetch(`${BACKEND_ROUTES_API}UpdateWorkoutPlan.php`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedPlan)
-      });
+      const response = await APIClient.put(`${BACKEND_ROUTES_API}UpdateWorkoutPlan.php`, updatedPlan);
 
       if (response.ok) {
         setWorkoutPlans(prev => prev.map(plan => 
@@ -350,19 +333,12 @@ const MyWorkouts = () => {
     if (!newExercise.name) return;
 
     try {
-      const response = await fetch(`${BACKEND_ROUTES_API}CreateCustomExercise.php`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: newExercise.name,
-          category: newExercise.category,
-          muscle_group: newExercise.muscle_group,
-          equipment: newExercise.equipment,
-          instructions: newExercise.instructions
-        })
+      const response = await APIClient.post(`${BACKEND_ROUTES_API}CreateCustomExercise.php`, {
+        name: newExercise.name,
+        category: newExercise.category,
+        muscle_group: newExercise.muscle_group,
+        equipment: newExercise.equipment,
+        instructions: newExercise.instructions
       });
 
       if (response.ok) {
@@ -393,14 +369,7 @@ const MyWorkouts = () => {
   const savePlan = async () => {
     if (newPlan.name && newPlan.exercises.length > 0) {
       try {
-        const response = await fetch(`${BACKEND_ROUTES_API}CreateWorkoutPlan.php`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(newPlan)
-        });
+        const response = await APIClient.post(`${BACKEND_ROUTES_API}CreateWorkoutPlan.php`, newPlan);
 
         if (response.ok) {
           const data = await response.json();
@@ -433,13 +402,7 @@ const MyWorkouts = () => {
 
   const viewWorkoutDetails = async (workoutId) => {
     try {
-      const response = await fetch(`${BACKEND_ROUTES_API}GetWorkoutDetails.php?sessionId=${workoutId}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
+      const response = await APIClient.get(`${BACKEND_ROUTES_API}GetWorkoutDetails.php?sessionId=${workoutId}`);
 
       if (response.ok) {
         const data = await response.json();
@@ -470,18 +433,11 @@ const MyWorkouts = () => {
   const finishWorkout = async () => {
     try {
       // Save workout session
-      const sessionResponse = await fetch(`${BACKEND_ROUTES_API}SaveWorkoutSession.php`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          workoutPlanId: activeWorkout.id,
-          planName: activeWorkout.name,
-          duration: Math.floor(workoutTimer / 60), // Convert to minutes
-          exercises: workoutLogs
-        })
+      const sessionResponse = await APIClient.post(`${BACKEND_ROUTES_API}SaveWorkoutSession.php`, {
+        workoutPlanId: activeWorkout.id,
+        planName: activeWorkout.name,
+        duration: Math.floor(workoutTimer / 60), // Convert to minutes
+        exercises: workoutLogs
       });
 
       if (sessionResponse.ok) {

@@ -15,33 +15,14 @@
  */
 
 require_once(__DIR__ . '/../bootstrap.php'); // Load environment variables
-
 require_once(__DIR__ . '/AppConfig.php'); // Load application configuration
+
 if (!defined('APP_RUNNING')) {
     http_response_code(403);
     exit('Forbidden');
 }
+
 // Define allowed origins (update for production)
-
-if (session_status() === PHP_SESSION_NONE) {
-    // Set session configurations only if no session is active
-    ini_set('session.cookie_lifetime', 86400); // 24 hours cookie
-    ini_set('session.gc_maxlifetime', 86400); // 24 hours server
-
-    session_set_cookie_params([
-        'lifetime' => 86400, // 24 hours
-        'path' => '/', // Available in the entire domain
-        'domain' => '',  // Automatic domain detection
-        'secure' => false, // True for HTTPS
-        'httponly' => true, // Prevent JavaScript access
-        'samesite' => 'Lax'
-    ]);
-
-    session_start();
-    error_log('Session started with ID: ' . session_id());
-}
-
-
 $allowedOrigins = [AppConfig::getFrontendUrl()];
 
 // Get the origin of the request
@@ -56,10 +37,10 @@ if (in_array($origin, $allowedOrigins)) {
 }
 
 // Specify allowed HTTP methods for cross-origin requests
-header("Access-Control-Allow-Methods: GET, POST,PUT, DELETE,OPTIONS");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 
-// Define allowed request headers
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+// Define allowed request headers (including CSRF token)
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token, X-Requested-With");
 
 // Ensure responses are sent in JSON format with UTF-8 encoding
 header("Content-Type: application/json; charset=UTF-8");
