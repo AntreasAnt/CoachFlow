@@ -12,7 +12,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { BACKEND_ROUTES_API } from "../config/config";
-import { readCookie } from "../utils/csrfread";
+
 
 
 function Login() {
@@ -105,8 +105,7 @@ function Login() {
       const res = await fetch(BACKEND_ROUTES_API + "Login.php", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": decodeURIComponent(readCookie("XSRF-TOKEN")),
+          "Content-Type": "application/json"
         },
         credentials: "include",
         body: JSON.stringify({

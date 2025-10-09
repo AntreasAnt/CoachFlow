@@ -5,10 +5,8 @@
  * Accepts user data via POST and returns JSON response
  */
 
-// Set JSON response type
-header('Content-Type: application/json');
-// Enable cross-origin requests
-include_once("../config/cors.php");
+require_once __DIR__ . "/../config/cors.php";
+
 // Include user management functionality
 include_once("../controllers/UserController.php");
 
