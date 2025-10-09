@@ -1,9 +1,7 @@
 <?php
 
 // Define APP_RUNNING to allow access to controllers and models
-if (!defined('APP_RUNNING')) {
-    define('APP_RUNNING', true);
-}
+
 
 /**
  * CORS Configuration File
@@ -19,7 +17,10 @@ if (!defined('APP_RUNNING')) {
 require_once(__DIR__ . '/../bootstrap.php'); // Load environment variables
 
 require_once(__DIR__ . '/AppConfig.php'); // Load application configuration
-
+if (!defined('APP_RUNNING')) {
+    http_response_code(403);
+    exit('Forbidden');
+}
 // Define allowed origins (update for production)
 
 if (session_status() === PHP_SESSION_NONE) {
