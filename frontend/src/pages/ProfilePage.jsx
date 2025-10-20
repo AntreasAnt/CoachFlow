@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { BACKEND_ROUTES_API } from '../config/config';
 import LogoutButton from '../components/LogoutButton';
 import '../styles/ProfilePage.css';
+import '../styles/trainee-dashboard.css';
 
 const ProfilePage = () => {
   const { username: profileUsername } = useParams();
@@ -53,99 +54,107 @@ const ProfilePage = () => {
   const isOwnProfile = !profileUsername || (currentUser && profileUsername === currentUser.username);
   const displayUsername = profileUsername || (currentUser ? currentUser.username : 'unknown');
 
-  // Fetch current user data
+  // Fetch profile data from backend
   useEffect(() => {
-    const fetchCurrentUser = async () => {
+    const fetchProfileData = async () => {
       try {
-        const response = await fetch(BACKEND_ROUTES_API + "VerifyPrivilage.php", {
+        // First verify current user authentication
+        const authResponse = await fetch(BACKEND_ROUTES_API + "VerifyPrivilage.php", {
           credentials: 'include',
           headers: {
             'Accept': 'application/json'
           }
         });
-        const data = await response.json();
+        const authData = await authResponse.json();
         
-        if (data.success) {
-          const user = {
-            username: data.username || 'user',
-            role: data.privileges || 'trainee',
-            user_id: data.user_id || 1
+        if (authData.success && authData.privileges && authData.privileges !== 'loggedout') {
+          const currentUserData = {
+            username: authData.username || 'user',
+            role: authData.privileges || 'trainee',
+            user_id: authData.user_id || 1
           };
-          setCurrentUser(user);
+          setCurrentUser(currentUserData);
           
-          // Update profile data with user info
-          setProfileData(prev => ({
-            ...prev,
-            username: user.username,
-            email: `${user.username}@coachflow.com`,
-            full_name: user.username,
-            specialization: user.role === 'trainer' ? 'Personal Training' : '',
-            experience_years: user.role === 'trainer' ? '3' : '',
-            certifications: user.role === 'trainer' ? 'NASM-CPT, ACE-CPT' : '',
-            bio: user.role === 'trainer' ? 'Passionate about helping clients achieve their fitness goals through personalized training programs.' : '',
-            fitness_goals: user.role === 'trainee' ? 'Weight Loss & Muscle Building' : '',
-            experience_level: user.role === 'trainee' ? 'Intermediate' : '',
-            workouts_completed: user.role === 'trainee' ? 45 : 0,
-            total_workout_time: user.role === 'trainee' ? 2700 : 0,
-            assigned_trainer: user.role === 'trainee' ? { name: 'John Smith', username: 'johnsmith' } : null,
-            current_program: user.role === 'trainee' ? 'Strength Building Program' : '',
-            clients: user.role === 'trainer' ? [
-              { name: 'Alice Johnson', username: 'alice' },
-              { name: 'Bob Wilson', username: 'bob' },
-              { name: 'Sarah Davis', username: 'sarah' }
-            ] : []
-          }));
+          // Fetch profile data (either current user or specific user)
+          let profileUrl = BACKEND_ROUTES_API + "GetUserProfile.php";
+          if (profileUsername) {
+            profileUrl += `?username=${encodeURIComponent(profileUsername)}`;
+          }
+          
+          const profileResponse = await fetch(profileUrl, {
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (profileResponse.status === 403 || profileResponse.status === 401) {
+            console.error('Authentication failed, redirecting to login');
+            navigate('/login');
+            return;
+          }
+          
+          const profileData = await profileResponse.json();
+          
+          if (profileData.success) {
+            const user = profileData.user;
+            
+            // Set profile data from database
+            setProfileData({
+              // Basic Info
+              username: user.username || 'Unknown',
+              email: user.email || '',
+              full_name: user.full_name || user.username || 'Unknown User',
+              phone: user.phone || '',
+              date_of_birth: user.date_of_birth || '',
+              profile_photo: user.profilePicture || '/src/assets/images/default-avatar.png',
+              
+              // Physical Info
+              height: user.height || '',
+              weight: user.weight || '',
+              
+              // Professional Info (for trainers)
+              specialization: user.specialization || '',
+              experience_years: user.experience_years || '',
+              certifications: user.certifications || '',
+              bio: user.bio || '',
+              
+              // Fitness Info (for trainees)
+              fitness_goals: user.fitness_goals || '',
+              experience_level: user.experience_level || '',
+              medical_notes: user.medical_notes || '',
+              
+              // Stats from database
+              member_since: user.member_since || '2024-01-01',
+              workouts_completed: 0, // TODO: fetch from workout logs
+              total_workout_time: 0, // TODO: fetch from workout logs
+              
+              // Relationships (placeholder - would come from other tables)
+              assigned_trainer: null, // TODO: fetch trainer relationship
+              current_program: '', // TODO: fetch current program
+              clients: [] // TODO: fetch clients for trainers
+            });
+          } else {
+            console.error('Failed to fetch profile:', profileData.message);
+          }
         } else {
-          // Fallback for development
-          const fallbackUser = {
-            username: 'testuser',
-            role: 'trainee',
-            user_id: 1
-          };
-          setCurrentUser(fallbackUser);
-          
-          setProfileData(prev => ({
-            ...prev,
-            username: fallbackUser.username,
-            email: `${fallbackUser.username}@coachflow.com`,
-            full_name: fallbackUser.username,
-            fitness_goals: 'Weight Loss & Muscle Building',
-            experience_level: 'Intermediate',
-            workouts_completed: 45,
-            total_workout_time: 2700,
-            assigned_trainer: { name: 'John Smith', username: 'johnsmith' },
-            current_program: 'Strength Building Program'
-          }));
+          console.error('Authentication failed:', authData.message || 'User not logged in');
+          navigate('/login');
+          return;
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
-        // Fallback for development
-        const fallbackUser = {
-          username: 'testuser',
-          role: 'trainee',
-          user_id: 1
-        };
-        setCurrentUser(fallbackUser);
-        
-        setProfileData(prev => ({
-          ...prev,
-          username: fallbackUser.username,
-          email: `${fallbackUser.username}@coachflow.com`,
-          full_name: fallbackUser.username,
-          fitness_goals: 'Weight Loss & Muscle Building',
-          experience_level: 'Intermediate',
-          workouts_completed: 45,
-          total_workout_time: 2700,
-          assigned_trainer: { name: 'John Smith', username: 'johnsmith' },
-          current_program: 'Strength Building Program'
-        }));
+        console.error('Error fetching profile data:', error);
+        if (error.message && (error.message.includes('403') || error.message.includes('401'))) {
+          navigate('/login');
+          return;
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCurrentUser();
-  }, []);
+    fetchProfileData();
+  }, [profileUsername, navigate]);
 
   // Update editData when profileData changes
   useEffect(() => {
@@ -191,16 +200,39 @@ const ProfilePage = () => {
 
   const handleSaveProfile = async () => {
     try {
-      // For now, just update local state
-      setProfileData(editData);
-      setIsEditing(false);
+      const response = await fetch(BACKEND_ROUTES_API + "UpdateUserProfile.php", {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(editData)
+      });
       
-      // Show success message
-      const toast = document.createElement('div');
-      toast.className = 'toast-notification success';
-      toast.innerHTML = '<i class="bi bi-check-circle me-2"></i>Profile updated successfully!';
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 3000);
+      const result = await response.json();
+      
+      if (result.success) {
+        // Update local state with the saved data
+        setProfileData(editData);
+        setIsEditing(false);
+        
+        // Show success message
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification success';
+        toast.innerHTML = '<i class="bi bi-check-circle me-2"></i>Profile updated successfully!';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+      } else {
+        console.error('Save failed:', result.message);
+        
+        // Show error message
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification error';
+        toast.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>' + (result.message || 'Failed to update profile. Please try again.');
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+      }
       
     } catch (error) {
       console.error('Error updating profile:', error);

@@ -434,6 +434,22 @@ class UserModel
             return false;
         }
     }
+    
+    public function getUserByUsername($username)
+    {
+        try {
+            $query = "SELECT userid, username, role FROM user WHERE username = ? AND isdeleted = 0";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bind_param("s", $username);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            return $result->fetch_assoc();
+        } catch (Exception $e) {
+            error_log("Error getting user by username: " . $e->getMessage());
+            return false;
+        }
+    }
+    
     public function getprofileById($id)
     {
         // SQL query to fetch user by ID including the image path
@@ -452,6 +468,55 @@ class UserModel
             return false;
         }
     }
+    
+    public function updateUserProfile($userId, $updateData)
+    {
+        try {
+            // Build dynamic UPDATE query based on provided fields
+            $setClause = [];
+            $values = [];
+            $types = "";
+
+            foreach ($updateData as $field => $value) {
+                $setClause[] = "$field = ?";
+                $values[] = $value;
+                if (is_int($value) || is_float($value)) {
+                    $types .= is_int($value) ? "i" : "d";
+                } else {
+                    $types .= "s";
+                }
+            }
+
+            if (empty($setClause)) {
+                return false; // No fields to update
+            }
+
+            $sql = "UPDATE user SET " . implode(", ", $setClause) . " WHERE userid = ?";
+            $values[] = $userId;
+            $types .= "s";
+
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) {
+                error_log("Prepare failed: " . $this->conn->error);
+                return false;
+            }
+
+            $stmt->bind_param($types, ...$values);
+            $result = $stmt->execute();
+            
+            if (!$result) {
+                error_log("Execute failed: " . $stmt->error);
+            }
+            
+            $stmt->close();
+            return $result;
+            
+        } catch (Exception $e) {
+            error_log("Error updating user profile: " . $e->getMessage());
+            return false;
+        }
+    }
+    
     public function updateUserProfileImage($userId, $imageId)
     {
         try {
