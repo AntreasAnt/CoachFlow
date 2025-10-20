@@ -17,15 +17,15 @@ class AppConfig
     // Application URLs
     public static function getFrontendUrl() {
         $urls = $_ENV['FRONTEND_URL'] ?? 'http://localhost:5173';
-        // Support multiple URLs separated by comma
-        return explode(',', $urls);
-    }
-
-    // Get primary frontend URL for emails and single-URL purposes
-    public static function getPrimaryFrontendUrl() {
-        $urls = $_ENV['FRONTEND_URL'] ?? 'http://localhost:5173';
         // Return the first URL from comma-separated list
         return explode(',', $urls)[0];
+    }
+
+    // Get all allowed frontend URLs for CORS
+    public static function getAllowedOrigins() {
+        $urls = $_ENV['FRONTEND_URL'] ?? 'http://localhost:5173';
+        // Support multiple URLs separated by comma
+        return explode(',', $urls);
     }
 
     public static function getBackendUrl() {

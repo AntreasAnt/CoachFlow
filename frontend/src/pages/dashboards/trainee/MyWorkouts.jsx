@@ -490,7 +490,7 @@ const MyWorkouts = () => {
                     Start Workout
                   </button>
                   <button 
-                    className="btn btn-outline-secondary"
+                    className="btn btn-outline-primary"
                     onClick={() => {
                       setPlanToEdit(plan);
                       setShowEditModal(true);
@@ -681,7 +681,7 @@ const MyWorkouts = () => {
                                 <br />
                                 <small className="text-muted">
                                   {exercise.category} • {exercise.muscle_group}
-                                  {exercise.is_custom && <span className="badge bg-success ms-1">Custom</span>}
+                                  {Boolean(exercise.is_custom) && <span className="badge bg-success ms-1">Custom</span>}
                                 </small>
                               </div>
                               <i className="bi bi-plus-circle text-primary"></i>
