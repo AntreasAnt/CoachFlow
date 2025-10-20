@@ -21,6 +21,13 @@ class AppConfig
         return explode(',', $urls);
     }
 
+    // Get primary frontend URL for emails and single-URL purposes
+    public static function getPrimaryFrontendUrl() {
+        $urls = $_ENV['FRONTEND_URL'] ?? 'http://localhost:5173';
+        // Return the first URL from comma-separated list
+        return explode(',', $urls)[0];
+    }
+
     public static function getBackendUrl() {
         return $_ENV['BACKEND_URL'] ?? 'http://localhost:8000';
     }

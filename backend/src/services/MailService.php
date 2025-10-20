@@ -135,7 +135,7 @@ class MailService
     public function sendPasswordResetEmail($userEmail, $resetToken)
     {
         try {
-            $resetUrl = AppConfig::getFrontendUrl() . "/new-password?token={$resetToken}&email={$userEmail}";
+            $resetUrl = AppConfig::getPrimaryFrontendUrl() . "/new-password?token={$resetToken}&email={$userEmail}";
 
             $email = new \SendGrid\Mail\Mail();
             $email->setFrom(MailConfig::FROM_EMAIL, MailConfig::FROM_NAME);

@@ -12,7 +12,6 @@ function SignUp() {
     email: "",
     password: "",
     confpassword: "",
-    isTrainer: false, // required checkbox
   });
 
   const [errors, setErrors] = useState({
@@ -20,7 +19,6 @@ function SignUp() {
     email: "",
     password: "",
     confpassword: "",
-    isTrainer: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,19 +28,7 @@ function SignUp() {
   const [showConfPassword, setShowConfPassword] = useState(false);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    if (type === "checkbox") {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: checked,
-      }));
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "", // clear trainer error if user checks it
-      }));
-      return;
-    }
+    const { name, value } = e.target;
 
     // Clear errors when typing
     if (name === "password" || name === "confpassword") {
@@ -59,7 +45,7 @@ function SignUp() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { username, email, password, confpassword, isTrainer } = formData;
+    const { username, email, password, confpassword } = formData;
     const newErrors = {};
 
     // Username validation
@@ -100,11 +86,6 @@ function SignUp() {
     // Confirm password validation
     if (confpassword !== password) {
       newErrors.confpassword = "Passwords do not match";
-    }
-
-    // Trainer checkbox validation
-    if (!isTrainer) {
-      newErrors.isTrainer = "You must confirm that you are a Trainer";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -284,22 +265,6 @@ function SignUp() {
               </button>
             </div>
             {errors.confpassword && <div className="invalid-feedback d-block">{errors.confpassword}</div>}
-          </div>
-
-          {/* Trainer confirmation checkbox */}
-          <div className="form-check mb-3">
-            <input
-              className={`form-check-input ${errors.isTrainer ? "is-invalid" : ""}`}
-              type="checkbox"
-              name="isTrainer"
-              id="isTrainer"
-              checked={formData.isTrainer}
-              onChange={handleChange}
-            />
-            <label className="form-check-label" htmlFor="isTrainer">
-              Confirm that I am a Trainer <span className="text-danger">*</span>
-            </label>
-            {errors.isTrainer && <div className="invalid-feedback">{errors.isTrainer}</div>}
           </div>
 
           {generalError && (

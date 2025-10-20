@@ -134,7 +134,7 @@ class UserController extends UserModel
             $this->password = password_hash($inputData["password"], PASSWORD_DEFAULT);
             $this->UserID = $this->getUserID(); // Generate user ID
             $this->registrationDate = time();
-            $this->UserPrivileges = 'trainer'; // Set default user privileges (trainer)
+            $this->UserPrivileges = 'trainee'; // Set default user privileges (trainee)
             $this->IsVerified = 0;
 
             $user = $this->saveUser(); // Save the new user to the database
