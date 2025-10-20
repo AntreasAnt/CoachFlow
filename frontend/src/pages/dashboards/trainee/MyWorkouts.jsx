@@ -30,7 +30,9 @@ const MyWorkouts = () => {
   const [showExerciseModal, setShowExerciseModal] = useState(false);
   const [showCancelWorkoutModal, setShowCancelWorkoutModal] = useState(false);
   const [showFinishWorkoutModal, setShowFinishWorkoutModal] = useState(false);
+  const [showEndWorkoutModal, setShowEndWorkoutModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showBreakOverModal, setShowBreakOverModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   
   // Timer states
@@ -66,7 +68,7 @@ const MyWorkouts = () => {
         setBreakTimer(prev => {
           if (isTimerMode && prev <= 1) {
             setIsBreakTimerRunning(false);
-            alert('Break time is over!');
+            setShowBreakOverModal(true);
             return breakTimerSetting;
           }
           return isTimerMode ? prev - 1 : prev + 1;
@@ -147,6 +149,9 @@ const MyWorkouts = () => {
     description: '',
     exercises: []
   });
+  
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingPlanId, setEditingPlanId] = useState(null);
 
   const [newExercise, setNewExercise] = useState({
     name: '',
@@ -210,7 +215,9 @@ const MyWorkouts = () => {
   };
 
   const startWorkout = (plan) => {
-    setActiveWorkout({
+    console.log('Starting workout with plan:', plan);
+    
+    const workoutData = {
       ...plan,
       startTime: new Date(),
       completedSets: plan.exercises.map(ex => Array(ex.sets).fill({
@@ -220,7 +227,10 @@ const MyWorkouts = () => {
         notes: '',
         completed: false
       }))
-    });
+    };
+    
+    console.log('Active workout data structure:', workoutData);
+    setActiveWorkout(workoutData);
     setCurrentExerciseIndex(0);
     setCurrentSetIndex(0);
     setWorkoutLogs([]);
@@ -231,6 +241,7 @@ const MyWorkouts = () => {
   };
 
   const completeSet = () => {
+    console.log('Complete set called');
     if (!activeWorkout || !currentSetData.reps) {
       alert('Please enter the number of reps completed');
       return;
@@ -263,13 +274,34 @@ const MyWorkouts = () => {
     // Reset current set data
     setCurrentSetData({ weight: '', reps: '', rpe: '', notes: '' });
 
-    // Move to next set
+    // Check if this is the last set of the last exercise
     const currentExercise = activeWorkout.exercises[currentExerciseIndex];
-    if (currentSetIndex < currentExercise.sets - 1) {
-      setCurrentSetIndex(currentSetIndex + 1);
-    } else {
+    const isLastSet = currentSetIndex >= currentExercise.sets - 1;
+    const isLastExercise = currentExerciseIndex >= activeWorkout.exercises.length - 1;
+
+    console.log('Exercise progress:', {
+      currentExerciseIndex,
+      currentSetIndex,
+      totalExercises: activeWorkout.exercises.length,
+      setsInCurrentExercise: currentExercise.sets,
+      isLastSet,
+      isLastExercise
+    });
+
+    if (isLastSet && isLastExercise) {
+      // This is the last set of the last exercise - auto finish workout
+      console.log('Auto-finishing workout');
+      setTimeout(() => {
+        setShowFinishWorkoutModal(true);
+      }, 1000); // Small delay to show completion
+    } else if (isLastSet) {
       // Move to next exercise
+      console.log('Moving to next exercise');
       nextExercise();
+    } else {
+      // Move to next set in current exercise
+      console.log('Moving to next set');
+      setCurrentSetIndex(currentSetIndex + 1);
     }
 
     // Start break timer
@@ -282,8 +314,8 @@ const MyWorkouts = () => {
       setCurrentSetIndex(0);
       setCurrentSetData({ weight: '', reps: '', rpe: '', notes: '' });
     } else {
-      // Workout completed
-      finishWorkout();
+      // This shouldn't happen now since we handle completion in completeSet
+      console.log('Reached end of exercises in nextExercise - this should not happen');
     }
   };
 
@@ -360,17 +392,31 @@ const MyWorkouts = () => {
   const savePlan = async () => {
     if (newPlan.name && newPlan.exercises.length > 0) {
       try {
-        const data = await APIClient.post(`${BACKEND_ROUTES_API}CreateWorkoutPlan.php`, newPlan);
+        let data;
+        if (isEditMode) {
+          // Update existing plan
+          const updateData = { ...newPlan, id: editingPlanId };
+          data = await APIClient.put(`${BACKEND_ROUTES_API}UpdateWorkoutPlan.php`, updateData);
+        } else {
+          // Create new plan
+          data = await APIClient.post(`${BACKEND_ROUTES_API}CreateWorkoutPlan.php`, newPlan);
+        }
 
         if (data.success) {
           fetchWorkoutData(); // Refresh the data
-          setNewPlan({ name: '', description: '', exercises: [] });
+          resetPlanForm();
           setActiveView('plans');
         }
       } catch (err) {
         console.error('Error saving plan:', err);
       }
     }
+  };
+
+  const resetPlanForm = () => {
+    setNewPlan({ name: '', description: '', exercises: [] });
+    setIsEditMode(false);
+    setEditingPlanId(null);
   };
 
   // Break timer functions
@@ -390,11 +436,17 @@ const MyWorkouts = () => {
 
   const viewWorkoutDetails = async (workoutId) => {
     try {
+      console.log('Fetching workout details for ID:', workoutId);
       const data = await APIClient.get(`${BACKEND_ROUTES_API}GetWorkoutDetails.php?sessionId=${workoutId}`);
+      console.log('Received data:', data);
 
       if (data.success) {
+        console.log('Setting workout details:', data.workoutDetails);
         setSelectedWorkoutDetails(data.workoutDetails);
         setShowWorkoutDetails(true);
+        console.log('Modal should now be visible');
+      } else {
+        console.error('API returned error:', data.message);
       }
     } catch (err) {
       console.error('Error fetching workout details:', err);
@@ -414,18 +466,148 @@ const MyWorkouts = () => {
     setActiveView('plans');
   };
 
-  // Finish workout function
-  const finishWorkout = async () => {
-    try {
-      // Save workout session
-      const sessionData = await APIClient.post(`${BACKEND_ROUTES_API}SaveWorkoutSession.php`, {
-        workoutPlanId: activeWorkout.id,
-        planName: activeWorkout.name,
-        duration: Math.floor(workoutTimer / 60), // Convert to minutes
-        exercises: workoutLogs
-      });
+  // End workout early function (saves current progress)
+  const endWorkoutEarly = async () => {
+    console.log('End workout early called');
+    console.log('Active workout object:', activeWorkout);
+    
+    if (!activeWorkout) {
+      alert('No active workout found');
+      return;
+    }
 
-      if (sessionData.success) {
+    if (!activeWorkout.id || !activeWorkout.name) {
+      alert('Invalid workout data');
+      console.error('Active workout missing required fields:', activeWorkout);
+      return;
+    }
+    
+    const duration = Math.max(1, Math.floor(workoutTimer / 60)); // Ensure at least 1 minute
+    
+    const requestData = {
+      workoutPlanId: activeWorkout.id,
+      planName: activeWorkout.name + ' (Ended Early)',
+      duration: duration
+    };
+
+    console.log('Request data for SaveWorkoutSession (early end):', requestData);
+    console.log('Request data stringified:', JSON.stringify(requestData));
+    console.log('Request data types:', {
+      workoutPlanId: typeof requestData.workoutPlanId,
+      planName: typeof requestData.planName,
+      duration: typeof requestData.duration
+    });
+    
+    try {
+      // Step 1: Save workout session
+      const sessionData = await APIClient.post(`${BACKEND_ROUTES_API}SaveWorkoutSession.php`, requestData);
+
+      console.log('End workout early - save session response:', sessionData);
+
+      if (sessionData.success && sessionData.sessionId) {
+        // Step 2: Save workout logs if there are any
+        if (workoutLogs.length > 0) {
+          const logsData = await APIClient.post(`${BACKEND_ROUTES_API}SaveWorkoutLogs.php`, {
+            sessionId: sessionData.sessionId,
+            logs: workoutLogs
+          });
+
+          console.log('End workout early - save logs response:', logsData);
+
+          if (!logsData.success) {
+            console.error('Failed to save workout logs:', logsData.message);
+            alert('Workout saved but failed to save exercise logs: ' + (logsData.message || 'Unknown error'));
+            return;
+          }
+        }
+
+        setSuccessMessage('Workout ended and progress saved!');
+        setShowSuccessModal(true);
+        
+        // Reset workout state
+        setActiveWorkout(null);
+        setIsWorkoutTimerRunning(false);
+        setWorkoutTimer(0);
+        setCurrentExerciseIndex(0);
+        setCurrentSetIndex(0);
+        setWorkoutLogs([]);
+        setCurrentSetData({ weight: '', reps: '', rpe: '', notes: '' });
+        setActiveView('plans');
+        
+        // Refresh data
+        fetchWorkoutData();
+      } else {
+        console.error('Failed to end workout early:', sessionData.message);
+        alert('Failed to save workout: ' + (sessionData.message || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error('Error ending workout:', err);
+      alert('Error ending workout: ' + err.message);
+    }
+  };
+
+  // Finish workout function (complete workout)
+  const finishWorkout = async () => {
+    console.log('Finish workout called');
+    console.log('Active workout object:', activeWorkout);
+    console.log('Workout timer:', workoutTimer);
+    
+    if (!activeWorkout) {
+      alert('No active workout found');
+      return;
+    }
+
+    if (!activeWorkout.id) {
+      alert('Invalid workout ID');
+      console.error('Active workout missing ID:', activeWorkout);
+      return;
+    }
+
+    if (!activeWorkout.name) {
+      alert('Invalid workout name');
+      console.error('Active workout missing name:', activeWorkout);
+      return;
+    }
+    
+    const duration = Math.max(1, Math.floor(workoutTimer / 60)); // Ensure at least 1 minute
+    
+    const requestData = {
+      workoutPlanId: activeWorkout.id,
+      planName: activeWorkout.name,
+      duration: duration
+    };
+
+    console.log('Request data for SaveWorkoutSession:', requestData);
+    console.log('Request data stringified:', JSON.stringify(requestData));
+    console.log('Request data types:', {
+      workoutPlanId: typeof requestData.workoutPlanId,
+      planName: typeof requestData.planName,
+      duration: typeof requestData.duration
+    });
+
+    try {
+      // Step 1: Save workout session
+      const sessionData = await APIClient.post(`${BACKEND_ROUTES_API}SaveWorkoutSession.php`, requestData);
+
+      console.log('Save session response:', sessionData);
+
+      if (sessionData.success && sessionData.sessionId) {
+        // Step 2: Save workout logs if there are any
+        if (workoutLogs.length > 0) {
+          const logsData = await APIClient.post(`${BACKEND_ROUTES_API}SaveWorkoutLogs.php`, {
+            sessionId: sessionData.sessionId,
+            logs: workoutLogs
+          });
+
+          console.log('Save logs response:', logsData);
+
+          if (!logsData.success) {
+            console.error('Failed to save workout logs:', logsData.message);
+            alert('Workout saved but failed to save exercise logs: ' + (logsData.message || 'Unknown error'));
+            return;
+          }
+        }
+
         setSuccessMessage('Workout completed successfully!');
         setShowSuccessModal(true);
         setShowFinishWorkoutModal(false);
@@ -442,9 +624,13 @@ const MyWorkouts = () => {
         
         // Refresh data
         fetchWorkoutData();
+      } else {
+        console.error('Failed to save workout session:', sessionData.message);
+        alert('Failed to save workout: ' + (sessionData.message || 'Unknown error'));
       }
     } catch (err) {
       console.error('Error finishing workout:', err);
+      alert('Error finishing workout: ' + err.message);
     }
   };
 
@@ -454,7 +640,10 @@ const MyWorkouts = () => {
         <h4 className="mb-0">My Workout Plans</h4>
         <button 
           className="btn btn-primary"
-          onClick={() => setActiveView('create')}
+          onClick={() => {
+            resetPlanForm();
+            setActiveView('create');
+          }}
         >
           <i className="bi bi-plus-circle me-2"></i>
           Create Plan
@@ -492,8 +681,15 @@ const MyWorkouts = () => {
                   <button 
                     className="btn btn-outline-primary"
                     onClick={() => {
-                      setPlanToEdit(plan);
-                      setShowEditModal(true);
+                      // Pre-fill the create form with existing plan data
+                      setNewPlan({
+                        name: plan.name,
+                        description: plan.description || '',
+                        exercises: plan.exercises || []
+                      });
+                      setIsEditMode(true);
+                      setEditingPlanId(plan.id);
+                      setActiveView('create');
                     }}
                   >
                     <i className="bi bi-pencil"></i>
@@ -613,13 +809,16 @@ const MyWorkouts = () => {
   const renderCreateView = () => (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="mb-0">Create Workout Plan</h4>
+        <h4 className="mb-0">{isEditMode ? 'Edit Workout Plan' : 'Create Workout Plan'}</h4>
         <button 
           className="btn btn-outline-secondary"
-          onClick={() => setActiveView('plans')}
+          onClick={() => {
+            resetPlanForm();
+            setActiveView('plans');
+          }}
         >
           <i className="bi bi-arrow-left me-2"></i>
-          Back
+          {isEditMode ? 'Cancel Edit' : 'Back'}
         </button>
       </div>
 
@@ -830,7 +1029,7 @@ const MyWorkouts = () => {
                 disabled={!newPlan.name || newPlan.exercises.length === 0}
               >
                 <i className="bi bi-save me-2"></i>
-                Save Plan
+                {isEditMode ? 'Update Plan' : 'Save Plan'}
               </button>
             </div>
           </div>
@@ -857,18 +1056,20 @@ const MyWorkouts = () => {
         <h4 className="mb-0">Active Workout: {activeWorkout?.name}</h4>
         <div className="d-flex gap-2">
           <button 
-            className="btn btn-outline-warning"
-            onClick={cancelWorkout}
+            className="btn btn-outline-danger"
+            onClick={() => setShowCancelWorkoutModal(true)}
+            title="Cancel workout without saving progress"
           >
             <i className="bi bi-x-circle me-2"></i>
             Cancel Workout
           </button>
           <button 
-            className="btn btn-outline-danger"
-            onClick={() => setShowCancelWorkoutModal(true)}
+            className="btn btn-outline-warning"
+            onClick={() => setShowEndWorkoutModal(true)}
+            title="End workout early but save current progress"
           >
             <i className="bi bi-stop-circle me-2"></i>
-            Cancel Workout
+            End Workout Early
           </button>
         </div>
       </div>
@@ -1260,81 +1461,285 @@ const MyWorkouts = () => {
     </div>
   );
 
-  const WorkoutDetailsModal = () => (
-    <div className={`modal fade ${showWorkoutDetails ? 'show d-block' : ''}`} style={{ backgroundColor: showWorkoutDetails ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
-      <div className="modal-dialog modal-lg">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">Workout Details</h5>
-            <button 
-              type="button" 
-              className="btn-close" 
-              onClick={() => setShowWorkoutDetails(false)}
-            ></button>
-          </div>
-          <div className="modal-body">
-            {selectedWorkoutDetails && (
-              <div>
-                <div className="row mb-3">
-                  <div className="col-md-6">
-                    <strong>Workout Plan:</strong> {selectedWorkoutDetails.plan_name}
+  const WorkoutDetailsModal = () => {
+    const [expandedExercise, setExpandedExercise] = useState(null);
+
+    // Group exercises by name for better display
+    const groupedExercises = selectedWorkoutDetails?.exerciseLogs?.reduce((acc, log) => {
+      if (!acc[log.exercise_name]) {
+        acc[log.exercise_name] = [];
+      }
+      acc[log.exercise_name].push(log);
+      return acc;
+    }, {}) || {};
+
+    // Calculate total volume and other stats
+    const calculateStats = () => {
+      if (!selectedWorkoutDetails?.exerciseLogs) return {};
+      
+      let totalVolume = 0;
+      let totalReps = 0;
+      let uniqueExercises = new Set();
+      let rpeSum = 0;
+      let rpeCount = 0;
+
+      selectedWorkoutDetails.exerciseLogs.forEach(log => {
+        uniqueExercises.add(log.exercise_name);
+        totalReps += parseInt(log.reps_completed) || 0;
+        
+        if (log.weight_kg && log.reps_completed) {
+          totalVolume += (parseFloat(log.weight_kg) * parseInt(log.reps_completed));
+        }
+        
+        if (log.rpe) {
+          rpeSum += parseFloat(log.rpe);
+          rpeCount++;
+        }
+      });
+
+      return {
+        totalVolume: totalVolume.toFixed(1),
+        totalReps,
+        uniqueExercises: uniqueExercises.size,
+        avgRpe: rpeCount > 0 ? (rpeSum / rpeCount).toFixed(1) : null
+      };
+    };
+
+    const stats = calculateStats();
+
+    return (
+      <div className={`modal fade ${showWorkoutDetails ? 'show d-block' : ''}`} style={{ backgroundColor: showWorkoutDetails ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
+        <div className="modal-dialog modal-xl">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">
+                <i className="bi bi-clipboard-data me-2"></i>
+                Workout Details
+              </h5>
+              <button 
+                type="button" 
+                className="btn-close" 
+                onClick={() => setShowWorkoutDetails(false)}
+              ></button>
+            </div>
+            <div className="modal-body">
+              {selectedWorkoutDetails && (
+                <div>
+                  {/* Workout Overview */}
+                  <div className="card border-0 bg-light mb-4">
+                    <div className="card-body p-3">
+                      <div className="row">
+                        <div className="col-md-8">
+                          <h6 className="card-title mb-2">
+                            <i className="bi bi-clipboard-check me-2 text-primary"></i>
+                            {selectedWorkoutDetails.plan_name}
+                          </h6>
+                          <p className="text-muted small mb-0">
+                            <i className="bi bi-calendar3 me-1"></i>
+                            {new Date(selectedWorkoutDetails.session_date).toLocaleDateString('en-US', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </p>
+                        </div>
+                        <div className="col-md-4 text-end">
+                          {selectedWorkoutDetails.rating && (
+                            <div className="mb-2">
+                              <span className="badge bg-warning text-dark">
+                                <i className="bi bi-star-fill me-1"></i>
+                                Rating: {selectedWorkoutDetails.rating}/10
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="col-md-6">
-                    <strong>Date:</strong> {selectedWorkoutDetails.session_date}
+
+                  {/* Statistics Cards */}
+                  <div className="row mb-4">
+                    <div className="col-md-2 col-6 mb-3">
+                      <div className="card border-0 h-100 text-center">
+                        <div className="card-body p-3">
+                          <div className="text-primary fs-4">
+                            <i className="bi bi-clock"></i>
+                          </div>
+                          <div className="fw-bold">{selectedWorkoutDetails.duration_minutes}</div>
+                          <small className="text-muted">Minutes</small>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-md-2 col-6 mb-3">
+                      <div className="card border-0 h-100 text-center">
+                        <div className="card-body p-3">
+                          <div className="text-success fs-4">
+                            <i className="bi bi-list-ol"></i>
+                          </div>
+                          <div className="fw-bold">{selectedWorkoutDetails.total_sets}</div>
+                          <small className="text-muted">Total Sets</small>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-md-2 col-6 mb-3">
+                      <div className="card border-0 h-100 text-center">
+                        <div className="card-body p-3">
+                          <div className="text-info fs-4">
+                            <i className="bi bi-arrow-repeat"></i>
+                          </div>
+                          <div className="fw-bold">{stats.totalReps}</div>
+                          <small className="text-muted">Total Reps</small>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-md-2 col-6 mb-3">
+                      <div className="card border-0 h-100 text-center">
+                        <div className="card-body p-3">
+                          <div className="text-warning fs-4">
+                            <i className="bi bi-trophy"></i>
+                          </div>
+                          <div className="fw-bold">{stats.uniqueExercises}</div>
+                          <small className="text-muted">Exercises</small>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-md-2 col-6 mb-3">
+                      <div className="card border-0 h-100 text-center">
+                        <div className="card-body p-3">
+                          <div className="text-danger fs-4">
+                            <i className="bi bi-speedometer2"></i>
+                          </div>
+                          <div className="fw-bold">{stats.totalVolume}</div>
+                          <small className="text-muted">Volume (kg)</small>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-md-2 col-6 mb-3">
+                      <div className="card border-0 h-100 text-center">
+                        <div className="card-body p-3">
+                          <div className="text-secondary fs-4">
+                            <i className="bi bi-graph-up"></i>
+                          </div>
+                          <div className="fw-bold">{stats.avgRpe || '-'}</div>
+                          <small className="text-muted">Avg RPE</small>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="row mb-3">
-                  <div className="col-md-6">
-                    <strong>Duration:</strong> {selectedWorkoutDetails.duration_minutes} minutes
-                  </div>
-                  <div className="col-md-6">
-                    <strong>Total Sets:</strong> {selectedWorkoutDetails.total_sets}
-                  </div>
-                </div>
                 
-                <h6 className="mt-4 mb-3">Exercise Log</h6>
-                <div className="table-responsive">
-                  <table className="table table-sm">
-                    <thead>
-                      <tr>
-                        <th>Exercise</th>
-                        <th>Set</th>
-                        <th>Weight</th>
-                        <th>Reps</th>
-                        <th>RPE</th>
-                        <th>Notes</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedWorkoutDetails.exerciseLogs?.map((log, index) => (
-                        <tr key={index}>
-                          <td>{log.exercise_name}</td>
-                          <td>{log.set_number}</td>
-                          <td>{log.weight_kg || '-'}</td>
-                          <td>{log.reps_completed}</td>
-                          <td>{log.rpe || '-'}</td>
-                          <td>{log.notes || '-'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  {/* Exercise Breakdown */}
+                  <h6 className="mb-3">
+                    <i className="bi bi-list-check me-2"></i>
+                    Exercise Breakdown
+                  </h6>
+                  
+                  {Object.keys(groupedExercises).length > 0 ? (
+                    <div className="accordion">
+                      {Object.entries(groupedExercises).map(([exerciseName, sets], exerciseIndex) => {
+                        const isExpanded = expandedExercise === exerciseIndex;
+                        return (
+                          <div key={exerciseIndex} className="card border-0 mb-2">
+                            <div 
+                              className={`btn btn-light text-start p-3 rounded ${isExpanded ? 'shadow-sm' : ''}`}
+                              style={{ cursor: 'pointer' }}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setExpandedExercise(isExpanded ? null : exerciseIndex);
+                              }}
+                            >
+                              <div className="d-flex justify-content-between align-items-center w-100">
+                                <div>
+                                  <strong>{exerciseName}</strong>
+                                </div>
+                                <div className="d-flex align-items-center">
+                                  <span className="badge bg-primary me-2">{sets.length} sets</span>
+                                  <span className="badge bg-secondary me-2">
+                                    {sets.reduce((sum, set) => sum + (parseInt(set.reps_completed) || 0), 0)} reps
+                                  </span>
+                                  <i className={`bi bi-chevron-${isExpanded ? 'up' : 'down'}`}></i>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {isExpanded && (
+                              <div className="card-body pt-0">
+                                <div className="table-responsive">
+                                  <table className="table table-sm table-striped">
+                                    <thead>
+                                      <tr>
+                                        <th>Set</th>
+                                        <th>Weight (kg)</th>
+                                        <th>Reps</th>
+                                        <th>RPE</th>
+                                        <th>Volume (kg)</th>
+                                        <th>Notes</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {sets.map((set, setIndex) => {
+                                        const volume = set.weight_kg && set.reps_completed ? 
+                                          (parseFloat(set.weight_kg) * parseInt(set.reps_completed)).toFixed(1) : '-';
+                                        
+                                        return (
+                                          <tr key={setIndex}>
+                                            <td>
+                                              <span className="badge bg-outline-primary">{set.set_number}</span>
+                                            </td>
+                                            <td>{set.weight_kg || '-'}</td>
+                                            <td>{set.reps_completed}</td>
+                                            <td>
+                                              {set.rpe ? (
+                                                <span className={`badge ${
+                                                  set.rpe <= 6 ? 'bg-success' : 
+                                                  set.rpe <= 8 ? 'bg-warning text-dark' : 'bg-danger'
+                                                }`}>
+                                                  {set.rpe}
+                                                </span>
+                                              ) : '-'}
+                                            </td>
+                                            <td>{volume}</td>
+                                            <td>
+                                              <small className="text-muted">
+                                                {set.notes || '-'}
+                                              </small>
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center text-muted py-4">
+                      <i className="bi bi-inbox fs-1"></i>
+                      <p>No exercise data recorded for this workout.</p>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-          </div>
-          <div className="modal-footer">
-            <button 
-              type="button" 
-              className="btn btn-secondary" 
-              onClick={() => setShowWorkoutDetails(false)}
-            >
-              Close
-            </button>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => setShowWorkoutDetails(false)}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Cancel Workout Modal
   const CancelWorkoutModal = () => (
@@ -1351,7 +1756,8 @@ const MyWorkouts = () => {
           </div>
           <div className="modal-body">
             <p>Are you sure you want to cancel this workout?</p>
-            <p className="text-muted small">All progress will be lost and cannot be recovered.</p>
+            <p className="text-danger small"><strong>Warning:</strong> All progress will be lost and cannot be recovered.</p>
+            <p className="text-muted small">If you want to save your progress, use "End Workout Early" instead.</p>
           </div>
           <div className="modal-footer">
             <button 
@@ -1367,6 +1773,48 @@ const MyWorkouts = () => {
               onClick={cancelWorkout}
             >
               Cancel Workout
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // End Workout Early Modal
+  const EndWorkoutModal = () => (
+    <div className={`modal fade ${showEndWorkoutModal ? 'show d-block' : ''}`} style={{ backgroundColor: showEndWorkoutModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
+      <div className="modal-dialog">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">End Workout Early</h5>
+            <button 
+              type="button" 
+              className="btn-close" 
+              onClick={() => setShowEndWorkoutModal(false)}
+            ></button>
+          </div>
+          <div className="modal-body">
+            <p>Do you want to end your workout early?</p>
+            <p className="text-success small"><strong>Your current progress will be saved.</strong></p>
+            <p className="text-muted small">You can continue this workout later or start a new one.</p>
+          </div>
+          <div className="modal-footer">
+            <button 
+              type="button" 
+              className="btn btn-secondary" 
+              onClick={() => setShowEndWorkoutModal(false)}
+            >
+              Continue Workout
+            </button>
+            <button 
+              type="button" 
+              className="btn btn-warning" 
+              onClick={() => {
+                endWorkoutEarly();
+                setShowEndWorkoutModal(false);
+              }}
+            >
+              End Workout Early
             </button>
           </div>
         </div>
@@ -1415,6 +1863,44 @@ const MyWorkouts = () => {
               onClick={finishWorkout}
             >
               Finish Workout
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Break Over Modal
+  const BreakOverModal = () => (
+    <div className={`modal fade ${showBreakOverModal ? 'show d-block' : ''}`} style={{ backgroundColor: showBreakOverModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
+      <div className="modal-dialog">
+        <div className="modal-content">
+          <div className="modal-header bg-warning">
+            <h5 className="modal-title">
+              <i className="bi bi-alarm text-dark me-2"></i>
+              Break Time Over!
+            </h5>
+            <button 
+              type="button" 
+              className="btn-close" 
+              onClick={() => setShowBreakOverModal(false)}
+            ></button>
+          </div>
+          <div className="modal-body text-center">
+            <div className="mb-3">
+              <i className="bi bi-stopwatch text-warning" style={{ fontSize: '3rem' }}></i>
+            </div>
+            <h6>Your rest period is complete!</h6>
+            <p className="text-muted">Time to get back to your workout.</p>
+          </div>
+          <div className="modal-footer">
+            <button 
+              type="button" 
+              className="btn btn-warning w-100" 
+              onClick={() => setShowBreakOverModal(false)}
+            >
+              <i className="bi bi-play-circle me-2"></i>
+              Continue Workout
             </button>
           </div>
         </div>
@@ -1589,7 +2075,9 @@ const MyWorkouts = () => {
       <WorkoutDetailsModal />
       <ExerciseSelectionModal />
       <CancelWorkoutModal />
+      <EndWorkoutModal />
       <FinishWorkoutModal />
+      <BreakOverModal />
       <SuccessModal />
     </div>
   );

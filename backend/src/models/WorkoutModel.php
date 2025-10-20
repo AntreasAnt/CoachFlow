@@ -594,7 +594,7 @@ class WorkoutModel
             $this->conn->begin_transaction();
 
             // Insert exercise logs
-            $query = "INSERT INTO workout_exercise_logs (workout_session_id, exercise_name, set_number, reps_completed, weight_kg, rpe, notes, created_at) 
+            $query = "INSERT INTO workout_exercise_logs (workout_session_id, exercise_name, set_number, reps_completed, weight_kg, rpe, notes, completed_at) 
                       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
             
             $stmt = $this->conn->prepare($query);

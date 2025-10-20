@@ -98,8 +98,16 @@ class WorkoutController
     public function createWorkoutSession($userId, $workoutPlanId, $planName, $duration, $rating = null)
     {
         try {
+            // Debug: Log the received parameters
+            error_log("WorkoutController::createWorkoutSession - userId: " . ($userId ?: 'NULL'));
+            error_log("WorkoutController::createWorkoutSession - workoutPlanId: " . ($workoutPlanId ?: 'NULL'));
+            error_log("WorkoutController::createWorkoutSession - planName: " . ($planName ?: 'NULL'));
+            error_log("WorkoutController::createWorkoutSession - duration: " . ($duration ?: 'NULL'));
+            error_log("WorkoutController::createWorkoutSession - rating: " . ($rating ?: 'NULL'));
+
             // Validate input
             if (!$userId || !$workoutPlanId || !$planName || !$duration) {
+                error_log("WorkoutController::createWorkoutSession - Validation failed");
                 throw new Exception('All required fields must be provided');
             }
 

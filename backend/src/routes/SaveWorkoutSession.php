@@ -27,14 +27,24 @@ try {
     // Get input data
     $input = json_decode(file_get_contents('php://input'), true);
     
+    // Debug: Log the received data
+    error_log("SaveWorkoutSession - Received data: " . json_encode($input));
+    
     if (!$input) {
+        error_log("SaveWorkoutSession - No input data received");
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Invalid input data']);
         exit();
     }
 
+    // Debug: Check individual fields
+    error_log("SaveWorkoutSession - workoutPlanId: " . (isset($input['workoutPlanId']) ? $input['workoutPlanId'] : 'NOT SET'));
+    error_log("SaveWorkoutSession - planName: " . (isset($input['planName']) ? $input['planName'] : 'NOT SET'));
+    error_log("SaveWorkoutSession - duration: " . (isset($input['duration']) ? $input['duration'] : 'NOT SET'));
+
     // Validate required fields
     if (!isset($input['workoutPlanId']) || !isset($input['planName']) || !isset($input['duration'])) {
+        error_log("SaveWorkoutSession - Missing required fields");
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Workout plan ID, plan name, and duration are required']);
         exit();
