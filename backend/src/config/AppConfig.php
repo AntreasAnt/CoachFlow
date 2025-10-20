@@ -16,7 +16,9 @@ class AppConfig
 {
     // Application URLs
     public static function getFrontendUrl() {
-        return $_ENV['FRONTEND_URL'] ?? 'http://localhost:5174';
+        $urls = $_ENV['FRONTEND_URL'] ?? 'http://localhost:5173';
+        // Support multiple URLs separated by comma
+        return explode(',', $urls);
     }
 
     public static function getBackendUrl() {

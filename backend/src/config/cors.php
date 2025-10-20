@@ -23,7 +23,7 @@ if (!defined('APP_RUNNING')) {
 }
 
 // Define allowed origins (update for production)
-$allowedOrigins = [AppConfig::getFrontendUrl()];
+$allowedOrigins = AppConfig::getFrontendUrl();
 
 // Get the origin of the request
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
@@ -53,7 +53,7 @@ header("Content-Security-Policy: " .
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; " .
     "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; " .
     "img-src 'self' data: https: blob:; " .
-    "connect-src 'self' " . AppConfig::getFrontendUrl() . " " . AppConfig::getBackendUrl() . "; " .
+    "connect-src 'self' " . implode(' ', AppConfig::getFrontendUrl()) . " " . AppConfig::getBackendUrl() . "; " .
     "frame-ancestors 'none'; " .
     "base-uri 'self'; " .
     "form-action 'self'"
