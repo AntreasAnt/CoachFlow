@@ -458,6 +458,9 @@ const MyWorkouts = () => {
     setActiveWorkout(null);
     setIsWorkoutTimerRunning(false);
     setWorkoutTimer(0);
+    setIsBreakTimerRunning(false);
+    setBreakTimer(0);
+    setShowBreakOverModal(false);
     setCurrentExerciseIndex(0);
     setCurrentSetIndex(0);
     setWorkoutLogs([]);
@@ -528,6 +531,9 @@ const MyWorkouts = () => {
         setActiveWorkout(null);
         setIsWorkoutTimerRunning(false);
         setWorkoutTimer(0);
+        setIsBreakTimerRunning(false);
+        setBreakTimer(0);
+        setShowBreakOverModal(false);
         setCurrentExerciseIndex(0);
         setCurrentSetIndex(0);
         setWorkoutLogs([]);
@@ -616,6 +622,9 @@ const MyWorkouts = () => {
         setActiveWorkout(null);
         setIsWorkoutTimerRunning(false);
         setWorkoutTimer(0);
+        setIsBreakTimerRunning(false);
+        setBreakTimer(0);
+        setShowBreakOverModal(false);
         setCurrentExerciseIndex(0);
         setCurrentSetIndex(0);
         setWorkoutLogs([]);
