@@ -15,6 +15,7 @@ import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import ManagerDashboard from "./pages/dashboards/ManagerDashboard";
 import TrainerDashboard from "./pages/dashboards/TrainerDashboard";
 import TraineeDashboard from "./pages/dashboards/TraineeDashboard";
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   return (
@@ -94,6 +95,16 @@ function App() {
               <TraineeDashboard />
             </AuthRoot>
           } 
+        />
+        
+        {/* Profile Routes */}
+        <Route 
+          path="/profile" 
+          element={<ProfilePage />}
+        />
+        <Route 
+          path="/user/:username" 
+          element={<ProfilePage />}
         />
       </Routes>
     </Router>

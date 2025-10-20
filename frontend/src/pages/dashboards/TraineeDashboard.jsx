@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import LogoutButton from '../../components/LogoutButton';
 import HomePage from './trainee/HomePage';
 import MyWorkouts from './trainee/MyWorkouts';
@@ -46,7 +47,11 @@ const TraineeDashboard = () => {
                   <i className="bi bi-person-circle"></i>
                 </button>
                 <ul className="dropdown-menu">
-                  <li><a className="dropdown-item" href="#"><i className="bi bi-person me-2"></i>Profile</a></li>
+                  <li>
+                    <Link to="/profile" className="dropdown-item">
+                      <i className="bi bi-person me-2"></i>Profile
+                    </Link>
+                  </li>
                   <li><a className="dropdown-item" href="#"><i className="bi bi-gear me-2"></i>Settings</a></li>
                   <li><hr className="dropdown-divider" /></li>
                   <li><LogoutButton className="dropdown-item" /></li>
