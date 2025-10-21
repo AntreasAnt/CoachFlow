@@ -7,8 +7,6 @@
  * - Sends token for check
  */
 
-// Set response type to JSON
-header('Content-Type: application/json');
 // Enable CORS for cross-origin requests
 include_once("../config/cors.php");
 // Include controller for user operations
