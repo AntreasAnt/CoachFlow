@@ -1,0 +1,306 @@
+/* Luxury Homepage Styles - Black & White Theme */
+
+/* Hero Section */
+.hero-section {
+  background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+  color: #ffffff;
+  padding: 6rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+  opacity: 0.8;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-title {
+  font-size: 4rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #ffffff 0%, #e8e8e8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-subtitle {
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #e8e8e8;
+  margin-bottom: 2.5rem;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+.hero-cta {
+  margin-top: 2rem;
+}
+
+/* Features Section */
+.features-section {
+  background: #fafafa;
+  padding: 6rem 0;
+}
+
+.feature-card {
+  background: #ffffff;
+  border: none;
+  border-radius: 0;
+  padding: 3rem 2rem;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid transparent;
+  height: 100%;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  border-left-color: #000000;
+}
+
+.feature-icon {
+  font-size: 3rem;
+  color: #000000;
+  margin-bottom: 1.5rem;
+  display: block;
+}
+
+.feature-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.feature-description {
+  color: #666666;
+  font-size: 1rem;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+}
+
+/* About Section */
+.about-section {
+  background: #ffffff;
+  padding: 6rem 0;
+}
+
+.about-content {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.about-title {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #000000;
+  margin-bottom: 2rem;
+  letter-spacing: -0.03em;
+}
+
+.about-text {
+  font-size: 1.25rem;
+  color: #666666;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+  letter-spacing: 0.01em;
+}
+
+/* Stats Section */
+.stats-section {
+  background: #000000;
+  color: #ffffff;
+  padding: 4rem 0;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.stat-number {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: #ffffff;
+  display: block;
+  letter-spacing: -0.02em;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: #e8e8e8;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+/* CTA Section */
+.cta-section {
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+  padding: 6rem 0;
+  text-align: center;
+}
+
+.cta-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #000000;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.cta-description {
+  font-size: 1.25rem;
+  color: #666666;
+  margin-bottom: 2.5rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+/* Luxury Navigation */
+.navbar-luxury {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid #e8e8e8;
+  padding: 1rem 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navbar-luxury.scrolled {
+  background: rgba(255, 255, 255, 0.98) !important;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Testimonials */
+.testimonials-section {
+  background: #fafafa;
+  padding: 6rem 0;
+}
+
+.testimonial-card {
+  background: #ffffff;
+  border: none;
+  border-radius: 0;
+  padding: 3rem 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 100%;
+  position: relative;
+}
+
+.testimonial-card::before {
+  content: '"';
+  position: absolute;
+  top: 1rem;
+  left: 2rem;
+  font-size: 4rem;
+  color: #e8e8e8;
+  font-family: serif;
+  line-height: 1;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+.testimonial-text {
+  font-size: 1.125rem;
+  color: #333333;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  font-style: italic;
+  margin-top: 2rem;
+}
+
+.testimonial-author {
+  font-weight: 700;
+  color: #000000;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+}
+
+.testimonial-role {
+  color: #666666;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  letter-spacing: 0.025em;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.25rem;
+  }
+  
+  .about-title {
+    font-size: 2rem;
+  }
+  
+  .cta-title {
+    font-size: 2rem;
+  }
+  
+  .feature-card {
+    margin-bottom: 2rem;
+  }
+  
+  .stat-number {
+    font-size: 2.5rem;
+  }
+}
+
+/* Luxury Animations */
+@keyframes luxurySlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.luxury-animate {
+  animation: luxurySlideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.luxury-animate-delay-1 {
+  animation: luxurySlideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
+}
+
+.luxury-animate-delay-2 {
+  animation: luxurySlideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both;
+}
+
+.luxury-animate-delay-3 {
+  animation: luxurySlideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.6s both;
+}

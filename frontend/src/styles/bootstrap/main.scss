@@ -1,51 +1,74 @@
-// COLORS
-$white:    #ffffff;
-$black:    #111111;
+// LUXURY BLACK & WHITE THEME COLORS
+$pure-white:    #ffffff;
+$pure-black:    #000000;
+$rich-black:    #0a0a0a;
+$charcoal:      #1a1a1a;
+$graphite:      #2d2d2d;
+$pearl-white:   #fafafa;
+$platinum:      #f5f5f5;
+$silver:        #e8e8e8;
 
-$primary:   #000000; // cobalt blue (main accent)
-$secondary: #ffffff; // lighter blue for hovers/links
-$success:   #10B981; // green for success
-$danger:    #EF4444; // red for errors
-$light:     #F3F4F6; // light gray backgrounds
-$dark:      #1F2937; // dark gray for text/nav
+// BOOTSTRAP COLOR OVERRIDES
+$white:    $pure-white;
+$black:    $pure-black;
 
-// FONTS
-$font-family-sans-serif: 'Inter', 'Helvetica Neue', Arial, sans-serif;
-$headings-font-family:   'Montserrat', 'Helvetica Neue', Arial, sans-serif;
-$headings-font-weight:   600;
+$primary:   $pure-black;      // Pure black for primary actions
+$secondary: $pure-white;      // Pure white for contrast
+$success:   $rich-black;      // Rich black for success
+$info:      $charcoal;        // Charcoal for info
+$warning:   $graphite;        // Graphite for warnings
+$danger:    $pure-black;      // Black for errors (sophisticated)
+$light:     $pearl-white;     // Pearl white backgrounds
+$dark:      $rich-black;      // Rich black for text
 
-// TYPOGRAPHY FIXES
-strong, b {
-  font-weight: bold !important;
-}
-em, i {
-  font-style: italic !important;
-}
+// LUXURY GRAYS
+$gray-100: #fafafa;
+$gray-200: #f5f5f5;
+$gray-300: #e8e8e8;
+$gray-400: #d1d1d1;
+$gray-500: #b0b0b0;
+$gray-600: #888888;
+$gray-700: #666666;
+$gray-800: #4d4d4d;
+$gray-900: #1a1a1a;
 
-// BUTTON STYLES
-.btn-primary {
-  color: $white !important;
-  background-color: $primary !important;
-  border-radius: 0.75rem !important; // smoother radius
-  padding: 0.5rem 1.5rem !important;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-}
+// PREMIUM TYPOGRAPHY
+$font-family-sans-serif: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+$headings-font-family:   'Montserrat', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+$headings-font-weight:   700;
+$headings-color:         $rich-black;
 
-.btn-secondary {
-  color: $white !important;
-  background-color: $secondary !important;
-  border-radius: 0.75rem !important;
-  padding: 0.5rem 1.5rem !important;
-  font-weight: 500;
-}
+// LUXURY SPACING & SIZING
+$spacer: 1rem;
+$border-radius: 8px;          // Smooth, rounded edges
+$border-radius-sm: 6px;
+$border-radius-lg: 12px;
+$border-width: 1px;           // Softer borders
 
-// SMALL TEXT
-.small {
-  font-size: 0.9rem !important;
-  color: $dark !important;
-}
+// PREMIUM SHADOWS
+$box-shadow-sm:    0 1px 3px rgba(0, 0, 0, 0.08);
+$box-shadow:       0 2px 8px rgba(0, 0, 0, 0.1);
+$box-shadow-lg:    0 4px 12px rgba(0, 0, 0, 0.15);
+
+// SMOOTH COMPONENT OVERRIDES
+$navbar-padding-y: 1rem;
+$navbar-brand-font-weight: 900;
+
+$btn-padding-y: 0.75rem;
+$btn-padding-x: 1.5rem;
+$btn-font-weight: 500;
+$btn-text-transform: none;
+$btn-letter-spacing: 0.05em;
+$btn-border-radius: 8px;
+
+$input-padding-y: 0.875rem;
+$input-padding-x: 1.25rem;
+$input-border-radius: 8px;
+$input-focus-border-color: $pure-black;
+
+$card-border-width: 0;
+$card-border-radius: 8px;
+$card-box-shadow: $box-shadow-lg;
 
 // IMPORT BOOTSTRAP LAST
 @import "bootstrap/scss/bootstrap";

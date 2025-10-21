@@ -12,6 +12,7 @@ const ProfilePage = () => {
   // All hooks must be declared at the top level
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('home'); // Default to home tab
   const [profileData, setProfileData] = useState({
     // Basic Info
     username: 'Loading...',
@@ -267,12 +268,6 @@ const ProfilePage = () => {
         <div className="container-fluid px-4 py-3">
           <div className="d-flex justify-content-between align-items-center">
             <div className="d-flex align-items-center">
-              <button 
-                className="btn btn-outline-secondary me-3 rounded-pill"
-                onClick={() => navigate(-1)}
-              >
-                <i className="bi bi-arrow-left me-2"></i>Back
-              </button>
               <div>
                 <h1 className="h4 mb-0 fw-bold text-dark">
                   {isOwnProfile ? 'My Profile' : `${profileData.full_name}'s Profile`}
@@ -345,7 +340,7 @@ const ProfilePage = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container-fluid px-4 py-4">
+      <main className="container-fluid px-4 py-4 pb-5" style={{ minHeight: 'calc(100vh - 140px)' }}>
         {/* Profile Header Card */}
         <div className="row mb-4">
           <div className="col-12">
@@ -375,8 +370,8 @@ const ProfilePage = () => {
                       
                       {/* Basic Info */}
                       <div className="text-white flex-grow-1">
-                        <h2 className="h3 mb-1 fw-bold">{profileData.full_name}</h2>
-                        <p className="mb-2 opacity-75">@{profileData.username}</p>
+                        <h2 className="h3 text-light mb-1 fw-bold">{profileData.full_name}</h2>
+                        <p className="mb-2 text-light opacity-50">@{profileData.username}</p>
                         <div className="d-flex flex-wrap gap-3 profile-stats">
                           <div className="d-flex align-items-center">
                             <i className="bi bi-person-badge me-1"></i>
@@ -788,6 +783,83 @@ const ProfilePage = () => {
           </div>
         </div>
       </main>
+
+      {/* Bottom Navigation */}
+      <nav className="fixed-bottom footer-menu">
+        <div className="container-fluid">
+          <div className="row">
+            <div className="col">
+              <div className={activeTab === 'home' ? 'nav-item-active' : ''}>
+                <button
+                  className={`btn w-100 py-2 border-0 ${
+                    activeTab === 'home' 
+                      ? 'text-primary nav-btn-active' 
+                      : 'text-muted'
+                  }`}
+                  onClick={() => setActiveTab('home')}
+                >
+                  <div className="d-flex flex-column align-items-center">
+                    <i className={`bi bi-house${activeTab === 'home' ? '-fill' : ''} fs-5`}></i>
+                    <small className="mt-1 fw-${activeTab === 'home' ? 'bold' : 'normal'}">Home</small>
+                  </div>
+                </button>
+              </div>
+            </div>
+            <div className="col">
+              <div className={activeTab === 'workouts' ? 'nav-item-active' : ''}>
+                <button
+                  className={`btn w-100 py-2 border-0 ${
+                    activeTab === 'workouts' 
+                      ? 'text-primary nav-btn-active' 
+                      : 'text-muted'
+                  }`}
+                  onClick={() => setActiveTab('workouts')}
+                >
+                  <div className="d-flex flex-column align-items-center">
+                    <i className={`bi bi-lightning${activeTab === 'workouts' ? '-fill' : ''} fs-5`}></i>
+                    <small className="mt-1 fw-${activeTab === 'workouts' ? 'bold' : 'normal'}">Workouts</small>
+                  </div>
+                </button>
+              </div>
+            </div>
+            <div className="col">
+              <div className={activeTab === 'meals' ? 'nav-item-active' : ''}>
+                <button
+                  className={`btn w-100 py-2 border-0 ${
+                    activeTab === 'meals' 
+                      ? 'text-primary nav-btn-active' 
+                      : 'text-muted'
+                  }`}
+                  onClick={() => setActiveTab('meals')}
+                >
+                  <div className="d-flex flex-column align-items-center">
+                    <i className={`bi bi-apple fs-5`}></i>
+                    <small className="mt-1 fw-${activeTab === 'meals' ? 'bold' : 'normal'}">Meals</small>
+                  </div>
+                </button>
+              </div>
+            </div>
+            <div className="col">
+              <div className={activeTab === 'progress' ? 'nav-item-active' : ''}>
+                <button
+                  className={`btn w-100 py-2 border-0 ${
+                    activeTab === 'progress' 
+                      ? 'text-primary nav-btn-active' 
+                      : 'text-muted'
+                  }`}
+                  onClick={() => setActiveTab('progress')}
+                >
+                  <div className="d-flex flex-column align-items-center">
+                    <i className={`bi bi-graph-up${activeTab === 'progress' ? '-arrow' : ''} fs-5`}></i>
+                    <small className="mt-1 fw-${activeTab === 'progress' ? 'bold' : 'normal'}">Progress</small>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </nav>
     </div>
   );
 };
