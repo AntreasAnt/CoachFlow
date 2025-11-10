@@ -34,21 +34,12 @@ const TraineeDashboard = () => {
               <button className="btn btn-outline-dark btn-sm">
                 <i className="bi bi-bell"></i>
               </button>
-              <div className="dropdown">
-                <button className="btn btn-outline-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                  <i className="bi bi-person-circle"></i>
-                </button>
-                <ul className="dropdown-menu">
-                  <li>
-                    <Link to="/profile" className="dropdown-item">
-                      <i className="bi bi-person me-2"></i>Profile
-                    </Link>
-                  </li>
-                  <li><a className="dropdown-item" href="#"><i className="bi bi-gear me-2"></i>Settings</a></li>
-                  <li><hr className="dropdown-divider" /></li>
-                  <li><LogoutButton className="dropdown-item" /></li>
-                </ul>
-              </div>
+              <button 
+                className="btn btn-outline-dark btn-sm" 
+                onClick={() => navigate('/profile')}
+              >
+                <i className="bi bi-person-circle"></i>
+              </button>
             </div>
           </div>
         </div>
