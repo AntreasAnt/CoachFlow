@@ -36,7 +36,16 @@ const AuthRoot = ({ children, allowedPrivileges = ['admin'], requireLogout = fal
     }, []);
 
     if (loading) {
-        return <div>Loading...</div>;
+        return (
+            <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh', backgroundColor: '#f8f9fa' }}>
+                <div className="text-center">
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <p className="mt-3 text-dark">Verifying authentication...</p>
+                </div>
+            </div>
+        );
     }
 
     // For pages that require user to be logged out (like signup, login)

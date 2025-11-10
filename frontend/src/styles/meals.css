@@ -1,0 +1,129 @@
+/* Meals Page Additional Styles */
+
+.hover-bg-light:hover {
+  background-color: #f8f9fa;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.modal.show {
+  display: block;
+}
+
+.footer-menu {
+  background: white;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+  z-index: 1030;
+}
+
+.nav-item-active {
+  position: relative;
+}
+
+.nav-item-active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 3px;
+  background: var(--bs-primary);
+  border-radius: 0 0 3px 3px;
+}
+
+.nav-btn-active {
+  font-weight: 600;
+}
+
+.bg-luxury {
+  background-color: #f5f5f5;
+}
+
+.card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+.progress {
+  border-radius: 10px;
+  background-color: #e9ecef;
+}
+
+.progress-bar {
+  border-radius: 10px;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f8f9fa;
+  cursor: default;
+}
+
+.btn-sm {
+  border-radius: 20px;
+  padding: 0.4rem 1rem;
+}
+
+.badge {
+  font-weight: 500;
+  padding: 0.35em 0.65em;
+}
+
+/* Smooth modal animations */
+.modal.show {
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-dialog {
+  animation: slideUp 0.3s;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Custom scrollbar for search results */
+.modal-body div[style*="overflowY"] {
+  scrollbar-width: thin;
+  scrollbar-color: #ccc #f1f1f1;
+}
+
+.modal-body div[style*="overflowY"]::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body div[style*="overflowY"]::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.modal-body div[style*="overflowY"]::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+.modal-body div[style*="overflowY"]::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}

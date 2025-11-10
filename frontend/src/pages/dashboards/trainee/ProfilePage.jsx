@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { BACKEND_ROUTES_API } from '../config/config';
-import LogoutButton from '../components/LogoutButton';
-import '../styles/ProfilePage.css';
-import '../styles/trainee-dashboard.css';
+import { BACKEND_ROUTES_API } from '../../../config/config';
+import LogoutButton from '../../../components/LogoutButton';
+import TraineeHeader from '../../../components/TraineeHeader';
+import '../../../styles/ProfilePage.css';
+import '../../../styles/trainee-dashboard.css';
 
 const ProfilePage = () => {
   const { username: profileUsername } = useParams();
@@ -262,16 +263,18 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="min-vh-100 profile-page">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-bottom sticky-top">
+    <div className="min-vh-100 bg-white">
+      <TraineeHeader />
+      <div className="profile-page">
+      {/* Page Title */}
+      <div className="bg-white border-bottom">
         <div className="container-fluid px-4 py-3">
           <div className="d-flex justify-content-between align-items-center">
             <div className="d-flex align-items-center">
               <div>
-                <h1 className="h4 mb-0 fw-bold text-dark">
+                <h2 className="h4 mb-0 fw-bold text-dark">
                   {isOwnProfile ? 'My Profile' : `${profileData.full_name}'s Profile`}
-                </h1>
+                </h2>
                 <p className="small text-muted mb-0">
                   {isOwnProfile ? 'Manage your account settings' : 'View profile information'}
                 </p>
@@ -337,7 +340,7 @@ const ProfilePage = () => {
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
       <main className="container-fluid px-4 py-4 pb-5" style={{ minHeight: 'calc(100vh - 140px)' }}>
@@ -876,6 +879,7 @@ const ProfilePage = () => {
           </div>
         </div>
       </nav>
+      </div>
     </div>
   );
 };

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import LogoutButton from '../../components/LogoutButton';
-import HomePage from './trainee/HomePage';
-import Progress from './trainee/Progress';
-import '../../styles/trainee-dashboard.css';
+import LogoutButton from '../../../components/LogoutButton';
+import HomePage from './HomePage';
+import Progress from './Progress';
+import '../../../styles/trainee-dashboard.css';
 
 const TraineeDashboard = () => {
   const [activeTab, setActiveTab] = useState('home');

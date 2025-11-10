@@ -6,7 +6,7 @@ import { BACKEND_ROUTES_API } from "../config/config";
 import AdminDashboard from "./dashboards/AdminDashboard";
 import ManagerDashboard from "./dashboards/ManagerDashboard";
 import TrainerDashboard from "./dashboards/TrainerDashboard";
-import TraineeDashboard from "./dashboards/TraineeDashboard";
+import TraineeDashboard from "./dashboards/trainee/TraineeDashboard";
 
 function MainPage() {
   const [userRole, setUserRole] = useState(null);
@@ -46,9 +46,12 @@ function MainPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Loading...</span>
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh', backgroundColor: '#f8f9fa' }}>
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3 text-dark">Loading CoachFlow...</p>
         </div>
       </div>
     );

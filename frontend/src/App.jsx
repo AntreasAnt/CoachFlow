@@ -14,8 +14,14 @@ import AuthRoot from "./contexts/AuthRoot";
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import ManagerDashboard from "./pages/dashboards/ManagerDashboard";
 import TrainerDashboard from "./pages/dashboards/TrainerDashboard";
-import TraineeDashboard from "./pages/dashboards/TraineeDashboard";
-import ProfilePage from "./pages/ProfilePage";
+import TraineeDashboard from "./pages/dashboards/trainee/TraineeDashboard";
+import ProfilePage from "./pages/dashboards/trainee/ProfilePage";
+
+// Import new page components
+import MyWorkouts from "./pages/dashboards/trainee/MyWorkouts";
+import MealsPage from "./pages/dashboards/trainee/MealsPage";
+import ProgressPage from "./pages/ProgressPage";
+import Coach from "./pages/dashboards/trainee/Coach";
 
 function App() {
   return (
@@ -97,6 +103,16 @@ function App() {
           } 
         />
         
+        {/* Dashboard alias route */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <TraineeDashboard />
+            </AuthRoot>
+          } 
+        />
+        
         {/* Profile Routes */}
         <Route 
           path="/profile" 
@@ -105,6 +121,40 @@ function App() {
         <Route 
           path="/user/:username" 
           element={<ProfilePage />}
+        />
+        
+        {/* New Page Routes */}
+        <Route 
+          path="/workouts" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <MyWorkouts />
+            </AuthRoot>
+          }
+        />
+        <Route 
+          path="/meals" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <MealsPage />
+            </AuthRoot>
+          }
+        />
+        <Route 
+          path="/progress" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <ProgressPage />
+            </AuthRoot>
+          }
+        />
+        <Route 
+          path="/coach" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <Coach />
+            </AuthRoot>
+          }
         />
       </Routes>
     </Router>
