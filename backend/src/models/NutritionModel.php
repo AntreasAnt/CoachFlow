@@ -462,26 +462,32 @@ class NutritionModel
                    fiber, sugar, sodium, notes) 
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
+        // Set defaults for optional fields
+        $fiber = $logData['fiber'] ?? 0;
+        $sugar = $logData['sugar'] ?? 0;
+        $sodium = $logData['sodium'] ?? 0;
+        $notes = $logData['notes'] ?? '';
+        
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param(
-            "isssissdddddddds",
-            $userId,
-            $logData['log_date'],
-            $logData['meal_type'],
-            $logData['food_source'],
-            $logData['food_id'],
-            $logData['food_name'],
-            $logData['serving_size'],
-            $logData['serving_unit'],
-            $logData['quantity'],
-            $logData['calories'],
-            $logData['protein'],
-            $logData['carbs'],
-            $logData['fat'],
-            $logData['fiber'],
-            $logData['sugar'],
-            $logData['sodium'],
-            $logData['notes']
+            "isssssdsdddddddds",  // i=int, s=string, d=double (17 params total)
+            $userId,              // 1: i - int
+            $logData['log_date'],       // 2: s - string (date)
+            $logData['meal_type'],      // 3: s - string
+            $logData['food_source'],    // 4: s - string
+            $logData['food_id'],        // 5: s - string (fdc_id or custom id)
+            $logData['food_name'],      // 6: s - string
+            $logData['serving_size'],   // 7: d - double
+            $logData['serving_unit'],   // 8: s - string
+            $logData['quantity'],       // 9: d - double
+            $logData['calories'],       // 10: d - double
+            $logData['protein'],        // 11: d - double
+            $logData['carbs'],          // 12: d - double
+            $logData['fat'],            // 13: d - double
+            $fiber,                     // 14: d - double
+            $sugar,                     // 15: d - double
+            $sodium,                    // 16: d - double
+            $notes                      // 17: s - string
         );
         
         if ($stmt->execute()) {

@@ -10,7 +10,7 @@
 require_once __DIR__ . "/../config/cors.php";
 
 require_once '../config/Database.php';
-require_once '../controllers/NutritionController.php';
+require_once '../models/NutritionModel.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
@@ -29,16 +29,14 @@ try {
     $userId = $_SESSION['user_id'];
     
     // Get nutrition goal
-    $controller = new NutritionController();
-    $result = $controller->getGoal($userId);
+    $model = new NutritionModel();
+    $goal = $model->getActiveGoal($userId);
     
-    if ($result['success']) {
-        http_response_code(200);
-        echo json_encode($result);
-    } else {
-        http_response_code(400);
-        echo json_encode($result);
-    }
+    http_response_code(200);
+    echo json_encode([
+        'success' => true,
+        'goal' => $goal
+    ]);
     
 } catch (Exception $e) {
     error_log("Get nutrition goal endpoint error: " . $e->getMessage());

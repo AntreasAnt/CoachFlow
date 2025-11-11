@@ -14,6 +14,21 @@ const MealsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState({ usda_foods: [], custom_foods: [] });
   const [loading, setLoading] = useState(false);
+  const [availablePortions, setAvailablePortions] = useState([]);
+  
+  // Store base nutritional values (per serving) for proportional calculation
+  const [baseNutrition, setBaseNutrition] = useState({
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    serving_size: 0,
+    original_serving_size: 0,
+    original_calories: 0,
+    original_protein: 0,
+    original_carbs: 0,
+    original_fat: 0
+  });
   
   // Form states
   const [goalForm, setGoalForm] = useState({
@@ -159,22 +174,160 @@ const MealsPage = () => {
     setLoading(false);
   };
 
-  const selectFood = (food, source) => {
+  const selectFood = async (food, source) => {
     const nutrients = source === 'usda' ? food.nutrients : food;
+    const baseCalories = parseFloat(nutrients.calories || food.calories || 0);
+    const baseProtein = parseFloat(nutrients.protein || food.protein || 0);
+    const baseCarbs = parseFloat(nutrients.carbs || food.carbs || 0);
+    const baseFat = parseFloat(nutrients.fat || food.fat || 0);
+    const baseServingSize = parseFloat(food.serving_size || 100);
+    
+    // Normalize to per 100g for consistent calculation
+    const caloriesPer100g = baseCalories / baseServingSize * 100;
+    const proteinPer100g = baseProtein / baseServingSize * 100;
+    const carbsPer100g = baseCarbs / baseServingSize * 100;
+    const fatPer100g = baseFat / baseServingSize * 100;
+    
+    // Fetch portions from API only when food is selected (for performance)
+    let portions = [];
+    if (source === 'usda' && food.fdc_id) {
+      try {
+        const response = await fetch(
+          `${BACKEND_ROUTES_API}/GetFoodPortions.php?fdc_id=${food.fdc_id}`,
+          { credentials: 'include' }
+        );
+        const data = await response.json();
+        if (data.success && data.portions) {
+          portions = data.portions;
+        }
+      } catch (error) {
+        console.error('Error fetching portions:', error);
+      }
+    }
+    setAvailablePortions(portions);
+    
+    // Store base nutrition values per 100g AND the original serving size
+    setBaseNutrition({
+      calories: caloriesPer100g,
+      protein: proteinPer100g,
+      carbs: carbsPer100g,
+      fat: fatPer100g,
+      serving_size: 100,
+      original_serving_size: baseServingSize,  // Store original serving size (e.g., 50g for an egg)
+      original_calories: baseCalories,
+      original_protein: baseProtein,
+      original_carbs: baseCarbs,
+      original_fat: baseFat
+    });
+    
+    // Default to 100g and grams unit
+    const defaultQuantity = 100;
+    
     setLogForm({
       ...logForm,
       food_source: source,
       food_id: source === 'usda' ? food.fdc_id : food.id,
       food_name: food.description || food.name,
-      serving_size: food.serving_size || 100,
-      serving_unit: food.serving_unit || 'g',
-      calories: nutrients.calories || food.calories || '',
-      protein: nutrients.protein || food.protein || '',
-      carbs: nutrients.carbs || food.carbs || '',
-      fat: nutrients.fat || food.fat || ''
+      serving_size: baseServingSize,
+      serving_unit: 'g',
+      quantity: defaultQuantity,
+      calories: (caloriesPer100g * (defaultQuantity / 100)).toFixed(1),
+      protein: (proteinPer100g * (defaultQuantity / 100)).toFixed(1),
+      carbs: (carbsPer100g * (defaultQuantity / 100)).toFixed(1),
+      fat: (fatPer100g * (defaultQuantity / 100)).toFixed(1),
+      portion_gram_weight: null  // Will be set when selecting a portion
     });
     setSearchResults({ usda_foods: [], custom_foods: [] });
     setSearchQuery('');
+  };
+
+  const handleQuantityChange = (newQuantity) => {
+    const quantity = parseFloat(newQuantity) || 0;
+    
+    let newCalories, newProtein, newCarbs, newFat;
+    
+    // Check if using gram/ml based or portion-based measurement
+    if (logForm.serving_unit === 'g' || logForm.serving_unit === 'ml') {
+      // Calculate based on per 100g values
+      const multiplier = quantity / 100;
+      newCalories = (baseNutrition.calories * multiplier).toFixed(1);
+      newProtein = (baseNutrition.protein * multiplier).toFixed(1);
+      newCarbs = (baseNutrition.carbs * multiplier).toFixed(1);
+      newFat = (baseNutrition.fat * multiplier).toFixed(1);
+    } else if (logForm.serving_unit.startsWith('portion_') && logForm.portion_gram_weight) {
+      // Calculate based on the gram weight of the selected portion
+      const multiplier = (logForm.portion_gram_weight * quantity) / 100;
+      newCalories = (baseNutrition.calories * multiplier).toFixed(1);
+      newProtein = (baseNutrition.protein * multiplier).toFixed(1);
+      newCarbs = (baseNutrition.carbs * multiplier).toFixed(1);
+      newFat = (baseNutrition.fat * multiplier).toFixed(1);
+    } else {
+      // Fallback to original serving size
+      newCalories = (baseNutrition.original_calories * quantity).toFixed(1);
+      newProtein = (baseNutrition.original_protein * quantity).toFixed(1);
+      newCarbs = (baseNutrition.original_carbs * quantity).toFixed(1);
+      newFat = (baseNutrition.original_fat * quantity).toFixed(1);
+    }
+    
+    setLogForm({
+      ...logForm,
+      quantity: newQuantity,
+      calories: newCalories,
+      protein: newProtein,
+      carbs: newCarbs,
+      fat: newFat
+    });
+  };
+
+  const handleMeasurementTypeChange = (newUnit) => {
+    // Set default quantity based on measurement type
+    let defaultQuantity;
+    let calories, protein, carbs, fat;
+    let portionGramWeight = null;
+    
+    if (newUnit === 'g' || newUnit === 'ml') {
+      // For grams/ml, default to 100 and calculate based on per 100g values
+      defaultQuantity = 100;
+      const multiplier = defaultQuantity / 100;
+      calories = (baseNutrition.calories * multiplier).toFixed(1);
+      protein = (baseNutrition.protein * multiplier).toFixed(1);
+      carbs = (baseNutrition.carbs * multiplier).toFixed(1);
+      fat = (baseNutrition.fat * multiplier).toFixed(1);
+    } else if (newUnit.startsWith('portion_')) {
+      // This is a specific portion from the API (e.g., "portion_0" for first portion)
+      const portionIndex = parseInt(newUnit.split('_')[1]);
+      const portion = availablePortions[portionIndex];
+      
+      if (portion) {
+        defaultQuantity = 1;
+        portionGramWeight = portion.gram_weight;
+        
+        // Calculate nutrition based on the gram weight of the portion
+        const multiplier = portionGramWeight / 100;
+        calories = (baseNutrition.calories * multiplier).toFixed(1);
+        protein = (baseNutrition.protein * multiplier).toFixed(1);
+        carbs = (baseNutrition.carbs * multiplier).toFixed(1);
+        fat = (baseNutrition.fat * multiplier).toFixed(1);
+      }
+    } else {
+      // Fallback to original serving size
+      defaultQuantity = 1;
+      calories = baseNutrition.original_calories?.toFixed(1) || '0';
+      protein = baseNutrition.original_protein?.toFixed(1) || '0';
+      carbs = baseNutrition.original_carbs?.toFixed(1) || '0';
+      fat = baseNutrition.original_fat?.toFixed(1) || '0';
+    }
+    
+    setLogForm(prev => ({
+      ...prev,
+      serving_unit: newUnit,
+      quantity: defaultQuantity,
+      portion_gram_weight: portionGramWeight,
+      calories: calories,
+      protein: protein,
+      carbs: carbs,
+      fat: fat
+    }));
   };
 
   const handleLogFood = async (e) => {
@@ -553,7 +706,7 @@ const MealsPage = () => {
                     
                     {/* Search Results */}
                     {(searchResults.usda_foods.length > 0 || searchResults.custom_foods.length > 0) && (
-                      <div className="mt-2" style={{maxHeight: '200px', overflowY: 'auto', border: '1px solid #dee2e6', borderRadius: '4px'}}>
+                      <div className="mt-2" style={{maxHeight: '300px', overflowY: 'auto', border: '1px solid #dee2e6', borderRadius: '4px'}}>
                         {searchResults.usda_foods.map((food, idx) => (
                           <div 
                             key={`usda-${idx}`}
@@ -561,8 +714,17 @@ const MealsPage = () => {
                             style={{cursor: 'pointer'}}
                             onClick={() => selectFood(food, 'usda')}
                           >
-                            <strong>{food.description}</strong>
-                            {food.brand_name && <><br/><small className="text-muted">{food.brand_name}</small></>}
+                            <div><strong>{food.description}</strong></div>
+                            {food.brand_name && <div><small className="text-muted">{food.brand_name}</small></div>}
+                            <div className="mt-1">
+                              <small className="text-muted">
+                                {food.nutrients.calories || 0} cal • 
+                                P: {food.nutrients.protein || 0}g • 
+                                C: {food.nutrients.carbs || 0}g • 
+                                F: {food.nutrients.fat || 0}g
+                                {food.serving_size && ` (per ${food.serving_size}${food.serving_unit || 'g'})`}
+                              </small>
+                            </div>
                           </div>
                         ))}
                         {searchResults.custom_foods.map((food) => (
@@ -572,8 +734,19 @@ const MealsPage = () => {
                             style={{cursor: 'pointer'}}
                             onClick={() => selectFood(food, 'custom')}
                           >
-                            <strong>{food.name}</strong> <span className="badge bg-info">Custom</span>
-                            {food.brand_name && <><br/><small className="text-muted">{food.brand_name}</small></>}
+                            <div>
+                              <strong>{food.name}</strong> <span className="badge bg-info">Custom</span>
+                            </div>
+                            {food.brand_name && <div><small className="text-muted">{food.brand_name}</small></div>}
+                            <div className="mt-1">
+                              <small className="text-muted">
+                                {food.calories || 0} cal • 
+                                P: {food.protein || 0}g • 
+                                C: {food.carbs || 0}g • 
+                                F: {food.fat || 0}g
+                                {food.serving_size && ` (per ${food.serving_size}${food.serving_unit || 'g'})`}
+                              </small>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -615,35 +788,39 @@ const MealsPage = () => {
                       </div>
 
                       <div className="row">
-                        <div className="col-md-4 mb-3">
-                          <label className="form-label">Serving Size *</label>
-                          <input 
-                            type="number" 
-                            step="0.01"
-                            className="form-control"
-                            value={logForm.serving_size}
-                            onChange={(e) => setLogForm({...logForm, serving_size: e.target.value})}
-                            required
-                          />
-                        </div>
-                        <div className="col-md-4 mb-3">
-                          <label className="form-label">Unit *</label>
-                          <input 
-                            type="text" 
-                            className="form-control"
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Measurement Type *</label>
+                          <select 
+                            className="form-select"
                             value={logForm.serving_unit}
-                            onChange={(e) => setLogForm({...logForm, serving_unit: e.target.value})}
+                            onChange={(e) => handleMeasurementTypeChange(e.target.value)}
                             required
-                          />
+                          >
+                            <option value="g">Grams (g)</option>
+                            <option value="ml">Milliliters (ml)</option>
+                            {availablePortions.map((portion, index) => (
+                              <option key={index} value={`portion_${index}`}>
+                                Per {portion.label} ({portion.gram_weight}g)
+                              </option>
+                            ))}
+                          </select>
                         </div>
-                        <div className="col-md-4 mb-3">
-                          <label className="form-label">Quantity *</label>
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">
+                            Quantity ({
+                              logForm.serving_unit === 'g' ? 'grams' : 
+                              logForm.serving_unit === 'ml' ? 'ml' : 
+                              logForm.serving_unit.startsWith('portion_') ? 
+                                availablePortions[parseInt(logForm.serving_unit.split('_')[1])]?.label || 'portion' :
+                                'units'
+                            }) *
+                          </label>
                           <input 
                             type="number" 
                             step="0.01"
                             className="form-control"
                             value={logForm.quantity}
-                            onChange={(e) => setLogForm({...logForm, quantity: e.target.value})}
+                            onChange={(e) => handleQuantityChange(e.target.value)}
                             required
                           />
                         </div>
@@ -657,9 +834,10 @@ const MealsPage = () => {
                             step="0.01"
                             className="form-control"
                             value={logForm.calories}
-                            onChange={(e) => setLogForm({...logForm, calories: e.target.value})}
-                            required
+                            readOnly
+                            style={{backgroundColor: '#f8f9fa'}}
                           />
+                          <small className="text-muted">Auto-calculated based on quantity</small>
                         </div>
                         <div className="col-md-3 mb-3">
                           <label className="form-label">Protein (g) *</label>
@@ -668,8 +846,8 @@ const MealsPage = () => {
                             step="0.01"
                             className="form-control"
                             value={logForm.protein}
-                            onChange={(e) => setLogForm({...logForm, protein: e.target.value})}
-                            required
+                            readOnly
+                            style={{backgroundColor: '#f8f9fa'}}
                           />
                         </div>
                         <div className="col-md-3 mb-3">
@@ -679,8 +857,8 @@ const MealsPage = () => {
                             step="0.01"
                             className="form-control"
                             value={logForm.carbs}
-                            onChange={(e) => setLogForm({...logForm, carbs: e.target.value})}
-                            required
+                            readOnly
+                            style={{backgroundColor: '#f8f9fa'}}
                           />
                         </div>
                         <div className="col-md-3 mb-3">
@@ -690,8 +868,8 @@ const MealsPage = () => {
                             step="0.01"
                             className="form-control"
                             value={logForm.fat}
-                            onChange={(e) => setLogForm({...logForm, fat: e.target.value})}
-                            required
+                            readOnly
+                            style={{backgroundColor: '#f8f9fa'}}
                           />
                         </div>
                       </div>

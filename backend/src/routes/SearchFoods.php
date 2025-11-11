@@ -57,9 +57,9 @@ try {
             $results['usda_foods'] = $cachedFoods;
             error_log("SearchFoods: Found " . count($cachedFoods) . " cached foods for query: " . $query);
         } else {
-            // Search USDA API
+            // Search USDA API (without portions for speed)
             error_log("SearchFoods: Searching USDA API for: " . $query);
-            $usdaResults = $usdaService->searchFoods($query, 20);
+            $usdaResults = $usdaService->searchFoods($query, 20, [], false); // false = no portions on search
             $results['usda_foods'] = $usdaResults;
             error_log("SearchFoods: USDA API returned " . count($usdaResults) . " foods");
         }
