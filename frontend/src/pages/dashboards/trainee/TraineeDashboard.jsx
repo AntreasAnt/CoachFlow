@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import LogoutButton from '../../../components/LogoutButton';
+import TraineeHeader from '../../../components/TraineeHeader';
 import HomePage from './HomePage';
 import Progress from './Progress';
 import '../../../styles/trainee-dashboard.css';
@@ -23,27 +23,7 @@ const TraineeDashboard = () => {
   return (
     <div className="min-vh-100 bg-white">
       {/* Header */}
-      <header className="bg-white shadow-sm border-bottom">
-        <div className="container-fluid px-4 py-3">
-          <div className="d-flex justify-content-between align-items-center">
-            <div>
-              <h1 className="h4 mb-0 fw-bold text-dark">CoachFlow</h1>
-              <p className="small text-muted mb-0">Welcome back, Trainee!</p>
-            </div>
-            <div className="d-flex align-items-center gap-3">
-              <button className="btn btn-outline-dark btn-sm">
-                <i className="bi bi-bell"></i>
-              </button>
-              <button 
-                className="btn btn-outline-dark btn-sm" 
-                onClick={() => navigate('/profile')}
-              >
-                <i className="bi bi-person-circle"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <TraineeHeader />
 
       {/* Main Content */}
       <main className="pb-5" style={{ minHeight: 'calc(100vh - 140px)' }}>
