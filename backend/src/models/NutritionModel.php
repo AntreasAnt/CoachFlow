@@ -531,48 +531,7 @@ class NutritionModel
     /**
      * Update food log entry
      */
-    public function updateFoodLog($userId, $logId, $logData)
-    {
-        $query = "UPDATE food_logs 
-                  SET meal_type = ?, quantity = ?, calories = ?, protein = ?, 
-                      carbs = ?, fat = ?, fiber = ?, sugar = ?, sodium = ?, notes = ?
-                  WHERE id = ? AND user_id = ?";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bind_param(
-            "sddddddddsii",
-            $logData['meal_type'],
-            $logData['quantity'],
-            $logData['calories'],
-            $logData['protein'],
-            $logData['carbs'],
-            $logData['fat'],
-            $logData['fiber'],
-            $logData['sugar'],
-            $logData['sodium'],
-            $logData['notes'],
-            $logId,
-            $userId
-        );
-        
-        if ($stmt->execute()) {
-            // Get the log date to update summary
-            $dateQuery = "SELECT log_date FROM food_logs WHERE id = ?";
-            $dateStmt = $this->conn->prepare($dateQuery);
-            $dateStmt->bind_param("i", $logId);
-            $dateStmt->execute();
-            $dateResult = $dateStmt->get_result();
-            $dateRow = $dateResult->fetch_assoc();
-            
-            if ($dateRow) {
-                $this->updateDailySummary($userId, $dateRow['log_date']);
-            }
-            
-            return true;
-        }
-        
-        return false;
-    }
+    
 
     /**
      * Delete food log entry

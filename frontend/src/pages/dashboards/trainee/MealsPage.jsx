@@ -15,6 +15,7 @@ const MealsPage = () => {
   const [searchResults, setSearchResults] = useState({ usda_foods: [], custom_foods: [] });
   const [loading, setLoading] = useState(false);
   const [availablePortions, setAvailablePortions] = useState([]);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   
   // Store base nutritional values (per serving) for proportional calculation
   const [baseNutrition, setBaseNutrition] = useState({
@@ -58,6 +59,24 @@ const MealsPage = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Helper function to convert text to title case
+  const toTitleCase = (str) => {
+    if (!str) return '';
+    return str
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Toast notification helper
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'success' });
+    }, 3000);
+  };
 
   const loadData = async () => {
     await Promise.all([
@@ -140,13 +159,13 @@ const MealsPage = () => {
       if (data.success) {
         setShowGoalModal(false);
         await loadNutritionGoal();
-        alert('Nutrition goal set successfully!');
+        showToast('Nutrition goal set successfully!', 'success');
       } else {
-        alert(data.error || 'Failed to set goal');
+        showToast(data.error || 'Failed to set goal', 'danger');
       }
     } catch (error) {
       console.error('Error setting goal:', error);
-      alert('Failed to set goal');
+      showToast('Failed to set goal', 'danger');
     }
     setLoading(false);
   };
@@ -175,6 +194,9 @@ const MealsPage = () => {
   };
 
   const selectFood = async (food, source) => {
+    // Show loading indicator immediately for better UX
+    setLoading(true);
+    
     const nutrients = source === 'usda' ? food.nutrients : food;
     const baseCalories = parseFloat(nutrients.calories || food.calories || 0);
     const baseProtein = parseFloat(nutrients.protein || food.protein || 0);
@@ -223,11 +245,14 @@ const MealsPage = () => {
     // Default to 100g and grams unit
     const defaultQuantity = 100;
     
+    // Apply title case to food name
+    const foodName = toTitleCase(food.description || food.name);
+    
     setLogForm({
       ...logForm,
       food_source: source,
       food_id: source === 'usda' ? food.fdc_id : food.id,
-      food_name: food.description || food.name,
+      food_name: foodName,
       serving_size: baseServingSize,
       serving_unit: 'g',
       quantity: defaultQuantity,
@@ -239,6 +264,7 @@ const MealsPage = () => {
     });
     setSearchResults({ usda_foods: [], custom_foods: [] });
     setSearchQuery('');
+    setLoading(false);
   };
 
   const handleQuantityChange = (newQuantity) => {
@@ -345,13 +371,57 @@ const MealsPage = () => {
         setShowLogModal(false);
         resetLogForm();
         await loadData();
-        alert('Food logged successfully!');
+        showToast('Food logged successfully!', 'success');
       } else {
-        alert(data.error || 'Failed to log food');
+        showToast(data.error || 'Failed to log food', 'danger');
       }
     } catch (error) {
       console.error('Error logging food:', error);
-      alert('Failed to log food');
+      showToast('Failed to log food', 'danger');
+    }
+    setLoading(false);
+  };
+
+  const handleDeleteLog = async (logId) => {
+    setLoading(true);
+    try {
+      console.log('Deleting log ID:', logId);
+      const response = await fetch(`${BACKEND_ROUTES_API}/DeleteFoodLog.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ log_id: logId })
+      });
+      
+      console.log('Delete response status:', response.status);
+      
+      // Get the response as text first to see what's actually returned
+      const responseText = await response.text();
+      console.log('Delete response text:', responseText);
+      
+      // Try to parse as JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse JSON:', responseText);
+        showToast('Server returned invalid response', 'danger');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Delete response data:', data);
+      
+      if (data.success) {
+        await loadData();
+        showToast('Food log deleted successfully!', 'success');
+      } else {
+        console.error('Delete failed:', data);
+        showToast(data.error || 'Failed to delete food log', 'danger');
+      }
+    } catch (error) {
+      console.error('Error deleting food log:', error);
+      showToast('Failed to delete food log', 'danger');
     }
     setLoading(false);
   };
@@ -402,6 +472,23 @@ const MealsPage = () => {
   return (
     <div className="min-vh-100 bg-white">
       <TraineeHeader />
+      
+      {/* Toast Notification */}
+      {toast.show && (
+        <div 
+          className="position-fixed top-0 end-0 p-3" 
+          style={{ zIndex: 9999, marginTop: '80px' }}
+        >
+          <div className={`alert alert-${toast.type} alert-dismissible fade show shadow-lg`} role="alert">
+            <strong>{toast.type === 'success' ? '✓' : '✕'}</strong> {toast.message}
+            <button 
+              type="button" 
+              className="btn-close" 
+              onClick={() => setToast({ ...toast, show: false })}
+            ></button>
+          </div>
+        </div>
+      )}
       
       {/* Meals Content */}
       <div className="bg-luxury">
@@ -566,20 +653,30 @@ const MealsPage = () => {
                               <th>Protein</th>
                               <th>Carbs</th>
                               <th>Fat</th>
+                              <th>Delete</th>
                             </tr>
                           </thead>
                           <tbody>
                             {logs.map((log) => (
                               <tr key={log.id}>
                                 <td>
-                                  <strong>{log.food_name}</strong>
+                                  <strong>{toTitleCase(log.food_name)}</strong>
                                   {log.notes && <><br/><small className="text-muted">{log.notes}</small></>}
                                 </td>
-                                <td>{log.quantity} × {log.serving_size}{log.serving_unit}</td>
-                                <td>{Math.round(log.calories * log.quantity)} kcal</td>
-                                <td>{Math.round(log.protein * log.quantity)}g</td>
-                                <td>{Math.round(log.carbs * log.quantity)}g</td>
-                                <td>{Math.round(log.fat * log.quantity)}g</td>
+                                <td>{log.quantity}{log.serving_unit}</td>
+                                <td>{Math.round(log.calories)} kcal</td>
+                                <td>{Math.round(log.protein)}g</td>
+                                <td>{Math.round(log.carbs)}g</td>
+                                <td>{Math.round(log.fat)}g</td>
+                                <td>
+                                  <button
+                                    className="btn btn-sm btn-outline-danger"
+                                    onClick={() => handleDeleteLog(log.id)}
+                                    title="Delete"
+                                  >
+                                    <i className="bi bi-trash"></i>
+                                  </button>
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -714,8 +811,8 @@ const MealsPage = () => {
                             style={{cursor: 'pointer'}}
                             onClick={() => selectFood(food, 'usda')}
                           >
-                            <div><strong>{food.description}</strong></div>
-                            {food.brand_name && <div><small className="text-muted">{food.brand_name}</small></div>}
+                            <div><strong>{toTitleCase(food.description)}</strong></div>
+                            {food.brand_name && <div><small className="text-muted">{toTitleCase(food.brand_name)}</small></div>}
                             <div className="mt-1">
                               <small className="text-muted">
                                 {food.nutrients.calories || 0} cal • 
@@ -735,9 +832,9 @@ const MealsPage = () => {
                             onClick={() => selectFood(food, 'custom')}
                           >
                             <div>
-                              <strong>{food.name}</strong> <span className="badge bg-info">Custom</span>
+                              <strong>{toTitleCase(food.name)}</strong> <span className="badge bg-info">Custom</span>
                             </div>
-                            {food.brand_name && <div><small className="text-muted">{food.brand_name}</small></div>}
+                            {food.brand_name && <div><small className="text-muted">{toTitleCase(food.brand_name)}</small></div>}
                             <div className="mt-1">
                               <small className="text-muted">
                                 {food.calories || 0} cal • 
