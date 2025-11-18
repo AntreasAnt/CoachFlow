@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../../styles/trainee-dashboard.css';
 import { API_BASE_URL, BACKEND_ROUTES_API } from '../../../config/config';
@@ -13,6 +13,11 @@ const MealsPage = () => {
   const [showLogModal, setShowLogModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState({ usda_foods: [], custom_foods: [] });
+  const [resultsFor, setResultsFor] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [isDebouncing, setIsDebouncing] = useState(false);
+  const [pendingQuery, setPendingQuery] = useState('');
+  const searchAbortRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [availablePortions, setAvailablePortions] = useState([]);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -57,6 +62,8 @@ const MealsPage = () => {
   });
 
   useEffect(() => {
+  // Ensure a clean search state when the page mounts
+  resetSearchState();
     loadData();
   }, []);
 
@@ -197,6 +204,42 @@ const MealsPage = () => {
     }
   };
 
+  // Debounced search when typing
+  useEffect(() => {
+    if (!searchQuery || searchQuery.trim().length < 2) {
+      setIsDebouncing(false);
+      setPendingQuery('');
+      return;
+    }
+    setIsDebouncing(true);
+    setPendingQuery(searchQuery.trim());
+    const id = setTimeout(() => {
+      handleSearchFoods();
+    }, 350);
+    return () => clearTimeout(id);
+  }, [searchQuery]);
+
+  // When results for the current query are committed to state, stop showing Searching…
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return;
+    if (resultsFor && resultsFor === trimmed) {
+      // Results corresponding to current input are now rendered; clear pending/searching
+      setSearching(false);
+      setPendingQuery('');
+      setIsDebouncing(false);
+    }
+  }, [resultsFor, searchQuery]);
+
+  // Abort any in-flight search on unmount
+  useEffect(() => {
+    return () => {
+      if (searchAbortRef.current) {
+        searchAbortRef.current.abort();
+      }
+    };
+  }, []);
+
   const handleSetGoal = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -223,32 +266,57 @@ const MealsPage = () => {
   };
 
   const handleSearchFoods = async () => {
-    if (!searchQuery.trim()) return;
+    const q = searchQuery.trim();
+    if (!q) return;
     
-    setLoading(true);
+    // Cancel any in-flight search
+    if (searchAbortRef.current) {
+      searchAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
+
+  setIsDebouncing(false);
+  setSearching(true);
+  setPendingQuery(q);
     try {
-      const url = `${BACKEND_ROUTES_API}SearchFoods.php?query=${encodeURIComponent(searchQuery)}&source=all`;
+      const url = `${BACKEND_ROUTES_API}SearchFoods.php?query=${encodeURIComponent(q)}&source=all`;
       console.log('Searching URL:', url); // Debug log
-      const response = await fetch(url, { credentials: 'include' });
+      const response = await fetch(url, { credentials: 'include', signal: controller.signal });
       console.log('Response status:', response.status); // Debug log
       const data = await response.json();
       console.log('Search response:', data); // Debug log
       if (data.success) {
         console.log('Search results:', data.results); // Debug log
         setSearchResults(data.results);
+        setResultsFor(q);
       } else {
         console.error('Search failed:', data.error || data.message);
+        setSearchResults({ usda_foods: [], custom_foods: [] });
+        setResultsFor(q);
       }
     } catch (error) {
-      console.error('Error searching foods:', error);
+      if (error.name !== 'AbortError') {
+        console.error('Error searching foods:', error);
+      }
     }
-    setLoading(false);
+    // Do not clear searching here; wait for the commit effect tied to resultsFor === current input
+  };
+
+  const resetSearchState = () => {
+    // Abort any inflight request
+    if (searchAbortRef.current) {
+      try { searchAbortRef.current.abort(); } catch {}
+    }
+    setSearchQuery('');
+    setSearchResults({ usda_foods: [], custom_foods: [] });
+    setResultsFor('');
+    setSearching(false);
+    setIsDebouncing(false);
+    setPendingQuery('');
   };
 
   const selectFood = async (food, source) => {
-    // Show loading indicator immediately for better UX
-    setLoading(true);
-    
     const nutrients = source === 'usda' ? food.nutrients : food;
     const baseCalories = parseFloat(nutrients.calories || food.calories || 0);
     const baseProtein = parseFloat(nutrients.protein || food.protein || 0);
@@ -261,6 +329,42 @@ const MealsPage = () => {
     const proteinPer100g = baseProtein / baseServingSize * 100;
     const carbsPer100g = baseCarbs / baseServingSize * 100;
     const fatPer100g = baseFat / baseServingSize * 100;
+
+    // Immediately show selection (default to grams, 100g) for instant feedback
+    const defaultQuantity = 100;
+    const foodName = toTitleCase(food.description || food.name);
+    setBaseNutrition({
+      calories: caloriesPer100g,
+      protein: proteinPer100g,
+      carbs: carbsPer100g,
+      fat: fatPer100g,
+      serving_size: 100,
+      original_serving_size: baseServingSize,
+      original_calories: baseCalories,
+      original_protein: baseProtein,
+      original_carbs: baseCarbs,
+      original_fat: baseFat
+    });
+    setLogForm(prev => ({
+      ...prev,
+      food_source: source,
+      food_id: source === 'usda' ? food.fdc_id : food.id,
+      food_name: foodName,
+      serving_size: baseServingSize,
+      serving_unit: 'g',
+      quantity: defaultQuantity,
+      calories: (caloriesPer100g * (defaultQuantity / 100)).toFixed(1),
+      protein: (proteinPer100g * (defaultQuantity / 100)).toFixed(1),
+      carbs: (carbsPer100g * (defaultQuantity / 100)).toFixed(1),
+      fat: (fatPer100g * (defaultQuantity / 100)).toFixed(1),
+      portion_gram_weight: null
+    }));
+    // Collapse results for clarity
+  setSearchResults({ usda_foods: [], custom_foods: [] });
+  setResultsFor('');
+  setSearchQuery('');
+    // Now fetch portions in the background
+    setLoading(true);
     
     // Fetch portions from API only when food is selected (for performance)
     let portions = [];
@@ -277,45 +381,8 @@ const MealsPage = () => {
       } catch (error) {
         console.error('Error fetching portions:', error);
       }
-    }
-    setAvailablePortions(portions);
-    
-    // Store base nutrition values per 100g AND the original serving size
-    setBaseNutrition({
-      calories: caloriesPer100g,
-      protein: proteinPer100g,
-      carbs: carbsPer100g,
-      fat: fatPer100g,
-      serving_size: 100,
-      original_serving_size: baseServingSize,  // Store original serving size (e.g., 50g for an egg)
-      original_calories: baseCalories,
-      original_protein: baseProtein,
-      original_carbs: baseCarbs,
-      original_fat: baseFat
-    });
-    
-    // Default to 100g and grams unit
-    const defaultQuantity = 100;
-    
-    // Apply title case to food name
-    const foodName = toTitleCase(food.description || food.name);
-    
-    setLogForm({
-      ...logForm,
-      food_source: source,
-      food_id: source === 'usda' ? food.fdc_id : food.id,
-      food_name: foodName,
-      serving_size: baseServingSize,
-      serving_unit: 'g',
-      quantity: defaultQuantity,
-      calories: (caloriesPer100g * (defaultQuantity / 100)).toFixed(1),
-      protein: (proteinPer100g * (defaultQuantity / 100)).toFixed(1),
-      carbs: (carbsPer100g * (defaultQuantity / 100)).toFixed(1),
-      fat: (fatPer100g * (defaultQuantity / 100)).toFixed(1),
-      portion_gram_weight: null  // Will be set when selecting a portion
-    });
-    setSearchResults({ usda_foods: [], custom_foods: [] });
-    setSearchQuery('');
+  }
+  setAvailablePortions(portions);
     setLoading(false);
   };
 
@@ -594,7 +661,7 @@ const MealsPage = () => {
               </button>
               <button 
                 className="btn btn-primary btn-sm"
-                onClick={() => setShowLogModal(true)}
+                onClick={() => { resetSearchState(); setShowLogModal(true); }}
               >
                 <i className="bi bi-plus-lg me-1"></i>
                 Log Food
@@ -859,11 +926,11 @@ const MealsPage = () => {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">Log Food</h5>
-                <button type="button" className="btn-close" onClick={() => {setShowLogModal(false); resetLogForm();}}></button>
+                <button type="button" className="btn-close" onClick={() => {setShowLogModal(false); resetLogForm(); resetSearchState();}}></button>
               </div>
               <form onSubmit={handleLogFood}>
                 <div className="modal-body">
-                  {/* Search Foods */}
+              {/* Search Foods */}
                   <div className="mb-4">
                     <label className="form-label">Search Food</label>
                     <div className="input-group">
@@ -872,28 +939,53 @@ const MealsPage = () => {
                         className="form-control"
                         placeholder="Search USDA database..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleSearchFoods())}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setSearchQuery(v);
+                          const len = v.trim().length;
+                          if (len >= 2) {
+                            // show immediate feedback while debounce counts down
+                            setIsDebouncing(true);
+                          } else {
+                            setIsDebouncing(false);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            // stop debouncing and trigger search now
+                            setIsDebouncing(false);
+                            handleSearchFoods();
+                          }
+                        }}
                       />
-                      <button 
-                        className="btn btn-outline-primary" 
-                        type="button"
-                        onClick={handleSearchFoods}
-                        disabled={loading}
-                      >
-                        <i className="bi bi-search"></i>
-                      </button>
+                      {/* Removed search button per request; search triggers on typing (debounced) or Enter */}
+                    </div>
+                    {/* Search state feedback */}
+                    <div className="mt-1" aria-live="polite">
+            {((searching || isDebouncing) || (pendingQuery && pendingQuery === searchQuery.trim())) && (
+                        <small className="text-muted">
+                          <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                          Searching…
+                        </small>
+                      )}
+            {!searching && !isDebouncing && !pendingQuery && searchQuery.trim().length > 0 && searchQuery.trim().length < 2 && (
+                        <small className="text-muted">Type at least 2 characters to search</small>
+                      )}
+            {!searching && !isDebouncing && !pendingQuery && searchQuery.trim().length >= 2 && (resultsFor === searchQuery.trim()) && (searchResults.usda_foods.length + searchResults.custom_foods.length === 0) && (
+                        <small className="text-muted">No results for "{searchQuery.trim()}"</small>
+                      )}
                     </div>
                     
                     {/* Search Results */}
                     {(searchResults.usda_foods.length > 0 || searchResults.custom_foods.length > 0) && (
                       <div className="mt-2" style={{maxHeight: '300px', overflowY: 'auto', border: '1px solid #dee2e6', borderRadius: '4px'}}>
-                        {searchResults.usda_foods.map((food, idx) => (
+            {searchResults.usda_foods.map((food, idx) => (
                           <div 
                             key={`usda-${idx}`}
                             className="p-2 border-bottom cursor-pointer hover-bg-light"
                             style={{cursor: 'pointer'}}
-                            onClick={() => selectFood(food, 'usda')}
+              onMouseDown={(e) => { e.preventDefault(); selectFood(food, 'usda'); }}
                           >
                             <div><strong>{toTitleCase(food.description)}</strong></div>
                             {food.brand_name && <div><small className="text-muted">{toTitleCase(food.brand_name)}</small></div>}
@@ -908,12 +1000,12 @@ const MealsPage = () => {
                             </div>
                           </div>
                         ))}
-                        {searchResults.custom_foods.map((food) => (
+            {searchResults.custom_foods.map((food) => (
                           <div 
                             key={`custom-${food.id}`}
                             className="p-2 border-bottom cursor-pointer hover-bg-light"
                             style={{cursor: 'pointer'}}
-                            onClick={() => selectFood(food, 'custom')}
+              onMouseDown={(e) => { e.preventDefault(); selectFood(food, 'custom'); }}
                           >
                             <div>
                               <strong>{toTitleCase(food.name)}</strong> <span className="badge bg-info">Custom</span>
@@ -1084,7 +1176,7 @@ const MealsPage = () => {
                   )}
                 </div>
                 <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => {setShowLogModal(false); resetLogForm();}}>
+                  <button type="button" className="btn btn-secondary" onClick={() => {setShowLogModal(false); resetLogForm(); resetSearchState();}}>
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary" disabled={loading || !logForm.food_name}>
