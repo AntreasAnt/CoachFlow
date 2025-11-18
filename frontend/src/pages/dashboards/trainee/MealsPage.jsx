@@ -70,6 +70,58 @@ const MealsPage = () => {
       .join(' ');
   };
 
+  // Helper to format serving string nicely (e.g., 2 eggs instead of "2 1 egg")
+  const formatServing = (quantityVal, unitRaw) => {
+    if (!unitRaw) return String(quantityVal || '');
+    const qtyNum = parseFloat(quantityVal);
+    const qtyDisplay = Number.isNaN(qtyNum) ? 0 : (Number.isInteger(qtyNum) ? qtyNum : parseFloat(qtyNum.toFixed(2)));
+    const unit = String(unitRaw).trim();
+
+    // Handle internal portion unit keys
+    if (unit.startsWith('portion_')) {
+      return `${qtyDisplay} portion${qtyDisplay === 1 ? '' : 's'}`;
+    }
+
+    // Grams / ml simple case
+    if (unit === 'g' || unit === 'ml') {
+      return `${qtyDisplay} ${unit}`;
+    }
+
+    // Remove leading numeric like "1 " from labels such as "1 egg", "1 slice", "1 cup, diced"
+    let label = unit.replace(/^\s*\d+(?:\.\d+)?\s*/, '');
+
+    // Keep any comma suffix (", large") intact; pluralize the noun before the comma
+    const commaIdx = label.indexOf(',');
+    const main = (commaIdx >= 0) ? label.slice(0, commaIdx).trim() : label.trim();
+    const rest = (commaIdx >= 0) ? label.slice(commaIdx) : '';
+
+    // Find last word in main to pluralize
+    const lastWordMatch = main.match(/([A-Za-z]+)\s*$/);
+    if (!lastWordMatch) {
+      return `${qtyDisplay} ${label}`.trim();
+    }
+
+    const noun = lastWordMatch[1];
+    const nounStart = main.lastIndexOf(noun);
+
+    const pluralize = (w, q) => {
+      if (q === 1) return w;
+      const wl = w.toLowerCase();
+      // Special cases
+      const specials = { egg: 'eggs', leaf: 'leaves', loaf: 'loaves', knife: 'knives' };
+      if (specials[wl]) return specials[wl];
+      if (/(?:ch|sh)$/.test(wl) || /(?:s|x|z)$/.test(wl)) return w + 'es';
+      if (/[^aeiou]y$/.test(wl)) return w.slice(0, -1) + 'ies';
+      if (/fe$/.test(wl)) return w.slice(0, -2) + 'ves';
+      if (/f$/.test(wl)) return w.slice(0, -1) + 'ves';
+      return w + 's';
+    };
+
+    const pluralNoun = pluralize(noun, qtyDisplay);
+    const mainPlural = main.slice(0, nounStart) + pluralNoun;
+    return `${qtyDisplay} ${mainPlural}${rest}`;
+  };
+
   // Toast notification helper
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -268,7 +320,11 @@ const MealsPage = () => {
   };
 
   const handleQuantityChange = (newQuantity) => {
-    const quantity = parseFloat(newQuantity) || 0;
+    let quantity = parseFloat(newQuantity) || 0;
+    // For grams/ml, normalize to integer values
+    if (logForm.serving_unit === 'g' || logForm.serving_unit === 'ml') {
+      quantity = Math.max(0, Math.round(quantity));
+    }
     
     let newCalories, newProtein, newCarbs, newFat;
     
@@ -297,7 +353,7 @@ const MealsPage = () => {
     
     setLogForm({
       ...logForm,
-      quantity: newQuantity,
+      quantity: quantity,
       calories: newCalories,
       protein: newProtein,
       carbs: newCarbs,
@@ -360,11 +416,27 @@ const MealsPage = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Prepare payload with human-friendly serving unit for portion-based entries
+      const payload = { ...logForm };
+      if (typeof payload.serving_unit === 'string' && payload.serving_unit.startsWith('portion_')) {
+        const portionIndex = parseInt(payload.serving_unit.split('_')[1]);
+        const portion = availablePortions[portionIndex];
+        // Use portion label and gram weight when available; fall back to generic 'portion'
+        if (portion) {
+          payload.serving_unit = portion.label; // e.g., "large egg", "slice", "cup"
+          payload.serving_size = portion.gram_weight; // grams per portion
+        } else {
+          payload.serving_unit = 'portion';
+        }
+        // Ensure integer quantity for portion-based measures
+        payload.quantity = Math.max(1, Math.round(parseFloat(payload.quantity) || 1));
+      }
+
       const response = await fetch(`${BACKEND_ROUTES_API}/LogFood.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(logForm)
+        body: JSON.stringify(payload)
       });
       const data = await response.json();
       if (data.success) {
@@ -503,7 +575,19 @@ const MealsPage = () => {
               <div className="d-flex gap-2">
               <button 
                 className="btn btn-outline-primary btn-sm"
-                onClick={() => setShowGoalModal(true)}
+                onClick={() => {
+                  // Prefill goal form with current values when editing
+                  if (nutritionGoal) {
+                    setGoalForm({
+                      goal_type: nutritionGoal.goal_type || 'daily',
+                      target_calories: nutritionGoal.target_calories ?? '',
+                      target_protein: nutritionGoal.target_protein ?? '',
+                      target_carbs: nutritionGoal.target_carbs ?? '',
+                      target_fat: nutritionGoal.target_fat ?? ''
+                    });
+                  }
+                  setShowGoalModal(true);
+                }}
               >
                 <i className="bi bi-target me-1"></i>
                 {nutritionGoal ? 'Edit Goal' : 'Set Goal'}
@@ -663,7 +747,7 @@ const MealsPage = () => {
                                   <strong>{toTitleCase(log.food_name)}</strong>
                                   {log.notes && <><br/><small className="text-muted">{log.notes}</small></>}
                                 </td>
-                                <td>{log.quantity}{log.serving_unit}</td>
+                                <td>{formatServing(log.quantity, log.serving_unit)}</td>
                                 <td>{Math.round(log.calories)} kcal</td>
                                 <td>{Math.round(log.protein)}g</td>
                                 <td>{Math.round(log.carbs)}g</td>
@@ -907,17 +991,33 @@ const MealsPage = () => {
                             Quantity ({
                               logForm.serving_unit === 'g' ? 'grams' : 
                               logForm.serving_unit === 'ml' ? 'ml' : 
-                              logForm.serving_unit.startsWith('portion_') ? 
-                                availablePortions[parseInt(logForm.serving_unit.split('_')[1])]?.label || 'portion' :
+                              (typeof logForm.serving_unit === 'string' && logForm.serving_unit.startsWith('portion_')) ? 
+                                (availablePortions[parseInt(logForm.serving_unit.split('_')[1])] ? availablePortions[parseInt(logForm.serving_unit.split('_')[1])].label : 'portion') :
                                 'units'
                             }) *
                           </label>
                           <input 
                             type="number" 
-                            step="0.01"
+                            step={(typeof logForm.serving_unit === 'string' && logForm.serving_unit.startsWith('portion_')) ? "1" : (logForm.serving_unit === 'g' ? "1" : (logForm.serving_unit === 'ml' ? "1" : "1"))}
                             className="form-control"
-                            value={logForm.quantity}
-                            onChange={(e) => handleQuantityChange(e.target.value)}
+                            value={(typeof logForm.serving_unit === 'string' && logForm.serving_unit.startsWith('portion_'))
+                              ? Math.round(logForm.quantity || 1)
+                              : ((logForm.serving_unit === 'g' || logForm.serving_unit === 'ml')
+                                  ? Math.round(logForm.quantity || 0)
+                                  : logForm.quantity)
+                            }
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              if (typeof logForm.serving_unit === 'string' && logForm.serving_unit.startsWith('portion_')) {
+                                const intVal = Math.max(1, Math.round(parseFloat(raw) || 1));
+                                handleQuantityChange(intVal);
+                              } else if (logForm.serving_unit === 'g' || logForm.serving_unit === 'ml') {
+                                const intVal = Math.max(0, Math.round(parseFloat(raw) || 0));
+                                handleQuantityChange(intVal);
+                              } else {
+                                handleQuantityChange(raw);
+                              }
+                            }}
                             required
                           />
                         </div>
