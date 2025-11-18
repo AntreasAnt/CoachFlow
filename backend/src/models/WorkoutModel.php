@@ -132,6 +132,47 @@ class WorkoutModel
     }
 
     /**
+     * Get recent workout sessions with paging
+     */
+    public function getRecentSessionsPaged($userId, $limit = 7, $offset = 0)
+    {
+        try {
+            $query = "SELECT 
+                        id,
+                        workout_plan_id,
+                        plan_name,
+                        session_date,
+                        duration_minutes,
+                        rating,
+                        created_at
+                      FROM workout_sessions
+                      WHERE user_id = ?
+                      ORDER BY session_date DESC, created_at DESC
+                      LIMIT ? OFFSET ?";
+
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Prepare failed: " . $this->conn->error);
+            }
+
+            $stmt->bind_param("iii", $userId, $limit, $offset);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $sessions = [];
+            while ($row = $result->fetch_assoc()) {
+                $sessions[] = $row;
+            }
+            
+            return $sessions;
+
+        } catch (Exception $e) {
+            error_log("Error in getRecentSessionsPaged: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
      * Get premium workout plans
      */
     public function getPremiumPlans()

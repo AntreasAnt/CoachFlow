@@ -7,6 +7,7 @@ import TraineeHeader from '../../../components/TraineeHeader';
 const MealsPage = () => {
   const navigate = useNavigate();
   const [todayLogs, setTodayLogs] = useState([]);
+  const [historyLogs, setHistoryLogs] = useState([]);
   const [dailySummary, setDailySummary] = useState(null);
   const [nutritionGoal, setNutritionGoal] = useState(null);
   const [showGoalModal, setShowGoalModal] = useState(false);
@@ -21,6 +22,17 @@ const MealsPage = () => {
   const [loading, setLoading] = useState(false);
   const [availablePortions, setAvailablePortions] = useState([]);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  // Meal history pagination (7-day windows)
+  const todayStr = new Date().toISOString().split('T')[0];
+  const dateToStr = (d) => d.toISOString().split('T')[0];
+  const addDays = (dateStr, delta) => {
+    const d = new Date(dateStr);
+    d.setDate(d.getDate() + delta);
+    return dateToStr(d);
+  };
+  const [historyEndDate, setHistoryEndDate] = useState(todayStr);
+  const [historyStartDate, setHistoryStartDate] = useState(addDays(todayStr, -6));
+  const [historyLoading, setHistoryLoading] = useState(false);
   
   // Store base nutritional values (per serving) for proportional calculation
   const [baseNutrition, setBaseNutrition] = useState({
@@ -145,6 +157,12 @@ const MealsPage = () => {
     ]);
   };
 
+  // Load initial 7-day history window
+  useEffect(() => {
+    loadMealHistory(historyStartDate, historyEndDate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historyStartDate, historyEndDate]);
+
   const loadNutritionGoal = async () => {
     try {
       const response = await fetch(`${BACKEND_ROUTES_API}/GetNutritionGoal.php`, {
@@ -172,6 +190,27 @@ const MealsPage = () => {
       }
     } catch (error) {
       console.error('Error loading food logs:', error);
+    }
+  };
+
+  const loadMealHistory = async (startDate, endDate) => {
+    try {
+      setHistoryLoading(true);
+      const response = await fetch(
+        `${BACKEND_ROUTES_API}/GetFoodLogs.php?start_date=${startDate}&end_date=${endDate}`,
+        { credentials: 'include' }
+      );
+      const data = await response.json();
+      if (data.success) {
+        setHistoryLogs(data.logs || []);
+      } else {
+        setHistoryLogs([]);
+      }
+    } catch (error) {
+      console.error('Error loading meal history:', error);
+      setHistoryLogs([]);
+    } finally {
+      setHistoryLoading(false);
     }
   };
 
@@ -608,42 +647,64 @@ const MealsPage = () => {
 
   const groupedLogs = groupLogsByMealType();
 
+  // Group history logs by date then meal type
+  const groupHistoryByDateAndMeal = () => {
+    const byDate = {};
+    historyLogs.forEach(log => {
+      const date = log.log_date;
+      if (!byDate[date]) {
+        byDate[date] = { breakfast: [], lunch: [], dinner: [], snack: [], other: [] };
+      }
+      if (byDate[date][log.meal_type]) byDate[date][log.meal_type].push(log);
+    });
+    // Sort dates descending
+    const sortedDates = Object.keys(byDate).sort((a,b) => new Date(b) - new Date(a));
+    return { byDate, sortedDates };
+  };
+  const { byDate: historyByDate, sortedDates: historyDates } = groupHistoryByDateAndMeal();
+
+  const canGoNewer = new Date(historyEndDate) < new Date(todayStr);
+  const goOlder = () => {
+    const newEnd = addDays(historyStartDate, -1);
+    const newStart = addDays(newEnd, -6);
+    setHistoryEndDate(newEnd);
+    setHistoryStartDate(newStart);
+  };
+  const goNewer = () => {
+    if (!canGoNewer) return;
+    const newStart = addDays(historyEndDate, 1);
+    let newEnd = addDays(newStart, 6);
+    if (new Date(newEnd) > new Date(todayStr)) newEnd = todayStr;
+    setHistoryStartDate(newStart);
+    setHistoryEndDate(newEnd);
+  };
+
   return (
     <div className="min-vh-100 bg-white">
       <TraineeHeader />
-      
+
       {/* Toast Notification */}
       {toast.show && (
-        <div 
-          className="position-fixed top-0 end-0 p-3" 
-          style={{ zIndex: 9999, marginTop: '80px' }}
-        >
+        <div className="position-fixed top-0 end-0 p-3" style={{ zIndex: 9999, marginTop: '80px' }}>
           <div className={`alert alert-${toast.type} alert-dismissible fade show shadow-lg`} role="alert">
             <strong>{toast.type === 'success' ? '✓' : '✕'}</strong> {toast.message}
-            <button 
-              type="button" 
-              className="btn-close" 
-              onClick={() => setToast({ ...toast, show: false })}
-            ></button>
+            <button type="button" className="btn-close" onClick={() => setToast({ ...toast, show: false })}></button>
           </div>
         </div>
       )}
-      
-      {/* Meals Content */}
-      <div className="bg-luxury">
-        {/* Page Header */}
-        <div className="bg-white border-bottom">
-          <div className="container-fluid px-4 py-3">
-            <div className="d-flex justify-content-between align-items-center">
-              <div>
-                <h2 className="h5 mb-0 fw-bold text-dark">Meals & Nutrition</h2>
-                <p className="small text-muted mb-0">Track your food and macros</p>
-              </div>
-              <div className="d-flex gap-2">
-              <button 
+
+      {/* Page Header */}
+      <div className="bg-white border-bottom">
+        <div className="container-fluid px-4 py-3">
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <h2 className="h5 mb-0 fw-bold text-dark">Meals & Nutrition</h2>
+              <p className="small text-muted mb-0">Track your food and macros</p>
+            </div>
+            <div className="d-flex gap-2">
+              <button
                 className="btn btn-outline-primary btn-sm"
                 onClick={() => {
-                  // Prefill goal form with current values when editing
                   if (nutritionGoal) {
                     setGoalForm({
                       goal_type: nutritionGoal.goal_type || 'daily',
@@ -659,7 +720,7 @@ const MealsPage = () => {
                 <i className="bi bi-target me-1"></i>
                 {nutritionGoal ? 'Edit Goal' : 'Set Goal'}
               </button>
-              <button 
+              <button
                 className="btn btn-primary btn-sm"
                 onClick={() => { resetSearchState(); setShowLogModal(true); }}
               >
@@ -671,9 +732,7 @@ const MealsPage = () => {
         </div>
       </div>
 
-      {/* Main Content */}
       <main className="container-fluid px-4 py-4 pb-5">
-        {/* Daily Summary Cards */}
         {dailySummary && (
           <div className="row g-3 mb-4">
             <div className="col-md-3">
@@ -768,7 +827,7 @@ const MealsPage = () => {
         )}
 
         {/* Today's Meals */}
-        <div className="card border-0 shadow-sm">
+        <div className="card border-0 shadow-sm mb-4">
           <div className="card-header bg-white border-bottom">
             <h5 className="mb-0">Today's Meals</h5>
           </div>
@@ -840,6 +899,98 @@ const MealsPage = () => {
             )}
           </div>
         </div>
+
+    {/* Meal History (7-day windows) */}
+    <div className="card border-0 shadow-sm mb-5">
+          <div className="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 className="mb-0">Meal History</h5>
+            <div className="d-flex align-items-center gap-2">
+              <button className="btn btn-sm btn-outline-secondary" onClick={goOlder} disabled={historyLoading}>
+                <i className="bi bi-chevron-left"></i> Previous 7 days
+              </button>
+              <div className="small text-muted">
+                {historyStartDate} – {historyEndDate}
+              </div>
+              <button className="btn btn-sm btn-outline-secondary" onClick={goNewer} disabled={!canGoNewer || historyLoading}>
+                Next 7 days <i className="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+          <div className="card-body">
+            {historyLoading ? (
+              <div className="text-center py-4"><div className="spinner-border" role="status"></div></div>
+            ) : historyDates.length === 0 ? (
+              <div className="text-center text-muted py-4">No meals in this range.</div>
+            ) : (
+              historyDates.map(date => {
+                const weekday = new Date(date).toLocaleDateString(undefined, { weekday: 'long' });
+                const allLogs = ['breakfast','lunch','dinner','snack','other'].flatMap(meal => historyByDate[date][meal]);
+                const totals = allLogs.reduce((acc, l) => {
+                  acc.calories += l.calories || 0;
+                  acc.protein += l.protein || 0;
+                  acc.carbs += l.carbs || 0;
+                  acc.fat += l.fat || 0;
+                  return acc;
+                }, { calories:0, protein:0, carbs:0, fat:0 });
+                return (
+                  <div key={date} className="mb-3 border rounded">
+                    <div className="d-flex justify-content-between align-items-center px-3 py-2 bg-light">
+                      <div>
+                        <strong>{weekday}</strong> <span className="text-muted">{date}</span><br/>
+                        <small className="text-muted">{allLogs.length} item(s) • {Math.round(totals.calories)} kcal • P {Math.round(totals.protein)}g • C {Math.round(totals.carbs)}g • F {Math.round(totals.fat)}g</small>
+                      </div>
+                      <button
+                        className="btn btn-sm btn-outline-primary"
+                        type="button"
+                        onClick={() => {
+                          const section = document.getElementById(`history-details-${date}`);
+                          if (section) section.classList.toggle('d-none');
+                        }}
+                      >
+                        View Details
+                      </button>
+                    </div>
+                    <div id={`history-details-${date}`} className="px-3 py-3 d-none">
+                      {['breakfast','lunch','dinner','snack','other'].map(meal => (
+                        historyByDate[date][meal].length > 0 && (
+                          <div key={`${date}-${meal}`} className="mb-3">
+                            <div className="fw-semibold text-capitalize mb-2">{meal}</div>
+                            <div className="table-responsive">
+                              <table className="table table-sm">
+                                <thead>
+                                  <tr>
+                                    <th>Food</th>
+                                    <th>Serving</th>
+                                    <th>Calories</th>
+                                    <th>Protein</th>
+                                    <th>Carbs</th>
+                                    <th>Fat</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {historyByDate[date][meal].map(item => (
+                                    <tr key={item.id}>
+                                      <td><strong>{toTitleCase(item.food_name)}</strong></td>
+                                      <td>{formatServing(item.quantity, item.serving_unit)}</td>
+                                      <td>{Math.round(item.calories)} kcal</td>
+                                      <td>{Math.round(item.protein)}g</td>
+                                      <td>{Math.round(item.carbs)}g</td>
+                                      <td>{Math.round(item.fat)}g</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
       </main>
 
       {/* Goal Modal */}
@@ -855,8 +1006,8 @@ const MealsPage = () => {
                 <div className="modal-body">
                   <div className="mb-3">
                     <label className="form-label">Goal Type</label>
-                    <select 
-                      className="form-select" 
+                    <select
+                      className="form-select"
                       value={goalForm.goal_type}
                       onChange={(e) => setGoalForm({...goalForm, goal_type: e.target.value})}
                       required
@@ -867,8 +1018,8 @@ const MealsPage = () => {
                   </div>
                   <div className="mb-3">
                     <label className="form-label">Target Calories *</label>
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       className="form-control"
                       value={goalForm.target_calories}
                       onChange={(e) => setGoalForm({...goalForm, target_calories: e.target.value})}
@@ -878,8 +1029,8 @@ const MealsPage = () => {
                   <div className="row">
                     <div className="col-md-4 mb-3">
                       <label className="form-label">Protein (g)</label>
-                      <input 
-                        type="number" 
+                      <input
+                        type="number"
                         className="form-control"
                         value={goalForm.target_protein}
                         onChange={(e) => setGoalForm({...goalForm, target_protein: e.target.value})}
@@ -887,8 +1038,8 @@ const MealsPage = () => {
                     </div>
                     <div className="col-md-4 mb-3">
                       <label className="form-label">Carbs (g)</label>
-                      <input 
-                        type="number" 
+                      <input
+                        type="number"
                         className="form-control"
                         value={goalForm.target_carbs}
                         onChange={(e) => setGoalForm({...goalForm, target_carbs: e.target.value})}
@@ -896,8 +1047,8 @@ const MealsPage = () => {
                     </div>
                     <div className="col-md-4 mb-3">
                       <label className="form-label">Fat (g)</label>
-                      <input 
-                        type="number" 
+                      <input
+                        type="number"
                         className="form-control"
                         value={goalForm.target_fat}
                         onChange={(e) => setGoalForm({...goalForm, target_fat: e.target.value})}
@@ -1189,7 +1340,7 @@ const MealsPage = () => {
         </div>
       )}
 
-      {/* Bottom Navigation */}
+  {/* Bottom Navigation */}
       <nav className="fixed-bottom footer-menu" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="container-fluid" style={{ backgroundColor: 'white', borderTop: '1px solid #dee2e6' }}>
           <div className="row">
@@ -1281,7 +1432,6 @@ const MealsPage = () => {
           </div>
         </div>
       </nav>
-      </div>
     </div>
   );
 };

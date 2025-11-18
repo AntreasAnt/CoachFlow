@@ -9,6 +9,9 @@ const MyWorkouts = () => {
   const [activeView, setActiveView] = useState('plans'); // plans, create, log
   const [workoutPlans, setWorkoutPlans] = useState([]);
   const [workoutHistory, setWorkoutHistory] = useState([]);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyHasMore, setHistoryHasMore] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [allExercises, setAllExercises] = useState([]);
   const [premadeWorkoutPlans, setPremadeWorkoutPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +56,11 @@ const MyWorkouts = () => {
     fetchWorkoutData();
   }, []);
 
+  useEffect(() => {
+    fetchRecentSessions(historyPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historyPage]);
+
   // Timer effects
   useEffect(() => {
     if (isWorkoutTimerRunning) {
@@ -91,7 +99,8 @@ const MyWorkouts = () => {
 
       if (data.success) {
         setWorkoutPlans(data.workoutPlans);
-        setWorkoutHistory(data.recentSessions);
+  // initial recent sessions come from GetWorkoutData; we will also fetch paged
+  setWorkoutHistory(data.recentSessions);
         setAllExercises(data.exercises || []);
         setPremadeWorkoutPlans(data.premiumPlans || []);
       } else {
@@ -103,6 +112,21 @@ const MyWorkouts = () => {
       setError('Failed to load workout data. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRecentSessions = async (page = 1) => {
+    try {
+      setHistoryLoading(true);
+      const resp = await APIClient.get(`${BACKEND_ROUTES_API}GetRecentWorkouts.php?page=${page}&pageSize=7`);
+      if (resp.success) {
+        setWorkoutHistory(resp.sessions || []);
+        setHistoryHasMore(!!resp.hasMore);
+      }
+    } catch (e) {
+      console.error('Error fetching paged sessions', e);
+    } finally {
+      setHistoryLoading(false);
     }
   };
 
@@ -812,6 +836,23 @@ const MyWorkouts = () => {
                 </div>
               ))
             )}
+            <div className="d-flex justify-content-between align-items-center pt-3">
+              <button
+                className="btn btn-outline-secondary btn-sm"
+                onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                disabled={historyLoading || historyPage === 1}
+              >
+                <i className="bi bi-chevron-left"></i> Previous
+              </button>
+              <div className="small text-muted">Page {historyPage}</div>
+              <button
+                className="btn btn-outline-secondary btn-sm"
+                onClick={() => setHistoryPage(p => p + 1)}
+                disabled={historyLoading || !historyHasMore}
+              >
+                Next <i className="bi bi-chevron-right"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
