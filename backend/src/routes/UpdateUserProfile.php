@@ -1,5 +1,4 @@
 <?php
-header('Content-Type: application/json');
 include_once("../config/cors.php");
 include_once("../models/UserModel.php");
 include_once("../config/Auth.php");

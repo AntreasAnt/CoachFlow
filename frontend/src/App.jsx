@@ -14,13 +14,15 @@ import AuthRoot from "./contexts/AuthRoot";
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import ManagerDashboard from "./pages/dashboards/ManagerDashboard";
 import TrainerDashboard from "./pages/dashboards/TrainerDashboard";
-import TraineeDashboard from "./pages/dashboards/trainee/TraineeDashboard";
+
+import TraineeDashboardHome from "./pages/dashboards/trainee/Dashboard";
 import ProfilePage from "./pages/dashboards/trainee/ProfilePage";
 
-// Import new page components
+
 import MyWorkouts from "./pages/dashboards/trainee/MyWorkouts";
 import MealsPage from "./pages/dashboards/trainee/MealsPage";
-import ProgressPage from "./pages/ProgressPage";
+import Progress from "./pages/dashboards/trainee/Progress";
+
 import Coach from "./pages/dashboards/trainee/Coach";
 
 function App() {
@@ -94,21 +96,16 @@ function App() {
             </AuthRoot>
           } 
         />
-        <Route 
-          path="/trainee-dashboard" 
-          element={
-            <AuthRoot allowedPrivileges={['trainee']}>
-              <TraineeDashboard />
-            </AuthRoot>
-          } 
-        />
+        
         
         {/* Dashboard alias route */}
         <Route 
           path="/dashboard" 
           element={
             <AuthRoot allowedPrivileges={['trainee']}>
-              <TraineeDashboard />
+
+                <TraineeDashboardHome />
+             
             </AuthRoot>
           } 
         />
@@ -144,7 +141,7 @@ function App() {
           path="/progress" 
           element={
             <AuthRoot allowedPrivileges={['trainee']}>
-              <ProgressPage />
+              <Progress />
             </AuthRoot>
           }
         />

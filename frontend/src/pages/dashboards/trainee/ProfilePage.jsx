@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import LogoutButton from '../../../components/LogoutButton';
-import TraineeHeader from '../../../components/TraineeHeader';
+import TraineeDashboard from '../../../components/TraineeDashboard';
 import '../../../styles/ProfilePage.css';
 import '../../../styles/trainee-dashboard.css';
 
@@ -263,8 +263,7 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="min-vh-100 bg-white">
-      <TraineeHeader />
+    <TraineeDashboard>
       <div className="profile-page">
       {/* Page Title */}
       <div className="bg-white border-bottom">
@@ -310,6 +309,9 @@ const ProfilePage = () => {
                       <i className="bi bi-pencil me-2"></i>Edit Profile
                     </button>
                   )}
+
+                  {/* Visible logout button for the profile owner */}
+                  <LogoutButton className="btn btn-outline-danger rounded-pill" />
                 </>
               )}
               
@@ -787,100 +789,9 @@ const ProfilePage = () => {
         </div>
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="fixed-bottom footer-menu" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="container-fluid" style={{ backgroundColor: 'white', borderTop: '1px solid #dee2e6' }}>
-          <div className="row">
-            <div className="col">
-              <div className={window.location.pathname === '/' ? 'nav-item-active' : ''}>
-                <button
-                  className={`btn w-100 py-2 border-0 ${
-                    window.location.pathname === '/' 
-                      ? 'text-primary nav-btn-active' 
-                      : 'text-muted'
-                  }`}
-                  onClick={() => navigate('/')}
-                >
-                  <div className="d-flex flex-column align-items-center">
-                    <i className={`bi bi-house${window.location.pathname === '/' ? '-fill' : ''} fs-5`}></i>
-                    <small className="mt-1">Home</small>
-                  </div>
-                </button>
-              </div>
-            </div>
-            <div className="col">
-              <div className={window.location.pathname === '/workouts' ? 'nav-item-active' : ''}>
-                <button
-                  className={`btn w-100 py-2 border-0 ${
-                    window.location.pathname === '/workouts' 
-                      ? 'text-primary nav-btn-active' 
-                      : 'text-muted'
-                  }`}
-                  onClick={() => navigate('/workouts')}
-                >
-                  <div className="d-flex flex-column align-items-center">
-                    <i className={`bi bi-lightning${window.location.pathname === '/workouts' ? '-fill' : ''} fs-5`}></i>
-                    <small className="mt-1">Workouts</small>
-                  </div>
-                </button>
-              </div>
-            </div>
-            <div className="col">
-              <div className={window.location.pathname === '/meals' ? 'nav-item-active' : ''}>
-                <button
-                  className={`btn w-100 py-2 border-0 ${
-                    window.location.pathname === '/meals' 
-                      ? 'text-primary nav-btn-active' 
-                      : 'text-muted'
-                  }`}
-                  onClick={() => navigate('/meals')}
-                >
-                  <div className="d-flex flex-column align-items-center">
-                    <i className={`bi bi-${window.location.pathname === '/meals' ? 'cup-hot-fill' : 'cup-hot'} fs-5`}></i>
-                    <small className="mt-1">Meals</small>
-                  </div>
-                </button>
-              </div>
-            </div>
-            <div className="col">
-              <div className={window.location.pathname === '/progress' ? 'nav-item-active' : ''}>
-                <button
-                  className={`btn w-100 py-2 border-0 ${
-                    window.location.pathname === '/progress' 
-                      ? 'text-primary nav-btn-active' 
-                      : 'text-muted'
-                  }`}
-                  onClick={() => navigate('/progress')}
-                >
-                  <div className="d-flex flex-column align-items-center">
-                    <i className={`bi bi-graph-up${window.location.pathname === '/progress' ? '-arrow' : ''} fs-5`}></i>
-                    <small className="mt-1">Progress</small>
-                  </div>
-                </button>
-              </div>
-            </div>
-            <div className="col">
-              <div className={window.location.pathname === '/coach' ? 'nav-item-active' : ''}>
-                <button
-                  className={`btn w-100 py-2 border-0 ${
-                    window.location.pathname === '/coach' 
-                      ? 'text-primary nav-btn-active' 
-                      : 'text-muted'
-                  }`}
-                  onClick={() => navigate('/coach')}
-                >
-                  <div className="d-flex flex-column align-items-center">
-                    <i className={`bi bi-person-check${window.location.pathname === '/coach' ? '-fill' : ''} fs-5`}></i>
-                    <small className="mt-1">Coach</small>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      {/* Bottom navigation provided by TraineeDashboard */}
       </div>
-    </div>
+    </TraineeDashboard>
   );
 };
 
