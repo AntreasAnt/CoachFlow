@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BACKEND_ROUTES_API } from '../../../config/config';
+import TraineeDashboard from '../../../components/TraineeDashboard';
 
 const HomePage = () => {
   const [prebuiltPlans, setPrebuiltPlans] = useState([]);
@@ -57,7 +58,8 @@ const HomePage = () => {
   };
 
   return (
-    <div className="container-fluid px-4 py-3">
+    <TraineeDashboard>
+      <div className="container-fluid px-4 py-3">
       {/* Error State */}
       {error && (
         <div className="alert alert-danger" role="alert">
@@ -218,7 +220,8 @@ const HomePage = () => {
       </div>
         </>
       )}
-    </div>
+      </div>
+    </TraineeDashboard>
   );
 };
 

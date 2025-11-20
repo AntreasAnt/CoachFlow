@@ -11,14 +11,16 @@ function SignUp() {
     username: "",
     email: "",
     password: "",
-    confpassword: "",
+  confpassword: "",
+  role: "",
   });
 
   const [errors, setErrors] = useState({
     username: "",
     email: "",
     password: "",
-    confpassword: "",
+  confpassword: "",
+  role: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -88,6 +90,11 @@ function SignUp() {
       newErrors.confpassword = "Passwords do not match";
     }
 
+    // Role validation
+    if (!formData.role) {
+      newErrors.role = 'Please select whether you are a trainer or a trainee';
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -109,7 +116,7 @@ function SignUp() {
         email,
         password,
         registrationDate,
-        role: "trainer", // always trainer since required
+        role: formData.role || 'trainee',
       };
 
       const response = await fetch(BACKEND_ROUTES_API + "SignUp.php", {
@@ -272,6 +279,26 @@ function SignUp() {
               {generalError}
             </div>
           )}
+
+          {/* Role selection */}
+          <div className="mb-3">
+        
+            <div className="form-check form-check-inline">
+              <input className="form-check-input" type="radio" name="role" id="roleTrainee" value="trainee"
+                checked={formData.role === 'trainee'}
+                onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
+              />
+              <label className="form-check-label" htmlFor="roleTrainee">Trainee</label>
+            </div>
+            <div className="form-check form-check-inline">
+              <input className="form-check-input" type="radio" name="role" id="roleTrainer" value="trainer"
+                checked={formData.role === 'trainer'}
+                onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
+              />
+              <label className="form-check-label" htmlFor="roleTrainer">Trainer</label>
+            </div>
+            {errors.role && <div className="text-danger small mt-1">{errors.role}</div>}
+          </div>
 
           <button
             type="submit"
