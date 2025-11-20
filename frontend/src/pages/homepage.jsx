@@ -6,7 +6,7 @@ import { BACKEND_ROUTES_API } from "../config/config";
 import AdminDashboard from "./dashboards/AdminDashboard";
 import ManagerDashboard from "./dashboards/ManagerDashboard";
 import TrainerDashboard from "./dashboards/TrainerDashboard";
-import TraineeDashboard from "../components/TraineeDashboard";
+import TraineeDashboard from "./dashboards/trainee/Dashboard";
 
 function MainPage() {
   const [userRole, setUserRole] = useState(null);
