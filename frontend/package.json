@@ -12,6 +12,12 @@
   "dependencies": {
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
+  "@mui/material": "^6.1.6",
+  "@mui/x-data-grid": "^7.22.2",
+  "jspdf": "^2.5.1",
+  "jspdf-autotable": "^3.8.0",
+  "@emotion/react": "^11.13.3",
+  "@emotion/styled": "^11.13.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.1"

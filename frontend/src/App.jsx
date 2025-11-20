@@ -25,6 +25,8 @@ import Progress from "./pages/dashboards/trainee/Progress";
 
 import Coach from "./pages/dashboards/trainee/Coach";
 
+import AdminUserDashboard from "./pages/dashboards/admin/UsersDashboard/UsersDashboard";   
+
 function App() {
   return (
     <Router>
@@ -153,6 +155,17 @@ function App() {
             </AuthRoot>
           }
         />
+
+
+ <Route 
+          path="/admin/users" 
+          element={
+            <AuthRoot allowedPrivileges={['admin']}>
+              <AdminUserDashboard />
+            </AuthRoot>
+          } 
+        />
+
       </Routes>
     </Router>
   );
