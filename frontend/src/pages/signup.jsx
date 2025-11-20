@@ -12,7 +12,7 @@ function SignUp() {
     email: "",
     password: "",
   confpassword: "",
-  role: "",
+  role: "trainee",
   });
 
   const [errors, setErrors] = useState({
