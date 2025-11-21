@@ -24,7 +24,7 @@ export const EditUserModal = ({
         <div className="modal-dialog" role="document">
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title">Επεξεργασία Χρήστη</h5>
+              <h5 className="modal-title">Edit User</h5>
               <button
                 type="button"
                 className="btn-close"
@@ -44,7 +44,7 @@ export const EditUserModal = ({
                 {/* Username Field */}
                 <div className="mb-3">
                   <label htmlFor="username" className="form-label">
-                    Όνομα Χρήστη
+                    Username
                   </label>
                   <input
                     type="text"
@@ -96,7 +96,7 @@ export const EditUserModal = ({
                 {/* Role Field */}
                 <div className="mb-3">
                   <label htmlFor="role" className="form-label">
-                    Ρόλος
+                    Role
                   </label>
                   <select
                     name="role"
@@ -117,7 +117,7 @@ export const EditUserModal = ({
                     Διαχειριστής
                     </option>
                     <option value="3" className="text-success">
-                      Χρήστης
+                      User
                     </option>
                   </select>
                 </div>

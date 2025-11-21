@@ -22,12 +22,12 @@ export async function forceReset({ selectedUsers, setError, setShowActionsModal,
         }, 3000);
       
     } else {
-      setError(data.message || "Αποτυχία επαναφοράς κωδικών.");
+  setError(data.message || "Failed to force reset password(s).");
 
       setTimeout(()=>{setError(false)}, 8000);
     }
   } catch (error) {
-    setError(error.message || "Παρουσιάστηκε σφάλμα κατά την επαναφορά κωδικών.");
+  setError(error.message || "An error occurred while sending force reset request.");
     setTimeout(()=>{setError(false)}, 8000);
   } finally {
     setShowActionsModal(false);

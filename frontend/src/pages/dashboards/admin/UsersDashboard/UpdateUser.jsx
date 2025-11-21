@@ -18,8 +18,8 @@ export async function updateUser({
   
     // Validate form data
     const newErrors = {};
-    if (!formData.username) newErrors.username = "Το όνομα χρήστη είναι υποχρεωτικό";
-    if (!formData.email) newErrors.email = "Το email είναι υποχρεωτικό";
+  if (!formData.username) newErrors.username = "Username is required";
+  if (!formData.email) newErrors.email = "Email is required";
   
     // If there are validation errors, update state and stop submission
     if (Object.keys(newErrors).length > 0) {
@@ -38,7 +38,7 @@ export async function updateUser({
       userId: selectedUserId,
       username: formData.username,
       email: formData.email,
-      role: formData.role
+  role: formData.role
     };
   
     try {
@@ -92,7 +92,7 @@ export async function updateUser({
              setShowEditModal(false);
 
   
-        setError(data.message || "Registration failed");
+  setError(data.message || "Failed to update user");
         setTimeout(() => {
           setError("");
         }, 5000);
@@ -112,7 +112,7 @@ export async function updateUser({
         throw new Error("Unexpected response format");
       }
     } catch (error) {
-      setError("Παρουσιάστηκε σφάλμα κατά την ενημέρωση του χρήστη. Παρακαλώ δοκιμάστε ξανά.");
+  setError("An error occurred while updating the user. Please try again.");
       console.error("Error:", error);
       setShowEditModal(false);
       setTimeout(() => {

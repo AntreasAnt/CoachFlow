@@ -14,11 +14,11 @@ const ActionsModal = ({
       <div className="modal-dialog" role="document">
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">Ενέργειες</h5>
+            <h5 className="modal-title">Actions</h5>
             <button type="button" className="btn-close" onClick={handleClose}></button>
           </div>
           <div className="modal-body">
-            <p>Επιλέξτε μία από τις παρακάτω ενέργειες:</p>
+            <p>Select one of the following actions:</p>
             <div className="d-flex flex-column gap-2">
   <button className="btn btn-danger btn-sm w-100 py-2" onClick={handleDelete}>
     <i className="bi bi-trash3 me-2"></i>

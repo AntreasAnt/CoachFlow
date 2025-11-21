@@ -21,7 +21,7 @@ export const AddUserModal = ({
         <div className="modal-dialog" role="document">
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title">Προσθήκη Νέου Χρήστη</h5>
+              <h5 className="modal-title">Add New User</h5>
               <button
                 type="button"
                 className="btn-close"
@@ -41,7 +41,7 @@ export const AddUserModal = ({
                 {/* Username Field */}
                 <div className="mb-3">
                   <label htmlFor="username" className="form-label">
-                    Όνομα Χρήστη
+                    Username
                   </label>
                   <input
                     type="text"
@@ -87,7 +87,7 @@ export const AddUserModal = ({
                 {/* Password Fields */}
                 <div className="mb-3">
                   <label htmlFor="password" className="form-label">
-                    Κωδικός
+                    Password
                   </label>
                   <input
                     type="password"
@@ -109,7 +109,7 @@ export const AddUserModal = ({
                 </div>
                 <div className="mb-3">
                   <label htmlFor="confpassword" className="form-label">
-                    Επιβεβαίωση Κωδικού
+                    Confirm Password
                   </label>
                   <input
                     type="password"
@@ -132,7 +132,7 @@ export const AddUserModal = ({
                 {/* Role Field */}
                 <div className="mb-3">
                   <label htmlFor="role" className="form-label">
-                    Ρόλος
+                    Role
                   </label>
                   <select
                     name="role"
@@ -146,9 +146,10 @@ export const AddUserModal = ({
                         : ""
                     }`}
                   >
-                    <option value="1">Διαχειριστής</option>
-                    <option value="2">Υπάλληλος</option>
-                    <option value="3">Πελάτης</option>
+                    <option value="admin">Admin</option>
+                    <option value="manager">Manager</option>
+                    <option value="trainer">Trainer</option>
+                    <option value="trainee">Trainee</option>
                   </select>
                   {errors.role && (
                     <div className="invalid-feedback">{errors.role}</div>
@@ -163,7 +164,7 @@ export const AddUserModal = ({
                 onClick={handleCloseModal}
                 disabled={isSubmitting}
               >
-                Κλείσιμο
+                Close
               </button>
               <button
                 type="button"
@@ -174,10 +175,10 @@ export const AddUserModal = ({
                 {isSubmitting ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2"></span>
-                    Αποθήκευση...
+                    Saving...
                   </>
                 ) : (
-                  "Αποθήκευση"
+                  "Save"
                 )}
               </button>
             </div>

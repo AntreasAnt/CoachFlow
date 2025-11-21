@@ -61,7 +61,7 @@ export async function userDisable({ selectedUsers, setError, setShowActionsModal
              }, 3000);
 
         }else{
-          setError(data.message || "Αποτυχία απενεργοποίησης.");
+          setError(data.message || "Failed to disable selected users.");
           setTimeout(()=>{setError(false)}, 8000);
         }
 
@@ -70,7 +70,7 @@ export async function userDisable({ selectedUsers, setError, setShowActionsModal
 
     }
   } catch (error) {
-    setError(error.message || "Παρουσιάστηκε σφάλμα .");
+  setError(error.message || "An error occurred while disabling users.");
     setTimeout(()=>{setError(false)}, 8000);
   } finally {
     setShowActionsModal(false);

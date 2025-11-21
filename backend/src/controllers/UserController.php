@@ -134,9 +134,17 @@ class UserController extends UserModel
             $this->password = password_hash($inputData["password"], PASSWORD_DEFAULT);
             $this->UserID = $this->getUserID(); // Generate user ID
             $this->registrationDate = time();
-            // Set user privileges from input if provided and valid; default to 'trainee'
-            if (isset($inputData['role']) && in_array($inputData['role'], ['trainer', 'trainee'])) {
-                $this->UserPrivileges = $inputData['role'];
+            // Set user role / privileges. Accept textual roles (trainer/trainee) or numeric role codes (1=admin,2=manager,3=user)
+            if (isset($inputData['role'])) {
+                $role = $inputData['role'];
+                // Normalize numeric roles directly, otherwise keep textual trainer/trainee
+                if (in_array($role, ['1','2','3',1,2,3], true)) {
+                    $this->UserPrivileges = (string)$role; // store numeric code as string
+                } elseif (in_array($role, ['trainer','trainee'], true)) {
+                    $this->UserPrivileges = $role;
+                } else {
+                    $this->UserPrivileges = 'trainee';
+                }
             } else {
                 $this->UserPrivileges = 'trainee'; // default
             }

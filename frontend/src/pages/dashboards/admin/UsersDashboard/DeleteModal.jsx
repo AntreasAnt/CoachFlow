@@ -25,7 +25,7 @@ export const DeleteModal = ({ show, selectedCount, onCancel, onConfirm }) => {
             <div className="modal-body">
               <p>
                 Είστε σίγουροι ότι θέλετε να διαγράψετε {selectedCount}{" "}
-                {selectedCount === 1 ? "χρήστη" : "χρήστες"}?
+                {selectedCount === 1 ? "user" : "users"}?
               </p>
               <p className="text-danger">
                 <small>Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.</small>

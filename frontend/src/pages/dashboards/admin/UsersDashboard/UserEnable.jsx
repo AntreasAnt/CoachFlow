@@ -61,13 +61,13 @@ export async function userEnable({ selectedUsers, setError, setShowActionsModal,
                   setEnableSuccess(false);
               }, 3000);
             
-          }else {setError(data.message || "Αποτυχία ενεργοποίησης.");
+          }else {setError(data.message || "Failed to enable selected users.");
                  setTimeout(()=>{setError(false)}, 8000);
           }
 
     }
   } catch (error) {
-    setError(error.message || "Παρουσιάστηκε σφάλμα .");
+  setError(error.message || "An error occurred while enabling users.");
     setTimeout(()=>{setError(false)}, 8000);
   } finally {
     setShowActionsModal(false);

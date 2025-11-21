@@ -10,7 +10,7 @@ export async function confirmDeleteUser({
   }) {
     try {
       const response = await fetch(
-        BACKEND_ROUTES_API +  "DeleteUsers.php",
+        BACKEND_ROUTES_API +  "DeleteUser.php",
         {
           method: "POST",
           headers: {

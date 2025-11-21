@@ -22,7 +22,7 @@ export const Search = ({ onSearch }) => {
       <input
         type="text"
         className="form-control"
-        placeholder="Αναζήτηση χρήστη..."
+  placeholder="Search user..."
         value={query}
         // the user types in the input field, the query state is updated with the current value of the input field.
         onChange={(e) => setQuery(e.target.value)}

@@ -308,22 +308,21 @@ class UserModel
 
 
         // Get paginated results with search
-        $query = "SELECT 
-                u.userid, 
-                u.email, 
-                u.username, 
-                u.registrationdate, 
-                u.lastlogin, 
-                u.role, 
-                u.isdisabled,
-                GROUP_CONCAT(DISTINCT ut.fullname SEPARATOR ', ') as trackmyself,
-                GROUP_CONCAT(DISTINCT ut2.personname SEPARATOR ', ') as trackothers
-              FROM user u
-              LEFT JOIN user_self_tracking ut ON u.userid = ut.userid
-              LEFT JOIN user_tracked_candidates ut2 ON u.userid = ut2.userid
-              $whereClause
-              GROUP BY u.userid
-              LIMIT ? OFFSET ?";
+    // Tracking tables may not exist in some deployments; use placeholders instead of joins
+    $query = "SELECT 
+        u.userid, 
+        u.email, 
+        u.username, 
+        u.registrationdate, 
+        u.lastlogin, 
+        u.role, 
+        u.isdisabled,
+        NULL as trackmyself,
+        NULL as trackothers
+          FROM user u
+          $whereClause
+          GROUP BY u.userid
+          LIMIT ? OFFSET ?";
 
         $stmt = $this->conn->prepare($query);
 

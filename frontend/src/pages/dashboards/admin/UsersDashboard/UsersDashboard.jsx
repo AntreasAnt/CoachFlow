@@ -74,7 +74,7 @@ function UsersDashboard() {
   // Function to handle opening the actions modal
 const handleOpenActionsModal = () => {
   if (selectedUsers.length === 0) {
-    setError("Παρακαλώ επιλέξτε έναν χρήστη για ενέργειες.");
+  setError("Please select at least one user for actions.");
     setTimeout(() => {
       setError(null);
     }, 5000);
@@ -98,7 +98,7 @@ const handleRoleSearch = (role) => {
   // Placeholder handlers for disable and force reset actions.
   const handleDisable = async () => {
     if (selectedUsers.length === 0) {
-      setError("Παρακαλώ επιλέξτε έναν χρήστη για να τον απενεργοποιήσετε.");
+  setError("Please select at least one user to disable.");
       setTimeout(() => setError(null), 5000);
       return;
     }
@@ -116,7 +116,7 @@ const handleRoleSearch = (role) => {
 
   const handleEnable = async () => {
     if (selectedUsers.length === 0) {
-      setError("Παρακαλώ επιλέξτε έναν χρήστη για να τον ενεργοποιήσετε.");
+  setError("Please select at least one user to enable.");
       setTimeout(() => setError(null), 5000);
       return;
     }
@@ -131,7 +131,7 @@ const handleRoleSearch = (role) => {
   }
   const handleForceReset = async () => {
     if (selectedUsers.length === 0) {
-      setError("Παρακαλώ επιλέξτε έναν χρήστη για επαναφορά κωδικού.");
+  setError("Please select at least one user to force reset password.");
       setTimeout(() => setError(null), 5000);
       return;
     }
@@ -308,14 +308,14 @@ const handleRoleSearch = (role) => {
   //When Edit is clicked on a user
   const handleEdit = () => {
     if (selectedUsers.length === 0) {
-      setError("Παρακαλώ επιλέξτε έναν χρήστη για επεξεργασία.");
+  setError("Please select one user to edit.");
       setTimeout(() => {
         setError(null);
       }, 5000);
       return;
     } else if (selectedUsers.length > 1) {
       setError(
-        `Παρακαλώ επιλέξτε μόνο έναν χρήστη για επεξεργασία. Έχετε επιλέξει ${selectedUsers.length} χρήστες.`
+  `Please select only one user to edit. You have selected ${selectedUsers.length} users.`
       );
       setTimeout(() => {
         setError(null);
@@ -380,7 +380,7 @@ const handleRoleSearch = (role) => {
     if (selectedUsers.length > 0) {
       setShowDeleteModal(true);
     } else {
-      setError("Παρακαλώ επιλέξτε έναν χρήστη για διαγραφή.");
+  setError("Please select at least one user to delete.");
       setTimeout(() => {
         setError(null);
       }, 5000);
@@ -437,13 +437,12 @@ const handleRoleSearch = (role) => {
       user.id,
       user.username,
       user.email,
-      user.role === 1
-        ? "Admin"
-        : user.role === 2
-          ? "Editor"
-          : user.role === 3
-            ? "Guest"
-            : "Guest",
+      // Map role value to label (supports both numeric legacy and string enum)
+      (user.role === 1 || user.role === '1' || user.role === 'admin') ? 'Admin'
+        : (user.role === 2 || user.role === '2' || user.role === 'manager') ? 'Manager'
+        : (user.role === 3 || user.role === '3' || user.role === 'trainer') ? 'Trainer'
+        : (user.role === 4 || user.role === '4' || user.role === 'trainee') ? 'Trainee'
+        : 'User',
       user.isdisabled ? "Disabled" : "Enabled",
       formatDate(user.registrationdate),
       user.lastlogin ? formatDate(user.lastlogin) : "Never",
@@ -461,32 +460,32 @@ const handleRoleSearch = (role) => {
       <AdminSidebar />
       <div className="col-xl-10 p-4" style={{ height: "100%", overflowY: "auto" }}>
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2>Διαχείριση Χρηστών</h2>
+          <h2>User Management</h2>
           <button className="btn btn-primary ms-3" onClick={handleGeneratePDF}>
-            Λήψη <i className="bi bi-file-earmark-pdf"></i>
+            Export <i className="bi bi-file-earmark-pdf"></i>
           </button>
         </div>
           {/* Error and Success Messages */}
           {error && <div className="alert alert-danger">{error}</div>}
           {saveSuccess && (
             <div className="alert alert-success mt-3">
-              Ο χρήστης αποθηκεύτηκε με επιτυχία!
+              User saved successfully!
             </div>
           )}
           {resetSuccess && (
             <div className="alert alert-success mt-3">
-              Ο κωδικός πρόσβασης επαναφέρθηκε με επιτυχία!
+              Password reset request sent successfully!
             </div>
           )}
 
           {disableSuccess && (
             <div className="alert alert-success mt-3">
-              Απενεργοποίηση με επιτυχία!
+              Disable successful!
             </div>
           )}
           {enableSuccess && (
             <div className="alert alert-success mt-3">
-              Ενεργοποίηση με επιτυχία!
+              Enable successful!
             </div>
           )}
 
@@ -509,7 +508,7 @@ const handleRoleSearch = (role) => {
   onClick={() => setShowAddModal(true)}
 >
   <i className="bi bi-plus-circle me-2"></i>
-  Προσθήκη Χρήστη
+  Add User
 </button>
           {/* Edit User Button */}
           <button
@@ -521,7 +520,7 @@ const handleRoleSearch = (role) => {
             onClick={handleEdit}
           >
             <i className="bi bi-pencil-square me-2"></i>
-            Επεξεργασία
+            Edit
           </button>
 
          {/* Actions Button */}
@@ -532,7 +531,7 @@ const handleRoleSearch = (role) => {
             onClick={handleOpenActionsModal}
           >
             <i className={`bi bi-list me-2 s ${selectedUsers.length === 0 ? "" :"text-light"}`}></i>
-            Ενέργειες
+            Actions
           </button>
 
     

@@ -10,7 +10,7 @@ export const RoleSearch = ({ handleRoleSearch }) => {
       <option value="">Όλοι οι Ρόλοι</option>
       <option value="1">Επικεφαλής</option>
       <option value="2">Διαχειριστής</option>
-      <option value="3">Χρήστης</option>
+  <option value="3">User</option>
     </select>
   );
 };

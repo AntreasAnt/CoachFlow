@@ -19,11 +19,11 @@ export async function saveUser({
   // Final validation before submission:
   const newErrors = {};
   if (!formData.username)
-    newErrors.username = "Το όνομα χρήστη είναι υποχρεωτικό";
-  if (!formData.email) newErrors.email = "Το email είναι υποχρεωτικό";
-  if (!formData.password) newErrors.password = "Ο κωδικός είναι υποχρεωτικός";
+    newErrors.username = "Username is required";
+  if (!formData.email) newErrors.email = "Email is required";
+  if (!formData.password) newErrors.password = "Password is required";
   if (formData.password !== formData.confpassword)
-    newErrors.confpassword = "Οι κωδικοί δεν ταιριάζουν";
+    newErrors.confpassword = "Passwords do not match";
 
   // If there are validation errors, update state and stop submission
   if (Object.keys(newErrors).length > 0) {
@@ -122,7 +122,7 @@ export async function saveUser({
         role: "3",
       });
 
-      setError(data.message || "Registration failed");
+  setError(data.message || "Failed to create user");
       setTimeout(() => {
         setError("");
       }, 5000);
@@ -140,7 +140,7 @@ export async function saveUser({
       throw new Error("Unexpected response format");
     }
   } catch (error) {
-    setError("An error occurred during registration. Please try again.");
+  setError("An error occurred while creating the user. Please try again.");
     setShowAddModal(false);
   } finally {
     setIsSubmitting(false);

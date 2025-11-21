@@ -40,15 +40,23 @@ export const UsersTable = ({
     }
   };
   const getRoleLabel = (role) => {
-    switch (parseInt(role)) {
-      case 1:
-        return "Επικεφαλής";
-      case 2:
-        return "Διαχειριστής";
-      case 3:
-        return "Χρήστης";
+    // Normalize role to string for mapping
+    const r = String(role).toLowerCase();
+    switch (r) {
+      case '1':
+      case 'admin':
+        return 'Admin';
+      case '2':
+      case 'manager':
+        return 'Manager';
+      case '3':
+      case 'trainer':
+        return 'Trainer';
+      case '4':
+      case 'trainee':
+        return 'Trainee';
       default:
-        return "Άγνωστο";
+        return 'User';
     }
   };
 
@@ -126,7 +134,7 @@ export const UsersTable = ({
     { field: "id", headerName: "ID", width: 70 },
     {
       field: "username",
-      headerName: "Όνομα Χρήστη",
+  headerName: "Username",
       width: 220,
       renderCell: (params) => (
         <div className="d-flex align-items-center">
@@ -151,7 +159,7 @@ export const UsersTable = ({
     },
     {
       field: "role",
-      headerName: "Ρόλος",
+  headerName: "Role",
       width: 100,
       renderCell: (params) => (
         <span className={`badge bg-${getRoleBadgeColor(params.row.role)}`}>
@@ -161,7 +169,7 @@ export const UsersTable = ({
     },
     {
       field: "lastlogin",
-      headerName: "Τελευταία Σύνδεση",
+  headerName: "Last Login",
       width: 150,
       renderCell: (params) => (
         <span title={new Date(params.value * 1000).toLocaleString()}>
@@ -171,7 +179,7 @@ export const UsersTable = ({
     },
     {
       field: "registrationdate",
-      headerName: "Εγγραφή",
+  headerName: "Registered",
       width: 100,
       renderCell: (params) => (
         <span title={new Date(params.value * 1000).toLocaleString()}>
@@ -181,7 +189,7 @@ export const UsersTable = ({
     },
     {
       field: "user_self_tracking",
-      headerName: "Παρακολούθηση Χρήστη",
+  headerName: "User Tracking",
       width: 150,
       renderCell: (params) => {
         const { trackmyself, trackothers } = params.row;
@@ -197,7 +205,7 @@ export const UsersTable = ({
             }}
           >
             <i className="bi bi-eye-fill me-1"></i>
-            Προβολή
+            View
           </button>
         );
       },
