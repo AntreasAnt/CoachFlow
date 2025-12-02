@@ -20,7 +20,9 @@
   "@emotion/styled": "^11.13.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-router-dom": "^7.9.1"
+    "react-router-dom": "^7.9.1",
+    "firebase": "^11.0.0",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",

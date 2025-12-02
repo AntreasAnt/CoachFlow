@@ -11,6 +11,9 @@ frontend/.env.staging
 # Vendor directory
 vendor/
 
+# Firebase service account (keep real credentials out of VCS)
+backend/src/config/firebase-service-account.json
+
 # Composer files
 composer.phar
 

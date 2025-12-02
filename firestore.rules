@@ -1,0 +1,66 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Helper function to get user ID as string
+    function userId() {
+      return string(request.auth.uid);
+    }
+    
+    // Users collection - users can read/write their own document
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && userId() == uid;
+    }
+    
+    // Conversations collection - only participants can access
+    match /conversations/{conversationId} {
+      // Check if user is a participant
+      function isParticipant() {
+        return isSignedIn() && userId() in resource.data.participants;
+      }
+      
+      function isParticipantInNew() {
+        return isSignedIn() && userId() in request.resource.data.participants;
+      }
+      
+      // Allow read if user is a participant
+      allow read: if isParticipant();
+      
+      // Allow create if user is in the participants list
+      allow create: if isParticipantInNew();
+      
+      // Allow update if user is a participant (for lastMessage, typing, etc.)
+      allow update: if isParticipant();
+      
+      // Allow delete only if user created the conversation
+      allow delete: if isSignedIn() && userId() == resource.data.createdBy;
+      
+      // Messages subcollection
+      match /messages/{messageId} {
+        // Inherit participant check from parent conversation
+        function isConversationParticipant() {
+          return isSignedIn() && userId() in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+        }
+        
+        // Allow read if user is a conversation participant
+        allow read: if isConversationParticipant();
+        
+        // Allow create if user is a participant and is the sender
+        allow create: if isConversationParticipant() && userId() == request.resource.data.senderId;
+        
+        // Allow update for read receipts
+        allow update: if isConversationParticipant();
+        
+        // Allow delete if user is the sender or conversation creator
+        allow delete: if isConversationParticipant();
+      }
+    }
+  }
+}

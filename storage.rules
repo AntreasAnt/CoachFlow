@@ -1,0 +1,31 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to check if user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Attachments - stored under attachments/{conversationId}/{filename}
+    match /attachments/{conversationId}/{filename} {
+      // Helper to check if user is a participant in the conversation
+      function isParticipant() {
+        return isSignedIn() && 
+               request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants;
+      }
+      
+      // Allow upload if user is a participant
+      // Limit file size to 10MB
+      allow write: if isParticipant() && 
+                      request.resource.size < 10 * 1024 * 1024;
+      
+      // Allow read if user is a participant
+      allow read: if isParticipant();
+      
+      // Allow delete if user is a participant
+      allow delete: if isParticipant();
+    }
+  }
+}

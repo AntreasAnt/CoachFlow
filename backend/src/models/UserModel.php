@@ -451,20 +451,28 @@ class UserModel
     
     public function getprofileById($id)
     {
-        // SQL query to fetch user by ID, handle missing gallery table gracefully
-        $query = "SELECT u.*, 
-                  CASE 
-                    WHEN (SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'gallery') > 0 
-                    THEN (SELECT g.image FROM gallery g WHERE g.imageid = u.imageID LIMIT 1)
-                    ELSE NULL 
-                  END as image,
-                  CASE 
-                    WHEN (SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'gallery') > 0 
-                    THEN (SELECT g.imagename FROM gallery g WHERE g.imageid = u.imageID LIMIT 1)
-                    ELSE NULL 
-                  END as imagename
-                  FROM user u 
-                  WHERE u.userid = ?";
+        // Determine if gallery table exists first to avoid SQL errors referencing a missing table
+        $galleryExists = false;
+        try {
+            $checkStmt = $this->conn->prepare("SELECT COUNT(*) AS cnt FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'gallery'");
+            $checkStmt->execute();
+            $res = $checkStmt->get_result()->fetch_assoc();
+            $galleryExists = isset($res['cnt']) && (int)$res['cnt'] > 0;
+            $checkStmt->close();
+        } catch (Exception $e) {
+            // If information_schema not accessible, proceed without gallery
+            error_log("Gallery existence check failed: " . $e->getMessage());
+        }
+
+        if ($galleryExists) {
+            $query = "SELECT u.*, 
+                      (SELECT g.image FROM gallery g WHERE g.imageid = u.imageID LIMIT 1) AS image,
+                      (SELECT g.imagename FROM gallery g WHERE g.imageid = u.imageID LIMIT 1) AS imagename
+                      FROM user u WHERE u.userid = ?";
+        } else {
+            $query = "SELECT u.*, NULL AS image, NULL AS imagename FROM user u WHERE u.userid = ?";
+        }
+
         try {
             $stmt = $this->conn->prepare($query);
             $stmt->bind_param("s", $id);
@@ -473,19 +481,7 @@ class UserModel
             return $result->fetch_assoc();
         } catch (Exception $e) {
             error_log("Error getting user: " . $e->getMessage());
-            
-            // Fallback: try without gallery join
-            try {
-                $fallbackQuery = "SELECT u.*, NULL as image, NULL as imagename FROM user u WHERE u.userid = ?";
-                $stmt = $this->conn->prepare($fallbackQuery);
-                $stmt->bind_param("s", $id);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                return $result->fetch_assoc();
-            } catch (Exception $e2) {
-                error_log("Fallback query also failed: " . $e2->getMessage());
-                return false;
-            }
+            return false;
         }
     }
     

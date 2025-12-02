@@ -331,7 +331,6 @@ const ProfilePage = () => {
                   )}
                   {!isOwnProfile && (
                     <>
-                      <li><a className="dropdown-item" href="#"><i className="bi bi-chat-dots me-2"></i>Send Message</a></li>
                       <li><a className="dropdown-item" href="#"><i className="bi bi-share me-2"></i>Share Profile</a></li>
                       <li><hr className="dropdown-divider" /></li>
                       <li><a className="dropdown-item text-danger" href="#"><i className="bi bi-flag me-2"></i>Report</a></li>
@@ -650,9 +649,6 @@ const ProfilePage = () => {
                     <i className="bi bi-lightning me-2 text-warning"></i>Quick Actions
                   </h6>
                   <div className="d-grid gap-2">
-                    <button className="btn btn-primary rounded-pill">
-                      <i className="bi bi-chat-dots me-2"></i>Send Message
-                    </button>
                     {currentUser?.role === 'trainee' && (
                       <>
                         <button className="btn btn-outline-secondary rounded-pill">

@@ -22,6 +22,7 @@ import ProfilePage from "./pages/dashboards/trainee/ProfilePage";
 import MyWorkouts from "./pages/dashboards/trainee/MyWorkouts";
 import MealsPage from "./pages/dashboards/trainee/MealsPage";
 import Progress from "./pages/dashboards/trainee/Progress";
+import MessagesPage from "./pages/dashboards/trainee/MessagesPage";
 
 import Coach from "./pages/dashboards/trainee/Coach";
 
@@ -144,6 +145,14 @@ function App() {
           element={
             <AuthRoot allowedPrivileges={['trainee']}>
               <Progress />
+            </AuthRoot>
+          }
+        />
+        <Route 
+          path="/messages" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <MessagesPage />
             </AuthRoot>
           }
         />
