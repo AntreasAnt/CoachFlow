@@ -5,11 +5,25 @@
  * Used for lazy loading in messages page
  */
 
+// Start output buffering to prevent any output before JSON
+ob_start();
+
 session_start();
+
+// Clear any previous output
+ob_clean();
 
 // Set headers
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: http://localhost:5173, http://127.0.0.1:5173');
+
+// CORS configuration
+$allowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+
+if (in_array($origin, $allowedOrigins)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+}
+
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
@@ -52,12 +66,38 @@ try {
     $conn = $db->connect();
     
     if (empty($searchQuery)) {
-        // Return empty results if no query
+        // Return sample users when no query (limit to 5-8 for suggestions)
+        $query = "SELECT userid as id, username, role 
+                  FROM user 
+                  WHERE userid != ? 
+                  AND isdeleted = 0 
+                  AND isdisabled = 0 
+                  ORDER BY username ASC 
+                  LIMIT ?";
+        
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param('ii', $currentUserId, $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $users = [];
+        while ($row = $result->fetch_assoc()) {
+            $users[] = [
+                'id' => $row['id'],
+                'username' => $row['username'],
+                'role' => $row['role']
+            ];
+        }
+        
+        $stmt->close();
         $db->close();
+        
+        ob_clean();
         echo json_encode([
             'success' => true,
-            'users' => []
+            'users' => $users
         ]);
+        ob_end_flush();
         exit;
     }
     
@@ -89,16 +129,20 @@ try {
     $stmt->close();
     $db->close();
     
+    ob_clean();
     echo json_encode([
         'success' => true,
         'users' => $users
     ]);
+    ob_end_flush();
     
 } catch (Exception $e) {
     error_log('SearchChatUsers Error: ' . $e->getMessage());
     http_response_code(500);
+    ob_clean();
     echo json_encode([
         'success' => false,
         'message' => 'An error occurred while searching users'
     ]);
+    ob_end_flush();
 }

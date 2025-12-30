@@ -164,6 +164,17 @@
   border-bottom-right-radius: 4px;
 }
 
+/* Attachment links in your messages */
+.message-bubble.own a {
+  color: white;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.message-bubble.own a:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 /* Other person's messages - left side */
 .message-bubble.other {
   background: #f1f3f5;
@@ -171,6 +182,18 @@
   align-self: flex-start;
   margin-right: auto;
   border-bottom-left-radius: 4px;
+}
+
+/* Attachment links in other messages */
+.message-bubble.other a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.message-bubble.other a:hover {
+  color: #764ba2;
+  text-decoration: underline;
 }
 
 /* Unread message indicator */
@@ -339,4 +362,204 @@
 .conversations-list::-webkit-scrollbar-thumb:hover,
 .search-results::-webkit-scrollbar-thumb:hover {
   background: #adb5bd;
+}
+
+/* Message Input Container */
+.message-input-container {
+  background: white;
+  border-top: 1px solid #dee2e6;
+}
+
+.message-input-container textarea {
+  border-radius: 20px;
+  padding: 0.75rem 1rem;
+  border: 1px solid #dee2e6;
+}
+
+.message-input-container textarea:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+}
+
+.message-input-container .btn {
+  border-radius: 20px;
+  min-width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Paperclip button - always visible with opacity */
+.message-input-container .btn-outline-secondary {
+  opacity: 1 !important;
+  color: #6c757d !important;
+  border-color: #dee2e6 !important;
+  background: transparent !important;
+  transition: all 0.2s ease;
+}
+
+.message-input-container .btn-outline-secondary:hover {
+  color: #495057 !important;
+  border-color: #adb5bd !important;
+  background: #f8f9fa !important;
+}
+
+.message-input-container .btn-outline-secondary i {
+  color: inherit;
+}
+
+.message-input-container .badge {
+  font-weight: 500;
+  padding: 0.35em 0.65em;
+}
+
+/* Attached Files Preview */
+.attached-files-preview {
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Inline file preview - next to input */
+.file-preview-inline {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #dee2e6;
+  background: #f8f9fa;
+}
+
+.file-preview-inline-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.file-preview-inline-icon {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #6c757d;
+  background: #e9ecef;
+}
+
+.btn-remove-file-inline {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid white;
+  background: #dc3545;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  z-index: 10;
+}
+
+.btn-remove-file-inline:hover {
+  background: #c82333;
+  transform: scale(1.1);
+}
+
+.btn-remove-file-inline i {
+  font-size: 1rem;
+}
+
+.file-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  position: relative;
+  max-width: 100%;
+}
+
+.file-preview-thumbnail {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.file-preview-icon {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e9ecef;
+  border-radius: 4px;
+  font-size: 1.5rem;
+  color: #6c757d;
+  flex-shrink: 0;
+}
+
+.file-preview-info {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.file-preview-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #212529;
+}
+
+.file-preview-size {
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+.btn-remove-file {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: #dc3545;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.2s ease;
+}
+
+.btn-remove-file:hover {
+  background: #c82333;
+}
+
+.btn-remove-file i {
+  font-size: 1rem;
 }

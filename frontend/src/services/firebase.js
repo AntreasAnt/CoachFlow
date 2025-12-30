@@ -3,14 +3,6 @@ import { getFirestore, serverTimestamp } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAuth, signInWithCustomToken } from 'firebase/auth';
 
-// Environment-driven config; ensure these are set in a .env file
-// Example .env entries (do NOT commit real secrets):
-// VITE_FIREBASE_API_KEY=xxxxx
-// VITE_FIREBASE_AUTH_DOMAIN=your-app.firebaseapp.com
-// VITE_FIREBASE_PROJECT_ID=your-app
-// VITE_FIREBASE_STORAGE_BUCKET=your-app.appspot.com
-// VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
-// VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,

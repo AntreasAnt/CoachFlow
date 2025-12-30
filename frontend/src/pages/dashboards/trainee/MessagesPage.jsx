@@ -16,36 +16,63 @@ const MessagesContent = ({ currentUser }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   // Search users with debounce
   const searchUsers = useCallback(async (query) => {
+    // If query is empty, show sample users
     if (!query.trim()) {
-      setSearchResults([]);
+      setIsSearching(true);
+      try {
+        const response = await fetch(
+          `${BACKEND_ROUTES_API}SearchChatUsers.php?q=&limit=5`,
+          { credentials: 'include' }
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        if (data.success) {
+          setSearchResults(data.users || []);
+        }
+      } catch (err) {
+        console.error('Search error:', err);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+        setHasSearched(true);
+      }
       return;
     }
 
     setIsSearching(true);
+    setHasSearched(false);
     try {
       const response = await fetch(
-        `${BACKEND_ROUTES_API}SearchChatUsers.php?q=${encodeURIComponent(query)}&limit=10`,
+        `${BACKEND_ROUTES_API}SearchChatUsers.php?q=${encodeURIComponent(query)}&limit=8`,
         { credentials: 'include' }
       );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       if (data.success) {
         setSearchResults(data.users || []);
+        setHasSearched(true);
       }
     } catch (err) {
       console.error('Search error:', err);
+      setSearchResults([]);
     } finally {
       setIsSearching(false);
     }
   }, []);
 
-  // Debounce search
+  // Debounce search - trigger after 500ms of no typing
   useEffect(() => {
     const timer = setTimeout(() => {
       searchUsers(searchQuery);
-    }, 300);
+    }, 500);
     return () => clearTimeout(timer);
   }, [searchQuery, searchUsers]);
 
@@ -54,7 +81,15 @@ const MessagesContent = ({ currentUser }) => {
     setShowSearch(false);
     setSearchQuery('');
     setSearchResults([]);
+    setHasSearched(false);
   };
+
+  // Load sample users when search panel opens
+  useEffect(() => {
+    if (showSearch && !hasSearched && searchResults.length === 0) {
+      searchUsers('');
+    }
+  }, [showSearch, hasSearched, searchResults.length, searchUsers]);
 
   return (
     <div className="messages-page">
@@ -114,9 +149,30 @@ const MessagesContent = ({ currentUser }) => {
                   ))
                 ) : (
                   <div className="text-center text-muted py-3">
-                    {isSearching ? 'Searching...' : 'No users found'}
+                    {isSearching ? 'Searching...' : hasSearched ? 'No users found' : 'Start typing to search'}
                   </div>
                 )}
+              </div>
+            )}
+            
+            {!searchQuery && searchResults.length > 0 && (
+              <div className="search-results">
+                <div className="text-muted small px-3 py-2">Suggested users</div>
+                {searchResults.map(user => (
+                  <div
+                    key={user.id}
+                    className="search-result-item"
+                    onClick={() => handleStartConversation(user.id)}
+                  >
+                    <div className="user-avatar">
+                      {user.username[0].toUpperCase()}
+                    </div>
+                    <div className="user-info">
+                      <div className="user-name">{user.username}</div>
+                      <div className="user-role">{user.role}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

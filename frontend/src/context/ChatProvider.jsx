@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { db, storage, signInWithBackendSession } from '../services/firebase';
+import { db, signInWithBackendSession } from '../services/firebase';
 import {
   collection,
   doc,
@@ -15,8 +15,6 @@ import {
   getDocs,
   deleteDoc,
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { v4 as uuid } from 'uuid';
 
 const ChatContext = createContext(null);
 export const useChat = () => useContext(ChatContext);
@@ -162,37 +160,29 @@ export function ChatProvider({ currentUserBackend, children }) {
 
   // Group conversations removed per updated requirements (direct messaging only)
 
-  const sendMessage = useCallback(async ({ text, files }) => {
+  const sendMessage = useCallback(async ({ text }) => {
     if (!firebaseUser || !activeConversationId || !currentUserBackend?.userid) return;
+    if (!text || !text.trim()) return;
+    
     const msgRef = collection(db, 'conversations', activeConversationId, 'messages');
-
-    let attachmentMeta = [];
-    if (files && files.length) {
-      for (const f of files) {
-        const fileRef = ref(storage, `attachments/${activeConversationId}/${uuid()}_${f.name}`);
-        await uploadBytes(fileRef, f);
-        const url = await getDownloadURL(fileRef);
-        attachmentMeta.push({ name: f.name, url, type: f.type, size: f.size });
-      }
-    }
 
     const docData = {
       senderId: firebaseUser.uid,
-      text: text || '',
-      attachments: attachmentMeta,
+      text: text.trim(),
       createdAt: serverTimestamp(),
       readBy: [firebaseUser.uid],
-      type: attachmentMeta.length ? 'mixed' : 'text',
+      type: 'text',
     };
 
     const newMsg = await addDoc(msgRef, docData);
+    
     // Update conversation last message
     await updateDoc(doc(db, 'conversations', activeConversationId), {
-      lastMessage: docData.text || (attachmentMeta.length ? '[Attachment]' : ''),
+      lastMessage: docData.text,
       lastMessageAt: serverTimestamp(),
     });
     return newMsg.id;
-  }, [activeConversationId, currentUserBackend]);
+  }, [firebaseUser, activeConversationId, currentUserBackend]);
 
   const markConversationRead = useCallback(async () => {
     if (!firebaseUser || !activeConversationId || !currentUserBackend?.userid) return;

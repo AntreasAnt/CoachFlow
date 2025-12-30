@@ -7,39 +7,16 @@
 //       * File: backend/src/config/firebase-service-account.json
 //       * Env var path: FIREBASE_SERVICE_ACCOUNT=/absolute/path/to/sa.json
 //       * Env var inline JSON: FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account",...}' (optionally base64 encoded)
-// Security: Only works for authenticated PHP session users; do not expose this route publicly without session protections.
+// Security: Only works for authenticated PHP session users.
 
-header('Content-Type: application/json');
-// CORS: cannot use wildcard with credentials. Allow only the Vite dev origin.
-$allowedOrigins = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173'
-];
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if (in_array($origin, $allowedOrigins, true)) {
-    header('Access-Control-Allow-Origin: ' . $origin);
-    header('Vary: Origin');
-} else {
-    // If origin not allowed, return CORS error early.
-    if ($origin) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'cors_origin_not_allowed', 'origin' => $origin]);
-        exit;
-    }
-}
-header('Access-Control-Allow-Credentials: true');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Access-Control-Allow-Methods: GET, OPTIONS');
 
-// Handle preflight
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
+include_once("../config/cors.php");
+include_once("../config/Auth.php");
 
-session_start();
+// Require authentication (any logged-in user can get their own token)
+checkAuth(['trainee', 'trainer']);
 
-// Autoload + optional dotenv loading (so env vars in .env are available when running under built-in PHP server or Apache without system env propagation)
+// Autoload + optional dotenv loading
 require_once __DIR__ . '/../../vendor/autoload.php';
 if (class_exists(\Dotenv\Dotenv::class)) {
     $envBase = realpath(__DIR__ . '/../../');
@@ -52,14 +29,7 @@ if (class_exists(\Dotenv\Dotenv::class)) {
     }
 }
 
-// Basic session / privilege validation (reuse existing session logic)
-if (!isset($_SESSION['user_id']) || !$_SESSION['user_id']) {
-    echo json_encode(['success' => false, 'error' => 'not_authenticated']);
-    exit;
-}
-
 $uid = (string)$_SESSION['user_id'];
-error_log("GetFirebaseCustomToken: Creating token for user_id=" . $uid);
 
 // Resolve service account credentials prioritizing inline JSON env, then explicit path env, then default file.
 $serviceAccountPath = null;
@@ -120,7 +90,7 @@ try {
     $factory = (new Factory())->withServiceAccount($serviceAccountPath);
     $auth = $factory->createAuth();
 
-    // Optionally add additional claims (e.g., role) for Firestore security rules
+    // Add additional claims (e.g., role) for Firestore security rules
     $claims = [];
     if (isset($_SESSION['privileges'])) {
         $claims['role'] = $_SESSION['privileges'];

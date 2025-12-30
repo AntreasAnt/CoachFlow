@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useChat } from '../../context/ChatProvider';
 
 export function MessageInput() {
   const { sendMessage, setTyping, activeConversationId } = useChat();
   const [text, setText] = useState('');
-  const [files, setFiles] = useState([]);
   const [sending, setSending] = useState(false);
 
   const onChangeText = (e) => {
@@ -14,48 +13,57 @@ export function MessageInput() {
     setTimeout(() => setTyping(false), 1200);
   };
 
-  const onSelectFiles = (e) => {
-    setFiles(Array.from(e.target.files));
-  };
-
   const onSend = async (e) => {
-    e.preventDefault();
-    if (!activeConversationId || (!text.trim() && files.length === 0)) return;
+    if (e) e.preventDefault();
+    if (!activeConversationId || !text.trim()) return;
+    
     setSending(true);
     try {
-      await sendMessage({ text: text.trim(), files });
+      await sendMessage({ text: text.trim() });
       setText('');
-      setFiles([]);
     } catch (err) {
-      console.error('Send failed', err);
+      console.error('[MessageInput] Send failed:', err);
     } finally {
       setSending(false);
+      setTyping(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    // Send on Enter, new line on Shift+Enter
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onSend();
     }
   };
 
   return (
-    <form onSubmit={onSend} className="d-flex flex-column gap-2">
-      <textarea
-        className="form-control"
-        rows={2}
-        placeholder={activeConversationId ? 'Type a message...' : 'Select a conversation first'}
-        value={text}
-        onChange={onChangeText}
-        disabled={!activeConversationId || sending}
-      />
-      <input
-        type="file"
-        multiple
-        onChange={onSelectFiles}
-        className="form-control"
-        disabled={!activeConversationId || sending}
-      />
-      {files.length > 0 && (
-        <div className="small text-muted">{files.length} attachment(s) selected</div>
-      )}
-      <div className="d-flex justify-content-end">
-        <button className="btn btn-primary btn-sm" disabled={sending || !activeConversationId}>Send</button>
-      </div>
-    </form>
+    <div className="message-input-container p-3 border-top bg-white">
+      <form onSubmit={onSend}>
+        <div className="d-flex gap-2 align-items-center">
+          <div className="flex-fill">
+            <textarea
+              className="form-control"
+              rows={1}
+              placeholder={activeConversationId ? 'Type a message...' : 'Select a conversation first'}
+              value={text}
+              onChange={onChangeText}
+              onKeyDown={handleKeyDown}
+              disabled={!activeConversationId || sending}
+              style={{ resize: 'none', minHeight: '40px', maxHeight: '120px' }}
+            />
+          </div>
+          
+          <button 
+            type="submit"
+            className="btn btn-primary btn-sm px-3" 
+            disabled={sending || !activeConversationId || !text.trim()}
+            style={{ height: '40px' }}
+          >
+            <i className="bi bi-send-fill"></i>
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }

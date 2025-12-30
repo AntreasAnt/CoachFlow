@@ -94,21 +94,6 @@ export function ChatWindow() {
           return (
             <div key={m.id} className={`d-flex mb-3 ${isOwn ? 'justify-content-end' : 'justify-content-start'}`}>
               <div className={`message-bubble ${isOwn ? 'own' : 'other'} ${isUnread ? 'unread' : ''}`} style={{ maxWidth: '70%' }}>
-                {m.attachments?.length ? (
-                  <div className="mb-2">
-                    {m.attachments.map(a => (
-                      <div key={a.url} className="mb-1">
-                        {a.type.startsWith('image') ? (
-                          <img src={a.url} alt={a.name} className="img-fluid rounded" style={{ maxWidth: '250px' }} />
-                        ) : (
-                          <a href={a.url} target="_blank" rel="noreferrer" className="text-decoration-none">
-                            <i className="bi bi-file-earmark me-1"></i>{a.name}
-                          </a>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
                 {m.text && <div>{m.text}</div>}
                 <div className="message-timestamp mt-1">
                   {m.createdAt?.toDate ? new Date(m.createdAt.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
