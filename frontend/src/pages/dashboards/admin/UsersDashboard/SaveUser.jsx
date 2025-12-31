@@ -87,7 +87,7 @@ export async function saveUser({
         email: "",
         password: "",
         confpassword: "",
-        role: "3",
+        role: "trainee",
       });
 
       // Close modal

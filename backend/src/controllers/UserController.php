@@ -148,7 +148,8 @@ class UserController extends UserModel
             } else {
                 $this->UserPrivileges = 'trainee'; // default
             }
-            $this->IsVerified = 0;
+            // Set isverified from input or default to 0
+            $this->IsVerified = isset($inputData['isverified']) ? (int)$inputData['isverified'] : 0;
 
             $user = $this->saveUser(); // Save the new user to the database
 
@@ -166,7 +167,7 @@ class UserController extends UserModel
             $response = [
                 "success" => true,
                 "message" => "User created successfully",
-                "UserID" => $user
+                "UserID" => $this->UserID
             ];
         } catch (Exception $e) {
             // Handle any errors that occur during user creation

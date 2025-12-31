@@ -154,7 +154,7 @@ const handleRoleSearch = (role) => {
       username: "",
       email: "",
       password: "",
-      role: "3",
+      role: "trainee",
       lastlogin: "",
       registrationdate: "",
     });
@@ -207,7 +207,7 @@ const handleRoleSearch = (role) => {
     username: "",
     email: "",
     password: "",
-    role: "3",
+    role: "trainee",
   });
 
   //General Error
