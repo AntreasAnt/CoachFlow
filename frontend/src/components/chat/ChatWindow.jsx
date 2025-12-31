@@ -86,7 +86,7 @@ export function ChatWindow() {
       )}
 
       {/* Messages Area */}
-      <div className="flex-fill p-3" style={{ overflowY: 'auto', background: '#f8f9fa' }}>
+      <div className="flex-fill p-3" style={{ overflowY: 'auto' }}>
         {messages.map(m => {
           const isOwn = isOwnMessage(m.senderId);
           const isUnread = isMessageUnread(m);

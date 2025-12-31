@@ -263,6 +263,7 @@
 .typing-indicator-container {
   background: transparent;
   padding: 0 1rem 0.25rem 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .typing-indicator-small {
@@ -270,7 +271,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.4rem 0.7rem;
-  background: #e9ecef;
+  background: #dee2e6;
   border-radius: 18px;
   max-width: fit-content;
   box-shadow: 0 1px 2px rgba(0,0,0,0.1);
