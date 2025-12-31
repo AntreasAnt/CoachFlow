@@ -7,10 +7,11 @@ export const RoleSearch = ({ handleRoleSearch }) => {
       className="form-select"
       onChange={(e) => handleRoleSearch(e.target.value)}
     >
-      <option value="">Όλοι οι Ρόλοι</option>
-      <option value="1">Επικεφαλής</option>
-      <option value="2">Διαχειριστής</option>
-  <option value="3">User</option>
+      <option value="">All Roles</option>
+      <option value="admin">Admin</option>
+      <option value="manager">Manager</option>
+      <option value="trainer">Trainer</option>
+      <option value="trainee">Trainee</option>
     </select>
   );
 };
