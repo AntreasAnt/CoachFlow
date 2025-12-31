@@ -8,6 +8,7 @@ import { MessageInput } from '../../../components/chat/MessageInput';
 import '../../../styles/trainee-dashboard.css';
 import '../../../styles/messages.css';
 
+
 // Inner component that uses chat context
 const MessagesContent = ({ currentUser }) => {
   const chat = useChat();
@@ -225,21 +226,9 @@ const MessagesPage = () => {
 
   return (
     <div className="messages-page-wrapper">
-      {/* Header */}
+      {/* Header - Only visible on mobile and when no active conversation */}
       <header className="messages-header">
-        <div className="d-flex align-items-center">
-          <button 
-            className="btn btn-link text-dark me-3 p-0"
-            onClick={() => navigate(-1)}
-            title="Go back"
-          >
-            <i className="bi bi-arrow-left fs-4"></i>
-          </button>
-          <div>
-            <h1 className="h5 mb-0 fw-bold text-dark">Messages</h1>
-            <p className="small text-muted mb-0">Stay connected</p>
-          </div>
-        </div>
+       
       </header>
 
       {/* Main Content */}

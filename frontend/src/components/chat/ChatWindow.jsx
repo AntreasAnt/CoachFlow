@@ -3,7 +3,7 @@ import { useChat } from '../../context/ChatProvider';
 import { useNavigate } from 'react-router-dom';
 
 export function ChatWindow() {
-  const { messages, firebaseUser, typingMap, activeConversationId, conversations, blocked, blockUser, unblockUser, deleteConversation, allUsers, markAsRead } = useChat();
+  const { messages, firebaseUser, typingMap, activeConversationId, conversations, blocked, blockUser, unblockUser, deleteConversation, allUsers, markAsRead, setActiveConversationId } = useChat();
   const bottomRef = useRef(null);
   const [showActions, setShowActions] = useState(false);
   const navigate = useNavigate();
@@ -50,7 +50,7 @@ export function ChatWindow() {
         <div className="d-flex align-items-center">
           <button 
             className="btn btn-link text-dark d-md-none p-0 me-3"
-            onClick={() => navigate('/messages')}
+            onClick={() => setActiveConversationId(null)}
           >
             <i className="bi bi-arrow-left fs-5"></i>
           </button>
