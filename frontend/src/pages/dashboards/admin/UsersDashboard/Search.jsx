@@ -31,17 +31,18 @@ export const Search = ({ onSearch }) => {
       {query && (
       <button 
         type="button" 
-        className="btn btn-outline-secondary d-none d-sm-block"
+        className="btn btn-sm btn-secondary ms-2"
         onClick={handleClear}
       >
-        Καθαρισμός
+        <i className="bi bi-x-circle me-1"></i>
+        Clear
       </button>
       )}
       {/* For extra-small screens, show a simple 'x' icon */}
       {query && (
               <button 
               type="button" 
-              className="btn btn-outline-secondary d-block d-sm-none"
+              className="btn btn-sm btn-secondary d-block d-sm-none"
               onClick={handleClear}
             >
           <i className="bi bi-x"></i>

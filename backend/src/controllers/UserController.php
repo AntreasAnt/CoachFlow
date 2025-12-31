@@ -520,8 +520,8 @@ class UserController extends UserModel
                     continue;
                 }
                 // Try to send password reset email
-                $success = $notificationModel->ResetPasswordRequest($email);
-                if (!$success) {
+                $result = $notificationModel->ResetPasswordRequest($email);
+                if (!$result || !isset($result['success']) || !$result['success']) {
                     $failedResets[] = "Email: $email";
                 }
             }

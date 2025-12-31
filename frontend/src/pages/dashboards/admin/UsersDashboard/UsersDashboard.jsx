@@ -428,6 +428,25 @@ const handleRoleSearch = (role) => {
     
 
   //Generate PDF
+  const getRoleLabelForPDF = (role) => {
+    const r = String(role).toLowerCase();
+    switch (r) {
+      case '1':
+      case 'admin':
+        return 'Admin';
+      case '2':
+      case 'manager':
+        return 'Manager';
+      case '3':
+      case 'trainer':
+        return 'Trainer';
+      case '4':
+      case 'trainee':
+        return 'Trainee';
+      default:
+        return 'User';
+    }
+  };
 
   const handleGeneratePDF = () => {
     console.log("Generating PDF...");
@@ -437,12 +456,7 @@ const handleRoleSearch = (role) => {
       user.id,
       user.username,
       user.email,
-      // Map role value to label (supports both numeric legacy and string enum)
-      (user.role === 1 || user.role === '1' || user.role === 'admin') ? 'Admin'
-        : (user.role === 2 || user.role === '2' || user.role === 'manager') ? 'Manager'
-        : (user.role === 3 || user.role === '3' || user.role === 'trainer') ? 'Trainer'
-        : (user.role === 4 || user.role === '4' || user.role === 'trainee') ? 'Trainee'
-        : 'User',
+      getRoleLabelForPDF(user.role),
       user.isdisabled ? "Disabled" : "Enabled",
       formatDate(user.registrationdate),
       user.lastlogin ? formatDate(user.lastlogin) : "Never",
@@ -504,18 +518,19 @@ const handleRoleSearch = (role) => {
 
           {/* Add User Button */}
           <button
-  className="btn btn-success btn-sm me-2 mb-2"
-  onClick={() => setShowAddModal(true)}
->
-  <i className="bi bi-plus-circle me-2"></i>
-  Add User
-</button>
+            className="btn btn-sm btn-primary me-2 mb-2"
+            onClick={() => setShowAddModal(true)}
+          >
+            <i className="bi bi-plus-circle me-2"></i>
+            Add User
+          </button>
+
           {/* Edit User Button */}
           <button
-            className={`btn btn-sm mx-2 mb-2 ${
+            className={`btn btn-sm me-2 mb-2 ${
               selectedUsers.length != 1
-                ? "btn-secondary  opacity-75"
-                : "btn-warning"
+                ? "btn-secondary opacity-75"
+                : "btn-primary"
             }`}
             onClick={handleEdit}
           >
@@ -523,14 +538,16 @@ const handleRoleSearch = (role) => {
             Edit
           </button>
 
-         {/* Actions Button */}
-         <button
-            className={`btn btn-sm mx-2 mb-2 ${
-              selectedUsers.length === 0 ? "btn-secondary opacity-75" : "btn-secondary opacity-100 text-light"
+          {/* Actions Button */}
+          <button
+            className={`btn btn-sm me-2 mb-2 ${
+              selectedUsers.length === 0
+                ? "btn-secondary opacity-75"
+                : "btn-primary"
             }`}
             onClick={handleOpenActionsModal}
           >
-            <i className={`bi bi-list me-2 s ${selectedUsers.length === 0 ? "" :"text-light"}`}></i>
+            <i className="bi bi-list me-2"></i>
             Actions
           </button>
 

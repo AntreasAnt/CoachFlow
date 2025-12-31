@@ -117,19 +117,33 @@ class NotificationController extends NotificationModel
 
         if ($isUser) {
             if ($this->SavePasswordToken($email, $token)) {
-
                 $mailService = new MailService();
-                if ($mailService->sendPasswordResetEmail($email, $token)) {
-                    $response = [
-                        "success" => true,
-                        "message" => "Email sent successfully",
-                    ];
-                } else {
+                try {
+                    if ($mailService->sendPasswordResetEmail($email, $token)) {
+                        $response = [
+                            "success" => true,
+                            "message" => "Email sent successfully",
+                        ];
+                    } else {
+                        error_log("Password reset email failed to send for: " . $email);
+                        $response = [
+                            "success" => false,
+                            "message" => "Email not sent",
+                        ];
+                    }
+                } catch (Exception $e) {
+                    error_log("Password reset email exception for " . $email . ": " . $e->getMessage());
                     $response = [
                         "success" => false,
-                        "message" => "Email not sent",
+                        "message" => "Email sending failed: " . $e->getMessage(),
                     ];
                 }
+            } else {
+                error_log("Failed to save password reset token for: " . $email);
+                $response = [
+                    "success" => false,
+                    "message" => "Failed to save reset token",
+                ];
             }
         } else {
             $response = [
