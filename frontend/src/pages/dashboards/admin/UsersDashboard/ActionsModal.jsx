@@ -22,25 +22,25 @@ const ActionsModal = ({
             <div className="d-flex flex-column gap-2">
   <button className="btn btn-danger btn-sm w-100 py-2" onClick={handleDelete}>
     <i className="bi bi-trash3 me-2"></i>
-    Διαγραφή
+    Delete
   </button>
   <button className="btn btn-warning btn-sm w-100 py-2" onClick={handleDisable}>
     <i className="bi bi-slash-circle me-2"></i>
-    Απενεργοποίηση
+    Disable
   </button>
   <button className="btn btn-success btn-sm w-100 py-2" onClick={handleEnable}>
     <i className="bi bi-check-circle me-2"></i>
-    Eνεργοποίηση
+    Enable
   </button>
   <button className="btn btn-info btn-sm w-100 py-2" onClick={handleForceReset}>
     <i className="bi bi-arrow-clockwise me-2"></i>
-    Επαναφορά Κωδικού
+    Force Password Reset
   </button>
 </div>
           </div>
           <div className="modal-footer">
             <button type="button" className="btn btn-danger" onClick={handleClose}>
-              Κλείσιμο
+              Close
             </button>
           </div>
         </div>

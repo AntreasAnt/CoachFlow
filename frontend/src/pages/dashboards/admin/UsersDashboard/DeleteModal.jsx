@@ -14,7 +14,7 @@ export const DeleteModal = ({ show, selectedCount, onCancel, onConfirm }) => {
         <div className="modal-dialog modal-dialog-centered" role="document">
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title">Επιβεβαίωση Διαγραφής</h5>
+              <h5 className="modal-title">Confirm Delete</h5>
               <button
                 type="button"
                 className="btn-close"
@@ -24,16 +24,16 @@ export const DeleteModal = ({ show, selectedCount, onCancel, onConfirm }) => {
             </div>
             <div className="modal-body">
               <p>
-                Είστε σίγουροι ότι θέλετε να διαγράψετε {selectedCount}{" "}
+                Are you sure you want to delete {selectedCount}{" "}
                 {selectedCount === 1 ? "user" : "users"}?
               </p>
               <p className="text-danger">
-                <small>Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.</small>
+                <small>This action cannot be undone.</small>
               </p>
             </div>
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" onClick={onCancel}>
-                Ακύρωση
+                Cancel
               </button>
               <button
                 type="button"
@@ -41,7 +41,7 @@ export const DeleteModal = ({ show, selectedCount, onCancel, onConfirm }) => {
                 onClick={onConfirm}
                 aria-label="Confirm delete"
               >
-                Διαγραφή
+                Delete
               </button>
             </div>
           </div>

@@ -24,19 +24,26 @@ export const UsersTable = ({
   onPageSizeChange,
   setShowTrackedUsersModal,
 }) => {
-  // Υπολογίστε το επιπλέον ύψος βάσει της παρουσίας μηνύματος σφάλματος ή επιτυχίας
+  // Calculate extra height based on error or success message presence
   const extraHeight = error || successMessage ? 58 : 0;
-  // Τοπική συνάρτηση για να καθορίσει το χρώμα της σήμανσης βάσει του ρόλου
+  // Local function to determine badge color based on role
   const getRoleBadgeColor = (role) => {
-    switch (parseInt(role)) {
-      case 1:
+    const r = String(role).toLowerCase();
+    switch (r) {
+      case '1':
+      case 'admin':
         return "danger";
-      case 2:
+      case '2':
+      case 'manager':
         return "warning";
-      case 3:
+      case '3':
+      case 'trainer':
         return "success";
-      default:
+      case '4':
+      case 'trainee':
         return "primary";
+      default:
+        return "secondary";
     }
   };
   const getRoleLabel = (role) => {
@@ -246,12 +253,12 @@ export const UsersTable = ({
         }
         localeText={{
           MuiTablePagination: {
-            labelRowsPerPage: "Γραμμές ανά σελίδα",
+            labelRowsPerPage: "Rows per page",
             labelDisplayedRows: ({ from, to, count }) =>
-              `${from} - ${to} από ${count}`,
+              `${from} - ${to} of ${count}`,
           },
-          noRowsLabel: "Δεν βρέθηκαν δεδομένα",
-          errorOverlayDefaultLabel: "Σφάλμα κατά την ανάκτηση δεδομένων",
+          noRowsLabel: "No data found",
+          errorOverlayDefaultLabel: "Error loading data",
         }}
         disableRowSelectionOnClick
         sx={{

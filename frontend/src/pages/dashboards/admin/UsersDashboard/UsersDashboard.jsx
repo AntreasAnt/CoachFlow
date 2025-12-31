@@ -248,7 +248,7 @@ const handleRoleSearch = (role) => {
             id: user.userid,
             username: user.username,
             email: user.email,
-            role: user.userprivileges,
+            role: user.role,
             lastlogin: user.lastlogin,
             registrationdate: user.registrationdate,
             isdisabled: user.isdisabled,

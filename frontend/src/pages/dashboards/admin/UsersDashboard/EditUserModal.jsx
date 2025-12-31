@@ -112,12 +112,15 @@ export const EditUserModal = ({
                         : ""
                     }`}
                   >
-                    <option value="1">Επικεφαλής</option>
-                    <option value="2" className="text-warning">
-                    Διαχειριστής
+                    <option value="admin">Admin</option>
+                    <option value="manager" className="text-warning">
+                    Manager
                     </option>
-                    <option value="3" className="text-success">
-                      User
+                    <option value="trainer" className="text-success">
+                      Trainer
+                    </option>
+                    <option value="trainee" className="text-info">
+                      Trainee
                     </option>
                   </select>
                 </div>
@@ -129,7 +132,7 @@ export const EditUserModal = ({
                 className="btn btn-danger"
                 onClick={handleCloseModal}
               >
-                Κλείσιμο
+                Close
               </button>
               <button
                 type="button"
@@ -139,10 +142,10 @@ export const EditUserModal = ({
                 {isSubmitting ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2"></span>
-                    Ενημέρωση...
+                    Updating...
                   </>
                 ) : (
-                  "Ενημέρωση"
+                  "Update"
                 )}
               </button>
             </div>
