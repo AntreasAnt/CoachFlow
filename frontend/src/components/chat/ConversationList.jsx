@@ -37,6 +37,20 @@ export function ConversationList() {
     }
   }, [activeConversationId, markConversationRead]);
 
+  // Also mark as read when new messages arrive in active conversation
+  useEffect(() => {
+    if (activeConversationId && conversations.length > 0) {
+      const activeConv = conversations.find(c => c.id === activeConversationId);
+      if (activeConv && activeConv.lastMessage) {
+        // When lastMessage changes, mark as read
+        const timer = setTimeout(() => {
+          markConversationRead();
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [conversations, activeConversationId, markConversationRead]);
+
   // Check if conversation has unread messages (Instagram-style)
   const hasUnread = (conversation) => {
     if (!firebaseUser) return false;

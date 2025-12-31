@@ -103,19 +103,22 @@ export function ChatWindow() {
           );
         })}
         
-        {/* Typing Indicator - ONLY show for OTHER person */}
-        {otherParticipantUid && typingMap[otherParticipantUid] && (
-          <div className="d-flex justify-content-start mb-3">
-            <div className="typing-indicator">
-              <div className="dot"></div>
-              <div className="dot"></div>
-              <div className="dot"></div>
-            </div>
-          </div>
-        )}
-        
         <div ref={bottomRef} />
       </div>
+
+      {/* Typing Indicator - Above input field */}
+      {otherParticipantUid && typingMap[otherParticipantUid] && (
+        <div className="typing-indicator-container">
+          <div className="typing-indicator-small">
+            <span className="text-muted small">{otherDisplayName} is typing</span>
+            <div className="typing-dots">
+              <div className="dot-small"></div>
+              <div className="dot-small"></div>
+              <div className="dot-small"></div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

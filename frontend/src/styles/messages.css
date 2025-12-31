@@ -259,6 +259,45 @@
   }
 }
 
+/* Small Typing Indicator - Above Input */
+.typing-indicator-container {
+  background: transparent;
+  padding: 0 1rem 0.25rem 1rem;
+}
+
+.typing-indicator-small {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.7rem;
+  background: #e9ecef;
+  border-radius: 18px;
+  max-width: fit-content;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.typing-dots {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.dot-small {
+  width: 5px;
+  height: 5px;
+  background: #6c757d;
+  border-radius: 50%;
+  animation: typing 1.4s infinite;
+}
+
+.dot-small:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot-small:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
 /* Conversation List Item with Unread Badge */
 .conversation-item {
   padding: 0.75rem 1rem;

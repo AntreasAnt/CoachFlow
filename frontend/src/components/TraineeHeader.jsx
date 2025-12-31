@@ -32,9 +32,14 @@ const TraineeHeader = () => {
       let totalUnread = 0;
       snapshot.forEach((doc) => {
         const conv = doc.data();
-        // Simple heuristic: if lastMessage exists and you're not the sender, count as unread
-        // In production, you'd check actual message read status
-        if (conv.lastMessage && conv.lastMessageSenderId && conv.lastMessageSenderId !== firebaseUser.uid) {
+        // Check if conversation has unread messages:
+        // 1. There is a last message
+        // 2. The last message was sent by someone else
+        // 3. Current user hasn't read it (not in lastMessageReadBy array)
+        if (conv.lastMessage && 
+            conv.lastMessageSenderId && 
+            conv.lastMessageSenderId !== firebaseUser.uid &&
+            (!conv.lastMessageReadBy || !conv.lastMessageReadBy.includes(firebaseUser.uid))) {
           totalUnread++;
         }
       });
