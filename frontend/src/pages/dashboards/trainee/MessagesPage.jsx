@@ -44,65 +44,33 @@ const MessagesContent = ({ currentUser }) => {
     setFilteredConversations(filtered);
   }, [searchQuery, chat.conversations, chat.allUsers, chat.firebaseUser]);
 
-  // Get user IDs from filtered conversations to avoid duplicates
-  const existingConversationUserIds = filteredConversations.map(conv => {
-    const otherUserId = conv.participants.find(p => p !== chat.firebaseUser?.uid);
-    return String(otherUserId);
-  });
-
-  // Filter search results to exclude users we already have conversations with
-  const uniqueSearchResults = searchResults.filter(user => {
-    return !existingConversationUserIds.includes(String(user.id));
-  });
-
-  // Debug logging
-  console.log('[Search] Query:', searchQuery);
-  console.log('[Search] Filtered conversations:', filteredConversations.length);
-  console.log('[Search] Backend results:', searchResults.length);
-  console.log('[Search] Unique results (after filtering):', uniqueSearchResults.length);
-
   // Search users with debounce
   const searchUsers = useCallback(async (query) => {
-    // If query is empty, show sample users
+    // If query is empty, clear results and don't search
     if (!query.trim()) {
-      setIsSearching(true);
-      try {
-        const response = await fetch(
-          `${BACKEND_ROUTES_API}SearchChatUsers.php?q=&limit=5`,
-          { credentials: 'include' }
-        );
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        if (data.success) {
-          setSearchResults(data.users || []);
-        }
-      } catch (err) {
-        console.error('Search error:', err);
-        setSearchResults([]);
-      } finally {
-        setIsSearching(false);
-        setHasSearched(true);
-      }
+      setSearchResults([]);
+      setIsSearching(false);
+      setHasSearched(false);
       return;
     }
 
     setIsSearching(true);
     setHasSearched(false);
     try {
-      const response = await fetch(
-        `${BACKEND_ROUTES_API}SearchChatUsers.php?q=${encodeURIComponent(query)}&limit=8`,
-        { credentials: 'include' }
-      );
+      const url = `${BACKEND_ROUTES_API}SearchChatUsers.php?q=${encodeURIComponent(query)}&limit=8`;
+      const response = await fetch(url, { credentials: 'include' });
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
       const data = await response.json();
-      console.log('[Search] Backend response:', data);
+      
       if (data.success) {
         setSearchResults(data.users || []);
         setHasSearched(true);
+      } else {
+        setSearchResults([]);
       }
     } catch (err) {
       console.error('Search error:', err);
@@ -124,13 +92,6 @@ const MessagesContent = ({ currentUser }) => {
     chat.startDirectConversation(userId);
     setSearchQuery('');
   };
-
-  // Load sample users on mount
-  useEffect(() => {
-    if (!hasSearched && searchResults.length === 0) {
-      searchUsers('');
-    }
-  }, [hasSearched, searchResults.length, searchUsers]);
 
   return (
     <div className="messages-page">
@@ -164,101 +125,37 @@ const MessagesContent = ({ currentUser }) => {
           
           {searchQuery && (
             <div className="search-results">
-              {/* Show existing conversations first */}
-              {filteredConversations.length > 0 && (
-                <>
-                  <div className="text-muted small px-3 py-2 fw-bold">Existing Chats</div>
-                  {filteredConversations.map(conv => {
-                    const otherUserId = conv.participants.find(p => p !== chat.firebaseUser?.uid);
-                    const otherUser = chat.allUsers.find(u => {
-                      const userId = String(u.userid || u.id);
-                      return userId === String(otherUserId);
-                    });
-                    return otherUser ? (
-                      <div
-                        key={conv.id}
-                        className="search-result-item"
-                        onClick={() => {
-                          chat.setActiveConversationId(conv.id);
-                          setSearchQuery('');
-                        }}
-                      >
-                        <div className="user-avatar">
-                          {otherUser.username[0].toUpperCase()}
-                        </div>
-                        <div className="user-info">
-                          <div className="user-name">{otherUser.username}</div>
-                          {conv.lastMessage && (
-                            <div className="text-muted small text-truncate">{conv.lastMessage}</div>
-                          )}
-                        </div>
-                      </div>
-                    ) : null;
-                  })}
-                </>
-              )}
-              
-              {/* Separator if we have both */}
-              {filteredConversations.length > 0 && uniqueSearchResults.length > 0 && (
-                <div style={{ borderTop: '1px solid #eee', margin: '8px 0' }}></div>
-              )}
-              
-              {/* Then show other users */}
-              {uniqueSearchResults.length > 0 && (
-                <>
-                  <div className="text-muted small px-3 py-2 fw-bold">All Users</div>
-                  {uniqueSearchResults.map(user => (
-                    <div
-                      key={user.id}
-                      className="search-result-item"
-                      onClick={() => handleStartConversation(user.id)}
-                    >
-                      <div className="user-avatar">
-                        {user.username[0].toUpperCase()}
-                      </div>
-                      <div className="user-info">
-                        <div className="user-name">{user.username}</div>
-                        <div className="user-role">{user.role}</div>
-                      </div>
+              {searchResults.length > 0 ? (
+                searchResults.map(user => (
+                  <div
+                    key={user.id}
+                    className="search-result-item"
+                    onClick={() => handleStartConversation(user.id)}
+                  >
+                    <div className="user-avatar">
+                      {user.username[0].toUpperCase()}
                     </div>
-                  ))}
-                </>
-              )}
-              
-              {filteredConversations.length === 0 && uniqueSearchResults.length === 0 && (
+                    <div className="user-info">
+                      <div className="user-name">{user.username}</div>
+                      <div className="user-role">{user.role}</div>
+                    </div>
+                  </div>
+                ))
+              ) : (
                 <div className="text-center text-muted py-3">
-                  {isSearching ? 'Searching...' : 'No results found'}
+                  {isSearching ? 'Searching...' : 'No users found'}
                 </div>
               )}
-            </div>
-          )}
-          
-          {!searchQuery && searchResults.length > 0 && (
-            <div className="search-results">
-              <div className="text-muted small px-3 py-2">Suggested users</div>
-              {searchResults.map(user => (
-                <div
-                  key={user.id}
-                  className="search-result-item"
-                  onClick={() => handleStartConversation(user.id)}
-                >
-                  <div className="user-avatar">
-                    {user.username[0].toUpperCase()}
-                  </div>
-                  <div className="user-info">
-                    <div className="user-name">{user.username}</div>
-                    <div className="user-role">{user.role}</div>
-                  </div>
-                </div>
-              ))}
             </div>
           )}
         </div>
 
-        {/* Conversation List */}
-        <div className="conversations-list">
-          <ConversationList />
-        </div>
+        {/* Conversation List - Hide when searching */}
+        {!searchQuery && (
+          <div className="conversations-list">
+            <ConversationList />
+          </div>
+        )}
       </div>
 
       {/* Chat Window */}

@@ -799,4 +799,36 @@ class UserController extends UserModel
             ];
         }
     }
+
+    /**
+     * Search users by username or email
+     * 
+     * @param int $currentUserId - The ID of the current user (to exclude from results)
+     * @param string $searchQuery - The search term
+     * @param int $limit - Maximum number of results
+     * @return array - Array of matching users
+     */
+    public function searchChatUsers($currentUserId, $searchQuery = '', $limit = 10)
+    {
+        try {
+            // Validate limit
+            if ($limit < 1 || $limit > 50) {
+                $limit = 10;
+            }
+
+            // Search users by username or email (case-insensitive, partial match)
+            $users = $this->searchUsers($currentUserId, $searchQuery, $limit);
+            
+            return [
+                'success' => true,
+                'users' => $users
+            ];
+        } catch (Exception $e) {
+            error_log('UserController::searchChatUsers Error: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'An error occurred while searching users'
+            ];
+        }
+    }
 }

@@ -749,4 +749,64 @@ class UserModel
             return false;
         }
     }
+
+    /**
+     * Search users by username or email for chat
+     * 
+     * @param int $currentUserId - ID of current user to exclude from results
+     * @param string $searchQuery - Search term
+     * @param int $limit - Maximum results to return
+     * @return array - Array of matching users
+     */
+    public function searchUsers($currentUserId, $searchQuery, $limit = 10)
+    {
+        try {
+            if (empty($searchQuery)) {
+                // Return sample users when no query
+                $query = "SELECT userid as id, username, role 
+                          FROM {$this->table}
+                          WHERE userid != ? 
+                          AND isdeleted = 0 
+                          AND isdisabled = 0 
+                          ORDER BY username ASC 
+                          LIMIT ?";
+                
+                $stmt = $this->conn->prepare($query);
+                $stmt->bind_param('ii', $currentUserId, $limit);
+            } else {
+                // Search by username or email
+                $query = "SELECT userid as id, username, email, role 
+                          FROM {$this->table}
+                          WHERE userid != ? 
+                          AND isdeleted = 0 
+                          AND isdisabled = 0 
+                          AND (username LIKE ? OR email LIKE ?)
+                          ORDER BY username ASC 
+                          LIMIT ?";
+                
+                $stmt = $this->conn->prepare($query);
+                $searchPattern = '%' . $searchQuery . '%';
+                $stmt->bind_param('issi', $currentUserId, $searchPattern, $searchPattern, $limit);
+            }
+            
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $users = [];
+            while ($row = $result->fetch_assoc()) {
+                $users[] = [
+                    'id' => $row['id'],
+                    'username' => $row['username'],
+                    'role' => $row['role']
+                ];
+            }
+            
+            $stmt->close();
+            return $users;
+            
+        } catch (Exception $e) {
+            error_log('UserModel::searchUsers Error: ' . $e->getMessage());
+            return [];
+        }
+    }
 }

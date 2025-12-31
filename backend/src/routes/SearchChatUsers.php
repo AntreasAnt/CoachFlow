@@ -1,137 +1,49 @@
 <?php
-/**
- * Search Chat Users
- * Returns a limited list of users matching the search query
- * Used for lazy loading in messages page
- */
 
-session_start();
+require_once '../config/cors.php';
+require_once '../config/Auth.php';
+require_once '../controllers/UserController.php';
 
-// Set headers FIRST
-header('Content-Type: application/json; charset=utf-8');
-
-// CORS configuration
-$allowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
-$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
-
-if (in_array($origin, $allowedOrigins)) {
-    header('Access-Control-Allow-Origin: ' . $origin);
-}
-
-header('Access-Control-Allow-Credentials: true');
-header('Access-Control-Allow-Methods: GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-
-// Handle preflight
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
-
-// Only GET allowed
+// Only allow GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed']);
-    exit;
+    exit();
 }
 
 // Check authentication
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Not authenticated']);
-    exit;
-}
-
-// Include dependencies
-require_once __DIR__ . '/../config/Database.php';
+checkAuth(['trainee', 'trainer']);
 
 try {
-    // Get search query and limit
+    // Get user ID from session
+    $userId = $_SESSION['user_id'] ?? null;
+    
+    if (!$userId) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'User not authenticated']);
+        exit();
+    }
+
+    // Get search parameters
     $searchQuery = isset($_GET['q']) ? trim($_GET['q']) : '';
     $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
     
-    // Validate limit
-    if ($limit < 1 || $limit > 50) {
-        $limit = 10;
+    // Create controller instance and search users
+    $userController = new UserController();
+    $response = $userController->searchChatUsers($userId, $searchQuery, $limit);
+    
+    // Set appropriate HTTP status code
+    if (!$response['success']) {
+        http_response_code(400);
     }
     
-    $currentUserId = $_SESSION['user_id'];
-    $db = new Database();
-    $conn = $db->connect();
-    
-    if (empty($searchQuery)) {
-        // Return sample users when no query (limit to 5-8 for suggestions)
-        $query = "SELECT userid as id, username, role 
-                  FROM user 
-                  WHERE userid != ? 
-                  AND isdeleted = 0 
-                  AND isdisabled = 0 
-                  ORDER BY username ASC 
-                  LIMIT ?";
-        
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param('ii', $currentUserId, $limit);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        $users = [];
-        while ($row = $result->fetch_assoc()) {
-            $users[] = [
-                'id' => $row['id'],
-                'username' => $row['username'],
-                'role' => $row['role']
-            ];
-        }
-        
-        $stmt->close();
-        $db->close();
-        
-        echo json_encode([
-            'success' => true,
-            'users' => $users
-        ]);
-        exit;
-        exit;
-    }
-    
-    // Search users by username or email (case-insensitive, partial match)
-    $query = "SELECT userid as id, username, email, role 
-              FROM user 
-              WHERE userid != ? 
-              AND isdeleted = 0 
-              AND isdisabled = 0 
-              AND (username LIKE ? OR email LIKE ?)
-              ORDER BY username ASC 
-              LIMIT ?";
-    
-    $stmt = $conn->prepare($query);
-    $searchPattern = '%' . $searchQuery . '%';
-    $stmt->bind_param('issi', $currentUserId, $searchPattern, $searchPattern, $limit);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    $users = [];
-    while ($row = $result->fetch_assoc()) {
-        $users[] = [
-            'id' => $row['id'],
-            'username' => $row['username'],
-            'role' => $row['role']
-        ];
-    }
-    
-    $stmt->close();
-    $db->close();
-    
-    echo json_encode([
-        'success' => true,
-        'users' => $users
-    ]);
-    
+    echo json_encode($response);
+
 } catch (Exception $e) {
-    error_log('SearchChatUsers Error: ' . $e->getMessage());
+    error_log("Error in SearchChatUsers: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'An error occurred while searching users'
+        'message' => 'Internal server error'
     ]);
 }

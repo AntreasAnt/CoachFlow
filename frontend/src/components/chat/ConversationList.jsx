@@ -11,7 +11,8 @@ export function ConversationList() {
     messages,
     hasMoreConversations,
     loadingMoreConversations,
-    loadMoreConversations 
+    loadMoreConversations,
+    markConversationRead
   } = useChat();
   const listRef = useRef(null);
 
@@ -22,18 +23,31 @@ export function ConversationList() {
       const userId = u.userid || u.id;
       map[String(userId)] = u.username || u.name || userId;
     });
-    console.log('[ConversationList] User map:', map);
-    console.log('[ConversationList] All users:', allUsers);
     return map;
   }, [allUsers]);
+
+  // Auto-mark conversation as read when it becomes active
+  useEffect(() => {
+    if (activeConversationId) {
+      // Small delay to ensure conversation is loaded
+      const timer = setTimeout(() => {
+        markConversationRead();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [activeConversationId, markConversationRead]);
 
   // Check if conversation has unread messages (Instagram-style)
   const hasUnread = (conversation) => {
     if (!firebaseUser) return false;
-    // Message is unread if it exists and was sent by the other person
+    // Message is unread if:
+    // 1. There is a last message
+    // 2. The last message was sent by someone else
+    // 3. Current user hasn't read it (not in lastMessageReadBy array)
     return conversation.lastMessage && 
            conversation.lastMessageSenderId && 
-           String(conversation.lastMessageSenderId) !== String(firebaseUser.uid);
+           String(conversation.lastMessageSenderId) !== String(firebaseUser.uid) &&
+           (!conversation.lastMessageReadBy || !conversation.lastMessageReadBy.includes(firebaseUser.uid));
   };
 
   // Format time ago (Instagram-style: "2m", "1h", "3d", "2w")
@@ -85,7 +99,6 @@ export function ConversationList() {
       {conversations.map(c => {
         const others = (c.participants || []).filter(p => firebaseUser && String(p) !== String(firebaseUser.uid));
         const otherUid = others[0];
-        console.log('[ConversationList] Looking up user:', otherUid, 'Result:', userMap[String(otherUid)]);
         const displayName = userMap[String(otherUid)] || otherUid || 'User';
         const isActive = c.id === activeConversationId;
         const isUnread = hasUnread(c);

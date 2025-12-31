@@ -194,12 +194,15 @@ export function ChatProvider({ currentUserBackend, children }) {
       lastMessage: docData.text,
       lastMessageAt: serverTimestamp(),
       lastMessageSenderId: firebaseUser.uid,
+      lastMessageReadBy: [firebaseUser.uid], // Reset readBy when new message is sent
     });
     return newMsg.id;
   }, [firebaseUser, activeConversationId, currentUserBackend]);
 
   const markConversationRead = useCallback(async () => {
     if (!firebaseUser || !activeConversationId || !currentUserBackend?.userid) return;
+    
+    // First, mark all messages as read
     const msgRef = collection(db, 'conversations', activeConversationId, 'messages');
     const snap = await getDocs(query(msgRef, orderBy('createdAt', 'asc')));
     const ops = [];
@@ -212,6 +215,19 @@ export function ChatProvider({ currentUserBackend, children }) {
       }
     });
     if (ops.length) await Promise.all(ops);
+    
+    // Also update the conversation document to mark it as read by current user
+    const convDoc = doc(db, 'conversations', activeConversationId);
+    const convSnap = await getDoc(convDoc);
+    if (convSnap.exists()) {
+      const convData = convSnap.data();
+      const readBy = convData.lastMessageReadBy || [];
+      if (!readBy.includes(firebaseUser.uid)) {
+        await updateDoc(convDoc, {
+          lastMessageReadBy: [...readBy, firebaseUser.uid]
+        });
+      }
+    }
   }, [firebaseUser, activeConversationId, currentUserBackend]);
 
   const blockUser = useCallback(async (userId) => {
