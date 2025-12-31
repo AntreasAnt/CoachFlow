@@ -9,6 +9,8 @@ import {
   query,
   where,
   orderBy,
+  limit as firestoreLimit,
+  startAfter,
   onSnapshot,
   serverTimestamp,
   updateDoc,
@@ -34,6 +36,9 @@ export function ChatProvider({ currentUserBackend, children }) {
   const [typingMap, setTypingMap] = useState({});
   const [allUsers, setAllUsers] = useState([]);
   const [blocked, setBlocked] = useState([]);
+  const [hasMoreConversations, setHasMoreConversations] = useState(true);
+  const [loadingMoreConversations, setLoadingMoreConversations] = useState(false);
+  const [conversationsLimit] = useState(20); // Load 20 at a time
 
   // Enforce custom token auth only; no anonymous fallback
   useEffect(() => {
@@ -106,17 +111,25 @@ export function ChatProvider({ currentUserBackend, children }) {
   }, [firebaseUser, currentUserBackend]);
 
   // Subscribe to conversations where current user participates (requires Firebase auth)
+  // Uses pagination with initial limit
   useEffect(() => {
     if (!firebaseUser || !currentUserBackend?.userid) return;
     const convRef = collection(db, 'conversations');
-    const q = query(convRef, where('participants', 'array-contains', firebaseUser.uid), orderBy('lastMessageAt', 'desc'));
+    const q = query(
+      convRef, 
+      where('participants', 'array-contains', firebaseUser.uid), 
+      orderBy('lastMessageAt', 'desc'),
+      firestoreLimit(conversationsLimit)
+    );
     const unsub = onSnapshot(q, snap => {
       const list = [];
       snap.forEach(d => list.push({ id: d.id, ...d.data() }));
       setConversations(list);
+      // If we got less than the limit, there are no more
+      setHasMoreConversations(list.length >= conversationsLimit);
     });
     return () => unsub();
-  }, [firebaseUser, currentUserBackend]);
+  }, [firebaseUser, currentUserBackend, conversationsLimit]);
 
   // Subscribe to messages for active conversation (requires Firebase auth)
   useEffect(() => {
@@ -180,6 +193,7 @@ export function ChatProvider({ currentUserBackend, children }) {
     await updateDoc(doc(db, 'conversations', activeConversationId), {
       lastMessage: docData.text,
       lastMessageAt: serverTimestamp(),
+      lastMessageSenderId: firebaseUser.uid,
     });
     return newMsg.id;
   }, [firebaseUser, activeConversationId, currentUserBackend]);
@@ -234,9 +248,45 @@ export function ChatProvider({ currentUserBackend, children }) {
       await deleteDoc(convDoc);
       setActiveConversationId(null);
     } else {
-      console.warn('User not allowed to delete this conversation');
+      // just clear messages
+      const msgRef = collection(db, 'conversations', activeConversationId, 'messages');
+      const msgSnap = await getDocs(msgRef);
+      const deletions = [];
+      msgSnap.forEach(m => deletions.push(deleteDoc(doc(db, 'conversations', activeConversationId, 'messages', m.id))));
+      await Promise.all(deletions);
+      await updateDoc(convDoc, { lastMessage: null, lastMessageAt: null });
     }
   }, [firebaseUser, activeConversationId, currentUserBackend]);
+
+  const loadMoreConversations = useCallback(async () => {
+    if (!firebaseUser || !hasMoreConversations || loadingMoreConversations) return;
+    
+    setLoadingMoreConversations(true);
+    try {
+      const lastConv = conversations[conversations.length - 1];
+      if (!lastConv) return;
+      
+      const convRef = collection(db, 'conversations');
+      const q = query(
+        convRef,
+        where('participants', 'array-contains', firebaseUser.uid),
+        orderBy('lastMessageAt', 'desc'),
+        startAfter(lastConv.lastMessageAt),
+        firestoreLimit(conversationsLimit)
+      );
+      
+      const snapshot = await getDocs(q);
+      const newConvs = [];
+      snapshot.forEach(d => newConvs.push({ id: d.id, ...d.data() }));
+      
+      setConversations(prev => [...prev, ...newConvs]);
+      setHasMoreConversations(newConvs.length >= conversationsLimit);
+    } catch (err) {
+      console.error('[Chat] Error loading more conversations:', err);
+    } finally {
+      setLoadingMoreConversations(false);
+    }
+  }, [firebaseUser, conversations, hasMoreConversations, loadingMoreConversations, conversationsLimit]);
 
   const setTyping = useCallback(async (isTyping) => {
     if (!firebaseUser || !activeConversationId || !currentUserBackend?.userid) return;
@@ -276,6 +326,9 @@ export function ChatProvider({ currentUserBackend, children }) {
     unblockUser,
     deleteConversation,
     authError,
+    hasMoreConversations,
+    loadingMoreConversations,
+    loadMoreConversations,
   };
 
   return (

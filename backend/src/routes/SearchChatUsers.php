@@ -5,16 +5,10 @@
  * Used for lazy loading in messages page
  */
 
-// Start output buffering to prevent any output before JSON
-ob_start();
-
 session_start();
 
-// Clear any previous output
-ob_clean();
-
-// Set headers
-header('Content-Type: application/json');
+// Set headers FIRST
+header('Content-Type: application/json; charset=utf-8');
 
 // CORS configuration
 $allowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
@@ -92,28 +86,27 @@ try {
         $stmt->close();
         $db->close();
         
-        ob_clean();
         echo json_encode([
             'success' => true,
             'users' => $users
         ]);
-        ob_end_flush();
+        exit;
         exit;
     }
     
-    // Search users by username (case-insensitive, partial match)
-    $query = "SELECT userid as id, username, role 
+    // Search users by username or email (case-insensitive, partial match)
+    $query = "SELECT userid as id, username, email, role 
               FROM user 
               WHERE userid != ? 
               AND isdeleted = 0 
               AND isdisabled = 0 
-              AND username LIKE ? 
+              AND (username LIKE ? OR email LIKE ?)
               ORDER BY username ASC 
               LIMIT ?";
     
     $stmt = $conn->prepare($query);
     $searchPattern = '%' . $searchQuery . '%';
-    $stmt->bind_param('isi', $currentUserId, $searchPattern, $limit);
+    $stmt->bind_param('issi', $currentUserId, $searchPattern, $searchPattern, $limit);
     $stmt->execute();
     $result = $stmt->get_result();
     
@@ -129,20 +122,16 @@ try {
     $stmt->close();
     $db->close();
     
-    ob_clean();
     echo json_encode([
         'success' => true,
         'users' => $users
     ]);
-    ob_end_flush();
     
 } catch (Exception $e) {
     error_log('SearchChatUsers Error: ' . $e->getMessage());
     http_response_code(500);
-    ob_clean();
     echo json_encode([
         'success' => false,
         'message' => 'An error occurred while searching users'
     ]);
-    ob_end_flush();
 }

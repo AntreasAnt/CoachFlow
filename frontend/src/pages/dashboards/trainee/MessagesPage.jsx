@@ -15,8 +15,51 @@ const MessagesContent = ({ currentUser }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [filteredConversations, setFilteredConversations] = useState([]);
+
+  // Filter existing conversations based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredConversations([]);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = chat.conversations.filter(conv => {
+      const otherUserId = conv.participants.find(p => p !== chat.firebaseUser?.uid);
+      const otherUser = chat.allUsers.find(u => {
+        const userId = String(u.userid || u.id);
+        return userId === String(otherUserId);
+      });
+      
+      if (!otherUser) return false;
+      
+      const username = (otherUser.username || '').toLowerCase();
+      const email = (otherUser.email || '').toLowerCase();
+      
+      return username.includes(query) || email.includes(query);
+    });
+    
+    setFilteredConversations(filtered);
+  }, [searchQuery, chat.conversations, chat.allUsers, chat.firebaseUser]);
+
+  // Get user IDs from filtered conversations to avoid duplicates
+  const existingConversationUserIds = filteredConversations.map(conv => {
+    const otherUserId = conv.participants.find(p => p !== chat.firebaseUser?.uid);
+    return String(otherUserId);
+  });
+
+  // Filter search results to exclude users we already have conversations with
+  const uniqueSearchResults = searchResults.filter(user => {
+    return !existingConversationUserIds.includes(String(user.id));
+  });
+
+  // Debug logging
+  console.log('[Search] Query:', searchQuery);
+  console.log('[Search] Filtered conversations:', filteredConversations.length);
+  console.log('[Search] Backend results:', searchResults.length);
+  console.log('[Search] Unique results (after filtering):', uniqueSearchResults.length);
 
   // Search users with debounce
   const searchUsers = useCallback(async (query) => {
@@ -56,6 +99,7 @@ const MessagesContent = ({ currentUser }) => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
+      console.log('[Search] Backend response:', data);
       if (data.success) {
         setSearchResults(data.users || []);
         setHasSearched(true);
@@ -78,18 +122,15 @@ const MessagesContent = ({ currentUser }) => {
 
   const handleStartConversation = (userId) => {
     chat.startDirectConversation(userId);
-    setShowSearch(false);
     setSearchQuery('');
-    setSearchResults([]);
-    setHasSearched(false);
   };
 
-  // Load sample users when search panel opens
+  // Load sample users on mount
   useEffect(() => {
-    if (showSearch && !hasSearched && searchResults.length === 0) {
+    if (!hasSearched && searchResults.length === 0) {
       searchUsers('');
     }
-  }, [showSearch, hasSearched, searchResults.length, searchUsers]);
+  }, [hasSearched, searchResults.length, searchUsers]);
 
   return (
     <div className="messages-page">
@@ -106,33 +147,67 @@ const MessagesContent = ({ currentUser }) => {
             </button>
             <h5 className="mb-0 fw-bold">Messages</h5>
           </div>
-          <button 
-            className="btn btn-primary btn-sm"
-            onClick={() => setShowSearch(!showSearch)}
-          >
-            <i className="bi bi-plus-lg"></i>
-          </button>
         </div>
 
-        {/* Search Panel */}
-        {showSearch && (
-          <div className="search-panel">
-            <div className="search-input-wrapper">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Search users..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                autoFocus
-              />
-              {isSearching && <div className="spinner-border spinner-border-sm"></div>}
-            </div>
-            
-            {searchQuery && (
-              <div className="search-results">
-                {searchResults.length > 0 ? (
-                  searchResults.map(user => (
+        {/* Search Panel - Always visible */}
+        <div className="search-panel">
+          <div className="search-input-wrapper">
+            <input
+              type="text"
+              className="form-control form-control-sm"
+              placeholder="Search by name or email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {isSearching && <div className="spinner-border spinner-border-sm"></div>}
+          </div>
+          
+          {searchQuery && (
+            <div className="search-results">
+              {/* Show existing conversations first */}
+              {filteredConversations.length > 0 && (
+                <>
+                  <div className="text-muted small px-3 py-2 fw-bold">Existing Chats</div>
+                  {filteredConversations.map(conv => {
+                    const otherUserId = conv.participants.find(p => p !== chat.firebaseUser?.uid);
+                    const otherUser = chat.allUsers.find(u => {
+                      const userId = String(u.userid || u.id);
+                      return userId === String(otherUserId);
+                    });
+                    return otherUser ? (
+                      <div
+                        key={conv.id}
+                        className="search-result-item"
+                        onClick={() => {
+                          chat.setActiveConversationId(conv.id);
+                          setSearchQuery('');
+                        }}
+                      >
+                        <div className="user-avatar">
+                          {otherUser.username[0].toUpperCase()}
+                        </div>
+                        <div className="user-info">
+                          <div className="user-name">{otherUser.username}</div>
+                          {conv.lastMessage && (
+                            <div className="text-muted small text-truncate">{conv.lastMessage}</div>
+                          )}
+                        </div>
+                      </div>
+                    ) : null;
+                  })}
+                </>
+              )}
+              
+              {/* Separator if we have both */}
+              {filteredConversations.length > 0 && uniqueSearchResults.length > 0 && (
+                <div style={{ borderTop: '1px solid #eee', margin: '8px 0' }}></div>
+              )}
+              
+              {/* Then show other users */}
+              {uniqueSearchResults.length > 0 && (
+                <>
+                  <div className="text-muted small px-3 py-2 fw-bold">All Users</div>
+                  {uniqueSearchResults.map(user => (
                     <div
                       key={user.id}
                       className="search-result-item"
@@ -146,37 +221,39 @@ const MessagesContent = ({ currentUser }) => {
                         <div className="user-role">{user.role}</div>
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center text-muted py-3">
-                    {isSearching ? 'Searching...' : hasSearched ? 'No users found' : 'Start typing to search'}
+                  ))}
+                </>
+              )}
+              
+              {filteredConversations.length === 0 && uniqueSearchResults.length === 0 && (
+                <div className="text-center text-muted py-3">
+                  {isSearching ? 'Searching...' : 'No results found'}
+                </div>
+              )}
+            </div>
+          )}
+          
+          {!searchQuery && searchResults.length > 0 && (
+            <div className="search-results">
+              <div className="text-muted small px-3 py-2">Suggested users</div>
+              {searchResults.map(user => (
+                <div
+                  key={user.id}
+                  className="search-result-item"
+                  onClick={() => handleStartConversation(user.id)}
+                >
+                  <div className="user-avatar">
+                    {user.username[0].toUpperCase()}
                   </div>
-                )}
-              </div>
-            )}
-            
-            {!searchQuery && searchResults.length > 0 && (
-              <div className="search-results">
-                <div className="text-muted small px-3 py-2">Suggested users</div>
-                {searchResults.map(user => (
-                  <div
-                    key={user.id}
-                    className="search-result-item"
-                    onClick={() => handleStartConversation(user.id)}
-                  >
-                    <div className="user-avatar">
-                      {user.username[0].toUpperCase()}
-                    </div>
-                    <div className="user-info">
-                      <div className="user-name">{user.username}</div>
-                      <div className="user-role">{user.role}</div>
-                    </div>
+                  <div className="user-info">
+                    <div className="user-name">{user.username}</div>
+                    <div className="user-role">{user.role}</div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Conversation List */}
         <div className="conversations-list">
@@ -275,8 +352,6 @@ const MessagesPage = () => {
         </ChatProvider>
       )}
 
-
-      
     </div>
   );
 };

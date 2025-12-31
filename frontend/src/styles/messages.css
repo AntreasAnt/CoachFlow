@@ -51,17 +51,20 @@
 
 .search-input-wrapper {
   position: relative;
-  padding: 1rem;
+  padding: 0.75rem 1rem;
 }
 
-.search-input-wrapper .form-control {
-  padding-left: 1rem;
+.search-input-wrapper .form-control,
+.search-input-wrapper .form-control-sm {
+  padding: 0.5rem 1rem;
   padding-right: 2.5rem;
   border-radius: 20px;
   border: 1px solid #dee2e6;
   position: relative;
   z-index: 1;
   background: white;
+  font-size: 0.875rem;
+  height: 36px;
 }
 
 .search-input-wrapper .spinner-border {
@@ -292,6 +295,21 @@
   border-radius: 12px;
   min-width: 20px;
   text-align: center;
+}
+
+/* Unread dot indicator (Instagram-style) */
+.unread-dot {
+  width: 8px;
+  height: 8px;
+  background: #007bff;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Unread message text styling */
+.conversation-item .last-message.fw-semibold.text-dark {
+  color: #000 !important;
+  font-weight: 600;
 }
 
 .conversation-item .last-message {
