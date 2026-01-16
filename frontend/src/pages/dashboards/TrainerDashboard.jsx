@@ -27,9 +27,9 @@ const TrainerDashboard = () => {
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link text-light" to="/trainer/programs">
-                  <i className="bi bi-collection-play me-2"></i>
-                  Training Programs
+                <Link className="nav-link text-light" to="/trainer-dashboard/programs">
+                  <i className="bi bi-grid me-2"></i>
+                  My Programs
                 </Link>
               </li>
               <li className="nav-item">
@@ -193,7 +193,7 @@ const TrainerDashboard = () => {
                     <Link to="/trainer/add-client" className="btn btn-primary">
                       <i className="bi bi-person-plus me-2"></i>Add New Client
                     </Link>
-                    <Link to="/trainer/create-program" className="btn btn-outline-primary">
+                    <Link to="/trainer-dashboard/programs" className="btn btn-outline-primary">
                       <i className="bi bi-plus-circle me-2"></i>Create Program
                     </Link>
                     <Link to="/trainer/view-payments" className="btn btn-outline-success">

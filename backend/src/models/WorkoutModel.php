@@ -399,6 +399,61 @@ class WorkoutModel
     }
 
     /**
+     * Delete a custom exercise
+     */
+    public function deleteCustomExercise($userId, $exerciseId)
+    {
+        try {
+            // First verify the exercise is custom and belongs to the user
+            $checkQuery = "SELECT id FROM exercises WHERE id = ? AND is_custom = 1 AND created_by_user_id = ?";
+            $checkStmt = $this->conn->prepare($checkQuery);
+            if (!$checkStmt) {
+                throw new Exception("Prepare failed: " . $this->conn->error);
+            }
+
+            $checkStmt->bind_param("ii", $exerciseId, $userId);
+            $checkStmt->execute();
+            $result = $checkStmt->get_result();
+            
+            if ($result->num_rows === 0) {
+                return [
+                    'success' => false,
+                    'message' => 'Exercise not found or you do not have permission to delete it'
+                ];
+            }
+
+            // Delete the exercise
+            $deleteQuery = "DELETE FROM exercises WHERE id = ? AND is_custom = 1 AND created_by_user_id = ?";
+            $deleteStmt = $this->conn->prepare($deleteQuery);
+            if (!$deleteStmt) {
+                throw new Exception("Prepare failed: " . $this->conn->error);
+            }
+
+            $deleteStmt->bind_param("ii", $exerciseId, $userId);
+            $deleteResult = $deleteStmt->execute();
+            
+            if ($deleteResult) {
+                return [
+                    'success' => true,
+                    'message' => 'Exercise deleted successfully'
+                ];
+            }
+            
+            return [
+                'success' => false,
+                'message' => 'Failed to delete exercise'
+            ];
+
+        } catch (Exception $e) {
+            error_log("Error in deleteCustomExercise: " . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Error deleting exercise: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
      * Create a workout plan
      */
     public function createWorkoutPlan($userId, $planData)

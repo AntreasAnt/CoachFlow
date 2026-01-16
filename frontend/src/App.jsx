@@ -14,6 +14,7 @@ import AuthRoot from "./contexts/AuthRoot";
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import ManagerDashboard from "./pages/dashboards/ManagerDashboard";
 import TrainerDashboard from "./pages/dashboards/TrainerDashboard";
+import CreatePrograms from "./pages/dashboards/trainer/CreatePrograms";
 
 import TraineeDashboardHome from "./pages/dashboards/trainee/Dashboard";
 import ProfilePage from "./pages/dashboards/trainee/ProfilePage";
@@ -96,6 +97,14 @@ function App() {
           element={
             <AuthRoot allowedPrivileges={['trainer']}>
               <TrainerDashboard />
+            </AuthRoot>
+          } 
+        />
+        <Route 
+          path="/trainer-dashboard/programs" 
+          element={
+            <AuthRoot allowedPrivileges={['trainer']}>
+              <CreatePrograms />
             </AuthRoot>
           } 
         />

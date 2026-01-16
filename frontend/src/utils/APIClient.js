@@ -60,8 +60,13 @@ class APIClient {
     return response.json();
   }
 
-  static async delete(url, options = {}) {
-    const response = await this.fetch(url, { method: 'DELETE', ...options });
+  static async delete(url, data, options = {}) {
+    const response = await this.fetch(url, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+      body: data ? JSON.stringify(data) : undefined,
+      ...options
+    });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
