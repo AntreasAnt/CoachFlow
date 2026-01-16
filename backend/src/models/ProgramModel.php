@@ -38,8 +38,8 @@ class ProgramModel
                         trainer_id, title, description, long_description,
                         meta_title, meta_description, slug, tags,
                         difficulty_level, duration_weeks, category,
-                        price, currency, status
-                      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        price, currency, status, is_featured
+                      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $stmt = $this->conn->prepare($query);
             if (!$stmt) {
@@ -58,13 +58,18 @@ class ProgramModel
             $price = $programData['price'] ?? 0.00;
             $currency = $programData['currency'] ?? 'USD';
             $status = $programData['status'] ?? 'draft';
+            $isFeatured = $programData['is_featured'] ?? 0;
+
+            // Debug logging
+            error_log("Difficulty Level Value: '" . $difficultyLevel . "' (length: " . strlen($difficultyLevel) . ")");
+            error_log("Status Value: '" . $status . "'");
 
             $stmt->bind_param(
-                "issssssssissds",
+                "issssssssidsssi",
                 $trainerId, $title, $description, $longDescription,
                 $metaTitle, $metaDescription, $slug, $tags,
                 $difficultyLevel, $durationWeeks, $category,
-                $price, $currency, $status
+                $price, $currency, $status, $isFeatured
             );
 
             if (!$stmt->execute()) {
@@ -73,8 +78,11 @@ class ProgramModel
 
             $programId = $this->conn->insert_id;
 
-            // Insert exercises if provided
-            if (isset($programData['exercises']) && is_array($programData['exercises'])) {
+            // Insert workout sessions if provided
+            if (isset($programData['sessions']) && is_array($programData['sessions'])) {
+                $this->addSessionsToProgram($programId, $programData['sessions']);
+            } elseif (isset($programData['exercises']) && is_array($programData['exercises'])) {
+                // Fallback for old format (flat exercises)
                 $this->addExercisesToProgram($programId, $programData['exercises']);
             }
 
@@ -131,6 +139,7 @@ class ProgramModel
                         price = ?,
                         currency = ?,
                         status = ?,
+                        is_featured = ?,
                         updated_at = NOW()
                       WHERE id = ? AND trainer_id = ?";
 
@@ -151,13 +160,14 @@ class ProgramModel
             $price = $programData['price'] ?? 0.00;
             $currency = $programData['currency'] ?? 'USD';
             $status = $programData['status'] ?? 'draft';
+            $isFeatured = $programData['is_featured'] ?? 0;
 
             $stmt->bind_param(
-                "sssssssissdsii",
+                "sssssssissdsiii",
                 $title, $description, $longDescription,
                 $metaTitle, $metaDescription, $tags,
                 $difficultyLevel, $durationWeeks, $category,
-                $price, $currency, $status,
+                $price, $currency, $status, $isFeatured,
                 $programId, $trainerId
             );
 
@@ -165,8 +175,20 @@ class ProgramModel
                 throw new Exception("Failed to update program: " . $stmt->error);
             }
 
-            // Update exercises if provided
-            if (isset($programData['exercises'])) {
+            // Update sessions and exercises if provided
+            if (isset($programData['sessions'])) {
+                // Delete existing sessions (will cascade delete exercises due to foreign key)
+                $deleteSessionsQuery = "DELETE FROM trainer_program_sessions WHERE program_id = ?";
+                $deleteSessionsStmt = $this->conn->prepare($deleteSessionsQuery);
+                $deleteSessionsStmt->bind_param("i", $programId);
+                $deleteSessionsStmt->execute();
+
+                // Add new sessions
+                if (is_array($programData['sessions']) && count($programData['sessions']) > 0) {
+                    $this->addSessionsToProgram($programId, $programData['sessions']);
+                }
+            } elseif (isset($programData['exercises'])) {
+                // Fallback: handle flat exercises for backward compatibility
                 // Delete existing exercises
                 $deleteQuery = "DELETE FROM trainer_program_exercises WHERE program_id = ?";
                 $deleteStmt = $this->conn->prepare($deleteQuery);
@@ -306,7 +328,10 @@ class ProgramModel
             $program = $result->fetch_assoc();
             $program['tags'] = json_decode($program['tags'] ?? '[]', true);
 
-            // Get exercises
+            // Get sessions with exercises
+            $program['sessions'] = $this->getProgramSessions($programId);
+            
+            // Also get flat exercises for backward compatibility
             $program['exercises'] = $this->getProgramExercises($programId);
 
             // Increment view count
@@ -329,6 +354,12 @@ class ProgramModel
     public function getMarketplacePrograms($filters = [])
     {
         try {
+            // Build count query
+            $countQuery = "SELECT COUNT(*) as total
+                          FROM trainer_programs tp
+                          JOIN user u ON tp.trainer_id = u.userid
+                          WHERE tp.status = 'published' AND tp.is_deleted = 0";
+            
             $query = "SELECT 
                         tp.id, tp.trainer_id, tp.title, tp.description,
                         tp.difficulty_level, tp.duration_weeks, tp.category,
@@ -340,33 +371,87 @@ class ProgramModel
                       JOIN user u ON tp.trainer_id = u.userid
                       WHERE tp.status = 'published' AND tp.is_deleted = 0";
 
+            $whereConditions = "";
             $params = [];
             $types = '';
 
+            // Search
+            if (!empty($filters['search'])) {
+                $whereConditions .= " AND (tp.title LIKE ? OR tp.description LIKE ?)";
+                $searchTerm = '%' . $filters['search'] . '%';
+                $params[] = $searchTerm;
+                $params[] = $searchTerm;
+                $types .= 'ss';
+            }
+
             // Apply filters
             if (!empty($filters['category'])) {
-                $query .= " AND tp.category = ?";
+                $whereConditions .= " AND tp.category = ?";
                 $params[] = $filters['category'];
                 $types .= 's';
             }
 
             if (!empty($filters['difficulty_level'])) {
-                $query .= " AND tp.difficulty_level = ?";
+                $whereConditions .= " AND tp.difficulty_level = ?";
                 $params[] = $filters['difficulty_level'];
                 $types .= 's';
             }
 
+            if (!empty($filters['min_duration'])) {
+                $whereConditions .= " AND tp.duration_weeks >= ?";
+                $params[] = $filters['min_duration'];
+                $types .= 'i';
+            }
+
+            if (!empty($filters['max_duration'])) {
+                $whereConditions .= " AND tp.duration_weeks <= ?";
+                $params[] = $filters['max_duration'];
+                $types .= 'i';
+            }
+
+            if (!empty($filters['min_price'])) {
+                $whereConditions .= " AND tp.price >= ?";
+                $params[] = $filters['min_price'];
+                $types .= 'd';
+            }
+
             if (!empty($filters['max_price'])) {
-                $query .= " AND tp.price <= ?";
+                $whereConditions .= " AND tp.price <= ?";
                 $params[] = $filters['max_price'];
                 $types .= 'd';
             }
 
+            if (!empty($filters['trainer_name'])) {
+                $whereConditions .= " AND u.full_name LIKE ?";
+                $params[] = '%' . $filters['trainer_name'] . '%';
+                $types .= 's';
+            }
+
+            if (isset($filters['is_featured']) && $filters['is_featured'] !== null) {
+                $whereConditions .= " AND tp.is_featured = ?";
+                $params[] = $filters['is_featured'];
+                $types .= 'i';
+            }
+
             if (!empty($filters['trainer_id'])) {
-                $query .= " AND tp.trainer_id = ?";
+                $whereConditions .= " AND tp.trainer_id = ?";
                 $params[] = $filters['trainer_id'];
                 $types .= 'i';
             }
+
+            // Apply to both queries
+            $countQuery .= $whereConditions;
+            $query .= $whereConditions;
+
+            // Get total count
+            $countStmt = $this->conn->prepare($countQuery);
+            if (!empty($params)) {
+                $countStmt->bind_param($types, ...$params);
+            }
+            $countStmt->execute();
+            $totalResult = $countStmt->get_result();
+            $totalRow = $totalResult->fetch_assoc();
+            $total = $totalRow['total'];
 
             // Sorting
             $sortBy = $filters['sort_by'] ?? 'popular';
@@ -414,7 +499,10 @@ class ProgramModel
                 $programs[] = $row;
             }
 
-            return $programs;
+            return [
+                'programs' => $programs,
+                'total' => $total
+            ];
 
         } catch (Exception $e) {
             error_log("Error in getMarketplacePrograms: " . $e->getMessage());
@@ -425,6 +513,53 @@ class ProgramModel
     /**
      * Get exercises for a program
      */
+    private function getProgramSessions($programId)
+    {
+        try {
+            // Get all sessions for this program
+            $sessionQuery = "SELECT * FROM trainer_program_sessions 
+                           WHERE program_id = ? 
+                           ORDER BY order_index, week_number, day_number";
+            
+            $sessionStmt = $this->conn->prepare($sessionQuery);
+            $sessionStmt->bind_param("i", $programId);
+            $sessionStmt->execute();
+            $sessionResult = $sessionStmt->get_result();
+            
+            $sessions = [];
+            while ($session = $sessionResult->fetch_assoc()) {
+                // Get exercises for this session
+                $exerciseQuery = "SELECT 
+                                    tpe.*,
+                                    e.name, e.category, e.muscle_group,
+                                    e.equipment, e.instructions, e.is_custom
+                                  FROM trainer_program_exercises tpe
+                                  JOIN exercises e ON tpe.exercise_id = e.id
+                                  WHERE tpe.session_id = ?
+                                  ORDER BY tpe.order_index";
+                
+                $exerciseStmt = $this->conn->prepare($exerciseQuery);
+                $exerciseStmt->bind_param("i", $session['id']);
+                $exerciseStmt->execute();
+                $exerciseResult = $exerciseStmt->get_result();
+                
+                $exercises = [];
+                while ($exercise = $exerciseResult->fetch_assoc()) {
+                    $exercises[] = $exercise;
+                }
+                
+                $session['exercises'] = $exercises;
+                $sessions[] = $session;
+            }
+            
+            return $sessions;
+            
+        } catch (Exception $e) {
+            error_log("Error in getProgramSessions: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
     private function getProgramExercises($programId)
     {
         try {
@@ -460,6 +595,96 @@ class ProgramModel
     /**
      * Add exercises to a program
      */
+    private function addSessionsToProgram($programId, $sessions)
+    {
+        try {
+            foreach ($sessions as $index => $session) {
+                // Insert session
+                $sessionQuery = "INSERT INTO trainer_program_sessions (
+                    program_id, session_name, session_description,
+                    week_number, day_number, order_index
+                ) VALUES (?, ?, ?, ?, ?, ?)";
+                
+                $sessionStmt = $this->conn->prepare($sessionQuery);
+                if (!$sessionStmt) {
+                    throw new Exception("Failed to prepare session statement: " . $this->conn->error);
+                }
+                
+                $sessionName = $session['name'] ?? 'Workout Session';
+                $sessionDescription = $session['description'] ?? '';
+                $weekNumber = $session['week_number'] ?? 1;
+                $dayNumber = $session['day_number'] ?? 1;
+                $orderIndex = $index;
+                
+                $sessionStmt->bind_param(
+                    "issiii",
+                    $programId, $sessionName, $sessionDescription,
+                    $weekNumber, $dayNumber, $orderIndex
+                );
+                
+                if (!$sessionStmt->execute()) {
+                    throw new Exception("Failed to insert session: " . $sessionStmt->error);
+                }
+                
+                $sessionId = $this->conn->insert_id;
+                
+                // Insert exercises for this session
+                if (isset($session['exercises']) && is_array($session['exercises'])) {
+                    $this->addExercisesToSession($programId, $sessionId, $session['exercises'], $weekNumber, $dayNumber);
+                }
+            }
+            
+            return true;
+            
+        } catch (Exception $e) {
+            error_log("Error in addSessionsToProgram: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    private function addExercisesToSession($programId, $sessionId, $exercises, $weekNumber, $dayNumber)
+    {
+        try {
+            $query = "INSERT INTO trainer_program_exercises (
+                        program_id, session_id, exercise_id, week_number, day_number,
+                        order_index, sets, reps, rest_seconds, tempo,
+                        rpe, notes, alternative_exercise_id
+                      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Prepare failed: " . $this->conn->error);
+            }
+
+            foreach ($exercises as $index => $exercise) {
+                $exerciseId = $exercise['exercise_id'];
+                $orderIndex = $index;
+                $sets = $exercise['sets'] ?? 3;
+                $reps = $exercise['reps'] ?? '';
+                $restSeconds = $exercise['rest_seconds'] ?? 60;
+                $tempo = $exercise['tempo'] ?? '';
+                $rpe = $exercise['rpe'] ?? '';
+                $notes = $exercise['notes'] ?? '';
+                $alternativeExerciseId = $exercise['alternative_exercise_id'] ?? null;
+
+                $stmt->bind_param(
+                    "iiiiiiisisssi",
+                    $programId, $sessionId, $exerciseId, $weekNumber, $dayNumber,
+                    $orderIndex, $sets, $reps, $restSeconds, $tempo,
+                    $rpe, $notes, $alternativeExerciseId
+                );
+
+                $stmt->execute();
+            }
+
+            return true;
+
+        } catch (Exception $e) {
+            error_log("Error in addExercisesToSession: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
     private function addExercisesToProgram($programId, $exercises)
     {
         try {

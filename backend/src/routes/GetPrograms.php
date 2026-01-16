@@ -29,11 +29,11 @@ try {
     
     // Get query parameters
     $type = $_GET['type'] ?? 'marketplace'; // marketplace, my-programs, single
-    $programId = $_GET['programId'] ?? null;
+    $programId = $_GET['programId'] ?? $_GET['id'] ?? null;
     
     $response = ['success' => true];
 
-    if ($type === 'single' && $programId) {
+    if (($type === 'single' || $programId) && $programId) {
         // Get single program details
         $includeDrafts = ($userRole === 'trainer'); // Trainers can see their drafts
         $program = $programModel->getProgramById($programId, $includeDrafts);
@@ -53,17 +53,23 @@ try {
     } elseif ($type === 'marketplace') {
         // Get marketplace programs with filters
         $filters = [
+            'search' => $_GET['search'] ?? null,
             'category' => $_GET['category'] ?? null,
             'difficulty_level' => $_GET['difficulty_level'] ?? null,
+            'min_duration' => $_GET['min_duration'] ?? null,
+            'max_duration' => $_GET['max_duration'] ?? null,
+            'min_price' => $_GET['min_price'] ?? null,
             'max_price' => $_GET['max_price'] ?? null,
-            'trainer_id' => $_GET['trainer_id'] ?? null,
+            'trainer_name' => $_GET['trainer_name'] ?? null,
+            'is_featured' => $_GET['is_featured'] ?? null,
             'sort_by' => $_GET['sort_by'] ?? 'popular',
             'limit' => $_GET['limit'] ?? 20,
             'offset' => $_GET['offset'] ?? 0
         ];
         
-        $programs = $programModel->getMarketplacePrograms($filters);
-        $response['programs'] = $programs;
+        $result = $programModel->getMarketplacePrograms($filters);
+        $response['programs'] = $result['programs'] ?? [];
+        $response['total'] = $result['total'] ?? 0;
         
     } else {
         throw new Exception('Invalid request type');

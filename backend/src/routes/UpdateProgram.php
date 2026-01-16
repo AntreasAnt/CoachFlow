@@ -36,7 +36,9 @@ try {
     $data = json_decode(file_get_contents('php://input'), true);
 
     // Validate required fields
-    if (empty($data['programId'])) {
+    $programId = $data['programId'] ?? $data['id'] ?? null;
+    
+    if (empty($programId)) {
         throw new Exception('Program ID is required');
     }
 
@@ -46,7 +48,7 @@ try {
 
     // Update program
     $programModel = new ProgramModel();
-    $result = $programModel->updateProgram($userId, $data['programId'], $data);
+    $result = $programModel->updateProgram($userId, $programId, $data);
 
     echo json_encode([
         'success' => true,

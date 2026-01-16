@@ -18,7 +18,7 @@ import CreatePrograms from "./pages/dashboards/trainer/CreatePrograms";
 
 import TraineeDashboardHome from "./pages/dashboards/trainee/Dashboard";
 import ProfilePage from "./pages/dashboards/trainee/ProfilePage";
-
+import ProgramMarketplace from "./pages/dashboards/trainee/ProgramMarketplace";
 
 import MyWorkouts from "./pages/dashboards/trainee/MyWorkouts";
 import MealsPage from "./pages/dashboards/trainee/MealsPage";
@@ -138,6 +138,14 @@ function App() {
           element={
             <AuthRoot allowedPrivileges={['trainee']}>
               <MyWorkouts />
+            </AuthRoot>
+          }
+        />
+        <Route 
+          path="/trainee-dashboard/marketplace" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <ProgramMarketplace />
             </AuthRoot>
           }
         />

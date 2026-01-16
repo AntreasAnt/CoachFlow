@@ -252,6 +252,8 @@ const CreatePrograms = () => {
       return;
     }
 
+    const wasEditing = isEditingSession;
+    
     if (isEditingSession) {
       // Update existing session
       const updatedSessions = [...workoutSessions];
@@ -266,7 +268,7 @@ const CreatePrograms = () => {
 
     // Reset current session
     resetSessionForm();
-    showToast(isEditingSession ? 'Workout session updated!' : 'Workout session added!', 'success');
+    showToast(wasEditing ? 'Workout session updated!' : 'Workout session added!', 'success');
   };
 
   const resetSessionForm = () => {
@@ -310,29 +312,9 @@ const CreatePrograms = () => {
     }
 
     try {
-      // Flatten all exercises from all workout sessions into the format expected by backend
-      const allProgramExercises = [];
-      
-      workoutSessions.forEach(session => {
-        session.exercises.forEach(exercise => {
-          allProgramExercises.push({
-            exercise_id: exercise.exercise_id,
-            week_number: session.week_number,
-            day_number: session.day_number,
-            sets: exercise.sets,
-            reps: exercise.reps,
-            rest_seconds: 60,
-            tempo: '',
-            rpe: exercise.rpe || '',
-            notes: session.description || '',
-            order_index: allProgramExercises.length
-          });
-        });
-      });
-
       const programData = {
         ...programPackage,
-        exercises: allProgramExercises
+        sessions: workoutSessions
       };
 
       const data = editingProgramId
@@ -394,54 +376,86 @@ const CreatePrograms = () => {
   };
 
   const editProgram = async (program) => {
-    // Load program data
-    setEditingProgramId(program.id);
-    setProgramPackage({
-      title: program.title,
-      description: program.description,
-      long_description: program.long_description || '',
-      meta_title: program.meta_title || '',
-      meta_description: program.meta_description || '',
-      tags: program.tags || [],
-      difficulty_level: program.difficulty_level,
-      duration_weeks: program.duration_weeks,
-      category: program.category,
-      price: program.price,
-      currency: program.currency,
-      status: program.status
-    });
-
-    // Load exercises and reconstruct workout sessions
-    // This is simplified - you may need to fetch full exercise details
-    const sessions = [];
-    // Group exercises by week and day
-    if (program.exercises && program.exercises.length > 0) {
-      const grouped = {};
-      program.exercises.forEach(ex => {
-        const key = `${ex.week_number}-${ex.day_number}`;
-        if (!grouped[key]) {
-          grouped[key] = {
-            name: `Week ${ex.week_number} Day ${ex.day_number}`,
-            description: ex.notes || '',
-            week_number: ex.week_number,
-            day_number: ex.day_number,
-            exercises: []
-          };
-        }
-        grouped[key].exercises.push({
-          exercise_id: ex.exercise_id,
-          name: ex.name || 'Exercise',
-          sets: ex.sets,
-          reps: ex.reps,
-          rpe: ex.rpe,
-          muscle_group: ex.muscle_group || '',
-          category: ex.category || ''
-        });
+    try {
+      // Fetch full program details including sessions
+      const data = await APIClient.get(`${BACKEND_ROUTES_API}GetPrograms.php?id=${program.id}`);
+      
+      if (!data.success || !data.program) {
+        showToast('Failed to load program details', 'error');
+        return;
+      }
+      
+      const fullProgram = data.program;
+      
+      // Load program data
+      setEditingProgramId(fullProgram.id);
+      setProgramPackage({
+        title: fullProgram.title,
+        description: fullProgram.description,
+        long_description: fullProgram.long_description || '',
+        meta_title: fullProgram.meta_title || '',
+        meta_description: fullProgram.meta_description || '',
+        tags: fullProgram.tags || [],
+        difficulty_level: fullProgram.difficulty_level,
+        duration_weeks: fullProgram.duration_weeks,
+        category: fullProgram.category,
+        price: fullProgram.price,
+        currency: fullProgram.currency,
+        status: fullProgram.status
       });
-      setWorkoutSessions(Object.values(grouped));
-    }
 
-    setActiveView('create');
+      // Load sessions with exercises
+      if (fullProgram.sessions && fullProgram.sessions.length > 0) {
+        // Use sessions from API
+        const sessions = fullProgram.sessions.map(session => ({
+          name: session.session_name,
+          description: session.session_description || '',
+          week_number: session.week_number,
+          day_number: session.day_number,
+          exercises: session.exercises.map(ex => ({
+            exercise_id: ex.exercise_id,
+            name: ex.name || 'Exercise',
+            sets: ex.sets,
+            reps: ex.reps,
+            rpe: ex.rpe || '',
+            muscle_group: ex.muscle_group || '',
+            category: ex.category || ''
+          }))
+        }));
+        setWorkoutSessions(sessions);
+      } else if (fullProgram.exercises && fullProgram.exercises.length > 0) {
+        // Fallback: group exercises by week and day if no sessions
+        const grouped = {};
+        fullProgram.exercises.forEach(ex => {
+          const key = `${ex.week_number}-${ex.day_number}`;
+          if (!grouped[key]) {
+            grouped[key] = {
+              name: `Week ${ex.week_number} Day ${ex.day_number}`,
+              description: ex.notes || '',
+              week_number: ex.week_number,
+              day_number: ex.day_number,
+              exercises: []
+            };
+          }
+          grouped[key].exercises.push({
+            exercise_id: ex.exercise_id,
+            name: ex.name || 'Exercise',
+            sets: ex.sets,
+            reps: ex.reps,
+            rpe: ex.rpe,
+            muscle_group: ex.muscle_group || '',
+            category: ex.category || ''
+          });
+        });
+        setWorkoutSessions(Object.values(grouped));
+      } else {
+        setWorkoutSessions([]);
+      }
+
+      setActiveView('create');
+    } catch (err) {
+      showToast('Error loading program: ' + err.message, 'error');
+    }
   };
 
   // Render Functions
@@ -527,7 +541,16 @@ const CreatePrograms = () => {
     <div>
       <style>{styles}</style>
       
-      <BackButton className="mb-3" />
+      <button 
+        className="btn btn-secondary mb-3"
+        onClick={() => {
+          resetProgramForm();
+          setActiveView('list');
+        }}
+      >
+        <i className="bi bi-arrow-left me-2"></i>
+        Back to Programs
+      </button>
       
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h4 className="mb-0">{editingProgramId ? 'Edit Program' : 'Create Training Program'}</h4>
@@ -698,23 +721,23 @@ const CreatePrograms = () => {
                             <span className="badge bg-secondary">{session.exercises.length} exercises</span>
                           </div>
                         </div>
-                        <div className="btn-group btn-group-sm">
+                        <div className="d-flex gap-2">
                           <button 
-                            className="btn btn-outline-secondary"
+                            className="btn btn-secondary btn-sm"
                             onClick={() => duplicateSession(index)}
                             title="Duplicate"
                           >
                             <i className="bi bi-files"></i>
                           </button>
                           <button 
-                            className="btn btn-outline-primary"
+                            className="btn btn-primary btn-sm"
                             onClick={() => editSession(index)}
                             title="Edit"
                           >
                             <i className="bi bi-pencil"></i>
                           </button>
                           <button 
-                            className="btn btn-outline-danger"
+                            className="btn btn-danger btn-sm"
                             onClick={() => deleteSession(index)}
                             title="Delete"
                           >
@@ -1008,7 +1031,7 @@ const CreatePrograms = () => {
               <button 
                 className="btn btn-primary w-100 btn-lg mb-2"
                 onClick={saveProgram}
-                disabled={!programPackage.title || workoutSessions.length === 0}
+                disabled={!programPackage.title || (!editingProgramId && workoutSessions.length === 0)}
               >
                 <i className="bi bi-save me-2"></i>
                 {editingProgramId ? 'Update Program Package' : 'Create Program Package'}
