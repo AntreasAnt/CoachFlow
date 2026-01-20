@@ -21,6 +21,7 @@ import ProfilePage from "./pages/dashboards/trainee/ProfilePage";
 import ProgramMarketplace from "./pages/dashboards/trainee/ProgramMarketplace";
 
 import MyWorkouts from "./pages/dashboards/trainee/MyWorkouts";
+import ProgramView from "./pages/dashboards/trainee/ProgramView";
 import MealsPage from "./pages/dashboards/trainee/MealsPage";
 import Progress from "./pages/dashboards/trainee/Progress";
 import MessagesPage from "./pages/dashboards/trainee/MessagesPage";
@@ -146,6 +147,22 @@ function App() {
           element={
             <AuthRoot allowedPrivileges={['trainee']}>
               <ProgramMarketplace />
+            </AuthRoot>
+          }
+        />
+        <Route 
+          path="/trainee-dashboard/program/:programId" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <ProgramView />
+            </AuthRoot>
+          }
+        />
+        <Route 
+          path="/trainee-dashboard/workouts" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <MyWorkouts />
             </AuthRoot>
           }
         />

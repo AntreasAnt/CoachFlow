@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import APIClient from '../../../utils/APIClient';
 import TraineeDashboard from '../../../components/TraineeDashboard';
 
 const MyWorkouts = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeView, setActiveView] = useState('plans'); // plans, create, log
   const [workoutPlans, setWorkoutPlans] = useState([]);
+  const [purchasedPrograms, setPurchasedPrograms] = useState([]);
   const [workoutHistory, setWorkoutHistory] = useState([]);
   const [historyPage, setHistoryPage] = useState(1);
   const [historyHasMore, setHistoryHasMore] = useState(false);
@@ -54,7 +56,23 @@ const MyWorkouts = () => {
 
   useEffect(() => {
     fetchWorkoutData();
-  }, []);
+    
+    // Check if we're coming from ProgramView with workout data to start
+    if (location.state?.startWorkout && location.state?.workoutData) {
+      console.log('Starting workout from location state:', location.state.workoutData);
+      setActiveWorkout(location.state.workoutData);
+      setCurrentExerciseIndex(0);
+      setCurrentSetIndex(0);
+      setWorkoutLogs([]);
+      setCurrentSetData({ weight: '', reps: '', rpe: '', notes: '' });
+      setWorkoutTimer(0);
+      setIsWorkoutTimerRunning(true);
+      setActiveView('log');
+      
+      // Clear the location state so it doesn't restart on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     fetchRecentSessions(historyPage);
@@ -102,9 +120,26 @@ const MyWorkouts = () => {
   // initial recent sessions come from GetWorkoutData; we will also fetch paged
   setWorkoutHistory(data.recentSessions);
         setAllExercises(data.exercises || []);
-        setPremadeWorkoutPlans(data.premiumPlans || []);
       } else {
         throw new Error(data.message || 'Failed to load workout data');
+      }
+
+      // Fetch purchased programs
+      const purchasedData = await APIClient.get(`${BACKEND_ROUTES_API}GetPurchasedPrograms.php`);
+      let purchasedList = [];
+      if (purchasedData.success) {
+        purchasedList = purchasedData.purchases || [];
+        setPurchasedPrograms(purchasedList);
+      }
+
+      // Fetch marketplace programs and filter out purchased ones
+      const marketplaceData = await APIClient.get(`${BACKEND_ROUTES_API}GetPrograms.php?type=marketplace&limit=6&sort_by=popular`);
+      if (marketplaceData.success) {
+        const purchasedProgramIds = purchasedList.map(p => p.program_id);
+        const availablePrograms = (marketplaceData.programs || []).filter(
+          program => !purchasedProgramIds.includes(program.id)
+        );
+        setPremadeWorkoutPlans(availablePrograms);
       }
 
     } catch (err) {
@@ -211,14 +246,37 @@ const MyWorkouts = () => {
   // Plan management functions
   const deletePlan = async (planId) => {
     try {
-      const data = await APIClient.delete(`${BACKEND_ROUTES_API}DeleteWorkoutPlan.php`, {
-        body: JSON.stringify({ planId })
-      });
+      console.log('deletePlan called with:', { planId, planToDelete });
+      
+      // Check if this is a purchased program
+      if (planToDelete?.isPurchased) {
+        console.log('Deleting purchased program:', planId);
+        
+        // Hide purchase (soft delete)
+        const data = await APIClient.delete(`${BACKEND_ROUTES_API}DeletePurchase.php`, {
+          programId: planId
+        });
 
-      if (data.success) {
-        setWorkoutPlans(prev => prev.filter(plan => plan.id !== planId));
-        setShowDeleteModal(false);
-        setPlanToDelete(null);
+        if (data.success) {
+          setPurchasedPrograms(prev => prev.filter(p => p.program_id !== planId));
+          setShowDeleteModal(false);
+          setPlanToDelete(null);
+          setSuccessMessage('Program hidden from your library');
+          setShowSuccessModal(true);
+          // Refresh to update lists
+          fetchWorkoutData();
+        }
+      } else {
+        // Delete user's own workout plan
+        const data = await APIClient.delete(`${BACKEND_ROUTES_API}DeleteWorkoutPlan.php`, {
+          planId: planId
+        });
+
+        if (data.success) {
+          setWorkoutPlans(prev => prev.filter(plan => plan.id !== planId));
+          setShowDeleteModal(false);
+          setPlanToDelete(null);
+        }
       }
     } catch (err) {
       console.error('Error deleting plan:', err);
@@ -688,6 +746,67 @@ const MyWorkouts = () => {
 
       {/* Workout Plans Grid */}
       <div className="row">
+        {/* Purchased Programs */}
+        {purchasedPrograms.map(program => (
+          <div key={`purchased-${program.program_id}`} className="col-lg-6 mb-3">
+            <div className="card border-0 shadow-sm h-100 border-success" style={{ borderWidth: '2px', borderStyle: 'solid' }}>
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-start mb-3">
+                  <h5 className="card-title">{program.title}</h5>
+                  <span className="badge bg-success">
+                    <i className="bi bi-bag-check me-1"></i>
+                    Purchased
+                  </span>
+                </div>
+                
+                <div className="mb-2">
+                  <span className="badge bg-light text-dark me-1">{program.difficulty_level}</span>
+                  <span className="badge bg-light text-dark me-1">{program.duration_weeks}w</span>
+                  <span className="badge bg-light text-dark">{program.category}</span>
+                </div>
+
+                <div className="mb-3">
+                  <small className="text-muted">Description:</small>
+                  <p className="small text-muted mb-0 mt-1">{program.description || 'No description available'}</p>
+                </div>
+
+                <div className="mb-3">
+                  <small className="text-muted">By: {program.trainer_name}</small>
+                </div>
+
+                <div className="d-flex gap-2">
+                  <button 
+                    className="btn btn-success flex-fill"
+                    onClick={() => navigate(`/trainee-dashboard/program/${program.program_id}`)}
+                  >
+                    <i className="bi bi-play-circle me-2"></i>
+                    View Program
+                  </button>
+                  <button 
+                    className="btn btn-outline-primary"
+                    onClick={() => {
+                      // Navigate to edit page or open edit modal for purchased program
+                      navigate(`/trainee-dashboard/program/${program.program_id}/edit`);
+                    }}
+                  >
+                    <i className="bi bi-pencil"></i>
+                  </button>
+                  <button 
+                    className="btn btn-outline-danger"
+                    onClick={() => {
+                      setPlanToDelete({ id: program.program_id, name: program.title, isPurchased: true });
+                      setShowDeleteModal(true);
+                    }}
+                  >
+                    <i className="bi bi-eye-slash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {/* User's Own Workout Plans */}
         {workoutPlans.map(plan => (
           <div key={plan.id} className="col-lg-6 mb-3">
             <div className="card border-0 shadow-sm h-100">
@@ -746,30 +865,50 @@ const MyWorkouts = () => {
         ))}
       </div>
 
-      {/* Buy Existing Workout Plans Section */}
-      <div className="mt-5">
-        <h5 className="mb-3">Premium Workout Plans</h5>
-        <div className="row">
-          {premadeWorkoutPlans.map((plan, index) => (
-            <div key={index} className="col-lg-4 mb-3">
-              <div className="card border-0 shadow-sm h-100">
-                <div className="card-body">
-                  <h6 className="card-title">{plan.title}</h6>
-                  <p className="text-muted small">{plan.description}</p>
-                  <div className="d-flex justify-content-between align-items-center">
-                    <span className="badge bg-primary">{plan.category}</span>
-                    <span className="fw-bold text-success">${plan.price}</span>
+      {/* Premium Workout Plans Section */}
+      {premadeWorkoutPlans.length > 0 && (
+        <div className="mt-5">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h5 className="mb-0">🏆 Premium Workout Programs</h5>
+            <button 
+              className="btn btn-outline-primary btn-sm"
+              onClick={() => navigate('/trainee-dashboard/marketplace')}
+            >
+              <i className="bi bi-shop me-2"></i>
+              View All Programs
+            </button>
+          </div>
+          <div className="row">
+            {premadeWorkoutPlans.slice(0, 3).map((plan, index) => (
+              <div key={index} className="col-lg-4 mb-3">
+                <div className="card border-0 shadow-sm h-100">
+                  <div className="card-body">
+                    <div className="mb-3">
+                      <h6 className="card-title mb-2">{plan.title}</h6>
+                      <p className="text-muted small mb-0">{plan.description?.substring(0, 100)}...</p>
+                    </div>
+                    <div className="mb-3">
+                      <span className="badge bg-light text-dark me-1">{plan.difficulty_level}</span>
+                      <span className="badge bg-light text-dark">{plan.duration_weeks} weeks</span>
+                    </div>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <span className="badge bg-primary">{plan.category}</span>
+                      <span className="fw-bold text-success">${plan.price}</span>
+                    </div>
+                    <button 
+                      className="btn btn-outline-primary w-100"
+                      onClick={() => navigate(`/trainee-dashboard/marketplace?programId=${plan.id}`)}
+                    >
+                      <i className="bi bi-eye me-2"></i>
+                      View Details
+                    </button>
                   </div>
-                  <button className="btn btn-outline-primary w-100 mt-3">
-                    <i className="bi bi-cart-plus me-2"></i>
-                    Purchase Plan
-                  </button>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Workout History with Filters */}
       <div className="mt-5">
@@ -1402,7 +1541,7 @@ const MyWorkouts = () => {
       <div className="modal-dialog">
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">Delete Workout Plan</h5>
+            <h5 className="modal-title">{planToDelete?.isPurchased ? 'Hide' : 'Delete'} Workout Plan</h5>
             <button 
               type="button" 
               className="btn-close" 
@@ -1410,8 +1549,12 @@ const MyWorkouts = () => {
             ></button>
           </div>
           <div className="modal-body">
-            <p>Are you sure you want to delete the workout plan "<strong>{planToDelete?.name}</strong>"?</p>
-            <p className="text-muted small">This action cannot be undone.</p>
+            <p>Are you sure you want to {planToDelete?.isPurchased ? 'hide' : 'delete'} the workout plan "<strong>{planToDelete?.name}</strong>"?</p>
+            {planToDelete?.isPurchased ? (
+              <p className="text-muted small">This will hide the program from your library. You can restore it later from the marketplace.</p>
+            ) : (
+              <p className="text-muted small">This action cannot be undone.</p>
+            )}
           </div>
           <div className="modal-footer">
             <button 
@@ -1424,9 +1567,12 @@ const MyWorkouts = () => {
             <button 
               type="button" 
               className="btn btn-danger" 
-              onClick={() => deletePlan(planToDelete?.id)}
+              onClick={() => {
+                console.log('Delete button clicked, planToDelete:', planToDelete);
+                deletePlan(planToDelete?.id);
+              }}
             >
-              Delete
+              {planToDelete?.isPurchased ? 'Hide' : 'Delete'}
             </button>
           </div>
         </div>

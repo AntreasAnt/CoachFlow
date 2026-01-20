@@ -20,6 +20,29 @@ class PurchaseModel
     {
         $database = new Database();
         $this->conn = $database->connect();
+        
+        // Ensure is_hidden column exists
+        $this->ensureIsHiddenColumn();
+    }
+
+    /**
+     * Ensure is_hidden column exists in program_purchases table
+     */
+    private function ensureIsHiddenColumn()
+    {
+        try {
+            $checkColumn = "SHOW COLUMNS FROM program_purchases LIKE 'is_hidden'";
+            $result = $this->conn->query($checkColumn);
+            
+            if ($result->num_rows === 0) {
+                // Add the column if it doesn't exist
+                $addColumn = "ALTER TABLE program_purchases ADD COLUMN is_hidden TINYINT(1) DEFAULT 0 AFTER access_granted";
+                $this->conn->query($addColumn);
+                error_log("Added is_hidden column to program_purchases table");
+            }
+        } catch (Exception $e) {
+            error_log("Error ensuring is_hidden column: " . $e->getMessage());
+        }
     }
 
     /**
@@ -96,12 +119,14 @@ class PurchaseModel
     public function completePurchase($stripePaymentIntentId, $paymentMethod = null)
     {
         try {
+            error_log("Completing purchase for payment intent: " . $stripePaymentIntentId);
+            
             $this->conn->begin_transaction();
 
             // Update purchase status
             $query = "UPDATE program_purchases 
                       SET status = 'completed',
-                          access_granted = TRUE,
+                          access_granted = 1,
                           completed_at = NOW(),
                           purchased_at = NOW(),
                           stripe_payment_method = ?,
@@ -112,20 +137,25 @@ class PurchaseModel
             $stmt->bind_param("ss", $paymentMethod, $stripePaymentIntentId);
 
             if (!$stmt->execute()) {
-                throw new Exception("Failed to complete purchase");
+                throw new Exception("Failed to complete purchase: " . $stmt->error);
             }
 
-            if ($stmt->affected_rows === 0) {
+            $affectedRows = $stmt->affected_rows;
+            error_log("Rows affected by purchase update: " . $affectedRows);
+
+            if ($affectedRows === 0) {
                 throw new Exception("Purchase not found for payment intent: " . $stripePaymentIntentId);
             }
 
             // Get purchase details to update program stats
-            $getPurchaseQuery = "SELECT program_id FROM program_purchases WHERE stripe_payment_intent_id = ?";
+            $getPurchaseQuery = "SELECT program_id, trainee_id FROM program_purchases WHERE stripe_payment_intent_id = ?";
             $getPurchaseStmt = $this->conn->prepare($getPurchaseQuery);
             $getPurchaseStmt->bind_param("s", $stripePaymentIntentId);
             $getPurchaseStmt->execute();
             $result = $getPurchaseStmt->get_result();
             $purchase = $result->fetch_assoc();
+
+            error_log("Completed purchase for trainee " . $purchase['trainee_id'] . " program " . $purchase['program_id']);
 
             // Update program purchase count
             $updateProgramQuery = "UPDATE trainer_programs 
@@ -136,6 +166,7 @@ class PurchaseModel
             $updateProgramStmt->execute();
 
             $this->conn->commit();
+            error_log("Purchase completed successfully");
             return true;
 
         } catch (Exception $e) {
@@ -185,13 +216,12 @@ class PurchaseModel
                         tp.difficulty_level,
                         tp.duration_weeks,
                         tp.category,
-                        u.first_name as trainer_first_name,
-                        u.last_name as trainer_last_name,
-                        u.id as trainer_id
+                        u.username as trainer_name,
+                        u.userid as trainer_id
                       FROM program_purchases pp
                       JOIN trainer_programs tp ON pp.program_id = tp.id
-                      JOIN users u ON pp.trainer_id = u.id
-                      WHERE pp.trainee_id = ? AND pp.status = ?
+                      JOIN user u ON pp.trainer_id = u.userid
+                      WHERE pp.trainee_id = ? AND pp.status = ? AND pp.is_hidden = 0
                       ORDER BY pp.purchased_at DESC";
 
             $stmt = $this->conn->prepare($query);
@@ -208,10 +238,62 @@ class PurchaseModel
                 $purchases[] = $row;
             }
 
+            error_log("getTraineePurchases for trainee $traineeId with status $status: Found " . count($purchases) . " purchases");
+
             return $purchases;
 
         } catch (Exception $e) {
             error_log("Error in getTraineePurchases: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Get trainee's hidden purchases
+     */
+    public function getTraineeHiddenPurchases($traineeId)
+    {
+        try {
+            $query = "SELECT 
+                        pp.id,
+                        pp.purchased_at,
+                        pp.amount,
+                        pp.currency,
+                        pp.status,
+                        tp.id as program_id,
+                        tp.title,
+                        tp.description,
+                        tp.difficulty_level,
+                        tp.duration_weeks,
+                        tp.category,
+                        u.username as trainer_name,
+                        u.userid as trainer_id
+                      FROM program_purchases pp
+                      JOIN trainer_programs tp ON pp.program_id = tp.id
+                      JOIN user u ON pp.trainer_id = u.userid
+                      WHERE pp.trainee_id = ? AND pp.status = 'completed' AND pp.is_hidden = 1
+                      ORDER BY pp.purchased_at DESC";
+
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Prepare failed: " . $this->conn->error);
+            }
+
+            $stmt->bind_param("i", $traineeId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            $purchases = [];
+            while ($row = $result->fetch_assoc()) {
+                $purchases[] = $row;
+            }
+
+            error_log("getTraineeHiddenPurchases for trainee $traineeId: Found " . count($purchases) . " hidden purchases");
+
+            return $purchases;
+
+        } catch (Exception $e) {
+            error_log("Error in getTraineeHiddenPurchases: " . $e->getMessage());
             throw $e;
         }
     }
@@ -222,19 +304,22 @@ class PurchaseModel
     public function hasAccess($traineeId, $programId)
     {
         try {
-            $query = "SELECT id 
+            $query = "SELECT id, status, access_granted
                       FROM program_purchases 
                       WHERE trainee_id = ? 
                       AND program_id = ? 
                       AND status = 'completed'
-                      AND access_granted = TRUE";
+                      AND access_granted = 1";
 
             $stmt = $this->conn->prepare($query);
             $stmt->bind_param("ii", $traineeId, $programId);
             $stmt->execute();
             $result = $stmt->get_result();
 
-            return $result->num_rows > 0;
+            $hasAccess = $result->num_rows > 0;
+            error_log("hasAccess check for trainee $traineeId, program $programId: " . ($hasAccess ? 'YES' : 'NO'));
+            
+            return $hasAccess;
 
         } catch (Exception $e) {
             error_log("Error in hasAccess: " . $e->getMessage());
@@ -278,12 +363,11 @@ class PurchaseModel
                         pp.amount,
                         pp.currency,
                         tp.title as program_title,
-                        u.first_name as trainee_first_name,
-                        u.last_name as trainee_last_name,
+                        u.username as trainee_name,
                         u.email as trainee_email
                       FROM program_purchases pp
                       JOIN trainer_programs tp ON pp.program_id = tp.id
-                      JOIN users u ON pp.trainee_id = u.id
+                      JOIN user u ON pp.trainee_id = u.userid
                       WHERE pp.trainer_id = ? AND pp.status = 'completed'
                       ORDER BY pp.purchased_at DESC";
 
@@ -337,4 +421,80 @@ class PurchaseModel
             throw $e;
         }
     }
-}
+
+    /**
+     * Hide a purchase (soft delete - remove from trainee's active library)
+     */
+    public function hidePurchase($traineeId, $programId)
+    {
+        try {
+            $query = "UPDATE program_purchases 
+                      SET is_hidden = 1
+                      WHERE trainee_id = ? AND program_id = ?";
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->bind_param("ii", $traineeId, $programId);
+
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to hide purchase: " . $stmt->error);
+            }
+
+            error_log("Hidden purchase for trainee $traineeId, program $programId");
+            return true;
+
+        } catch (Exception $e) {
+            error_log("Error in hidePurchase: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Restore a hidden purchase
+     */
+    public function restorePurchase($traineeId, $programId)
+    {
+        try {
+            $query = "UPDATE program_purchases 
+                      SET is_hidden = 0
+                      WHERE trainee_id = ? AND program_id = ?";
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->bind_param("ii", $traineeId, $programId);
+
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to restore purchase: " . $stmt->error);
+            }
+
+            error_log("Restored purchase for trainee $traineeId, program $programId");
+            return true;
+
+        } catch (Exception $e) {
+            error_log("Error in restorePurchase: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Delete a purchase (remove from trainee's library)
+     */
+    public function deletePurchase($traineeId, $programId)
+    {
+        try {
+            $query = "DELETE FROM program_purchases 
+                      WHERE trainee_id = ? AND program_id = ?";
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->bind_param("ii", $traineeId, $programId);
+
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to delete purchase: " . $stmt->error);
+            }
+
+            error_log("Deleted purchase for trainee $traineeId, program $programId");
+            return true;
+
+        } catch (Exception $e) {
+            error_log("Error in deletePurchase: " . $e->getMessage());
+            throw $e;
+        }
+    }}

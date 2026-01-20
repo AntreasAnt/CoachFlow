@@ -27,10 +27,14 @@ try {
     // Get purchased programs
     $purchaseModel = new PurchaseModel();
     $purchases = $purchaseModel->getTraineePurchases($userId, 'completed');
+    $hiddenPurchases = $purchaseModel->getTraineeHiddenPurchases($userId);
+
+    error_log("GetPurchasedPrograms for user $userId: Found " . count($purchases) . " purchases, " . count($hiddenPurchases) . " hidden");
 
     echo json_encode([
         'success' => true,
-        'purchases' => $purchases
+        'purchases' => $purchases,
+        'hiddenPurchases' => $hiddenPurchases
     ]);
 
 } catch (Exception $e) {

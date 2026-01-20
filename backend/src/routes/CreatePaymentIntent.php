@@ -59,7 +59,12 @@ try {
 
     // Get the official price from database (in dollars)
     $amount = $program['price'];
-    $currency = strtolower($program['currency']);
+    $currency = !empty($program['currency']) ? strtolower(trim($program['currency'])) : 'usd';
+    
+    // Validate currency
+    if (empty($currency) || $currency === '0' || strlen($currency) < 3) {
+        $currency = 'usd';
+    }
 
     // Convert to cents for Stripe (required for USD, EUR, etc.)
     $amountInCents = (int)($amount * 100);

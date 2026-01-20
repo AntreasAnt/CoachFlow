@@ -45,7 +45,7 @@ const ProgramFilters = ({ filters, onFilterChange, onClearFilters }) => {
           </div>
 
           {/* Category */}
-          <div className="col-md-6">
+          <div className="col-md-12">
             <label className="form-label small fw-bold">Category</label>
             <select
               className="form-select"
@@ -60,7 +60,7 @@ const ProgramFilters = ({ filters, onFilterChange, onClearFilters }) => {
           </div>
 
           {/* Difficulty */}
-          <div className="col-md-6">
+          <div className="col-md-12">
             <label className="form-label small fw-bold">Difficulty Level</label>
             <select
               className="form-select"
@@ -77,7 +77,7 @@ const ProgramFilters = ({ filters, onFilterChange, onClearFilters }) => {
           </div>
 
           {/* Duration */}
-          <div className="col-md-6">
+          <div className="col-md-12">
             <label className="form-label small fw-bold">Duration (weeks)</label>
             <div className="row g-2">
               <div className="col-6">
@@ -104,7 +104,7 @@ const ProgramFilters = ({ filters, onFilterChange, onClearFilters }) => {
           </div>
 
           {/* Price Range */}
-          <div className="col-md-6">
+          <div className="col-md-12">
             <label className="form-label small fw-bold">Price Range ($)</label>
             <div className="row g-2">
               <div className="col-6">

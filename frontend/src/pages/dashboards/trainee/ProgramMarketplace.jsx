@@ -8,7 +8,7 @@ import TraineeDashboard from '../../../components/TraineeDashboard';
 import ProgramFilters from '../../../components/ProgramFilters';
 import BackButton from '../../../components/BackButton';
 
-// Initialize Stripe (will be set after fetching publishable key)
+
 let stripePromise = null;
 
 const CheckoutForm = ({ clientSecret, onSuccess, onCancel, programTitle, amount }) => {
@@ -27,7 +27,7 @@ const CheckoutForm = ({ clientSecret, onSuccess, onCancel, programTitle, amount 
     setIsProcessing(true);
     setMessage(null);
 
-    const { error } = await stripe.confirmPayment({
+    const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
         return_url: `${window.location.origin}/trainee-dashboard/my-programs?payment=success`,
@@ -39,11 +39,8 @@ const CheckoutForm = ({ clientSecret, onSuccess, onCancel, programTitle, amount 
       setMessage(error.message);
       setIsProcessing(false);
     } else {
-      // Payment successful
-      setMessage('Payment successful! Redirecting...');
-      setTimeout(() => {
-        onSuccess();
-      }, 2000);
+      // Payment successful - pass payment intent ID to parent
+      onSuccess(paymentIntent.id);
     }
   };
 
@@ -107,11 +104,14 @@ const ProgramMarketplace = () => {
   const [searchParams] = useSearchParams();
   const [programs, setPrograms] = useState([]);
   const [purchasedPrograms, setPurchasedPrograms] = useState([]);
+  const [hiddenPrograms, setHiddenPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('marketplace');
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const [clientSecret, setClientSecret] = useState('');
+  const [paymentIntentId, setPaymentIntentId] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalPrograms, setTotalPrograms] = useState(0);
@@ -144,7 +144,7 @@ const ProgramMarketplace = () => {
     if (activeTab === 'marketplace') {
       fetchPrograms();
     }
-  }, [filters, currentPage, activeTab]);
+  }, [filters, currentPage, activeTab, purchasedPrograms]);
 
   const initializeStripe = async () => {
     try {
@@ -190,7 +190,13 @@ const ProgramMarketplace = () => {
       const data = await APIClient.get(`${BACKEND_ROUTES_API}GetPrograms.php?${queryParams.toString()}`);
       
       if (data.success) {
-        setPrograms(data.programs || []);
+        // Filter out programs that are already purchased
+        const purchasedProgramIds = purchasedPrograms.map(p => p.program_id);
+        const filteredPrograms = (data.programs || []).filter(
+          program => !purchasedProgramIds.includes(program.id)
+        );
+        
+        setPrograms(filteredPrograms);
         setTotalPrograms(data.total || 0);
         setTotalPages(Math.ceil((data.total || 0) / programsPerPage));
       }
@@ -205,11 +211,34 @@ const ProgramMarketplace = () => {
     try {
       const data = await APIClient.get(`${BACKEND_ROUTES_API}GetPurchasedPrograms.php`);
       
+      console.log('Purchased programs response:', data);
+      
       if (data.success) {
+        console.log('Setting purchased programs:', data.purchases);
         setPurchasedPrograms(data.purchases || []);
+        setHiddenPrograms(data.hiddenPurchases || []);
+      } else {
+        console.error('Failed to fetch purchased programs:', data.message);
       }
     } catch (error) {
       console.error('Error fetching purchased programs:', error);
+    }
+  };
+
+  const handleRestoreProgram = async (programId) => {
+    try {
+      const response = await APIClient.post(`${BACKEND_ROUTES_API}RestorePurchase.php`, {
+        programId: programId
+      });
+
+      if (response.success) {
+        await fetchPurchasedPrograms();
+      } else {
+        alert('Error: ' + (response.message || 'Failed to restore program'));
+      }
+    } catch (error) {
+      console.error('Error restoring program:', error);
+      alert('Failed to restore program');
     }
   };
 
@@ -222,30 +251,56 @@ const ProgramMarketplace = () => {
         programId: program.id
       });
 
+      console.log('Payment Intent Response:', response);
+
       if (response.success) {
         setClientSecret(response.clientSecret);
         setShowCheckout(true);
       } else {
-        alert('Error: ' + response.message);
+        alert('Error: ' + (response.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error creating payment intent:', error);
-      alert('Failed to initiate purchase');
+      alert('Failed to initiate purchase: ' + (error.message || 'Please try again'));
     }
   };
 
-  const handlePaymentSuccess = () => {
-    setShowCheckout(false);
-    setClientSecret('');
-    setSelectedProgram(null);
-    alert('Purchase successful! You can now access this program in "My Programs" tab.');
-    fetchPurchasedPrograms();
+  const handlePaymentSuccess = async (paymentIntentId) => {
+    try {
+      console.log('Completing purchase with payment intent:', paymentIntentId);
+      
+      // Complete the purchase in our database
+      const response = await APIClient.post(`${BACKEND_ROUTES_API}CompletePurchase.php`, {
+        paymentIntentId: paymentIntentId
+      });
+
+      console.log('Complete Purchase Response:', response);
+
+      if (response.success) {
+        setShowCheckout(false);
+        setClientSecret('');
+        setPaymentIntentId('');
+        setShowSuccessModal(true);
+        await fetchPurchasedPrograms();
+      } else {
+        alert('Payment succeeded but failed to complete purchase: ' + (response.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error completing purchase:', error);
+      alert('Payment succeeded but failed to complete purchase: ' + (error.message || 'Please contact support.'));
+    }
   };
 
   const handlePaymentCancel = () => {
     setShowCheckout(false);
     setClientSecret('');
     setSelectedProgram(null);
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    setSelectedProgram(null);
+    setActiveTab('purchased'); // Switch to My Programs tab
   };
 
   const renderProgramCard = (program, isPurchased = false) => (
@@ -343,6 +398,46 @@ const ProgramMarketplace = () => {
                 />
               </Elements>
             )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderSuccessModal = () => (
+    <div className={`modal fade ${showSuccessModal ? 'show d-block' : ''}`} 
+         style={{ backgroundColor: showSuccessModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
+      <div className="modal-dialog modal-dialog-centered">
+        <div className="modal-content">
+          <div className="modal-body text-center p-5">
+            <div className="mb-4">
+              <div className="rounded-circle bg-success d-inline-flex align-items-center justify-content-center" 
+                   style={{ width: '80px', height: '80px' }}>
+                <i className="bi bi-check-lg text-white" style={{ fontSize: '3rem' }}></i>
+              </div>
+            </div>
+            <h3 className="mb-3">Purchase Successful!</h3>
+            <p className="text-muted mb-4">
+              Congratulations! You now have access to <strong>{selectedProgram?.title}</strong>
+            </p>
+            <div className="d-flex gap-2 justify-content-center">
+              <button 
+                className="btn btn-primary"
+                onClick={handleCloseSuccessModal}
+              >
+                <i className="bi bi-play-circle me-2"></i>
+                View My Programs
+              </button>
+              <button 
+                className="btn btn-outline-dark"
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  setSelectedProgram(null);
+                }}
+              >
+                Continue Shopping
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -510,7 +605,7 @@ const ProgramMarketplace = () => {
 
         {activeTab === 'purchased' && (
           <>
-            {purchasedPrograms.length === 0 ? (
+            {purchasedPrograms.length === 0 && hiddenPrograms.length === 0 ? (
               <div className="text-center py-5">
                 <i className="bi bi-bag-x text-muted" style={{ fontSize: '3rem' }}></i>
                 <p className="text-muted mt-3">
@@ -527,14 +622,65 @@ const ProgramMarketplace = () => {
                 </button>
               </div>
             ) : (
-              <div className="row">
-                {purchasedPrograms.map(program => renderProgramCard(program, true))}
-              </div>
+              <>
+                {purchasedPrograms.length > 0 && (
+                  <div className="row">
+                    {purchasedPrograms.map(program => renderProgramCard(program, true))}
+                  </div>
+                )}
+
+                {hiddenPrograms.length > 0 && (
+                  <div className="mt-5">
+                    <h5 className="mb-3">
+                      <i className="bi bi-archive me-2"></i>
+                      Hidden Programs ({hiddenPrograms.length})
+                    </h5>
+                    <div className="row">
+                      {hiddenPrograms.map(program => (
+                        <div key={program.program_id} className="col-lg-3 col-md-4 col-sm-6 mb-4">
+                          <div className="card border-0 shadow-sm h-100" style={{ opacity: 0.7 }}>
+                            <div className="card-body">
+                              <div className="d-flex justify-content-between align-items-start mb-3">
+                                <h6 className="card-title mb-0">{program.title}</h6>
+                              </div>
+                              
+                              <p className="text-muted small" style={{ minHeight: '60px' }}>
+                                {program.description?.substring(0, 80)}...
+                              </p>
+                              
+                              <div className="mb-3">
+                                <span className="badge bg-light text-dark me-1 mb-1" style={{ fontSize: '0.7rem' }}>
+                                  {program.difficulty_level}
+                                </span>
+                                <span className="badge bg-light text-dark me-1 mb-1" style={{ fontSize: '0.7rem' }}>
+                                  {program.duration_weeks}w
+                                </span>
+                                <span className="badge bg-light text-dark mb-1" style={{ fontSize: '0.7rem' }}>
+                                  {program.category}
+                                </span>
+                              </div>
+
+                              <button 
+                                className="btn btn-success btn-sm w-100"
+                                onClick={() => handleRestoreProgram(program.program_id)}
+                              >
+                                <i className="bi bi-arrow-counterclockwise me-1"></i>
+                                Restore
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
 
         {renderCheckoutModal()}
+        {renderSuccessModal()}
       </div>
     </TraineeDashboard>
   );
