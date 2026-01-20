@@ -14,6 +14,11 @@ import AuthRoot from "./contexts/AuthRoot";
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import ManagerDashboard from "./pages/dashboards/ManagerDashboard";
 import TrainerDashboard from "./pages/dashboards/TrainerDashboard";
+import TrainerDashboardHome from "./pages/dashboards/trainer/TrainerDashboardHome";
+import TrainerProfile from "./pages/dashboards/trainer/TrainerProfile";
+import TrainerPayments from "./pages/dashboards/trainer/TrainerPayments";
+import TrainerClients from "./pages/dashboards/trainer/TrainerClients";
+import TrainerMessages from "./pages/dashboards/trainer/TrainerMessages";
 import CreatePrograms from "./pages/dashboards/trainer/CreatePrograms";
 
 import TraineeDashboardHome from "./pages/dashboards/trainee/Dashboard";
@@ -97,7 +102,15 @@ function App() {
           path="/trainer-dashboard" 
           element={
             <AuthRoot allowedPrivileges={['trainer']}>
-              <TrainerDashboard />
+              <TrainerDashboardHome />
+            </AuthRoot>
+          } 
+        />
+        <Route 
+          path="/trainer-dashboard/profile" 
+          element={
+            <AuthRoot allowedPrivileges={['trainer']}>
+              <TrainerProfile />
             </AuthRoot>
           } 
         />
@@ -106,6 +119,30 @@ function App() {
           element={
             <AuthRoot allowedPrivileges={['trainer']}>
               <CreatePrograms />
+            </AuthRoot>
+          } 
+        />
+        <Route 
+          path="/trainer-dashboard/clients" 
+          element={
+            <AuthRoot allowedPrivileges={['trainer']}>
+              <TrainerClients />
+            </AuthRoot>
+          } 
+        />
+        <Route 
+          path="/trainer-dashboard/payments" 
+          element={
+            <AuthRoot allowedPrivileges={['trainer']}>
+              <TrainerPayments />
+            </AuthRoot>
+          } 
+        />
+        <Route 
+          path="/trainer-dashboard/messages" 
+          element={
+            <AuthRoot allowedPrivileges={['trainer']}>
+              <TrainerMessages />
             </AuthRoot>
           } 
         />

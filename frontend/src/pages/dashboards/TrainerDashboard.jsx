@@ -15,13 +15,13 @@ const TrainerDashboard = () => {
             </div>
             <ul className="nav flex-column">
               <li className="nav-item">
-                <Link className="nav-link text-white" to="/trainer/dashboard">
+                <Link className="nav-link text-white" to="/trainer-dashboard">
                   <i className="bi bi-speedometer2 me-2"></i>
                   Overview
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link text-light" to="/trainer/clients">
+                <Link className="nav-link text-light" to="/trainer-dashboard/clients">
                   <i className="bi bi-people me-2"></i>
                   My Clients
                 </Link>
@@ -33,19 +33,19 @@ const TrainerDashboard = () => {
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link text-light" to="/trainer/payments">
+                <Link className="nav-link text-light" to="/trainer-dashboard/payments">
                   <i className="bi bi-credit-card me-2"></i>
                   Payments
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link text-light" to="/trainer/analytics">
-                  <i className="bi bi-graph-up me-2"></i>
-                  Analytics
+                <Link className="nav-link text-light" to="/trainer-dashboard/messages">
+                  <i className="bi bi-chat-dots me-2"></i>
+                  Messages
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link text-light" to="/trainer/profile">
+                <Link className="nav-link text-light" to="/trainer-dashboard/profile">
                   <i className="bi bi-person me-2"></i>
                   Profile
                 </Link>

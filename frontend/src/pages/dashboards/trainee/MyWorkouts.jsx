@@ -783,15 +783,6 @@ const MyWorkouts = () => {
                     View Program
                   </button>
                   <button 
-                    className="btn btn-outline-primary"
-                    onClick={() => {
-                      // Navigate to edit page or open edit modal for purchased program
-                      navigate(`/trainee-dashboard/program/${program.program_id}/edit`);
-                    }}
-                  >
-                    <i className="bi bi-pencil"></i>
-                  </button>
-                  <button 
                     className="btn btn-outline-danger"
                     onClick={() => {
                       setPlanToDelete({ id: program.program_id, name: program.title, isPurchased: true });
