@@ -206,31 +206,54 @@ const HomePage = () => {
         <div className="col-12">
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h4 className="mb-0">⭐ Popular Coaches</h4>
-            <button className="btn btn-outline-primary btn-sm">View All</button>
+            <button 
+              className="btn btn-outline-primary btn-sm"
+              onClick={() => navigate('/trainee-dashboard/find-trainer')}
+            >
+              View All
+            </button>
           </div>
           <div className="row">
-            {popularCoaches.map(coach => (
-              <div key={coach.id} className="col-lg-4 col-md-6 mb-3">
-                <div className="card h-100 border-0 shadow-sm hover-shadow">
-                  <div className="card-body text-center">
-                    <div className="fs-1 mb-3">{coach.avatar}</div>
-                    <h5 className="card-title">{coach.name}</h5>
-                    <p className="text-muted mb-2">{coach.specialization}</p>
-                    <div className="d-flex justify-content-center align-items-center mb-2">
-                      <i className="bi bi-star-fill text-warning me-1"></i>
-                      <span className="me-3">{coach.rating}</span>
-                      <i className="bi bi-people me-1"></i>
-                      <span>{coach.clients} clients</span>
+            {popularCoaches.length === 0 ? (
+              <div className="col-12 text-center py-5">
+                <i className="bi bi-people fs-1 text-muted mb-3 d-block"></i>
+                <h5 className="text-muted mb-3">Find Your Perfect Trainer</h5>
+                <p className="text-muted mb-4">Connect with professional trainers to reach your fitness goals</p>
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => navigate('/trainee-dashboard/find-trainer')}
+                >
+                  <i className="bi bi-search me-2"></i>
+                  Browse Trainers
+                </button>
+              </div>
+            ) : (
+              popularCoaches.map(coach => (
+                <div key={coach.id} className="col-lg-4 col-md-6 mb-3">
+                  <div className="card h-100 border-0 shadow-sm hover-shadow">
+                    <div className="card-body text-center">
+                      <div className="fs-1 mb-3">{coach.avatar}</div>
+                      <h5 className="card-title">{coach.name}</h5>
+                      <p className="text-muted mb-2">{coach.specialization}</p>
+                      <div className="d-flex justify-content-center align-items-center mb-2">
+                        <i className="bi bi-star-fill text-warning me-1"></i>
+                        <span className="me-3">{coach.rating}</span>
+                        <i className="bi bi-people me-1"></i>
+                        <span>{coach.clients} clients</span>
+                      </div>
+                      <p className="fw-bold text-primary mb-3">{coach.price}</p>
+                      <button 
+                        className="btn btn-outline-primary w-100"
+                        onClick={() => navigate('/trainee-dashboard/find-trainer')}
+                      >
+                        <i className="bi bi-person-plus me-2"></i>
+                        Connect
+                      </button>
                     </div>
-                    <p className="fw-bold text-primary mb-3">{coach.price}</p>
-                    <button className="btn btn-outline-primary w-100">
-                      <i className="bi bi-chat-dots me-2"></i>
-                      Connect
-                    </button>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

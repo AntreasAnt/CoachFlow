@@ -33,6 +33,14 @@ try {
                     $response['privileges'] = 'trainee';
             }
         }
+        
+        // Add user_id and username to response
+        if (isset($_SESSION['user_id'])) {
+            $response['user_id'] = $_SESSION['user_id'];
+        }
+        if (isset($_SESSION['username'])) {
+            $response['username'] = $_SESSION['username'];
+        }
     }
 } catch (Exception $e) {
     $response = [

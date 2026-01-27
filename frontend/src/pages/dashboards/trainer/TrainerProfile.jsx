@@ -127,7 +127,7 @@ const TrainerProfile = () => {
 
   return (
     <TrainerDashboardLayout>
-      <div className="container-fluid p-4">
+      <div className="container p-4" style={{ minHeight: 'calc(100vh - 0px)' }}>
         {/* Header */}
         <div className="mb-4">
           <h2 className="mb-1">My Profile</h2>
@@ -136,7 +136,7 @@ const TrainerProfile = () => {
 
         <div className="row">
           {/* Main Profile Form */}
-          <div className="col-lg-8">
+          <div className="col-lg-10">
             <div className="card border-0 shadow-sm mb-4">
               <div className="card-header bg-white border-bottom">
                 <h5 className="mb-0">
@@ -379,7 +379,7 @@ const TrainerProfile = () => {
           </div>
 
           {/* Sidebar - Profile Preview */}
-          <div className="col-lg-4">
+          <div className="col-lg-2">
             <div className="card border-0 shadow-sm position-sticky" style={{ top: '20px' }}>
               <div className="card-header bg-white border-bottom">
                 <h6 className="mb-0">Profile Preview</h6>

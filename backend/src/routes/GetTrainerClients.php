@@ -26,17 +26,17 @@ try {
     $database = new Database();
     $conn = $database->connect();
     
-    // Get active coaching relationships
+    // Get active coaching relationships with program assignment count
     $query = "SELECT 
                 cr.id,
                 cr.trainee_id,
                 cr.started_at,
                 cr.status,
                 u.full_name as name,
+                u.username,
                 u.email,
                 u.phone,
-                (SELECT COUNT(*) FROM trainer_program_assignments tpa 
-                 WHERE tpa.trainee_id = cr.trainee_id AND tpa.trainer_id = cr.trainer_id) as assigned_programs
+                (SELECT COUNT(*) FROM program_assignments WHERE trainer_id = ? AND trainee_id = cr.trainee_id) as assigned_programs
               FROM coaching_relationships cr
               JOIN user u ON cr.trainee_id = u.userid
               WHERE cr.trainer_id = ?
@@ -44,13 +44,14 @@ try {
               ORDER BY cr.started_at DESC";
     
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("i", $userId);
+    $stmt->bind_param("ii", $userId, $userId);
     $stmt->execute();
     $result = $stmt->get_result();
     
     $clients = [];
     while ($row = $result->fetch_assoc()) {
         $row['last_active'] = 'Today'; // Simplified - can be enhanced
+        $row['name'] = $row['name'] ?: $row['username']; // Use username if full_name is null
         $clients[] = $row;
     }
 

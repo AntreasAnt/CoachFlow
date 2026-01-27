@@ -64,7 +64,11 @@ try {
     $bio = $input['bio'] ?? '';
     $specializations = $input['specializations'] ?? '[]';
     $certifications = $input['certifications'] ?? '';
-    $yearsOfExperience = $input['yearsOfExperience'] ?? null;
+    $yearsOfExperience = $input['yearsOfExperience'] ?? 0;
+    // Convert empty string to 0 for integer field
+    if ($yearsOfExperience === '' || $yearsOfExperience === null) {
+        $yearsOfExperience = 0;
+    }
     $instagram = $input['instagram'] ?? '';
     $facebook = $input['facebook'] ?? '';
     $twitter = $input['twitter'] ?? '';

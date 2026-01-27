@@ -3,8 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import APIClient from '../../../utils/APIClient';
 import TraineeDashboard from '../../../components/TraineeDashboard';
+import CreateWorkoutProgram from './CreateWorkoutProgram';
 
-const MyWorkouts = () => {
+const MyWorkouts = ({ embedded = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [activeView, setActiveView] = useState('plans'); // plans, create, log
@@ -18,6 +19,27 @@ const MyWorkouts = () => {
   const [premadeWorkoutPlans, setPremadeWorkoutPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Program Package (container for workout sessions)
+  const [programPackage, setProgramPackage] = useState({
+    title: '',
+    description: '',
+    difficulty_level: 'beginner',
+    duration_weeks: 4,
+    category: 'Strength'
+  });
+  
+  // Workout Sessions (individual workouts inside the program)
+  const [workoutSessions, setWorkoutSessions] = useState([]);
+  const [currentSession, setCurrentSession] = useState({ 
+    name: '', 
+    description: '', 
+    exercises: [],
+    week_number: 1,
+    day_number: 1
+  });
+  const [isEditingSession, setIsEditingSession] = useState(false);
+  const [editingSessionIndex, setEditingSessionIndex] = useState(null);
   
   // Search and filter states
   const [exerciseSearch, setExerciseSearch] = useState('');
@@ -504,6 +526,51 @@ const MyWorkouts = () => {
     setEditingPlanId(null);
   };
 
+  // Handle saving program package with sessions (new session-based approach)
+  const handleSaveProgram = async (programData) => {
+    try {
+      const response = await APIClient.post(`${BACKEND_ROUTES_API}CreateWorkoutProgram.php`, {
+        title: programData.title,
+        description: programData.description,
+        difficulty_level: programData.difficulty_level,
+        duration_weeks: programData.duration_weeks,
+        category: programData.category,
+        sessions: programData.sessions
+      });
+
+      if (response.success) {
+        fetchWorkoutData(); // Refresh the data
+        setActiveView('plans');
+        alert('Program created successfully!');
+      } else {
+        alert('Failed to create program: ' + (response.message || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error('Error saving program:', err);
+      alert('Error creating program');
+    }
+  };
+
+  // Handle adding custom exercise
+  const handleAddCustomExercise = async (exerciseData) => {
+    try {
+      const response = await APIClient.post(`${BACKEND_ROUTES_API}CreateCustomExercise.php`, exerciseData);
+      
+      if (response.success) {
+        // Refresh exercises list
+        const updatedExercises = await APIClient.get(`${BACKEND_ROUTES_API}GetExercises.php`);
+        if (updatedExercises.exercises) {
+          setAllExercises(updatedExercises.exercises);
+        }
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Error adding custom exercise:', err);
+      return false;
+    }
+  };
+
   // Break timer functions
   const startBreakTimer = () => {
     if (isTimerMode) {
@@ -804,8 +871,20 @@ const MyWorkouts = () => {
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-start mb-3">
                   <h5 className="card-title">{plan.name}</h5>
-                  <span className="badge bg-light text-dark">{plan.exercises?.length || 0} exercises</span>
+                  {plan.is_program_package == 1 ? (
+                    <span className="badge bg-primary">{plan.session_count || 0} sessions</span>
+                  ) : (
+                    <span className="badge bg-light text-dark">{plan.exercises?.length || 0} exercises</span>
+                  )}
                 </div>
+                
+                {plan.is_program_package == 1 && (
+                  <div className="mb-2">
+                    <span className="badge bg-light text-dark me-1">{plan.difficulty_level}</span>
+                    <span className="badge bg-light text-dark me-1">{plan.duration_weeks}w</span>
+                    <span className="badge bg-light text-dark">{plan.category}</span>
+                  </div>
+                )}
                 
                 <div className="mb-3">
                   <small className="text-muted">Description:</small>
@@ -817,29 +896,49 @@ const MyWorkouts = () => {
                 </div>
 
                 <div className="d-flex gap-2">
-                  <button 
-                    className="btn btn-primary flex-fill"
-                    onClick={() => startWorkout(plan)}
-                  >
-                    <i className="bi bi-play-circle me-2"></i>
-                    Start Workout
-                  </button>
-                  <button 
-                    className="btn btn-outline-primary"
-                    onClick={() => {
-                      // Pre-fill the create form with existing plan data
-                      setNewPlan({
-                        name: plan.name,
-                        description: plan.description || '',
-                        exercises: plan.exercises || []
-                      });
-                      setIsEditMode(true);
-                      setEditingPlanId(plan.id);
-                      setActiveView('create');
-                    }}
-                  >
-                    <i className="bi bi-pencil"></i>
-                  </button>
+                  {plan.is_program_package == 1 ? (
+                    <>
+                      <button 
+                        className="btn btn-primary flex-fill"
+                        onClick={() => navigate(`/trainee-dashboard/user-program/${plan.id}`)}
+                      >
+                        <i className="bi bi-eye me-2"></i>
+                        View Program
+                      </button>
+                      <button 
+                        className="btn btn-outline-primary"
+                        onClick={() => navigate(`/trainee-dashboard/user-program/${plan.id}/edit`)}
+                      >
+                        <i className="bi bi-pencil"></i>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button 
+                        className="btn btn-primary flex-fill"
+                        onClick={() => startWorkout(plan)}
+                      >
+                        <i className="bi bi-play-circle me-2"></i>
+                        Start Workout
+                      </button>
+                      <button 
+                        className="btn btn-outline-primary"
+                        onClick={() => {
+                          // Pre-fill the create form with existing plan data
+                          setNewPlan({
+                            name: plan.name,
+                            description: plan.description || '',
+                            exercises: plan.exercises || []
+                          });
+                          setIsEditMode(true);
+                          setEditingPlanId(plan.id);
+                          setActiveView('create');
+                        }}
+                      >
+                        <i className="bi bi-pencil"></i>
+                      </button>
+                    </>
+                  )}
                   <button 
                     className="btn btn-outline-danger"
                     onClick={() => {
@@ -2227,10 +2326,8 @@ const MyWorkouts = () => {
     </div>
   );
 
-  return (
-    <TraineeDashboard>
-      
-      <div className="container-fluid px-4 py-3" style={{ paddingBottom: '100px' }}>
+  const content = (
+      <div className="container-fluid px-4 py-3" style={{ paddingBottom: embedded ? '0' : '100px' }}>
         {/* Error State */}
         {error && (
           <div className="alert alert-danger" role="alert">
@@ -2256,7 +2353,14 @@ const MyWorkouts = () => {
       {!loading && !error && (
         <>
           {activeView === 'plans' && renderPlansView()}
-          {activeView === 'create' && renderCreateView()}
+          {activeView === 'create' && (
+            <CreateWorkoutProgram 
+              onSave={handleSaveProgram}
+              onCancel={() => setActiveView('plans')}
+              allExercises={allExercises}
+              onAddCustomExercise={handleAddCustomExercise}
+            />
+          )}
           {activeView === 'log' && renderLogView()}
         </>
       )}
@@ -2274,8 +2378,9 @@ const MyWorkouts = () => {
 
       {/* Bottom navigation provided by TraineeDashboard */}
       </div>
-    </TraineeDashboard>
   );
+
+  return embedded ? content : <TraineeDashboard>{content}</TraineeDashboard>;
 };
 
 export default MyWorkouts;

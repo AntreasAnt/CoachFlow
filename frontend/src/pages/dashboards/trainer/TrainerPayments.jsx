@@ -97,7 +97,7 @@ const TrainerPayments = () => {
 
   return (
     <TrainerDashboardLayout>
-      <div className="container-fluid p-4">
+      <div className="container p-4" style={{ minHeight: 'calc(100vh - 0px)' }}>
         {/* Header */}
         <div className="mb-4">
           <h2 className="mb-1">Payments & Earnings</h2>

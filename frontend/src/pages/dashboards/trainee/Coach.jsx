@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import TraineeDashboard from '../../../components/TraineeDashboard';
 
@@ -32,12 +33,14 @@ const Coach = () => {
     }
   };
 
+  const navigate = useNavigate();
+
   const renderCurrentCoach = () => {
     if (!currentCoach) return (
       <div className="text-center py-4">
         <i className="bi bi-person-plus text-muted fs-1"></i>
         <p className="text-muted mt-2">No coach assigned yet</p>
-        <button className="btn btn-primary" onClick={() => setHasCoach(false)}>Find a Coach</button>
+        <button className="btn btn-primary" onClick={() => navigate('/trainee-dashboard/find-trainer')}>Find a Trainer</button>
       </div>
     );
 
@@ -100,32 +103,23 @@ const Coach = () => {
   const renderCoachSearch = () => (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="mb-0">Available Coaches</h4>
+        <h4 className="mb-0">Find Your Trainer</h4>
         <button className="btn btn-outline-secondary" onClick={() => setHasCoach(true)}>
           <i className="bi bi-arrow-left me-2"></i>Back to My Coach
         </button>
       </div>
 
-      <div className="row">
-        {availableCoaches.map(coach => (
-          <div key={coach.id} className="col-lg-4 col-md-6 mb-4">
-            <div className="card border-0 shadow-sm h-100">
-              <div className="card-body text-center">
-                <div className="fs-1 mb-2">{coach.avatar}</div>
-                <h5 className="card-title">{coach.name}</h5>
-                <p className="text-muted small">{coach.specialization}</p>
-                <div className="d-flex gap-2 mt-3">
-                  <button className="btn btn-primary flex-fill">Hire</button>
-                  <button className="btn btn-outline-primary">View</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="text-center mt-4">
-        <button className="btn btn-outline-primary">Load More Coaches</button>
+      <div className="text-center py-5">
+        <i className="bi bi-search-heart fs-1 text-primary mb-3 d-block"></i>
+        <h5 className="mb-3">Looking for a trainer?</h5>
+        <p className="text-muted mb-4">Browse through our verified trainers and find the perfect match for your fitness goals</p>
+        <button 
+          className="btn btn-primary btn-lg"
+          onClick={() => navigate('/trainee-dashboard/find-trainer')}
+        >
+          <i className="bi bi-search me-2"></i>
+          Browse Trainers
+        </button>
       </div>
     </div>
   );

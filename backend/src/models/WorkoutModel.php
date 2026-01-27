@@ -33,7 +33,11 @@ class WorkoutModel
                         name,
                         description,
                         last_performed,
-                        created_at
+                        created_at,
+                        is_program_package,
+                        duration_weeks,
+                        category,
+                        difficulty_level
                       FROM user_workout_plans
                       WHERE user_id = ?
                       ORDER BY last_performed DESC, created_at DESC";
@@ -49,36 +53,64 @@ class WorkoutModel
             
             $plans = [];
             while ($row = $result->fetch_assoc()) {
-                // Get exercises for this plan
-                $exerciseQuery = "SELECT 
-                                    wpe.exercise_id,
-                                    wpe.sets,
-                                    wpe.reps,
-                                    wpe.duration_seconds,
-                                    wpe.rest_seconds,
-                                    wpe.notes,
-                                    wpe.order_index,
-                                    e.name,
-                                    e.category,
-                                    e.muscle_group,
-                                    e.equipment,
-                                    e.instructions
-                                  FROM workout_plan_exercises wpe
-                                  JOIN exercises e ON wpe.exercise_id = e.id
-                                  WHERE wpe.workout_plan_id = ?
-                                  ORDER BY wpe.order_index ASC";
-                
-                $exerciseStmt = $this->conn->prepare($exerciseQuery);
-                $exerciseStmt->bind_param("i", $row['id']);
-                $exerciseStmt->execute();
-                $exerciseResult = $exerciseStmt->get_result();
-                
-                $exercises = [];
-                while ($exerciseRow = $exerciseResult->fetch_assoc()) {
-                    $exercises[] = $exerciseRow;
+                // Check if this is a program package with sessions
+                if ($row['is_program_package'] == 1) {
+                    // Get sessions for this program package
+                    $sessionQuery = "SELECT 
+                                        id,
+                                        name,
+                                        description,
+                                        week_number,
+                                        day_number
+                                      FROM program_workout_sessions
+                                      WHERE program_package_id = ?
+                                      ORDER BY week_number ASC, day_number ASC";
+                    
+                    $sessionStmt = $this->conn->prepare($sessionQuery);
+                    $sessionStmt->bind_param("i", $row['id']);
+                    $sessionStmt->execute();
+                    $sessionResult = $sessionStmt->get_result();
+                    
+                    $sessions = [];
+                    while ($sessionRow = $sessionResult->fetch_assoc()) {
+                        $sessions[] = $sessionRow;
+                    }
+                    
+                    $row['sessions'] = $sessions;
+                    $row['session_count'] = count($sessions);
+                } else {
+                    // Get exercises for regular workout plan
+                    $exerciseQuery = "SELECT 
+                                        wpe.exercise_id,
+                                        wpe.sets,
+                                        wpe.reps,
+                                        wpe.duration_seconds,
+                                        wpe.rest_seconds,
+                                        wpe.notes,
+                                        wpe.order_index,
+                                        e.name,
+                                        e.category,
+                                        e.muscle_group,
+                                        e.equipment,
+                                        e.instructions
+                                      FROM workout_plan_exercises wpe
+                                      JOIN exercises e ON wpe.exercise_id = e.id
+                                      WHERE wpe.workout_plan_id = ?
+                                      ORDER BY wpe.order_index ASC";
+                    
+                    $exerciseStmt = $this->conn->prepare($exerciseQuery);
+                    $exerciseStmt->bind_param("i", $row['id']);
+                    $exerciseStmt->execute();
+                    $exerciseResult = $exerciseStmt->get_result();
+                    
+                    $exercises = [];
+                    while ($exerciseRow = $exerciseResult->fetch_assoc()) {
+                        $exercises[] = $exerciseRow;
+                    }
+                    
+                    $row['exercises'] = $exercises;
                 }
                 
-                $row['exercises'] = $exercises;
                 $plans[] = $row;
             }
             

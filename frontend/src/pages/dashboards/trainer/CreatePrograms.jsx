@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import APIClient from '../../../utils/APIClient';
 import BackButton from '../../../components/BackButton';
+import TrainerDashboardLayout from '../../../components/TrainerDashboardLayout';
 
 // Add inline styles for card hover effect
 const styles = `
@@ -1123,12 +1124,13 @@ const CreatePrograms = () => {
   );
 
   return (
-    <div className="container-fluid py-4">
-      {activeView === 'list' && renderListView()}
-      {activeView === 'create' && renderCreateView()}
+    <TrainerDashboardLayout>
+      <div className="container py-4" style={{ minHeight: 'calc(100vh - 0px)' }}>
+        {activeView === 'list' && renderListView()}
+        {activeView === 'create' && renderCreateView()}
       
-      {/* Delete Confirmation Modal */}
-      {deleteModal.show && (
+        {/* Delete Confirmation Modal */}
+        {deleteModal.show && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
@@ -1187,7 +1189,8 @@ const CreatePrograms = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </TrainerDashboardLayout>
   );
 };
 

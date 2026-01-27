@@ -4,7 +4,7 @@ import '../../../styles/trainee-dashboard.css';
 import { API_BASE_URL, BACKEND_ROUTES_API } from '../../../config/config';
 import TraineeDashboard from '../../../components/TraineeDashboard';
 
-const MealsPage = () => {
+const MealsPage = ({ embedded = false }) => {
   const navigate = useNavigate();
   const [todayLogs, setTodayLogs] = useState([]);
   const [historyLogs, setHistoryLogs] = useState([]);
@@ -679,9 +679,8 @@ const MealsPage = () => {
     setHistoryEndDate(newEnd);
   };
 
-  return (
-    <TraineeDashboard>
-
+  const content = (
+    <>
       {/* Toast Notification */}
       {toast.show && (
         <div className="position-fixed top-0 end-0 p-3" style={{ zIndex: 9999, marginTop: '80px' }}>
@@ -1340,8 +1339,10 @@ const MealsPage = () => {
       )}
 
   {/* Bottom navigation provided by TraineeDashboard */}
-    </TraineeDashboard>
+    </>
   );
+
+  return embedded ? content : <TraineeDashboard>{content}</TraineeDashboard>;
 };
 
 export default MealsPage;

@@ -20,8 +20,8 @@ export function ConversationList() {
     const map = {};
     allUsers.forEach(u => { 
       // Support both 'userid' and 'id' fields for compatibility
-      const userId = u.userid || u.id;
-      map[String(userId)] = u.username || u.name || userId;
+      const userId = u.userId || u.userid || u.id;
+      map[String(userId)] = u.displayName || u.username || u.name || userId;
     });
     return map;
   }, [allUsers]);

@@ -43,7 +43,6 @@ try {
                 u.specializations,
                 u.certifications,
                 u.years_of_experience,
-                u.profile_image,
                 u.instagram,
                 u.facebook,
                 u.twitter,

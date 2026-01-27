@@ -11,7 +11,9 @@ require_once __DIR__ . '/../vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->load();
 
-define('APP_RUNNING', true);
+if (!defined('APP_RUNNING')) {
+    define('APP_RUNNING', true);
+}
 
 // Configure session settings BEFORE starting session
 if (session_status() !== PHP_SESSION_ACTIVE) {

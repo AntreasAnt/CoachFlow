@@ -17,9 +17,10 @@ import TrainerDashboard from "./pages/dashboards/TrainerDashboard";
 import TrainerDashboardHome from "./pages/dashboards/trainer/TrainerDashboardHome";
 import TrainerProfile from "./pages/dashboards/trainer/TrainerProfile";
 import TrainerPayments from "./pages/dashboards/trainer/TrainerPayments";
-import TrainerClients from "./pages/dashboards/trainer/TrainerClients";
+import TrainerClientsManagement from "./pages/dashboards/trainer/TrainerClientsManagement";
 import TrainerMessages from "./pages/dashboards/trainer/TrainerMessages";
 import CreatePrograms from "./pages/dashboards/trainer/CreatePrograms";
+import ManageClientPrograms from "./pages/dashboards/trainer/ManageClientPrograms";
 
 import TraineeDashboardHome from "./pages/dashboards/trainee/Dashboard";
 import ProfilePage from "./pages/dashboards/trainee/ProfilePage";
@@ -27,13 +28,20 @@ import ProgramMarketplace from "./pages/dashboards/trainee/ProgramMarketplace";
 
 import MyWorkouts from "./pages/dashboards/trainee/MyWorkouts";
 import ProgramView from "./pages/dashboards/trainee/ProgramView";
+import UserProgramView from "./pages/dashboards/trainee/UserProgramView";
+import EditUserProgram from "./pages/dashboards/trainee/EditUserProgram";
 import MealsPage from "./pages/dashboards/trainee/MealsPage";
 import Progress from "./pages/dashboards/trainee/Progress";
 import MessagesPage from "./pages/dashboards/trainee/MessagesPage";
 
 import Coach from "./pages/dashboards/trainee/Coach";
 
-import AdminUserDashboard from "./pages/dashboards/admin/UsersDashboard/UsersDashboard";   
+import AdminUserDashboard from "./pages/dashboards/admin/UsersDashboard/UsersDashboard";
+
+// Trainee Connection System Pages
+import FindTrainersPage from "./pages/dashboards/trainee/FindTrainersPage";
+import MyConnectionRequestsPage from "./pages/dashboards/trainee/MyConnectionRequestsPage";
+import MyPlansPage from "./pages/dashboards/trainee/MyPlansPage";   
 
 function App() {
   return (
@@ -117,7 +125,7 @@ function App() {
         <Route 
           path="/trainer-dashboard/programs" 
           element={
-            <AuthRoot allowedPrivileges={['trainer']}>
+            <AuthRoot allowedPrivileges={['trainer', 'trainee']}>
               <CreatePrograms />
             </AuthRoot>
           } 
@@ -126,7 +134,15 @@ function App() {
           path="/trainer-dashboard/clients" 
           element={
             <AuthRoot allowedPrivileges={['trainer']}>
-              <TrainerClients />
+              <TrainerClientsManagement />
+            </AuthRoot>
+          } 
+        />
+        <Route 
+          path="/trainer/clients/:clientId/manage" 
+          element={
+            <AuthRoot allowedPrivileges={['trainer']}>
+              <ManageClientPrograms />
             </AuthRoot>
           } 
         />
@@ -146,7 +162,6 @@ function App() {
             </AuthRoot>
           } 
         />
-        
         
         {/* Dashboard alias route */}
         <Route 
@@ -196,6 +211,22 @@ function App() {
           }
         />
         <Route 
+          path="/trainee-dashboard/user-program/:programId" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <UserProgramView />
+            </AuthRoot>
+          }
+        />
+        <Route 
+          path="/trainee-dashboard/user-program/:programId/edit" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <EditUserProgram />
+            </AuthRoot>
+          }
+        />
+        <Route 
           path="/trainee-dashboard/workouts" 
           element={
             <AuthRoot allowedPrivileges={['trainee']}>
@@ -235,7 +266,30 @@ function App() {
             </AuthRoot>
           }
         />
-
+        <Route 
+          path="/trainee-dashboard/find-trainer" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <FindTrainersPage />
+            </AuthRoot>
+          }
+        />
+        <Route 
+          path="/trainee-dashboard/my-plans" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <MyPlansPage />
+            </AuthRoot>
+          }
+        />
+        <Route 
+          path="/trainee-dashboard/my-requests" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <MyConnectionRequestsPage />
+            </AuthRoot>
+          }
+        />
 
  <Route 
           path="/admin/users" 

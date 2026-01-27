@@ -15,7 +15,6 @@ const TrainerDashboardLayout = ({ children }) => {
     { path: '/trainer-dashboard/programs', icon: 'grid-3x3-gap', label: 'Programs' },
     { path: '/trainer-dashboard/clients', icon: 'people', label: 'Clients' },
     { path: '/trainer-dashboard/payments', icon: 'credit-card', label: 'Payments' },
-    { path: '/trainer-dashboard/messages', icon: 'chat-dots', label: 'Messages' },
   ];
 
   return (

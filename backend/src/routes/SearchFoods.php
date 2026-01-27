@@ -65,7 +65,7 @@ try {
         }
     }
     
-    // Search custom foods
+    // Search custom foods (user's own + trainer's custom foods)
     if ($source === 'all' || $source === 'custom') {
         $customFoods = $model->getCustomFoods($userId);
         
@@ -74,6 +74,69 @@ try {
             return stripos($food['name'], $query) !== false || 
                    stripos($food['brand_name'], $query) !== false;
         }));
+        
+        // Also include trainer's custom foods
+        $db = new Database();
+        $conn = $db->connect();
+        $userRole = $_SESSION['user_privileges'] ?? $_SESSION['privileges'] ?? $_SESSION['role'] ?? null;
+        
+        // Check if table exists
+        $tableCheck = $conn->query("SHOW TABLES LIKE 'trainer_custom_foods'");
+        if ($tableCheck && $tableCheck->num_rows > 0) {
+            if ($userRole === 'trainer') {
+                // Trainer sees their own custom foods
+                $trainerQuery = "SELECT id, name, brand as brand_name, serving_size, serving_unit,
+                                       calories, protein, carbs, fat, portions
+                                FROM trainer_custom_foods
+                                WHERE trainer_id = ? AND (name LIKE ? OR brand LIKE ?)
+                                ORDER BY name ASC";
+                $stmt = $conn->prepare($trainerQuery);
+                $searchPattern = '%' . $query . '%';
+                $stmt->bind_param('iss', $userId, $searchPattern, $searchPattern);
+            } else {
+                // Trainee sees custom foods from all their trainers
+                $trainerQuery = "SELECT tcf.id, tcf.name, tcf.brand as brand_name, tcf.serving_size, 
+                                       tcf.serving_unit, tcf.calories, tcf.protein, tcf.carbs, tcf.fat,
+                                       tcf.portions, u.username as trainer_name
+                                FROM trainer_custom_foods tcf
+                                JOIN coaching_relationships cr ON tcf.trainer_id = cr.trainer_id
+                                JOIN user u ON tcf.trainer_id = u.userid
+                                WHERE cr.trainee_id = ? AND cr.status = 'active'
+                                  AND (tcf.name LIKE ? OR tcf.brand LIKE ?)
+                                ORDER BY tcf.name ASC";
+                $stmt = $conn->prepare($trainerQuery);
+                $searchPattern = '%' . $query . '%';
+                $stmt->bind_param('iss', $userId, $searchPattern, $searchPattern);
+            }
+            
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            while ($row = $result->fetch_assoc()) {
+                $trainerFood = [
+                    'id' => (int)$row['id'],
+                    'source' => 'trainer_custom',
+                    'name' => $row['name'],
+                    'brand_name' => $row['brand_name'] ?? '',
+                    'serving_size' => (float)$row['serving_size'],
+                    'serving_unit' => $row['serving_unit'],
+                    'calories' => (float)$row['calories'],
+                    'protein' => (float)$row['protein'],
+                    'carbs' => (float)$row['carbs'],
+                    'fat' => (float)$row['fat'],
+                    'portions' => $row['portions'] ? json_decode($row['portions'], true) : []
+                ];
+                
+                if (isset($row['trainer_name'])) {
+                    $trainerFood['trainer_name'] = $row['trainer_name'];
+                }
+                
+                $results['custom_foods'][] = $trainerFood;
+            }
+            
+            $stmt->close();
+        }
+        $conn->close();
     }
     
     http_response_code(200);

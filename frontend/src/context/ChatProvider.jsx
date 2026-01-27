@@ -91,13 +91,13 @@ export function ChatProvider({ currentUserBackend, children }) {
           return;
         }
         const data = await res.json();
-        if (!data.success || !data.users) {
+        if (!data.success || !data.chatUsers) {
           console.warn('[Chat] No users returned from backend:', data);
           return;
         }
         
         // Set all users state FIRST (before Firestore sync)
-        setAllUsers(data.users);
+        setAllUsers(data.chatUsers);
         
         // Note: We don't sync MySQL users to Firestore anymore
         // Each user's Firestore doc is created on first auth using their Firebase UID
