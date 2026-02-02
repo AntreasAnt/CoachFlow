@@ -33,6 +33,8 @@ import EditUserProgram from "./pages/dashboards/trainee/EditUserProgram";
 import MealsPage from "./pages/dashboards/trainee/MealsPage";
 import Progress from "./pages/dashboards/trainee/Progress";
 import MessagesPage from "./pages/dashboards/trainee/MessagesPage";
+import AnalyticsDashboard from "./pages/dashboards/trainee/AnalyticsDashboard";
+import TrainingPeriodManager from "./pages/dashboards/trainee/TrainingPeriodManager";
 
 import Coach from "./pages/dashboards/trainee/Coach";
 import MyCoach from "./pages/dashboards/trainee/MyCoach";
@@ -242,6 +244,20 @@ function App() {
           element={
             <AuthRoot allowedPrivileges={['trainee']}>
               <MealsPage />
+            </AuthRoot>
+          }
+        />
+        <Route 
+          path="/trainee-dashboard/analytics" 
+          element={<AuthRoot allowedPrivileges={['trainee']}>
+              <AnalyticsDashboard />
+            </AuthRoot>
+          }
+        />
+        <Route 
+          path="/trainee-dashboard/training-periods" 
+          element={<AuthRoot allowedPrivileges={['trainee']}>
+              <TrainingPeriodManager />
             </AuthRoot>
           }
         />

@@ -59,6 +59,13 @@ const TraineeHeader = () => {
           </div>
           <div className="d-flex align-items-center gap-3">
             <button 
+              className="btn btn-outline-dark btn-sm"
+              onClick={() => navigate('/trainee-dashboard/analytics')}
+              title="Analytics"
+            >
+              <i className="bi bi-graph-up"></i>
+            </button>
+            <button 
               className="btn btn-outline-dark btn-sm position-relative"
               onClick={() => navigate('/messages')}
               title="Messages"

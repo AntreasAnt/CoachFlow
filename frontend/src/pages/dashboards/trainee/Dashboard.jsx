@@ -10,6 +10,18 @@ const HomePage = () => {
   const [popularCoaches, setPopularCoaches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showWeightModal, setShowWeightModal] = useState(false);
+  const [weightValue, setWeightValue] = useState('');
+  const [savingWeight, setSavingWeight] = useState(false);
+  const [stats, setStats] = useState({
+    current_weight: null,
+    weight_change: null,
+    change_type: 'neutral',
+    workouts_this_week: 0,
+    current_streak: 0,
+    total_time_hours: 0
+  });
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
   useEffect(() => {
     fetchData();
@@ -19,14 +31,16 @@ const HomePage = () => {
     try {
       setLoading(true);
       
-      // Fetch published programs (limit 6, prioritize featured) and popular coaches
-      const programsData = await APIClient.get(
-        `${BACKEND_ROUTES_API}GetPrograms.php?type=marketplace&limit=6&sort_by=popular`
-      );
+      // Fetch stats, programs, and coaches
+      const [statsData, programsData, coachesData] = await Promise.all([
+        APIClient.get(`${BACKEND_ROUTES_API}GetHomeStats.php`),
+        APIClient.get(`${BACKEND_ROUTES_API}GetPrograms.php?type=marketplace&limit=6&sort_by=popular`),
+        APIClient.get(`${BACKEND_ROUTES_API}GetPopularCoaches.php`)
+      ]);
 
-      const coachesData = await APIClient.get(
-        `${BACKEND_ROUTES_API}GetPopularCoaches.php`
-      );
+      if (statsData.success) {
+        setStats(statsData.stats);
+      }
 
       if (programsData.success) {
         setFeaturedPrograms(programsData.programs || []);
@@ -43,6 +57,62 @@ const HomePage = () => {
       setLoading(false);
     }
   };
+
+  const handleLogWeight = async () => {
+    if (!weightValue || weightValue <= 0) {
+      setNotification({ show: true, message: 'Please enter a valid weight', type: 'warning' });
+      return;
+    }
+
+    try {
+      setSavingWeight(true);
+      const response = await fetch(`${BACKEND_ROUTES_API}QuickLogWeight.php`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ weight: parseFloat(weightValue) })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setStats(prev => ({
+          ...prev,
+          current_weight: data.data.current_weight,
+          weight_change: data.data.weight_change,
+          change_type: data.data.change_type
+        }));
+        setShowWeightModal(false);
+        setWeightValue('');
+        
+        let message = 'Weight logged successfully!';
+        if (data.data.weight_change) {
+          const change = Math.abs(data.data.weight_change);
+          if (data.data.change_type === 'gain') {
+            message += ` You gained ${change}kg from your last measurement.`;
+          } else if (data.data.change_type === 'loss') {
+            message += ` You lost ${change}kg from your last measurement.`;
+          }
+        }
+        setNotification({ show: true, message, type: 'success' });
+      } else {
+        setNotification({ show: true, message: data.message || 'Failed to log weight', type: 'danger' });
+      }
+    } catch (error) {
+      console.error('Error logging weight:', error);
+      setNotification({ show: true, message: 'Failed to log weight', type: 'danger' });
+    } finally {
+      setSavingWeight(false);
+    }
+  };
+
+  useEffect(() => {
+    if (notification.show) {
+      const timer = setTimeout(() => {
+        setNotification({ show: false, message: '', type: '' });
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification.show]);
 
   return (
     <TraineeDashboard>
@@ -71,26 +141,48 @@ const HomePage = () => {
       {/* Main Content */}
       {!loading && (
         <>
-          {/* Welcome Section */}
+          {/* Welcome Section with Quick Actions */}
           <div className="row mb-4">
-        <div className="col-12">
-          <div className="bg-gradient-primary text-white rounded p-4" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-            <div className="row align-items-center">
-              <div className="col-md-8">
-                <h2 className="mb-2">Welcome to Your Fitness Journey! 🎯</h2>
-                <p className="mb-3 lead">Discover premium workout plans and connect with top coaches to achieve your fitness goals.</p>
-                <button className="btn btn-light btn-lg">
-                  <i className="bi bi-play-circle me-2"></i>
-                  Start Your Journey
-                </button>
-              </div>
-              <div className="col-md-4 text-center">
-                <div className="fs-1">🏃‍♂️</div>
+            <div className="col-12">
+              <div className="bg-gradient-primary text-white rounded p-4" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+                <div className="row align-items-center">
+                  <div className="col-md-8">
+                    <h2 className="mb-2">Ready to Train? 💪</h2>
+                    <p className="mb-3 lead">Quick actions to get started with your fitness journey today.</p>
+                    <div className="d-flex gap-3 flex-wrap">
+                      <button 
+                        className="btn btn-light btn-lg"
+                        onClick={() => navigate('/trainee-dashboard/workouts')}
+                      >
+                        <i className="bi bi-play-circle me-2"></i>
+                        Start Workout
+                      </button>
+                      <button 
+                        className="btn btn-outline-light btn-lg"
+                        onClick={() => setShowWeightModal(true)}
+                      >
+                        <i className="bi bi-speedometer me-2"></i>
+                        Log Weight
+                      </button>
+                    </div>
+                  </div>
+                  <div className="col-md-4 text-center">
+                    <div className="fs-1">🏃‍♂️</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+
+          {/* Notification Toast */}
+          {notification.show && (
+            <div className="position-fixed top-0 end-0 p-3" style={{ zIndex: 9999 }}>
+              <div className={`alert alert-${notification.type} alert-dismissible fade show`} role="alert">
+                {notification.message}
+                <button type="button" className="btn-close" onClick={() => setNotification({ show: false, message: '', type: '' })}></button>
+              </div>
+            </div>
+          )}
 
       {/* Quick Stats */}
       <div className="row mb-4">
@@ -98,7 +190,7 @@ const HomePage = () => {
           <div className="card border-0 shadow-sm text-center">
             <div className="card-body py-4">
               <div className="text-primary fs-1 mb-2">⚡</div>
-              <h5 className="card-title">4</h5>
+              <h5 className="card-title">{stats.workouts_this_week}</h5>
               <p className="card-text text-muted">Workouts This Week</p>
             </div>
           </div>
@@ -106,9 +198,17 @@ const HomePage = () => {
         <div className="col-md-3 col-sm-6 mb-3">
           <div className="card border-0 shadow-sm text-center">
             <div className="card-body py-4">
-              <div className="text-success fs-1 mb-2">📈</div>
-              <h5 className="card-title">+2.5kg</h5>
-              <p className="card-text text-muted">Progress This Month</p>
+              <div className={`fs-1 mb-2 ${stats.change_type === 'gain' ? 'text-success' : stats.change_type === 'loss' ? 'text-info' : 'text-muted'}`}>
+                {stats.change_type === 'gain' ? '📈' : stats.change_type === 'loss' ? '📉' : '➖'}
+              </div>
+              <h5 className="card-title">
+                {stats.current_weight ? `${stats.current_weight}kg` : '-'}
+              </h5>
+              <p className="card-text text-muted">
+                {stats.weight_change ? (
+                  stats.change_type === 'gain' ? `+${stats.weight_change}kg` : `${stats.weight_change}kg`
+                ) : 'Current Weight'}
+              </p>
             </div>
           </div>
         </div>
@@ -116,7 +216,7 @@ const HomePage = () => {
           <div className="card border-0 shadow-sm text-center">
             <div className="card-body py-4">
               <div className="text-warning fs-1 mb-2">🔥</div>
-              <h5 className="card-title">12</h5>
+              <h5 className="card-title">{stats.current_streak}</h5>
               <p className="card-text text-muted">Day Streak</p>
             </div>
           </div>
@@ -125,8 +225,8 @@ const HomePage = () => {
           <div className="card border-0 shadow-sm text-center">
             <div className="card-body py-4">
               <div className="text-info fs-1 mb-2">⏱️</div>
-              <h5 className="card-title">6.5h</h5>
-              <p className="card-text text-muted">Total Time</p>
+              <h5 className="card-title">{stats.total_time_hours}h</h5>
+              <p className="card-text text-muted">Time This Month</p>
             </div>
           </div>
         </div>
@@ -258,6 +358,65 @@ const HomePage = () => {
         </div>
       </div>
         </>
+      )}
+
+      {/* Weight Logging Modal */}
+      {showWeightModal && (
+        <div className="modal d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header border-0">
+                <h5 className="modal-title">Log Your Weight</h5>
+                <button className="btn-close" onClick={() => setShowWeightModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <div className="mb-3">
+                  <label className="form-label">Weight (kg)</label>
+                  <input 
+                    type="number" 
+                    className="form-control form-control-lg"
+                    placeholder="Enter your weight in kg"
+                    value={weightValue}
+                    onChange={(e) => setWeightValue(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleLogWeight()}
+                    autoFocus
+                    step="0.1"
+                    min="0"
+                  />
+                  <small className="text-muted">Your weight will be tracked over time to show your progress</small>
+                </div>
+              </div>
+              <div className="modal-footer border-0">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => setShowWeightModal(false)}
+                  disabled={savingWeight}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-primary"
+                  onClick={handleLogWeight}
+                  disabled={savingWeight}
+                >
+                  {savingWeight ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2"></span>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-check-circle me-2"></i>
+                      Log Weight
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
       </div>
     </TraineeDashboard>

@@ -3,6 +3,7 @@
 require_once '../config/cors.php';
 require_once '../config/Auth.php';
 require_once '../controllers/WorkoutController.php';
+require_once '../models/AnalyticsModel.php';
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -43,6 +44,49 @@ try {
     // Create controller instance and save workout logs
     $workoutController = new WorkoutController();
     $response = $workoutController->saveWorkoutLogs($userId, $input['sessionId'], $input['logs']);
+    
+    // If logs saved successfully, calculate analytics
+    if ($response['success']) {
+        try {
+            $analyticsModel = new AnalyticsModel();
+            
+            // Get workout session date and training period
+            $database = new Database();
+            $conn = $database->connect();
+            $sessionQuery = "SELECT session_date, training_period_id FROM workout_sessions WHERE id = ?";
+            $stmt = $conn->prepare($sessionQuery);
+            $stmt->bind_param("i", $input['sessionId']);
+            $stmt->execute();
+            $sessionResult = $stmt->get_result();
+            $sessionData = $sessionResult->fetch_assoc();
+            
+            $workoutDate = $sessionData['session_date'] ?? date('Y-m-d');
+            $trainingPeriodId = $sessionData['training_period_id'] ?? null;
+            
+            // Calculate 1RM estimates
+            $oneRMCount = $analyticsModel->calculate1RMForWorkout($userId, $input['sessionId'], $trainingPeriodId);
+            
+            // Update weekly volume summary
+            $analyticsModel->updateWeeklyVolumeSummary($userId, $workoutDate);
+            
+            // Update workout streak
+            $currentStreak = $analyticsModel->updateWorkoutStreak($userId, $workoutDate);
+            
+            // Detect and award achievements
+            $newAchievements = $analyticsModel->detectAchievements($userId, $input['sessionId']);
+            
+            $response['analytics'] = [
+                'one_rm_calculated' => $oneRMCount,
+                'current_streak' => $currentStreak,
+                'new_achievements' => $newAchievements
+            ];
+            
+        } catch (Exception $analyticsError) {
+            error_log("Analytics calculation error: " . $analyticsError->getMessage());
+            // Don't fail the whole request if analytics fails
+            $response['analytics_error'] = $analyticsError->getMessage();
+        }
+    }
     
     // Set appropriate HTTP status code
     if (!$response['success']) {
