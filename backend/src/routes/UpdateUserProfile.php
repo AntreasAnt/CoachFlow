@@ -40,15 +40,19 @@ try {
     
     // Basic info fields
     if (isset($inputData['full_name'])) {
-        $updateData['full_name'] = htmlspecialchars(trim($inputData['full_name']), ENT_QUOTES, 'UTF-8');
+        $nameValue = htmlspecialchars(trim($inputData['full_name']), ENT_QUOTES, 'UTF-8');
+        $updateData['full_name'] = empty($nameValue) ? null : $nameValue;
     }
     
     if (isset($inputData['phone'])) {
-        $updateData['phone'] = htmlspecialchars(trim($inputData['phone']), ENT_QUOTES, 'UTF-8');
+        $phoneValue = htmlspecialchars(trim($inputData['phone']), ENT_QUOTES, 'UTF-8');
+        $updateData['phone'] = empty($phoneValue) ? null : $phoneValue;
     }
     
     if (isset($inputData['date_of_birth'])) {
-        $updateData['date_of_birth'] = $inputData['date_of_birth'];
+        // Handle empty date strings by setting to NULL
+        $dateValue = trim($inputData['date_of_birth']);
+        $updateData['date_of_birth'] = empty($dateValue) ? null : $dateValue;
     }
     
     // Physical info
@@ -58,6 +62,26 @@ try {
     
     if (isset($inputData['weight'])) {
         $updateData['weight'] = is_numeric($inputData['weight']) ? (float)$inputData['weight'] : null;
+    }
+    
+    if (isset($inputData['age'])) {
+        $ageValue = trim($inputData['age']);
+        if (empty($ageValue)) {
+            $updateData['age'] = null;
+        } else {
+            $age = (int)$ageValue;
+            $updateData['age'] = ($age >= 13 && $age <= 120) ? $age : null;
+        }
+    }
+    
+    if (isset($inputData['sex'])) {
+        $validSexes = ['male', 'female', 'other', 'prefer_not_to_say'];
+        $sexValue = trim($inputData['sex']);
+        if (empty($sexValue)) {
+            $updateData['sex'] = null;
+        } elseif (in_array($sexValue, $validSexes)) {
+            $updateData['sex'] = $sexValue;
+        }
     }
     
     // Professional info (for trainers)
@@ -98,10 +122,39 @@ try {
         // Fetch updated user data
         $updatedUser = $userModel->getprofileById($userId);
         
+        // Format the response to match GetUserProfile.php format
+        $responseData = [
+            'userId' => $updatedUser['userid'],
+            'username' => $updatedUser['username'],
+            'email' => $updatedUser['email'],
+            'full_name' => $updatedUser['full_name'] ?: $updatedUser['username'],
+            'phone' => $updatedUser['phone'],
+            'date_of_birth' => $updatedUser['date_of_birth'],
+            'role' => $updatedUser['role'],
+            'profilePicture' => $updatedUser['image'] ?? null,
+            
+            // Physical info
+            'height' => $updatedUser['height'],
+            'weight' => $updatedUser['weight'],
+            'age' => $updatedUser['age'],
+            'sex' => $updatedUser['sex'],
+            
+            // Professional info (for trainers)
+            'specialization' => $updatedUser['specialization'],
+            'experience_years' => $updatedUser['experience_years'],
+            'certifications' => $updatedUser['certifications'],
+            'bio' => $updatedUser['bio'],
+            
+            // Fitness info (for trainees)
+            'fitness_goals' => $updatedUser['fitness_goals'],
+            'experience_level' => $updatedUser['experience_level'],
+            'medical_notes' => $updatedUser['medical_notes'],
+        ];
+        
         echo json_encode([
             'success' => true,
             'message' => 'Profile updated successfully',
-            'user' => $updatedUser
+            'user' => $responseData
         ]);
     } else {
         echo json_encode([

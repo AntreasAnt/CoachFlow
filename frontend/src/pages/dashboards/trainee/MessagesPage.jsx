@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import { ChatProvider, useChat } from '../../../context/ChatProvider';
 import { ConversationList } from '../../../components/chat/ConversationList';
@@ -13,11 +13,19 @@ import '../../../styles/messages.css';
 const MessagesContent = ({ currentUser }) => {
   const chat = useChat();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [filteredConversations, setFilteredConversations] = useState([]);
+
+  // Auto-select conversation from navigation state (e.g., from MyCoach page)
+  useEffect(() => {
+    if (location.state?.selectedUserId && chat.firebaseUser) {
+      chat.startDirectConversation(location.state.selectedUserId);
+    }
+  }, [location.state, chat.firebaseUser]);
 
   // Filter existing conversations based on search query
   useEffect(() => {

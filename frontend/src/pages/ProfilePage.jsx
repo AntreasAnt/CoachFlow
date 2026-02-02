@@ -25,6 +25,8 @@ const ProfilePage = () => {
     // Physical Info
     height: '',
     weight: '',
+    age: '',
+    sex: '',
     
     // Professional Info (for trainers)
     specialization: '',
@@ -113,6 +115,8 @@ const ProfilePage = () => {
               // Physical Info
               height: user.height || '',
               weight: user.weight || '',
+              age: user.age || '',
+              sex: user.sex || '',
               
               // Professional Info (for trainers)
               specialization: user.specialization || '',
@@ -214,8 +218,17 @@ const ProfilePage = () => {
       const result = await response.json();
       
       if (result.success) {
-        // Update local state with the saved data
-        setProfileData(editData);
+        // Update local state with the data returned from server
+        if (result.user) {
+          // Merge the updated user data with current profile data
+          setProfileData(prevData => ({
+            ...prevData,
+            ...result.user
+          }));
+        } else {
+          // Fallback to using editData if server doesn't return user data
+          setProfileData(editData);
+        }
         setIsEditing(false);
         
         // Show success message

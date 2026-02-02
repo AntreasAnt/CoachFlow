@@ -18,6 +18,7 @@ const FindTrainersPage = () => {
     goals: ''
   });
   const [sendingRequest, setSendingRequest] = useState(false);
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   
   // Filter states
   const [filters, setFilters] = useState({
@@ -36,6 +37,16 @@ const FindTrainersPage = () => {
   useEffect(() => {
     fetchTrainers();
   }, [appliedFilters]);
+
+  // Auto-dismiss notification after 3 seconds
+  useEffect(() => {
+    if (notification.show) {
+      const timer = setTimeout(() => {
+        setNotification({ show: false, message: '', type: '' });
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification.show]);
 
   const fetchTrainers = async () => {
     try {
@@ -120,15 +131,15 @@ const FindTrainersPage = () => {
       );
       
       if (response.success) {
-        alert('Connection request sent successfully!');
+        setNotification({ show: true, message: 'Connection request sent successfully!', type: 'success' });
         setShowRequestModal(false);
         fetchTrainers(); // Refresh to update connection status
       } else {
-        alert(response.message || 'Failed to send request');
+        setNotification({ show: true, message: response.message || 'Failed to send request', type: 'danger' });
       }
     } catch (err) {
       console.error('Error sending request:', err);
-      alert('Failed to send request. Please try again.');
+      setNotification({ show: true, message: 'Failed to send request. Please try again.', type: 'danger' });
     } finally {
       setSendingRequest(false);
     }
@@ -693,6 +704,29 @@ const FindTrainersPage = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {notification.show && (
+        <div className="position-fixed top-0 end-0 p-3" style={{zIndex: 9999}}>
+          <div className={`toast show align-items-center text-white bg-${notification.type} border-0`} role="alert">
+            <div className="d-flex">
+              <div className="toast-body">
+                <i className={`bi bi-${
+                  notification.type === 'success' ? 'check-circle' : 
+                  notification.type === 'danger' ? 'x-circle' : 
+                  'exclamation-triangle'
+                } me-2`}></i>
+                {notification.message}
+              </div>
+              <button 
+                type="button" 
+                className="btn-close btn-close-white me-2 m-auto" 
+                onClick={() => setNotification({ show: false, message: '', type: '' })}
+              ></button>
             </div>
           </div>
         </div>

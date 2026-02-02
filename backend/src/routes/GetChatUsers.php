@@ -27,7 +27,7 @@ try {
     $conn = $db->connect();
     
     $currentUserId = $_SESSION['user_id'];
-    $userRole = $_SESSION['user_role'] ?? null;
+    $userRole = $_SESSION['user_privileges'] ?? $_SESSION['user_role'] ?? null;
     
     $chatUsers = [];
     
@@ -59,6 +59,38 @@ try {
                 'email' => $row['email'],
                 'role' => $row['role'],
                 'unreadCount' => 0 // Can be enhanced later
+            ];
+        }
+        
+        $stmt->close();
+    } elseif ($userRole === 'trainee') {
+        // For trainees, get their active trainer
+        $query = "SELECT 
+                    u.userid as userId,
+                    u.username as displayName,
+                    u.email,
+                    u.full_name,
+                    u.role
+                  FROM coaching_relationships cr
+                  JOIN user u ON cr.trainer_id = u.userid
+                  WHERE cr.trainee_id = ? 
+                  AND cr.status = 'active'
+                  AND u.isdeleted = 0 
+                  AND u.isdisabled = 0
+                  ORDER BY u.username ASC";
+        
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param('i', $currentUserId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        while ($row = $result->fetch_assoc()) {
+            $chatUsers[] = [
+                'userId' => (int)$row['userId'],
+                'displayName' => $row['full_name'] ?: $row['displayName'],
+                'email' => $row['email'],
+                'role' => $row['role'],
+                'unreadCount' => 0
             ];
         }
         

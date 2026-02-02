@@ -10,6 +10,9 @@ const MealsPage = ({ embedded = false }) => {
   const [historyLogs, setHistoryLogs] = useState([]);
   const [dailySummary, setDailySummary] = useState(null);
   const [nutritionGoal, setNutritionGoal] = useState(null);
+  // Trainer-assigned meal plan state
+  const [trainerMealPlan, setTrainerMealPlan] = useState(null);
+  const [mealPlanLoading, setMealPlanLoading] = useState(false);
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [showLogModal, setShowLogModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -153,7 +156,8 @@ const MealsPage = ({ embedded = false }) => {
     await Promise.all([
       loadNutritionGoal(),
       loadTodayLogs(),
-      loadDailySummary()
+      loadDailySummary(),
+      loadTrainerMealPlan()
     ]);
   };
 
@@ -175,6 +179,57 @@ const MealsPage = ({ embedded = false }) => {
     } catch (error) {
       console.error('Error loading nutrition goal:', error);
     }
+  };
+
+  const loadTrainerMealPlan = async () => {
+    setMealPlanLoading(true);
+    try {
+      const response = await fetch(`${BACKEND_ROUTES_API}/GetMyWeeklyMealPlan.php`, {
+        credentials: 'include'
+      });
+      const data = await response.json();
+      if (data.success && data.meals) {
+        setTrainerMealPlan(data.meals);
+      } else {
+        setTrainerMealPlan(null);
+      }
+    } catch (error) {
+      console.error('Error loading trainer meal plan:', error);
+      setTrainerMealPlan(null);
+    }
+    setMealPlanLoading(false);
+  };
+
+  // Helper function to convert day_of_week numbers to day names
+  const getDayName = (dayNumber) => {
+    const days = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    return days[dayNumber] || `Day ${dayNumber}`;
+  };
+
+  // Helper function to get meal type display name  
+  const getMealTypeDisplay = (mealType) => {
+    return mealType.charAt(0).toUpperCase() + mealType.slice(1);
+  };
+
+  // Helper function to safely parse food items
+  const parseFoodItems = (foodItems) => {
+    if (!foodItems) return [];
+    
+    // If it's already an array, return it
+    if (Array.isArray(foodItems)) return foodItems;
+    
+    // If it's a string, try to parse it
+    if (typeof foodItems === 'string') {
+      try {
+        const parsed = JSON.parse(foodItems);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        console.warn('Failed to parse food_items:', error);
+        return [];
+      }
+    }
+    
+    return [];
   };
 
   const loadTodayLogs = async () => {
@@ -824,10 +879,100 @@ const MealsPage = ({ embedded = false }) => {
           </div>
         )}
 
+        {/* Trainer Assigned Meal Plan */}
+        {trainerMealPlan && Array.isArray(trainerMealPlan) && trainerMealPlan.length > 0 && (
+          <div className="card border-0 shadow-sm mb-4">
+            <div className="card-header bg-white border-bottom">
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <h5 className="mb-1">
+                    <i className="bi bi-person-check text-primary me-2"></i>
+                    Your Trainer's Meal Plan
+                  </h5>
+                  <small className="text-muted">Follow this plan for best results • Continue logging your actual meals below</small>
+                </div>
+                <span className="badge bg-primary">Priority Plan</span>
+              </div>
+            </div>
+            <div className="card-body">
+              {mealPlanLoading ? (
+                <div className="text-center py-4">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="text-muted mt-2">Loading meal plan...</p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Day</th>
+                        <th>Meal</th>
+                        <th>Foods</th>
+                        <th>Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {trainerMealPlan.map((meal, index) => (
+                        <tr key={index}>
+                          <td>
+                            <strong>{getDayName(meal.day_of_week)}</strong>
+                          </td>
+                          <td>
+                            <span className="badge bg-primary">
+                              {getMealTypeDisplay(meal.meal_type)}
+                            </span>
+                          </td>
+                          <td>
+                            {(() => {
+                              const foodItems = parseFoodItems(meal.food_items);
+                              return foodItems.length > 0 ? (
+                                <div>
+                                  {foodItems.map((food, foodIndex) => (
+                                    <div key={foodIndex} className="mb-1">
+                                      <small className="d-block">
+                                        <strong>{food.food_name}</strong>
+                                        {food.quantity && food.serving_unit && (
+                                          <span className="text-muted"> - {food.quantity} {food.serving_unit}</span>
+                                        )}
+                                      </small>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <small className="text-muted">No foods assigned</small>
+                              );
+                            })()}
+                          </td>
+                          <td>
+                            {meal.notes && (
+                              <small className="text-muted">{meal.notes}</small>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Today's Meals */}
         <div className="card border-0 shadow-sm mb-4">
           <div className="card-header bg-white border-bottom">
-            <h5 className="mb-0">Today's Meals</h5>
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <h5 className="mb-0">Today's Meals</h5>
+                {trainerMealPlan && trainerMealPlan.length > 0 ? (
+                  <small className="text-muted">Track what you actually eat vs. your trainer's plan</small>
+                ) : (
+                  <small className="text-muted">Track your daily nutrition</small>
+                )}
+              </div>
+            </div>
           </div>
           <div className="card-body">
             {todayLogs.length === 0 ? (

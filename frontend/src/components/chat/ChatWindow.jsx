@@ -17,8 +17,11 @@ export function ChatWindow() {
 
   const otherDisplayName = useMemo(() => {
     if (!otherParticipantUid) return 'Conversation';
-    const match = allUsers.find(u => String(u.id) === String(otherParticipantUid));
-    return match?.username || otherParticipantUid;
+    const match = allUsers.find(u => {
+      const userId = String(u.userId || u.userid || u.id);
+      return userId === String(otherParticipantUid);
+    });
+    return match?.displayName || match?.username || match?.name || otherParticipantUid;
   }, [otherParticipantUid, allUsers]);
 
   // Mark messages as read when viewing

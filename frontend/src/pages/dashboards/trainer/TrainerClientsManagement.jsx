@@ -14,10 +14,24 @@ const TrainerClientsManagement = () => {
   const [selectedClient, setSelectedClient] = useState(null);
   const [showAssignProgramModal, setShowAssignProgramModal] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState('');
+  const [showDisconnectModal, setShowDisconnectModal] = useState(false);
+  const [disconnectReason, setDisconnectReason] = useState('');
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Auto-dismiss notification after 3 seconds
+  useEffect(() => {
+    if (notification.show) {
+      const timer = setTimeout(() => {
+        setNotification({ show: false, message: '', type: '' });
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification.show]);
 
   const fetchData = async () => {
     try {
@@ -122,6 +136,43 @@ const TrainerClientsManagement = () => {
     navigate('/trainer-dashboard/messages', { state: { selectedUserId: client.trainee_id } });
   };
 
+  const openDisconnectModal = (client) => {
+    setSelectedClient(client);
+    setDisconnectReason('');
+    setShowDisconnectModal(true);
+  };
+
+  const handleDisconnect = async () => {
+    if (!disconnectReason.trim()) {
+      setNotification({ show: true, message: 'Please provide a reason for disconnecting', type: 'warning' });
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_ROUTES_API}DisconnectCoaching.php`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          relationship_id: selectedClient.id,
+          reason: disconnectReason
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setShowDisconnectModal(false);
+        setNotification({ show: true, message: 'Successfully ended coaching relationship', type: 'success' });
+        fetchData(); // Refresh client list
+      } else {
+        setNotification({ show: true, message: result.message || 'Failed to disconnect', type: 'danger' });
+      }
+    } catch (error) {
+      console.error('Error disconnecting:', error);
+      setNotification({ show: true, message: 'Failed to disconnect. Please try again.', type: 'danger' });
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -188,7 +239,53 @@ const TrainerClientsManagement = () => {
                 {clients.map(client => (
                   <div key={client.id} className="col-md-6 col-lg-4 mb-4">
                     <div className="card border-0 shadow-sm h-100">
-                      <div className="card-body">
+                      <div className="card-body position-relative">
+                        <div className="position-absolute" style={{ top: '10px', right: '10px' }}>
+                          <button 
+                            className="btn btn-sm btn-light border-0"
+                            type="button" 
+                            onClick={() => setOpenDropdownId(openDropdownId === client.id ? null : client.id)}
+                            style={{ padding: '2px 8px' }}
+                          >
+                            <i className="bi bi-three-dots-vertical text-dark"></i>
+                          </button>
+                          {openDropdownId === client.id && (
+                            <>
+                              <div 
+                                className="position-fixed top-0 start-0 w-100 h-100" 
+                                style={{ zIndex: 1000 }}
+                                onClick={() => setOpenDropdownId(null)}
+                              ></div>
+                              <div 
+                                className="dropdown-menu dropdown-menu-end show" 
+                                style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1001 }}
+                              >
+                                <button 
+                                  className="text-danger"
+                                  onClick={() => {
+                                    setOpenDropdownId(null);
+                                    openDisconnectModal(client);
+                                  }}
+                                  style={{
+                                    display: 'block',
+                                    width: '100%',
+                                    padding: '0.25rem 1rem',
+                                    clear: 'both',
+                                    fontWeight: '400',
+                                    textAlign: 'left',
+                                    whiteSpace: 'nowrap',
+                                    backgroundColor: 'transparent',
+                                    border: 0,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <i className="bi bi-x-circle me-2"></i>
+                                  End Relationship
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
                         <div className="d-flex align-items-center mb-3">
                           <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" 
                                style={{ width: '50px', height: '50px', fontSize: '20px' }}>
@@ -217,7 +314,7 @@ const TrainerClientsManagement = () => {
                           </button>
                           <button
                             className="btn btn-outline-primary btn-sm flex-grow-1"
-                            onClick={() => navigate(`/trainer/clients/${client.id}/manage`)}
+                            onClick={() => navigate(`/trainer/clients/${client.trainee_id}/manage`)}
                           >
                             <i className="bi bi-gear me-1"></i>
                             Manage Programs
@@ -349,6 +446,71 @@ const TrainerClientsManagement = () => {
                     </button>
                   )}
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Disconnect Modal */}
+        {showDisconnectModal && (
+          <div className="modal d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-header border-0">
+                  <h5 className="modal-title">End Coaching Relationship?</h5>
+                  <button className="btn-close" onClick={() => setShowDisconnectModal(false)}></button>
+                </div>
+                <div className="modal-body">
+                  <p className="text-muted">
+                    Are you sure you want to end your coaching relationship with <strong>{selectedClient?.name}</strong>? 
+                    This action will disconnect you from your client.
+                  </p>
+                  <div className="mb-3">
+                    <label className="form-label">Reason for ending relationship (required)</label>
+                    <textarea 
+                      className="form-control" 
+                      rows="3"
+                      value={disconnectReason}
+                      onChange={(e) => setDisconnectReason(e.target.value)}
+                      placeholder="Please let us know why you're ending this relationship..."
+                    ></textarea>
+                  </div>
+                  <div className="alert alert-warning small mb-0">
+                    <i className="bi bi-exclamation-triangle me-2"></i>
+                    The client will be notified about the relationship ending.
+                  </div>
+                </div>
+                <div className="modal-footer border-0">
+                  <button className="btn btn-secondary" onClick={() => setShowDisconnectModal(false)}>
+                    Cancel
+                  </button>
+                  <button className="btn btn-danger" onClick={handleDisconnect}>
+                    Confirm End Relationship
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Toast Notification */}
+        {notification.show && (
+          <div className="position-fixed top-0 end-0 p-3" style={{zIndex: 9999}}>
+            <div className={`toast show align-items-center text-white bg-${notification.type} border-0`} role="alert">
+              <div className="d-flex">
+                <div className="toast-body">
+                  <i className={`bi bi-${
+                    notification.type === 'success' ? 'check-circle' : 
+                    notification.type === 'danger' ? 'x-circle' : 
+                    'exclamation-triangle'
+                  } me-2`}></i>
+                  {notification.message}
+                </div>
+                <button 
+                  type="button" 
+                  className="btn-close btn-close-white me-2 m-auto" 
+                  onClick={() => setNotification({ show: false, message: '', type: '' })}
+                ></button>
               </div>
             </div>
           </div>

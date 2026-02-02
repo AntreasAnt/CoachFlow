@@ -26,6 +26,8 @@ const ProfilePage = () => {
     // Physical Info
     height: '',
     weight: '',
+    age: '',
+    sex: '',
     
     // Professional Info (for trainers)
     specialization: '',
@@ -114,6 +116,8 @@ const ProfilePage = () => {
               // Physical Info
               height: user.height || '',
               weight: user.weight || '',
+              age: user.age || '',
+              sex: user.sex || '',
               
               // Professional Info (for trainers)
               specialization: user.specialization || '',
@@ -215,8 +219,17 @@ const ProfilePage = () => {
       const result = await response.json();
       
       if (result.success) {
-        // Update local state with the saved data
-        setProfileData(editData);
+        // Update local state with the data returned from server
+        if (result.user) {
+          // Merge the updated user data with current profile data
+          setProfileData(prevData => ({
+            ...prevData,
+            ...result.user
+          }));
+        } else {
+          // Fallback to using editData if server doesn't return user data
+          setProfileData(editData);
+        }
         setIsEditing(false);
         
         // Show success message
@@ -469,6 +482,45 @@ const ProfilePage = () => {
                       />
                     ) : (
                       <p className="mb-0 text-dark fw-medium">{formatDate(profileData.date_of_birth)}</p>
+                    )}
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-medium text-muted small">Age</label>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        className="form-control modern-input"
+                        value={editData.age || ''}
+                        onChange={(e) => setEditData({...editData, age: e.target.value})}
+                        placeholder="Enter your age"
+                        min="13"
+                        max="120"
+                      />
+                    ) : (
+                      <p className="mb-0 text-dark fw-medium">{profileData.age ? `${profileData.age} years old` : 'Not set'}</p>
+                    )}
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-medium text-muted small">Sex</label>
+                    {isEditing ? (
+                      <select
+                        className="form-select modern-input"
+                        value={editData.sex || ''}
+                        onChange={(e) => setEditData({...editData, sex: e.target.value})}
+                      >
+                        <option value="">Select...</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                        <option value="prefer_not_to_say">Prefer not to say</option>
+                      </select>
+                    ) : (
+                      <p className="mb-0 text-dark fw-medium">{
+                        profileData.sex ? 
+                        (profileData.sex === 'prefer_not_to_say' ? 'Prefer not to say' : 
+                         profileData.sex.charAt(0).toUpperCase() + profileData.sex.slice(1)) : 
+                        'Not set'
+                      }</p>
                     )}
                   </div>
                 </div>

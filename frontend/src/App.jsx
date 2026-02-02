@@ -17,10 +17,10 @@ import TrainerDashboard from "./pages/dashboards/TrainerDashboard";
 import TrainerDashboardHome from "./pages/dashboards/trainer/TrainerDashboardHome";
 import TrainerProfile from "./pages/dashboards/trainer/TrainerProfile";
 import TrainerPayments from "./pages/dashboards/trainer/TrainerPayments";
-import TrainerClientsManagement from "./pages/dashboards/trainer/TrainerClientsManagement";
 import TrainerMessages from "./pages/dashboards/trainer/TrainerMessages";
 import CreatePrograms from "./pages/dashboards/trainer/CreatePrograms";
 import ManageClientPrograms from "./pages/dashboards/trainer/ManageClientPrograms";
+import TrainerClientsManagement from "./pages/dashboards/trainer/TrainerClientsManagement";
 
 import TraineeDashboardHome from "./pages/dashboards/trainee/Dashboard";
 import ProfilePage from "./pages/dashboards/trainee/ProfilePage";
@@ -35,6 +35,8 @@ import Progress from "./pages/dashboards/trainee/Progress";
 import MessagesPage from "./pages/dashboards/trainee/MessagesPage";
 
 import Coach from "./pages/dashboards/trainee/Coach";
+import MyCoach from "./pages/dashboards/trainee/MyCoach";
+import TrainerProfileView from "./pages/dashboards/trainee/TrainerProfile";
 
 import AdminUserDashboard from "./pages/dashboards/admin/UsersDashboard/UsersDashboard";
 
@@ -130,6 +132,7 @@ function App() {
             </AuthRoot>
           } 
         />
+
         <Route 
           path="/trainer-dashboard/clients" 
           element={
@@ -263,6 +266,22 @@ function App() {
           element={
             <AuthRoot allowedPrivileges={['trainee']}>
               <Coach />
+            </AuthRoot>
+          }
+        />
+        <Route 
+          path="/trainee-dashboard/my-coach" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <MyCoach />
+            </AuthRoot>
+          }
+        />
+        <Route 
+          path="/trainee-dashboard/trainer/:trainerId" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <TrainerProfileView />
             </AuthRoot>
           }
         />

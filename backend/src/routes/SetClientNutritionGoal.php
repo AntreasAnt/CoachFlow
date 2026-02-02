@@ -48,6 +48,8 @@ try {
     
     $trainer_id = $_SESSION['user_id'];
     
+    error_log("SetClientNutritionGoal: trainer_id=$trainer_id, client_id=$client_id");
+    
     // Verify that this client belongs to the trainer
     $verify_query = "SELECT COUNT(*) as count FROM coaching_relationships 
                      WHERE trainer_id = ? AND trainee_id = ? AND status = 'active'";
@@ -57,38 +59,59 @@ try {
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
     
+    error_log("SetClientNutritionGoal: Active relationships found: " . $row['count']);
+    
     if ($row['count'] == 0) {
+        // Check if any relationship exists (regardless of status)
+        $check_query = "SELECT trainer_id, trainee_id, status FROM coaching_relationships 
+                       WHERE trainer_id = ? AND trainee_id = ?";
+        $check_stmt = $conn->prepare($check_query);
+        $check_stmt->bind_param('ii', $trainer_id, $client_id);
+        $check_stmt->execute();
+        $check_result = $check_stmt->get_result();
+        $rel_data = $check_result->fetch_assoc();
+        
+        error_log("SetClientNutritionGoal: Any relationship: " . json_encode($rel_data));
+        
         http_response_code(403);
-        echo json_encode(['success' => false, 'message' => 'Access denied']);
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Access denied - No active coaching relationship found',
+            'debug' => [
+                'trainer_id' => $trainer_id,
+                'client_id' => $client_id,
+                'relationship' => $rel_data
+            ]
+        ]);
         exit;
     }
     $stmt->close();
     
-    // Check if goal exists for this user
-    $check_query = "SELECT id FROM nutrition_goals WHERE user_id = ?";
+    // Check if trainer-assigned goal exists for this user
+    $check_query = "SELECT id FROM nutrition_goals WHERE user_id = ? AND source = 'trainer' AND assigned_by_trainer_id = ?";
     $stmt = $conn->prepare($check_query);
-    $stmt->bind_param('i', $client_id);
+    $stmt->bind_param('ii', $client_id, $trainer_id);
     $stmt->execute();
     $result = $stmt->get_result();
     $exists = $result->num_rows > 0;
     $stmt->close();
     
     if ($exists) {
-        // Update existing goal
+        // Update existing trainer-assigned goal
         $query = "UPDATE nutrition_goals 
                   SET goal_type = ?, target_calories = ?, target_protein = ?, 
-                      target_carbs = ?, target_fat = ?, created_at = NOW()
-                  WHERE user_id = ?";
+                      target_carbs = ?, target_fat = ?, updated_at = NOW()
+                  WHERE user_id = ? AND source = 'trainer' AND assigned_by_trainer_id = ?";
         $stmt = $conn->prepare($query);
-        $stmt->bind_param('siiiii', $goal_type, $target_calories, $target_protein, 
-                         $target_carbs, $target_fat, $client_id);
+        $stmt->bind_param('siiiiii', $goal_type, $target_calories, $target_protein, 
+                         $target_carbs, $target_fat, $client_id, $trainer_id);
     } else {
-        // Insert new goal
+        // Insert new trainer-assigned goal (does not overwrite self-created goals)
         $query = "INSERT INTO nutrition_goals 
-                  (user_id, goal_type, target_calories, target_protein, target_carbs, target_fat, created_at) 
-                  VALUES (?, ?, ?, ?, ?, ?, NOW())";
+                  (user_id, assigned_by_trainer_id, source, goal_type, target_calories, target_protein, target_carbs, target_fat) 
+                  VALUES (?, ?, 'trainer', ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($query);
-        $stmt->bind_param('isiiii', $client_id, $goal_type, $target_calories, $target_protein, 
+        $stmt->bind_param('iisiiii', $client_id, $trainer_id, $goal_type, $target_calories, $target_protein, 
                          $target_carbs, $target_fat);
     }
     

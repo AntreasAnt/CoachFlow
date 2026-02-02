@@ -1,0 +1,74 @@
+/* My Coach Page Styles */
+
+.coach-page .trainer-avatar img,
+.coach-page .avatar-placeholder {
+  object-fit: cover;
+  border: 3px solid #f8f9fa;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.coach-page .card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.coach-page .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+.coach-page .settings-accordion summary {
+  list-style: none;
+  padding: 0.5rem 0;
+}
+
+.coach-page .settings-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.coach-page .settings-accordion[open] summary {
+  color: var(--bs-body-color);
+}
+
+.coach-page .star-rating-input i {
+  transition: all 0.2s ease;
+}
+
+.coach-page .star-rating-input i:hover {
+  transform: scale(1.1);
+}
+
+.coach-page .modal {
+  overflow-y: auto;
+}
+
+.coach-page .badge {
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Make disconnect button less prominent */
+.coach-page .btn-outline-danger {
+  font-size: 0.875rem;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.coach-page .btn-outline-danger:hover {
+  opacity: 1;
+}
+
+/* Smooth animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.coach-page .card {
+  animation: fadeIn 0.3s ease-out;
+}

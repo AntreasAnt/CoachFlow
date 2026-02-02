@@ -11,6 +11,8 @@ const MyWorkouts = ({ embedded = false }) => {
   const [activeView, setActiveView] = useState('plans'); // plans, create, log
   const [workoutPlans, setWorkoutPlans] = useState([]);
   const [purchasedPrograms, setPurchasedPrograms] = useState([]);
+  const [trainerAssignedPrograms, setTrainerAssignedPrograms] = useState([]);
+  const [assignedProgramsLoading, setAssignedProgramsLoading] = useState(false);
   const [workoutHistory, setWorkoutHistory] = useState([]);
   const [historyPage, setHistoryPage] = useState(1);
   const [historyHasMore, setHistoryHasMore] = useState(false);
@@ -146,6 +148,9 @@ const MyWorkouts = ({ embedded = false }) => {
         throw new Error(data.message || 'Failed to load workout data');
       }
 
+      // Fetch trainer-assigned programs
+      await loadTrainerAssignedPrograms();
+
       // Fetch purchased programs
       const purchasedData = await APIClient.get(`${BACKEND_ROUTES_API}GetPurchasedPrograms.php`);
       let purchasedList = [];
@@ -170,6 +175,25 @@ const MyWorkouts = ({ embedded = false }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadTrainerAssignedPrograms = async () => {
+    setAssignedProgramsLoading(true);
+    try {
+      const response = await fetch(`${BACKEND_ROUTES_API}/GetMyAssignedPrograms.php`, {
+        credentials: 'include'
+      });
+      const data = await response.json();
+      if (data.success && data.programs) {
+        setTrainerAssignedPrograms(data.programs);
+      } else {
+        setTrainerAssignedPrograms([]);
+      }
+    } catch (error) {
+      console.error('Error loading trainer assigned programs:', error);
+      setTrainerAssignedPrograms([]);
+    }
+    setAssignedProgramsLoading(false);
   };
 
   const fetchRecentSessions = async (page = 1) => {
@@ -811,8 +835,112 @@ const MyWorkouts = ({ embedded = false }) => {
         </button>
       </div>
 
+      {/* Trainer Assigned Programs */}
+      {trainerAssignedPrograms && trainerAssignedPrograms.length > 0 && (
+        <div className="card border-0 shadow-sm mb-4">
+          <div className="card-header bg-white border-bottom">
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <h5 className="mb-1">
+                  <i className="bi bi-person-check text-primary me-2"></i>
+                  Your Trainer's Workout Programs
+                </h5>
+                <small className="text-muted">Follow these programs for best results • Continue using your own plans below</small>
+              </div>
+              <span className="badge bg-primary">Priority Programs</span>
+            </div>
+          </div>
+          <div className="card-body">
+            {assignedProgramsLoading ? (
+              <div className="text-center py-4">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="text-muted mt-2">Loading assigned programs...</p>
+              </div>
+            ) : (
+              <div className="row">
+                {trainerAssignedPrograms.map(program => (
+                  <div key={`assigned-${program.assignment_id}`} className="col-lg-6 mb-3">
+                    <div className="card border-primary h-100" style={{ borderWidth: '2px', borderStyle: 'solid' }}>
+                      <div className="card-body">
+                        <div className="d-flex justify-content-between align-items-start mb-3">
+                          <h5 className="card-title">{program.title}</h5>
+                          <span className="badge bg-primary">
+                            <i className="bi bi-star me-1"></i>
+                            Trainer Assigned
+                          </span>
+                        </div>
+                        
+                        <div className="mb-2">
+                          <span className="badge bg-light text-dark me-1">{program.difficulty_level}</span>
+                          <span className="badge bg-light text-dark me-1">{program.duration_weeks}w</span>
+                          <span className="badge bg-light text-dark">{program.category}</span>
+                        </div>
+
+                        <div className="mb-3">
+                          <small className="text-muted">Description:</small>
+                          <p className="small text-muted mb-0 mt-1">{program.description || 'No description available'}</p>
+                        </div>
+
+                        <div className="mb-3">
+                          <small className="text-muted">
+                            Assigned by: <strong>{program.trainer_name}</strong> on {program.assigned_at_formatted}
+                          </small>
+                        </div>
+
+                        <div className="d-flex gap-2">
+                          <button 
+                            className="btn btn-primary flex-fill"
+                            onClick={() => navigate(`/trainee-dashboard/program/${program.id}`, { 
+                              state: { 
+                                programData: program,
+                                fromAssigned: true
+                              } 
+                            })}
+                          >
+                            <i className="bi bi-play-fill me-1"></i>
+                            Start Program
+                          </button>
+                          <button 
+                            className="btn btn-outline-secondary"
+                            onClick={() => navigate(`/trainee/program-details/${program.id}`, { 
+                              state: { 
+                                programData: program,
+                                fromAssigned: true
+                              } 
+                            })}
+                          >
+                            <i className="bi bi-info-circle me-1"></i>
+                            Details
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Workout Plans Grid */}
       <div className="row">
+        {/* Section Header for Other Programs */}
+        {(purchasedPrograms.length > 0 || workoutPlans.length > 0 || premadeWorkoutPlans.length > 0) && 
+         trainerAssignedPrograms.length > 0 && (
+          <div className="col-12 mb-3">
+            <div className="d-flex align-items-center">
+              <hr className="flex-grow-1" />
+              <h6 className="mx-3 text-muted mb-0">
+                {trainerAssignedPrograms.length > 0 ? 'Your Other Workout Plans' : 'Your Workout Plans'}
+              </h6>
+              <hr className="flex-grow-1" />
+            </div>
+          </div>
+        )}
+
         {/* Purchased Programs */}
         {purchasedPrograms.map(program => (
           <div key={`purchased-${program.program_id}`} className="col-lg-6 mb-3">
@@ -2354,12 +2482,14 @@ const MyWorkouts = ({ embedded = false }) => {
         <>
           {activeView === 'plans' && renderPlansView()}
           {activeView === 'create' && (
-            <CreateWorkoutProgram 
-              onSave={handleSaveProgram}
-              onCancel={() => setActiveView('plans')}
-              allExercises={allExercises}
-              onAddCustomExercise={handleAddCustomExercise}
-            />
+            <div>
+              <CreateWorkoutProgram 
+                onSave={handleSaveProgram}
+                onCancel={() => setActiveView('plans')}
+                allExercises={allExercises}
+                onAddCustomExercise={handleAddCustomExercise}
+              />
+            </div>
           )}
           {activeView === 'log' && renderLogView()}
         </>

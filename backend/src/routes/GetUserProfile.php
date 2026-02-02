@@ -57,6 +57,8 @@ if ($user) {
         // Physical info
         'height' => $user['height'],
         'weight' => $user['weight'],
+        'age' => $user['age'],
+        'sex' => $user['sex'],
         
         // Professional info (for trainers)
         'specialization' => $user['specialization'],

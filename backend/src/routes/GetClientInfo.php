@@ -50,6 +50,8 @@ try {
     
     $trainer_id = $_SESSION['user_id'];
     
+    error_log("GetClientInfo: Looking for relationship - trainer_id=$trainer_id, client_id=$client_id");
+    
     // Verify that this client belongs to the trainer
     $query = "SELECT u.userid, u.username, u.full_name, u.email
               FROM coaching_relationships cr
@@ -62,9 +64,38 @@ try {
     $stmt->execute();
     $result = $stmt->get_result();
     
+    error_log("GetClientInfo: Query returned " . $result->num_rows . " rows");
+    
     if ($result->num_rows === 0) {
+        // Check if client exists at all
+        $check_client = "SELECT userid, username FROM user WHERE userid = ?";
+        $check_stmt = $conn->prepare($check_client);
+        $check_stmt->bind_param('i', $client_id);
+        $check_stmt->execute();
+        $check_result = $check_stmt->get_result();
+        
+        // Check if any relationship exists
+        $check_rel = "SELECT trainer_id, trainee_id, status FROM coaching_relationships WHERE trainer_id = ? AND trainee_id = ?";
+        $rel_stmt = $conn->prepare($check_rel);
+        $rel_stmt->bind_param('ii', $trainer_id, $client_id);
+        $rel_stmt->execute();
+        $rel_result = $rel_stmt->get_result();
+        $rel_data = $rel_result->fetch_assoc();
+        
+        error_log("GetClientInfo: Client exists: " . ($check_result->num_rows > 0 ? 'yes' : 'no'));
+        error_log("GetClientInfo: Relationship data: " . json_encode($rel_data));
+        
         http_response_code(404);
-        echo json_encode(['success' => false, 'message' => 'Client not found or not your client']);
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Client not found or not your client',
+            'debug' => [
+                'trainer_id' => $trainer_id,
+                'client_id' => $client_id,
+                'client_exists' => $check_result->num_rows > 0,
+                'relationship' => $rel_data
+            ]
+        ]);
         exit;
     }
     

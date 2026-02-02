@@ -496,8 +496,13 @@ class UserModel
             foreach ($updateData as $field => $value) {
                 $setClause[] = "$field = ?";
                 $values[] = $value;
-                if (is_int($value) || is_float($value)) {
-                    $types .= is_int($value) ? "i" : "d";
+                // Handle type binding - NULL values are always treated as strings
+                if ($value === null) {
+                    $types .= "s";
+                } elseif (is_int($value)) {
+                    $types .= "i";
+                } elseif (is_float($value)) {
+                    $types .= "d";
                 } else {
                     $types .= "s";
                 }

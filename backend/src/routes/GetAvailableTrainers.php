@@ -52,8 +52,8 @@ try {
                 tp.availability_status,
                 tp.max_clients,
                 tp.current_clients,
-                tp.average_rating,
-                tp.total_reviews,
+                COALESCE(urs.average_rating, tp.average_rating, 0) as average_rating,
+                COALESCE(urs.review_count, tp.total_reviews, 0) as total_reviews,
                 tp.profile_image,
                 tp.verified,
                 tp.created_at as member_since,
@@ -64,6 +64,7 @@ try {
                 END as connection_status
               FROM user u
               LEFT JOIN trainer_profiles tp ON u.userid = tp.user_id
+              LEFT JOIN user_rating_stats urs ON u.userid = urs.user_id
               LEFT JOIN coaching_relationships cr ON u.userid = cr.trainer_id 
                   AND cr.trainee_id = ? AND cr.status = 'active'
               LEFT JOIN coaching_requests creq ON u.userid = creq.trainer_id 
@@ -94,7 +95,7 @@ try {
     
     // Add rating filter
     if ($minRating > 0) {
-        $query .= " AND tp.average_rating >= ?";
+        $query .= " AND COALESCE(urs.average_rating, tp.average_rating, 0) >= ?";
         $params[] = $minRating;
         $types .= "d";
     }
@@ -141,23 +142,23 @@ try {
     // Add sorting
     switch ($sortBy) {
         case 'price_asc':
-            $query .= " ORDER BY tp.hourly_rate ASC, tp.average_rating DESC";
+            $query .= " ORDER BY tp.hourly_rate ASC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
             break;
         case 'price_desc':
-            $query .= " ORDER BY tp.hourly_rate DESC, tp.average_rating DESC";
+            $query .= " ORDER BY tp.hourly_rate DESC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
             break;
         case 'clients':
-            $query .= " ORDER BY tp.current_clients DESC, tp.average_rating DESC";
+            $query .= " ORDER BY tp.current_clients DESC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
             break;
         case 'experience':
-            $query .= " ORDER BY tp.experience_years DESC, tp.average_rating DESC";
+            $query .= " ORDER BY tp.experience_years DESC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
             break;
         case 'newest':
             $query .= " ORDER BY tp.created_at DESC";
             break;
         case 'rating':
         default:
-            $query .= " ORDER BY tp.average_rating DESC, tp.total_reviews DESC";
+            $query .= " ORDER BY COALESCE(urs.average_rating, tp.average_rating, 0) DESC, COALESCE(urs.review_count, tp.total_reviews, 0) DESC";
             break;
     }
     

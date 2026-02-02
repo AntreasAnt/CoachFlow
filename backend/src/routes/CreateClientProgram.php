@@ -80,76 +80,73 @@ try {
     
     $conn->begin_transaction();
     
-    // Create the program
+    // Create the program in premium_workout_plans (trainer-created custom program for client)
     $query = "INSERT INTO premium_workout_plans 
-              (trainer_id, title, description, long_description, category, difficulty_level, 
-               duration_weeks, price, currency, status, meta_title, meta_description, created_at) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, 0, 'USD', 'draft', ?, ?, NOW())";
+              (title, description, price, duration_weeks, difficulty_level, 
+               category, created_by_trainer_id, is_active, created_at) 
+              VALUES (?, ?, 0, ?, ?, ?, ?, 1, NOW())";
     
-    $meta_title = $title;
-    $meta_description = $description;
-    
+    error_log("CreateClientProgram: About to create program with title: $title");
     $stmt = $conn->prepare($query);
-    $stmt->bind_param('isssssisss', $trainer_id, $title, $description, $long_description, 
-                     $category, $difficulty_level, $duration_weeks, $meta_title, $meta_description);
+    $stmt->bind_param('sssssi', $title, $description, $duration_weeks, 
+                     $difficulty_level, $category, $trainer_id);
     $stmt->execute();
     $program_id = $stmt->insert_id;
     $stmt->close();
     
-    // Add tags if any
-    if (!empty($tags)) {
-        $tag_query = "INSERT INTO program_tags (program_id, tag) VALUES (?, ?)";
-        $tag_stmt = $conn->prepare($tag_query);
-        foreach ($tags as $tag) {
-            $tag_stmt->bind_param('is', $program_id, $tag);
-            $tag_stmt->execute();
-        }
-        $tag_stmt->close();
-    }
+    error_log("CreateClientProgram: Program created with ID: $program_id");
     
-    // Add workout sessions
-    $session_query = "INSERT INTO workout_sessions 
-                      (program_id, session_name, session_description, week_number, day_number) 
-                      VALUES (?, ?, ?, ?, ?)";
-    $session_stmt = $conn->prepare($session_query);
-    
-    $exercise_query = "INSERT INTO session_exercises 
-                       (session_id, exercise_id, sets, reps, rpe, exercise_order) 
-                       VALUES (?, ?, ?, ?, ?, ?)";
-    $exercise_stmt = $conn->prepare($exercise_query);
-    
-    foreach ($sessions as $index => $session) {
-        $session_name = $session['name'] ?? "Session " . ($index + 1);
-        $session_description = $session['description'] ?? '';
-        $week_number = $session['week_number'] ?? 1;
-        $day_number = $session['day_number'] ?? 1;
+    // Add workout sessions for premium programs
+    if (!empty($sessions)) {
+        error_log("CreateClientProgram: Adding " . count($sessions) . " sessions to premium program");
         
-        $session_stmt->bind_param('issii', $program_id, $session_name, $session_description, 
-                                  $week_number, $day_number);
-        $session_stmt->execute();
-        $session_id = $session_stmt->insert_id;
+        $session_query = "INSERT INTO premium_program_sessions 
+                          (program_id, session_name, session_description, week_number, day_number) 
+                          VALUES (?, ?, ?, ?, ?)";
+        $session_stmt = $conn->prepare($session_query);
         
-        // Add exercises to session
-        $exercises = $session['exercises'] ?? [];
-        foreach ($exercises as $ex_index => $exercise) {
-            $exercise_id = $exercise['exercise_id'] ?? null;
-            $sets = $exercise['sets'] ?? 3;
-            $reps = $exercise['reps'] ?? '10';
-            $rpe = $exercise['rpe'] ?? '';
-            $order = $ex_index + 1;
+        $exercise_query = "INSERT INTO premium_session_exercises 
+                           (session_id, exercise_id, sets, reps, rpe, exercise_order) 
+                           VALUES (?, ?, ?, ?, ?, ?)";
+        $exercise_stmt = $conn->prepare($exercise_query);
+    
+        foreach ($sessions as $index => $session) {
+            $session_name = $session['name'] ?? "Session " . ($index + 1);
+            $session_description = $session['description'] ?? '';
+            $week_number = $session['week_number'] ?? 1;
+            $day_number = $session['day_number'] ?? 1;
             
-            if ($exercise_id) {
-                $exercise_stmt->bind_param('iisssi', $session_id, $exercise_id, $sets, $reps, $rpe, $order);
-                $exercise_stmt->execute();
+            error_log("CreateClientProgram: Creating session: $session_name");
+            $session_stmt->bind_param('issii', $program_id, $session_name, $session_description, 
+                                      $week_number, $day_number);
+            $session_stmt->execute();
+            $session_id = $session_stmt->insert_id;
+            error_log("CreateClientProgram: Session created with ID: $session_id");
+            
+            // Add exercises to session
+            $exercises = $session['exercises'] ?? [];
+            error_log("CreateClientProgram: Adding " . count($exercises) . " exercises to session");
+            foreach ($exercises as $ex_index => $exercise) {
+                $exercise_id = $exercise['exercise_id'] ?? null;
+                $sets = $exercise['sets'] ?? 3;
+                $reps = $exercise['reps'] ?? '10';
+                $rpe = $exercise['rpe'] ?? '';
+                $order = $ex_index + 1;
+                
+                if ($exercise_id) {
+                    $exercise_stmt->bind_param('iisssi', $session_id, $exercise_id, $sets, $reps, $rpe, $order);
+                    $exercise_stmt->execute();
+                    error_log("CreateClientProgram: Exercise $exercise_id added to session");
+                }
             }
         }
+        
+        $session_stmt->close();
+        $exercise_stmt->close();
     }
     
-    $session_stmt->close();
-    $exercise_stmt->close();
-    
-    // Auto-assign the program to the client
-    $assign_query = "INSERT INTO program_assignments (trainer_id, trainee_id, program_id, assigned_at) 
+    // Create program assignment to track that trainer assigned this program to client
+    $assign_query = "INSERT INTO program_assignments (trainer_id, trainee_id, program_id, assigned_at)
                      VALUES (?, ?, ?, NOW())";
     $assign_stmt = $conn->prepare($assign_query);
     $assign_stmt->bind_param('iii', $trainer_id, $client_id, $program_id);
@@ -166,6 +163,8 @@ try {
     ]);
     
 } catch (Exception $e) {
+    error_log("CreateClientProgram Error: " . $e->getMessage());
+    error_log("CreateClientProgram Error trace: " . $e->getTraceAsString());
     if (isset($conn)) {
         $conn->rollback();
     }

@@ -28,11 +28,17 @@ const ManageClientPrograms = () => {
   const [clientInfo, setClientInfo] = useState(null);
   
   // Programs
-  const [assignedPrograms, setAssignedPrograms] = useState([]);
+  const [assignedPrograms, setAssignedPrograms] = useState([]); // Trainer-assigned programs
+  const [clientPrograms, setClientPrograms] = useState([]); // Client's self-created programs
   const [availablePrograms, setAvailablePrograms] = useState([]);
   const [allTrainerPrograms, setAllTrainerPrograms] = useState([]); // All programs including from other clients
   const [selectedProgramToAssign, setSelectedProgramToAssign] = useState('');
   const [programSearchQuery, setProgramSearchQuery] = useState('');
+  
+  // Program viewing/editing
+  const [viewingProgram, setViewingProgram] = useState(null);
+  const [editingProgram, setEditingProgram] = useState(null);
+  const [showProgramModal, setShowProgramModal] = useState(false);
   
   // Exercises for program creation
   const [allExercises, setAllExercises] = useState([]);
@@ -79,8 +85,120 @@ const ManageClientPrograms = () => {
   const [isEditingSession, setIsEditingSession] = useState(false);
   const [editingSessionIndex, setEditingSessionIndex] = useState(null);
   
+  // Function to view/edit program
+  const handleViewProgram = async (program) => {
+    try {
+      setLoading(true);
+      
+      // For custom programs (those created by trainers), use the custom endpoint
+      let response;
+      try {
+        response = await APIClient.get(`${BACKEND_ROUTES_API}GetCustomProgramDetails.php?programId=${program.id}`);
+      } catch (error) {
+        // If custom endpoint fails, fall back to basic program info
+        console.warn('Custom program details fetch failed, using basic info:', error);
+        response = { success: true, program: program };
+      }
+      
+      if (response.success) {
+        setViewingProgram(response.program);
+      } else {
+        // If the program details endpoint doesn't work for custom programs,
+        // just show the basic program info
+        setViewingProgram(program);
+      }
+      
+      setShowProgramModal(true);
+    } catch (error) {
+      console.error('Error fetching program details:', error);
+      // Show basic program info if detailed fetch fails
+      setViewingProgram(program);
+      setShowProgramModal(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleEditProgram = (program) => {
+    setEditingProgram({ ...program });
+    setViewingProgram(null);
+  };
+  
+  const handleSaveProgram = async () => {
+    try {
+      setLoading(true);
+      
+      const response = await APIClient.put(`${BACKEND_ROUTES_API}UpdateProgram.php`, {
+        programId: editingProgram.id,
+        title: editingProgram.title,
+        description: editingProgram.description,
+        duration_weeks: editingProgram.duration_weeks,
+        difficulty_level: editingProgram.difficulty_level,
+        category: editingProgram.category
+      });
+      
+      if (response.success) {
+        // Update the local state
+        setAssignedPrograms(prev => 
+          prev.map(p => p.id === editingProgram.id ? { ...p, ...editingProgram } : p)
+        );
+        setEditingProgram(null);
+        setShowProgramModal(false);
+      } else {
+        alert('Failed to update program: ' + response.message);
+      }
+    } catch (error) {
+      console.error('Error updating program:', error);
+      alert('Error updating program. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleCancelEdit = () => {
+    setEditingProgram(null);
+    if (viewingProgram) {
+      setShowProgramModal(true);
+    }
+  };
+  
+  const handleDeleteProgram = async (program) => {
+    if (!confirm(`Are you sure you want to delete the program "${program.title}"? This action cannot be undone.`)) {
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      
+      const response = await APIClient.delete(`${BACKEND_ROUTES_API}DeleteProgram.php`, {
+        data: { programId: program.id }
+      });
+      
+      if (response.success) {
+        // Update the local state to remove the program
+        setAssignedPrograms(prev => 
+          prev.filter(p => p.id !== program.id)
+        );
+        setShowProgramModal(false);
+        setViewingProgram(null);
+        showToast('Program deleted successfully!', 'success');
+        fetchClientData(); // Refresh data
+      } else {
+        showToast(response.message || 'Failed to delete program', 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting program:', error);
+      showToast('Error deleting program. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   // Meals
-  const [nutritionGoal, setNutritionGoal] = useState(null);
+  const [nutritionGoal, setNutritionGoal] = useState(null); // Trainer-assigned goal
+  const [selfNutritionGoal, setSelfNutritionGoal] = useState(null); // Client's self-created goal
+  const [nutritionTab, setNutritionTab] = useState('trainer'); // 'trainer' or 'self'
+  const [programTab, setProgramTab] = useState('trainer'); // 'trainer' or 'self' - trainer assignments as primary
   const [weeklyMeals, setWeeklyMeals] = useState([]);
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [showMealModal, setShowMealModal] = useState(false);
@@ -144,45 +262,153 @@ const ManageClientPrograms = () => {
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
   };
   
+  // Debug function to create coaching relationship
+  const createCoachingRelationship = async () => {
+    try {
+      console.log('[DEBUG_MANAGE_CLIENT] Creating coaching relationship for clientId:', clientId);
+      const response = await APIClient.post(`${BACKEND_ROUTES_API}DebugClients.php`, {
+        trainee_id: clientId
+      });
+      
+      console.log('[DEBUG_MANAGE_CLIENT] Create relationship response:', response);
+      
+      if (response.success) {
+        showToast('Coaching relationship created successfully!', 'success');
+        // Retry fetching client data
+        setTimeout(() => fetchClientData(), 1000);
+      } else {
+        showToast(response.message || 'Failed to create relationship', 'error');
+      }
+    } catch (error) {
+      console.error('[DEBUG_MANAGE_CLIENT] Error creating relationship:', error);
+      showToast('Error creating coaching relationship', 'error');
+    }
+  };
+  
   const fetchClientData = async () => {
+    console.log('[DEBUG_MANAGE_CLIENT] fetchClientData called for clientId:', clientId);
+    
     try {
       setLoading(true);
       
       // Fetch client info
       const url = `${BACKEND_ROUTES_API}GetClientInfo.php?client_id=${clientId}`;
-      console.log('Fetching client info from:', url);
-      const clientResponse = await APIClient.get(url);
+      console.log('[DEBUG_MANAGE_CLIENT] Fetching client info from:', url);
+      
+      let clientResponse;
+      try {
+        clientResponse = await APIClient.get(url);
+        console.log('[DEBUG_MANAGE_CLIENT] Client info response:', clientResponse);
+      } catch (clientError) {
+        console.error('[DEBUG_MANAGE_CLIENT] Client info request failed:', clientError);
+        throw new Error(`Client info failed: ${clientError.message}`);
+      }
+      
       if (clientResponse.success) {
+        console.log('[DEBUG_MANAGE_CLIENT] Client info received successfully:', clientResponse.client);
         setClientInfo(clientResponse.client);
+      } else {
+        // Client not found - show helpful error
+        console.error('[DEBUG_MANAGE_CLIENT] Client not found:', clientResponse);
+        showToast(`Client not found. ${clientResponse.message || ''}`, 'error');
+        if (clientResponse.debug) {
+          console.error('[DEBUG_MANAGE_CLIENT] Debug info:', clientResponse.debug);
+        }
+        return;
       }
       
       // Fetch assigned programs
-      const assignedResponse = await APIClient.get(`${BACKEND_ROUTES_API}GetClientAssignedPrograms.php?client_id=${clientId}`);
-      if (assignedResponse.success) {
-        setAssignedPrograms(assignedResponse.programs || []);
+      console.log('[DEBUG_MANAGE_CLIENT] Fetching assigned programs...');
+      try {
+        const assignedResponse = await APIClient.get(`${BACKEND_ROUTES_API}GetClientAssignedPrograms.php?client_id=${clientId}`);
+        console.log('[DEBUG_MANAGE_CLIENT] Assigned programs response:', assignedResponse);
+        if (assignedResponse.success) {
+          setAssignedPrograms(assignedResponse.programs || []);
+        } else {
+          console.warn('[DEBUG_MANAGE_CLIENT] Assigned programs request unsuccessful:', assignedResponse.message);
+        }
+      } catch (assignedError) {
+        console.error('[DEBUG_MANAGE_CLIENT] Assigned programs request failed:', assignedError);
+        // Don't throw, continue with other requests
+      }
+      
+      // Fetch client's self-created programs
+      console.log('[DEBUG_MANAGE_CLIENT] Fetching client self-created programs...');
+      try {
+        const clientProgramsResponse = await APIClient.get(`${BACKEND_ROUTES_API}GetClientPrograms.php?client_id=${clientId}`);
+        console.log('[DEBUG_MANAGE_CLIENT] Client programs response:', clientProgramsResponse);
+        if (clientProgramsResponse.success) {
+          setClientPrograms(clientProgramsResponse.programs || []);
+        } else {
+          console.warn('[DEBUG_MANAGE_CLIENT] Client programs request unsuccessful:', clientProgramsResponse.message);
+        }
+      } catch (clientProgramsError) {
+        console.error('[DEBUG_MANAGE_CLIENT] Client programs request failed:', clientProgramsError);
+        // Don't throw, continue with other requests
       }
       
       // Fetch available programs to assign
-      const availableResponse = await APIClient.get(`${BACKEND_ROUTES_API}GetTrainerPrograms.php`);
-      if (availableResponse.success) {
-        setAvailablePrograms(availableResponse.programs || []);
+      console.log('[DEBUG_MANAGE_CLIENT] Fetching available programs...');
+      try {
+        const availableResponse = await APIClient.get(`${BACKEND_ROUTES_API}GetTrainerPrograms.php`);
+        console.log('[DEBUG_MANAGE_CLIENT] Available programs response:', availableResponse);
+        if (availableResponse.success) {
+          setAvailablePrograms(availableResponse.programs || []);
+        } else {
+          console.warn('[DEBUG_MANAGE_CLIENT] Available programs request unsuccessful:', availableResponse.message);
+        }
+      } catch (availableError) {
+        console.error('[DEBUG_MANAGE_CLIENT] Available programs request failed:', availableError);
+        // Don't throw, continue with other requests
       }
       
       // Fetch client nutrition goal
-      const goalResponse = await APIClient.get(`${BACKEND_ROUTES_API}GetClientNutritionGoal.php?client_id=${clientId}`);
-      if (goalResponse.success && goalResponse.goal) {
-        setNutritionGoal(goalResponse.goal);
+      console.log('[DEBUG_MANAGE_CLIENT] Fetching nutrition goal...');
+      try {
+        const goalResponse = await APIClient.get(`${BACKEND_ROUTES_API}GetClientNutritionGoal.php?client_id=${clientId}`);
+        console.log('[DEBUG_MANAGE_CLIENT] Nutrition goal response:', goalResponse);
+        if (goalResponse.success) {
+          setNutritionGoal(goalResponse.trainer_goal);
+          setSelfNutritionGoal(goalResponse.self_goal);
+        } else {
+          console.warn('[DEBUG_MANAGE_CLIENT] Nutrition goal request unsuccessful:', goalResponse.message);
+        }
+      } catch (goalError) {
+        console.error('[DEBUG_MANAGE_CLIENT] Nutrition goal request failed:', goalError);
+        // Don't throw, continue with other requests
       }
       
       // Fetch weekly meal plan
-      const mealsResponse = await APIClient.get(`${BACKEND_ROUTES_API}GetClientWeeklyMeals.php?client_id=${clientId}`);
-      if (mealsResponse.success) {
-        setWeeklyMeals(mealsResponse.meals || []);
+      console.log('[DEBUG_MANAGE_CLIENT] Fetching weekly meals...');
+      try {
+        const mealsResponse = await APIClient.get(`${BACKEND_ROUTES_API}GetClientWeeklyMeals.php?client_id=${clientId}`);
+        console.log('[DEBUG_MANAGE_CLIENT] Weekly meals response:', mealsResponse);
+        if (mealsResponse.success) {
+          setWeeklyMeals(mealsResponse.meals || []);
+        } else {
+          console.warn('[DEBUG_MANAGE_CLIENT] Weekly meals request unsuccessful:', mealsResponse.message);
+        }
+      } catch (mealsError) {
+        console.error('[DEBUG_MANAGE_CLIENT] Weekly meals request failed:', mealsError);
+        // Don't throw, continue with other requests
       }
       
     } catch (error) {
-      console.error('Error fetching client data:', error);
-      showToast('Error loading client data', 'error');
+      console.error('[DEBUG_MANAGE_CLIENT] Error in fetchClientData:', error);
+      console.error('[DEBUG_MANAGE_CLIENT] Error message:', error.message);
+      console.error('[DEBUG_MANAGE_CLIENT] Error stack:', error.stack);
+      
+      // Check if it's a 404 error
+      if (error.message && error.message.includes('404')) {
+        console.error('[DEBUG_MANAGE_CLIENT] 404 error detected');
+        showToast('Client not found.', 'error');
+      } else if (error.message && error.message.includes('403')) {
+        console.error('[DEBUG_MANAGE_CLIENT] 403 error detected');
+        showToast('You do not have access to this client', 'error');
+      } else {
+        console.error('[DEBUG_MANAGE_CLIENT] Other error detected');
+        showToast(`Error loading client data: ${error.message}`, 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -223,27 +449,38 @@ const ManageClientPrograms = () => {
   };
   
   const handleAssignProgram = async () => {
+    console.log('[DEBUG_MANAGE_CLIENT] handleAssignProgram called');
+    console.log('[DEBUG_MANAGE_CLIENT] selectedProgramToAssign:', selectedProgramToAssign);
+    console.log('[DEBUG_MANAGE_CLIENT] clientId:', clientId);
+    
     if (!selectedProgramToAssign) {
+      console.log('[DEBUG_MANAGE_CLIENT] No program selected');
       showToast('Please select a program', 'warning');
       return;
     }
     
     try {
+      console.log('[DEBUG_MANAGE_CLIENT] Sending assign program request...');
       const response = await APIClient.post(`${BACKEND_ROUTES_API}AssignProgramToClient.php`, {
-        client_id: clientId,
-        program_id: selectedProgramToAssign
+        clientId: clientId,
+        programId: selectedProgramToAssign
       });
       
+      console.log('[DEBUG_MANAGE_CLIENT] Assign program response:', response);
+      
       if (response.success) {
+        console.log('[DEBUG_MANAGE_CLIENT] Program assigned successfully');
         showToast('Program assigned successfully!', 'success');
-        setActiveView('overview');
+        setActiveView('overview'); 
+        setProgramTab('trainer'); // Switch to trainer tab to show the newly assigned program
         setSelectedProgramToAssign('');
         fetchClientData();
       } else {
+        console.log('[DEBUG_MANAGE_CLIENT] Assign program failed:', response.message);
         showToast(response.message || 'Failed to assign program', 'error');
       }
     } catch (error) {
-      console.error('Error assigning program:', error);
+      console.error('[DEBUG_MANAGE_CLIENT] Error assigning program:', error);
       showToast('Error assigning program', 'error');
     }
   };
@@ -275,8 +512,12 @@ const ManageClientPrograms = () => {
   
   const handleSaveMeal = async (e) => {
     e.preventDefault();
+    console.log('[DEBUG_MANAGE_CLIENT] handleSaveMeal called');
+    console.log('[DEBUG_MANAGE_CLIENT] currentMeal:', currentMeal);
+    console.log('[DEBUG_MANAGE_CLIENT] clientId:', clientId);
     
     try {
+      console.log('[DEBUG_MANAGE_CLIENT] Sending save meal request...');
       const response = await APIClient.post(`${BACKEND_ROUTES_API}SetClientWeeklyMeals.php`, {
         client_id: clientId,
         day_of_week: currentMeal.day_of_week,
@@ -285,7 +526,10 @@ const ManageClientPrograms = () => {
         notes: currentMeal.notes
       });
       
+      console.log('[DEBUG_MANAGE_CLIENT] Save meal response:', response);
+      
       if (response.success) {
+        console.log('[DEBUG_MANAGE_CLIENT] Meal saved successfully');
         showToast('Meal saved successfully!', 'success');
         setShowMealModal(false);
         setCurrentMeal({
@@ -296,10 +540,11 @@ const ManageClientPrograms = () => {
         });
         fetchClientData();
       } else {
+        console.log('[DEBUG_MANAGE_CLIENT] Save meal failed:', response.message);
         showToast(response.message || 'Failed to save meal', 'error');
       }
     } catch (error) {
-      console.error('Error saving meal:', error);
+      console.error('[DEBUG_MANAGE_CLIENT] Error saving meal:', error);
       showToast('Error saving meal', 'error');
     }
   };
@@ -551,21 +796,30 @@ const ManageClientPrograms = () => {
   };
 
   const saveNutritionGoal = async () => {
+    console.log('[DEBUG_MANAGE_CLIENT] saveNutritionGoal called');
+    console.log('[DEBUG_MANAGE_CLIENT] clientId:', clientId);
+    console.log('[DEBUG_MANAGE_CLIENT] goalForm:', goalForm);
+    
     try {
+      console.log('[DEBUG_MANAGE_CLIENT] Sending nutrition goal request...');
       const response = await APIClient.post(`${BACKEND_ROUTES_API}SetClientNutritionGoal.php`, {
         client_id: clientId,
         ...goalForm
       });
       
+      console.log('[DEBUG_MANAGE_CLIENT] Nutrition goal response:', response);
+      
       if (response.success) {
+        console.log('[DEBUG_MANAGE_CLIENT] Nutrition goal set successfully');
         showToast('Nutrition goal set successfully!', 'success');
         setShowGoalModal(false);
         fetchClientData();
       } else {
+        console.log('[DEBUG_MANAGE_CLIENT] Nutrition goal failed:', response.message);
         showToast(response.message || 'Failed to set goal', 'error');
       }
     } catch (error) {
-      console.error('Error setting goal:', error);
+      console.error('[DEBUG_MANAGE_CLIENT] Error setting goal:', error);
       showToast('Error setting goal', 'error');
     }
   };
@@ -677,12 +931,19 @@ const ManageClientPrograms = () => {
   };
   
   const saveCustomProgram = async () => {
+    console.log('[DEBUG_MANAGE_CLIENT] saveCustomProgram called');
+    console.log('[DEBUG_MANAGE_CLIENT] programPackage:', programPackage);
+    console.log('[DEBUG_MANAGE_CLIENT] workoutSessions:', workoutSessions);
+    console.log('[DEBUG_MANAGE_CLIENT] clientId:', clientId);
+    
     if (!programPackage.title) {
+      console.log('[DEBUG_MANAGE_CLIENT] No program title provided');
       showToast('Please enter a program title', 'warning');
       return;
     }
     
     if (workoutSessions.length === 0) {
+      console.log('[DEBUG_MANAGE_CLIENT] No workout sessions provided');
       showToast('Please add at least one workout session', 'warning');
       return;
     }
@@ -694,18 +955,24 @@ const ManageClientPrograms = () => {
         client_id: clientId // Link to specific client
       };
       
+      console.log('[DEBUG_MANAGE_CLIENT] Sending custom program request with data:', programData);
       const response = await APIClient.post(`${BACKEND_ROUTES_API}CreateClientProgram.php`, programData);
       
+      console.log('[DEBUG_MANAGE_CLIENT] Custom program response:', response);
+      
       if (response.success) {
+        console.log('[DEBUG_MANAGE_CLIENT] Custom program created successfully');
         showToast('Custom program created and assigned!', 'success');
         setActiveView('overview');
+        setProgramTab('trainer'); // Switch to trainer tab to show the newly created program
         resetProgramForm();
         fetchClientData();
       } else {
+        console.log('[DEBUG_MANAGE_CLIENT] Custom program creation failed:', response.message);
         showToast(response.message || 'Failed to create program', 'error');
       }
     } catch (error) {
-      console.error('Error creating program:', error);
+      console.error('[DEBUG_MANAGE_CLIENT] Error creating program:', error);
       showToast('Error creating program', 'error');
     }
   };
@@ -743,6 +1010,48 @@ const ManageClientPrograms = () => {
       </TrainerDashboardLayout>
     );
   }
+
+  // Show error state if client not found (no coaching relationship)
+  if (!loading && !clientInfo) {
+    return (
+      <TrainerDashboardLayout>
+        <div className="container py-4">
+          <div className="text-center py-5">
+            <div className="mb-4">
+              <i className="bi bi-exclamation-triangle-fill display-1 text-warning"></i>
+            </div>
+            <h4 className="mb-3">Client Relationship Not Found</h4>
+            <p className="text-muted mb-4">
+              No active coaching relationship exists between you and client ID {clientId}.
+              <br />
+              This might happen if the relationship was not properly established.
+            </p>
+            <div className="d-flex gap-3 justify-content-center">
+              <button 
+                className="btn btn-outline-secondary"
+                onClick={() => navigate('/trainer-dashboard/clients')}
+              >
+                <i className="bi bi-arrow-left me-1"></i>
+                Back to Clients
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={createCoachingRelationship}
+              >
+                <i className="bi bi-plus-circle me-1"></i>
+                Create Coaching Relationship
+              </button>
+            </div>
+            <div className="mt-3">
+              <small className="text-muted">
+                Creating the relationship will allow you to manage this client's programs and nutrition.
+              </small>
+            </div>
+          </div>
+        </div>
+      </TrainerDashboardLayout>
+    );
+  }
   
   return (
     <TrainerDashboardLayout>
@@ -753,7 +1062,7 @@ const ManageClientPrograms = () => {
           <div>
             <button 
               className="btn btn-link p-0 mb-2"
-              onClick={() => navigate('/trainer/clients')}
+              onClick={() => navigate('/trainer-dashboard/clients')}
             >
               <i className="bi bi-arrow-left me-2"></i>
               Back to Clients
@@ -809,49 +1118,154 @@ const ManageClientPrograms = () => {
           <div>
             {/* Assigned Programs */}
             <div className="card mb-4">
-              <div className="card-header bg-white">
-                <h5 className="mb-0">Assigned Programs ({assignedPrograms.length})</h5>
+              <div className="card-header bg-white d-flex justify-content-between align-items-center">
+                <div>
+                  <h5 className="mb-0">Client Programs</h5>
+                  <small className="text-muted">Manage training programs for this client</small>
+                </div>
               </div>
               <div className="card-body">
-                {assignedPrograms.length === 0 ? (
-                  <div className="text-center py-4">
-                    <i className="bi bi-inbox display-4 text-muted"></i>
-                    <p className="text-muted mt-3">No programs assigned yet</p>
+                {/* Program Tabs */}
+                <ul className="nav nav-pills mb-4">
+                  <li className="nav-item me-2">
                     <button 
-                      className="btn btn-primary"
-                      onClick={() => setActiveView('assign-program')}
+                      className={`nav-link ${programTab === 'trainer' ? 'active' : ''}`}
+                      onClick={() => setProgramTab('trainer')}
                     >
-                      Assign a Program
+                      <i className="bi bi-person-check me-2"></i>
+                      Trainer Assigned ({assignedPrograms.length})
                     </button>
-                  </div>
-                ) : (
-                  <div className="row">
-                    {assignedPrograms.map(program => (
-                      <div key={program.assignment_id} className="col-md-6 col-lg-4 mb-3">
-                        <div className="card card-hover h-100">
-                          <div className="card-body">
-                            <h6 className="card-title">{program.title}</h6>
-                            <p className="text-muted small mb-2">{program.description}</p>
-                            <div className="d-flex flex-wrap gap-1 mb-2">
-                              <span className="badge bg-light text-dark">{program.category}</span>
-                              <span className="badge bg-light text-dark">{program.duration_weeks} weeks</span>
+                  </li>
+                  <li className="nav-item">
+                    <button 
+                      className={`nav-link ${programTab === 'self' ? 'active' : ''}`}
+                      onClick={() => setProgramTab('self')}
+                    >
+                      <i className="bi bi-person me-2"></i>
+                      Client Created ({clientPrograms.length})
+                    </button>
+                  </li>
+                </ul>
+
+                {/* Trainer Assigned Programs Tab */}
+                {programTab === 'trainer' && (
+                  <div>
+                    {assignedPrograms.length === 0 ? (
+                      <div className="text-center py-4">
+                        <i className="bi bi-clipboard-check display-4 text-primary mb-3"></i>
+                        <h6>No programs assigned yet</h6>
+                        <p className="text-muted mb-3">Assign training programs to guide this client's workouts</p>
+                        <button 
+                          className="btn btn-primary"
+                          onClick={() => setActiveView('assign-program')}
+                        >
+                          <i className="bi bi-plus-lg me-1"></i>
+                          Assign a Program
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                          <span className="text-muted">Programs assigned by you as trainer</span>
+                          <button 
+                            className="btn btn-sm btn-primary"
+                            onClick={() => setActiveView('assign-program')}
+                          >
+                            <i className="bi bi-plus-lg me-1"></i>
+                            Assign More
+                          </button>
+                        </div>
+                        <div className="row">
+                          {assignedPrograms.map(program => (
+                            <div key={program.assignment_id} className="col-md-6 col-lg-4 mb-3">
+                              <div className="card card-hover h-100 border-primary border-opacity-25">
+                                <div className="card-body">
+                                  <div className="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 className="card-title mb-0">{program.title}</h6>
+                                    <span className="badge bg-primary">Assigned</span>
+                                  </div>
+                                  <p className="text-muted small mb-2">{program.description}</p>
+                                  <div className="d-flex flex-wrap gap-1 mb-2">
+                                    <span className="badge bg-light text-dark">{program.category}</span>
+                                    <span className="badge bg-light text-dark">{program.duration_weeks} weeks</span>
+                                  </div>
+                                  <small className="text-muted">
+                                    <i className="bi bi-calendar3 me-1"></i>
+                                    Assigned {new Date(program.assigned_at).toLocaleDateString()}
+                                  </small>
+                                  <div className="mt-3 d-flex gap-2">
+                                    <button 
+                                      className="btn btn-sm btn-outline-primary flex-fill"
+                                      onClick={() => handleViewProgram(program)}
+                                    >
+                                      <i className="bi bi-eye me-1"></i>
+                                      View
+                                    </button>
+                                    <button 
+                                      className="btn btn-sm btn-outline-danger"
+                                      onClick={() => handleUnassignProgram(program.assignment_id)}
+                                    >
+                                      <i className="bi bi-trash"></i>
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
-                            <small className="text-muted">
-                              Assigned {new Date(program.assigned_at).toLocaleDateString()}
-                            </small>
-                            <div className="mt-3">
-                              <button 
-                                className="btn btn-sm btn-outline-danger w-100"
-                                onClick={() => handleUnassignProgram(program.assignment_id)}
-                              >
-                                <i className="bi bi-trash me-1"></i>
-                                Remove
-                              </button>
-                            </div>
-                          </div>
+                          ))}
                         </div>
                       </div>
-                    ))}
+                    )}
+                  </div>
+                )}
+
+                {/* Client Created Programs Tab */}
+                {programTab === 'self' && (
+                  <div>
+                    {clientPrograms.length === 0 ? (
+                      <div className="text-center py-4">
+                        <i className="bi bi-person-workspace display-4 text-secondary mb-3"></i>
+                        <h6>No self-created programs</h6>
+                        <p className="text-muted">Programs created by the client will appear here</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="mb-3">
+                          <span className="text-muted">Programs created by the client independently</span>
+                        </div>
+                        <div className="row">
+                          {clientPrograms.map(program => (
+                            <div key={program.id} className="col-md-6 col-lg-4 mb-3">
+                              <div className="card card-hover h-100 border-secondary border-opacity-25">
+                                <div className="card-body">
+                                  <div className="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 className="card-title mb-0">{program.title}</h6>
+                                    <span className="badge bg-secondary">Self-Created</span>
+                                  </div>
+                                  <p className="text-muted small mb-2">{program.description}</p>
+                                  <div className="d-flex flex-wrap gap-1 mb-2">
+                                    <span className="badge bg-light text-dark">{program.category || 'Custom'}</span>
+                                    <span className="badge bg-light text-dark">{program.duration_weeks || 'Flexible'} weeks</span>
+                                  </div>
+                                  <small className="text-muted">
+                                    <i className="bi bi-calendar3 me-1"></i>
+                                    Created {new Date(program.created_at).toLocaleDateString()}
+                                  </small>
+                                  <div className="mt-3">
+                                    <button 
+                                      className="btn btn-sm btn-outline-secondary w-100"
+                                      onClick={() => handleViewProgram(program)}
+                                    >
+                                      <i className="bi bi-eye me-1"></i>
+                                      View Program
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1327,66 +1741,155 @@ const ManageClientPrograms = () => {
           <div>
             {/* Nutrition Goals Section */}
             <div className="card mb-4">
-              <div className="card-header bg-white d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">Nutrition Goals</h5>
-                <button 
-                  className="btn btn-sm btn-primary"
-                  onClick={() => {
-                    if (nutritionGoal) {
-                      setGoalForm({
-                        goal_type: nutritionGoal.goal_type || 'daily',
-                        target_calories: nutritionGoal.target_calories || '',
-                        target_protein: nutritionGoal.target_protein || '',
-                        target_carbs: nutritionGoal.target_carbs || '',
-                        target_fat: nutritionGoal.target_fat || ''
-                      });
-                    }
-                    setShowGoalModal(true);
-                  }}
-                >
-                  {nutritionGoal ? 'Edit Goals' : 'Set Goals'}
-                </button>
+              <div className="card-header bg-white">
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h5 className="mb-0">Nutrition Goals</h5>
+                  <button 
+                    className="btn btn-sm btn-primary"
+                    onClick={() => {
+                      if (nutritionGoal) {
+                        setGoalForm({
+                          goal_type: nutritionGoal.goal_type || 'daily',
+                          target_calories: nutritionGoal.target_calories || '',
+                          target_protein: nutritionGoal.target_protein || '',
+                          target_carbs: nutritionGoal.target_carbs || '',
+                          target_fat: nutritionGoal.target_fat || ''
+                        });
+                      }
+                      setShowGoalModal(true);
+                    }}
+                  >
+                    {nutritionGoal ? 'Edit Trainer Goals' : 'Set Trainer Goals'}
+                  </button>
+                </div>
+                
+                {/* Tabs for Trainer vs Client Goals */}
+                <ul className="nav nav-tabs card-header-tabs">
+                  <li className="nav-item">
+                    <button 
+                      className={`nav-link ${nutritionTab === 'trainer' ? 'active' : ''}`}
+                      onClick={() => setNutritionTab('trainer')}
+                    >
+                      <i className="bi bi-person-badge me-2"></i>
+                      Trainer Assigned
+                    </button>
+                  </li>
+                  <li className="nav-item">
+                    <button 
+                      className={`nav-link ${nutritionTab === 'self' ? 'active' : ''}`}
+                      onClick={() => setNutritionTab('self')}
+                    >
+                      <i className="bi bi-person me-2"></i>
+                      Client's Own Goals
+                    </button>
+                  </li>
+                </ul>
               </div>
               <div className="card-body">
-                {nutritionGoal ? (
-                  <div className="row">
-                    <div className="col-md-3">
-                      <div className="card">
-                        <div className="card-body text-center">
-                          <h6 className="text-muted small">CALORIES</h6>
-                          <h3 className="mb-0">{nutritionGoal.target_calories}</h3>
+                {nutritionTab === 'trainer' ? (
+                  // Trainer-assigned goals
+                  nutritionGoal ? (
+                    <div>
+                      <div className="alert alert-info mb-3">
+                        <i className="bi bi-info-circle me-2"></i>
+                        These are the nutrition goals you've assigned to this client.
+                      </div>
+                      <div className="row">
+                        <div className="col-md-3">
+                          <div className="card">
+                            <div className="card-body text-center">
+                              <h6 className="text-muted small">CALORIES</h6>
+                              <h3 className="mb-0">{nutritionGoal.target_calories}</h3>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-md-3">
+                          <div className="card">
+                            <div className="card-body text-center">
+                              <h6 className="text-muted small">PROTEIN</h6>
+                              <h3 className="mb-0">{nutritionGoal.target_protein}g</h3>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-md-3">
+                          <div className="card">
+                            <div className="card-body text-center">
+                              <h6 className="text-muted small">CARBS</h6>
+                              <h3 className="mb-0">{nutritionGoal.target_carbs}g</h3>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-md-3">
+                          <div className="card">
+                            <div className="card-body text-center">
+                              <h6 className="text-muted small">FAT</h6>
+                              <h3 className="mb-0">{nutritionGoal.target_fat}g</h3>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <div className="col-md-3">
-                      <div className="card">
-                        <div className="card-body text-center">
-                          <h6 className="text-muted small">PROTEIN</h6>
-                          <h3 className="mb-0">{nutritionGoal.target_protein}g</h3>
-                        </div>
-                      </div>
+                  ) : (
+                    <div className="text-center py-5">
+                      <i className="bi bi-clipboard-data text-muted" style={{ fontSize: '3rem' }}></i>
+                      <p className="text-muted mt-3 mb-0">You haven't set nutrition goals for this client yet</p>
+                      <button 
+                        className="btn btn-primary mt-3"
+                        onClick={() => setShowGoalModal(true)}
+                      >
+                        Set Nutrition Goals
+                      </button>
                     </div>
-                    <div className="col-md-3">
-                      <div className="card">
-                        <div className="card-body text-center">
-                          <h6 className="text-muted small">CARBS</h6>
-                          <h3 className="mb-0">{nutritionGoal.target_carbs}g</h3>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-md-3">
-                      <div className="card">
-                        <div className="card-body text-center">
-                          <h6 className="text-muted small">FAT</h6>
-                          <h3 className="mb-0">{nutritionGoal.target_fat}g</h3>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  )
                 ) : (
-                  <div className="text-center py-4">
-                    <p className="text-muted mb-0">No nutrition goals set for this client</p>
-                  </div>
+                  // Client's self-created goals (read-only)
+                  selfNutritionGoal ? (
+                    <div>
+                      <div className="alert alert-secondary mb-3">
+                        <i className="bi bi-eye me-2"></i>
+                        These are the nutrition goals your client set for themselves. You can view but not edit them.
+                      </div>
+                      <div className="row">
+                        <div className="col-md-3">
+                          <div className="card border-secondary">
+                            <div className="card-body text-center">
+                              <h6 className="text-muted small">CALORIES</h6>
+                              <h3 className="mb-0">{selfNutritionGoal.target_calories}</h3>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-md-3">
+                          <div className="card border-secondary">
+                            <div className="card-body text-center">
+                              <h6 className="text-muted small">PROTEIN</h6>
+                              <h3 className="mb-0">{selfNutritionGoal.target_protein}g</h3>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-md-3">
+                          <div className="card border-secondary">
+                            <div className="card-body text-center">
+                              <h6 className="text-muted small">CARBS</h6>
+                              <h3 className="mb-0">{selfNutritionGoal.target_carbs}g</h3>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-md-3">
+                          <div className="card border-secondary">
+                            <div className="card-body text-center">
+                              <h6 className="text-muted small">FAT</h6>
+                              <h3 className="mb-0">{selfNutritionGoal.target_fat}g</h3>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-5">
+                      <i className="bi bi-clipboard-x text-muted" style={{ fontSize: '3rem' }}></i>
+                      <p className="text-muted mt-3 mb-0">Your client hasn't set their own nutrition goals yet</p>
+                    </div>
+                  )
                 )}
               </div>
             </div>
@@ -1957,6 +2460,233 @@ const ManageClientPrograms = () => {
                 </div>
                 <div className="modal-footer">
                   <button type="button" className="btn btn-secondary" onClick={() => setShowCustomMealTypeModal(false)}>Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Program View/Edit Modal */}
+        {(showProgramModal && (viewingProgram || editingProgram)) && (
+          <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <div className="modal-dialog modal-lg modal-dialog-scrollable">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">
+                    {editingProgram ? 'Edit Program' : 'Program Details'}
+                  </h5>
+                  <button 
+                    type="button" 
+                    className="btn-close" 
+                    onClick={() => {
+                      setShowProgramModal(false);
+                      setViewingProgram(null);
+                      setEditingProgram(null);
+                    }}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  {editingProgram ? (
+                    // Edit Mode
+                    <form>
+                      <div className="mb-3">
+                        <label className="form-label">Program Title</label>
+                        <input 
+                          type="text"
+                          className="form-control"
+                          value={editingProgram.title || ''}
+                          onChange={(e) => setEditingProgram({...editingProgram, title: e.target.value})}
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label">Description</label>
+                        <textarea 
+                          className="form-control"
+                          rows="3"
+                          value={editingProgram.description || ''}
+                          onChange={(e) => setEditingProgram({...editingProgram, description: e.target.value})}
+                        ></textarea>
+                      </div>
+                      <div className="row">
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Category</label>
+                          <select 
+                            className="form-control"
+                            value={editingProgram.category || ''}
+                            onChange={(e) => setEditingProgram({...editingProgram, category: e.target.value})}
+                          >
+                            <option value="Strength">Strength</option>
+                            <option value="Cardio">Cardio</option>
+                            <option value="Flexibility">Flexibility</option>
+                            <option value="General Fitness">General Fitness</option>
+                          </select>
+                        </div>
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Difficulty</label>
+                          <select 
+                            className="form-control"
+                            value={editingProgram.difficulty_level || ''}
+                            onChange={(e) => setEditingProgram({...editingProgram, difficulty_level: e.target.value})}
+                          >
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label">Duration (weeks)</label>
+                        <input 
+                          type="number"
+                          className="form-control"
+                          min="1"
+                          max="52"
+                          value={editingProgram.duration_weeks || ''}
+                          onChange={(e) => setEditingProgram({...editingProgram, duration_weeks: parseInt(e.target.value)})}
+                        />
+                      </div>
+                    </form>
+                  ) : (
+                    // View Mode
+                    <div>
+                      <div className="mb-4">
+                        <h6>Program Information</h6>
+                        <div className="row">
+                          <div className="col-md-6">
+                            <p><strong>Title:</strong> {viewingProgram.title}</p>
+                            <p><strong>Category:</strong> {viewingProgram.category}</p>
+                            <p><strong>Difficulty:</strong> <span className="text-capitalize">{viewingProgram.difficulty_level}</span></p>
+                          </div>
+                          <div className="col-md-6">
+                            <p><strong>Duration:</strong> {viewingProgram.duration_weeks} weeks</p>
+                            <p><strong>Created:</strong> {viewingProgram.created_at ? new Date(viewingProgram.created_at).toLocaleDateString() : 'N/A'}</p>
+                            {viewingProgram.trainer_name && (
+                              <p><strong>Created by:</strong> {viewingProgram.trainer_name}</p>
+                            )}
+                          </div>
+                        </div>
+                        {viewingProgram.description && (
+                          <div>
+                            <p><strong>Description:</strong></p>
+                            <p className="text-muted">{viewingProgram.description}</p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {viewingProgram.sessions && viewingProgram.sessions.length > 0 && (
+                        <div className="mb-4">
+                          <h6>Workout Sessions</h6>
+                          <div className="row">
+                            {viewingProgram.sessions.map((session, index) => (
+                              <div key={index} className="col-12 mb-3">
+                                <div className="card">
+                                  <div className="card-body">
+                                    <h6 className="card-title">{session.name || session.session_name}</h6>
+                                    {session.session_description && (
+                                      <p className="card-text small text-muted">{session.session_description}</p>
+                                    )}
+                                    <div className="d-flex gap-2 mb-3">
+                                      <span className="badge bg-light text-dark">Week {session.week_number}</span>
+                                      <span className="badge bg-light text-dark">Day {session.day_number}</span>
+                                    </div>
+                                    
+                                    {/* Exercise Details */}
+                                    {session.exercises && session.exercises.length > 0 && (
+                                      <div>
+                                        <h6 className="mb-2">Exercises ({session.exercises.length})</h6>
+                                        <div className="row">
+                                          {session.exercises.map((exercise, exIndex) => (
+                                            <div key={exIndex} className="col-md-6 mb-2">
+                                              <div className="border rounded p-2">
+                                                <div className="d-flex justify-content-between align-items-start">
+                                                  <div>
+                                                    <strong>{exercise.exercise_name}</strong>
+                                                    <div className="text-muted small">
+                                                      {exercise.muscle_group && `${exercise.muscle_group} • `}
+                                                      {exercise.equipment && exercise.equipment}
+                                                    </div>
+                                                  </div>
+                                                  <span className="badge bg-primary">{exercise.exercise_order}</span>
+                                                </div>
+                                                <div className="mt-1">
+                                                  <span className="text-dark">
+                                                    <strong>{exercise.sets}</strong> sets × <strong>{exercise.reps}</strong> reps
+                                                    {exercise.rpe && ` @ RPE ${exercise.rpe}`}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    
+                                    {(!session.exercises || session.exercises.length === 0) && (
+                                      <div className="text-muted">
+                                        <small>No exercises added to this session</small>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {(!viewingProgram.sessions || viewingProgram.sessions.length === 0) && (
+                        <div className="text-center py-4">
+                          <i className="bi bi-clipboard display-4 text-muted mb-3"></i>
+                          <h6 className="text-muted">No detailed sessions available</h6>
+                          <p className="text-muted">This is a basic program assignment.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="modal-footer">
+                  {editingProgram ? (
+                    <>
+                      <button 
+                        type="button" 
+                        className="btn btn-secondary"
+                        onClick={handleCancelEdit}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-primary"
+                        onClick={handleSaveProgram}
+                        disabled={loading}
+                      >
+                        {loading ? 'Saving...' : 'Save Changes'}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button 
+                        type="button" 
+                        className="btn btn-secondary"
+                        onClick={() => {
+                          setShowProgramModal(false);
+                          setViewingProgram(null);
+                        }}
+                      >
+                        Close
+                      </button>
+                      {viewingProgram && viewingProgram.created_by_trainer_id && (
+                        <button 
+                          type="button" 
+                          className="btn btn-danger"
+                          onClick={() => handleDeleteProgram(viewingProgram)}
+                        >
+                          <i className="bi bi-trash me-1"></i>
+                          Delete Program
+                        </button>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             </div>

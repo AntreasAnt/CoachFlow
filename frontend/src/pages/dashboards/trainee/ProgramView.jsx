@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import APIClient from '../../../utils/APIClient';
 import TraineeDashboard from '../../../components/TraineeDashboard';
@@ -7,26 +7,52 @@ import TraineeDashboard from '../../../components/TraineeDashboard';
 const ProgramView = () => {
   const { programId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [program, setProgram] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
+  const [isTrainerAssigned, setIsTrainerAssigned] = useState(false);
 
   useEffect(() => {
+    // Check if this is a trainer-assigned program from navigation state
+    if (location.state?.fromAssigned) {
+      setIsTrainerAssigned(true);
+    }
     fetchProgramDetails();
-  }, [programId]);
+  }, [programId, location.state]);
 
   const fetchProgramDetails = async () => {
     try {
       console.log('Fetching program details for ID:', programId);
       setLoading(true);
       
-      const data = await APIClient.get(`${BACKEND_ROUTES_API}GetProgramDetails.php?programId=${programId}`);
+      let data;
+      let usedCustomEndpoint = false;
+      try {
+        // First try the custom program details endpoint (for trainer-created programs)
+        data = await APIClient.get(`${BACKEND_ROUTES_API}GetCustomProgramDetails.php?programId=${programId}`);
+        usedCustomEndpoint = true;
+        // If we successfully used custom endpoint, it's likely trainer-assigned
+        setIsTrainerAssigned(true);
+      } catch (error) {
+        console.log('Custom program details failed, trying standard endpoint:', error);
+        // If that fails, try the standard program details endpoint (for marketplace programs)
+        data = await APIClient.get(`${BACKEND_ROUTES_API}GetProgramDetails.php?programId=${programId}`);
+        // Standard endpoint suggests it's a purchased program
+        if (!location.state?.fromAssigned) {
+          setIsTrainerAssigned(false);
+        }
+      }
       
       console.log('Program details response:', data);
       
       if (data.success) {
         setProgram(data.program);
+        // Additional check: if program has created_by_trainer_id, it might be trainer-assigned
+        if (data.program.created_by_trainer_id && !usedCustomEndpoint) {
+          setIsTrainerAssigned(true);
+        }
       } else {
         throw new Error(data.message || 'Failed to load program details');
       }
@@ -130,10 +156,17 @@ const ProgramView = () => {
             <h2 className="mb-1">{program.title}</h2>
             <p className="text-muted mb-0">By {program.trainer_name}</p>
           </div>
-          <span className="badge bg-success fs-6">
-            <i className="bi bi-bag-check me-1"></i>
-            Purchased
-          </span>
+          {isTrainerAssigned ? (
+            <span className="badge bg-primary fs-6">
+              <i className="bi bi-person-check me-1"></i>
+              Trainer Assigned
+            </span>
+          ) : (
+            <span className="badge bg-success fs-6">
+              <i className="bi bi-bag-check me-1"></i>
+              Purchased
+            </span>
+          )}
         </div>
 
         {/* Program Info */}

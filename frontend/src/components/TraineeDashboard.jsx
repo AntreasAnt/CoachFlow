@@ -58,13 +58,13 @@ const TraineeDashboard = ({ children }) => {
             <div className="col">
               <button
                 className={`btn w-100 py-2 border-0 ${
-                  window.location.pathname === '/trainee-dashboard/client-chat' ? 'text-primary nav-btn-active' : 'text-muted'
+                  window.location.pathname === '/trainee-dashboard/my-coach' ? 'text-primary nav-btn-active' : 'text-muted'
                 }`}
-                onClick={() => navigate('/trainee-dashboard/client-chat')}
+                onClick={() => navigate('/trainee-dashboard/my-coach')}
               >
                 <div className="d-flex flex-column align-items-center">
-                  <i className={`bi bi-chat${window.location.pathname === '/trainee-dashboard/client-chat' ? '-fill' : ''} fs-5`}></i>
-                  <small className="mt-1">Chat</small>
+                  <i className={`bi bi-person-badge${window.location.pathname === '/trainee-dashboard/my-coach' ? '-fill' : ''} fs-5`}></i>
+                  <small className="mt-1">My Coach</small>
                 </div>
               </button>
             </div>
