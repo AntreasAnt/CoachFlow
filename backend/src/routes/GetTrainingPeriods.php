@@ -1,27 +1,21 @@
 <?php
-define('APP_RUNNING', true);
-require_once '../bootstrap.php';
-require_once '../config/cors.php';
-require_once '../config/Auth.php';
-
 header('Content-Type: application/json');
+require_once __DIR__ . '/../src/bootstrap.php';
+require_once __DIR__ . '/../src/config/cors.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+    exit;
 }
 
-try {
-    // Check authentication
-    $userId = checkAuth();
-    if (!$userId) {
-        throw new Exception('Authentication required');
-    }
+$userId = $_SESSION['user_id'];
 
-    $database = new Database();
-    $conn = $database->connect();
-    
-    // Get all training periods for the user
+try {
+    $db = new Database();
+    $conn = $db->getConnection();
+
+    // Get all training periods for the user with workout counts
     $query = "SELECT 
                 tp.id,
                 tp.period_name,
@@ -29,25 +23,26 @@ try {
                 tp.end_date,
                 tp.is_active,
                 tp.notes,
-                tp.trainer_id,
+                tp.created_at,
                 u.name as trainer_name,
-                u.imageid as trainer_image,
                 COUNT(DISTINCT ws.id) as workouts_count
               FROM training_periods tp
-              LEFT JOIN user u ON tp.trainer_id = u.userid
+              LEFT JOIN users u ON tp.trainer_id = u.user_id
               LEFT JOIN workout_sessions ws ON ws.training_period_id = tp.id
-              WHERE tp.user_id = ?
+              WHERE tp.user_id = :user_id
               GROUP BY tp.id
-              ORDER BY tp.start_date DESC";
+              ORDER BY tp.is_active DESC, tp.start_date DESC";
     
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("i", $userId);
+    $stmt->bindParam(':user_id', $userId);
     $stmt->execute();
-    $result = $stmt->get_result();
     
-    $periods = [];
-    while ($row = $result->fetch_assoc()) {
-        $periods[] = $row;
+    $periods = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Format the data
+    foreach ($periods as &$period) {
+        $period['is_active'] = (bool)$period['is_active'];
+        $period['workouts_count'] = (int)$period['workouts_count'];
     }
 
     echo json_encode([
@@ -56,9 +51,10 @@ try {
     ]);
 
 } catch (Exception $e) {
+    error_log("GetTrainingPeriods Error: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage()
+        'message' => 'Failed to fetch training periods: ' . $e->getMessage()
     ]);
 }

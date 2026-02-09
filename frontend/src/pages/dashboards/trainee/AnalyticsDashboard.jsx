@@ -27,9 +27,20 @@ const AnalyticsDashboard = () => {
     return date.toISOString().split('T')[0];
   };
   
+  const [dateRange, setDateRange] = useState('90');
   const [startDate, setStartDate] = useState(getDefaultStartDate());
   const [endDate, setEndDate] = useState(getDefaultEndDate());
   const [activeTab, setActiveTab] = useState('overview');
+
+  useEffect(() => {
+    // Update dates based on range selection
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - parseInt(dateRange));
+    
+    setStartDate(start.toISOString().split('T')[0]);
+    setEndDate(end.toISOString().split('T')[0]);
+  }, [dateRange]);
 
   useEffect(() => {
     fetchAnalytics();
@@ -130,7 +141,7 @@ const AnalyticsDashboard = () => {
         {/* Header */}
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
-            <h2><i className="bi bi-graph-up me-2"></i>Analytics</h2>
+            <h2><i className="bi bi-graph-up me-2"></i>My Analytics</h2>
             <p className="text-muted">Track your progress and achievements</p>
           </div>
           <div className="d-flex gap-2 align-items-center">
@@ -140,7 +151,19 @@ const AnalyticsDashboard = () => {
             >
               <i className="bi bi-arrow-left-right me-2"></i>Compare Periods
             </button>
-            <div className="d-flex align-items-center gap-2">
+            <select
+              className="form-select form-select-sm"
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              style={{ width: 'auto' }}
+            >
+              <option value="30">Last 30 Days</option>
+              <option value="60">Last 60 Days</option>
+              <option value="90">Last 90 Days</option>
+              <option value="180">Last 6 Months</option>
+              <option value="365">Last Year</option>
+            </select>
+            <div className="d-none align-items-center gap-2">
               <label className="text-muted small mb-0">From:</label>
               <input 
                 type="date" 
@@ -308,7 +331,7 @@ const AnalyticsDashboard = () => {
             </div>
 
             {/* Personal Records */}
-            <div className="row">
+            <div className="row mt-4">
               <div className="col-12">
                 <div className="card border-0 shadow-sm">
                   <div className="card-header bg-white d-flex justify-content-between align-items-center">
@@ -328,9 +351,9 @@ const AnalyticsDashboard = () => {
                               </small>
                             </div>
                             <div className="text-end">
-                              <div className="badge bg-primary">{pr.record_value}kg (1RM)</div>
+                              <div className="badge bg-primary">{pr.estimated_1rm || pr.record_value}kg (1RM)</div>
                               <br />
-                              <small className="text-muted">{new Date(pr.achieved_date).toLocaleDateString()}</small>
+                              <small className="text-muted">{new Date(pr.achieved_date || pr.recorded_date).toLocaleDateString()}</small>
                             </div>
                           </div>
                         ))}
@@ -338,6 +361,118 @@ const AnalyticsDashboard = () => {
                     ) : (
                       <p className="text-muted text-center">No personal records yet. Keep training!</p>
                     )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Weekly Breakdown */}
+            {volumeTrends.length > 0 && (
+              <div className="row mt-4">
+                <div className="col-12">
+                  <div className="card border-0 shadow-sm">
+                    <div className="card-header bg-white">
+                      <h5 className="mb-0">Weekly Breakdown</h5>
+                    </div>
+                    <div className="card-body">
+                      <div className="table-responsive">
+                        <table className="table table-hover">
+                          <thead>
+                            <tr>
+                              <th>Week</th>
+                              <th>Workouts</th>
+                              <th>Volume (kg)</th>
+                              <th>Sets</th>
+                              <th>Reps</th>
+                              <th>Avg RPE</th>
+                              <th>Duration</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {volumeTrends.slice(0, 12).map((week, index) => (
+                              <tr key={index}>
+                                <td>
+                                  <small className="text-muted">
+                                    {new Date(week.week_start_date).toLocaleDateString()}
+                                  </small>
+                                </td>
+                                <td><strong>{week.total_workouts || 0}</strong></td>
+                                <td><strong>{(week.total_volume_kg || 0).toLocaleString()} kg</strong></td>
+                                <td>{week.total_sets || 0}</td>
+                                <td>{(week.total_reps || 0).toLocaleString()}</td>
+                                <td>
+                                  <span className={`badge ${week.avg_rpe >= 8 ? 'bg-danger' : week.avg_rpe >= 6 ? 'bg-warning' : 'bg-success'}`}>
+                                    {(week.avg_rpe || 0).toFixed(1)}
+                                  </span>
+                                </td>
+                                <td>{week.total_duration_minutes || 0} min</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Training Summary */}
+            <div className="row mt-4">
+              <div className="col-md-4 mb-3">
+                <div className="card border-0 shadow-sm">
+                  <div className="card-body">
+                    <h6 className="text-muted mb-3">Volume Stats</h6>
+                    <div className="d-flex justify-content-between mb-2">
+                      <span>Total Reps:</span>
+                      <strong>{(overview.total_reps || 0).toLocaleString()}</strong>
+                    </div>
+                    <div className="d-flex justify-content-between mb-2">
+                      <span>Total Sets:</span>
+                      <strong>{(overview.total_sets || 0).toLocaleString()}</strong>
+                    </div>
+                    <div className="d-flex justify-content-between">
+                      <span>Avg Sets/Workout:</span>
+                      <strong>{overview.total_workouts ? ((overview.total_sets || 0) / overview.total_workouts).toFixed(1) : 0}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="col-md-4 mb-3">
+                <div className="card border-0 shadow-sm">
+                  <div className="card-body">
+                    <h6 className="text-muted mb-3">Training Time</h6>
+                    <div className="d-flex justify-content-between mb-2">
+                      <span>Total Time:</span>
+                      <strong>{Math.floor((overview.total_minutes || 0) / 60)}h {(overview.total_minutes || 0) % 60}m</strong>
+                    </div>
+                    <div className="d-flex justify-content-between mb-2">
+                      <span>Avg Duration:</span>
+                      <strong>{overview.total_workouts ? ((overview.total_minutes || 0) / overview.total_workouts).toFixed(0) : 0} min</strong>
+                    </div>
+                    <div className="d-flex justify-content-between">
+                      <span>Unique Exercises:</span>
+                      <strong>{overview.unique_exercises || 0}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="col-md-4 mb-3">
+                <div className="card border-0 shadow-sm">
+                  <div className="card-body">
+                    <h6 className="text-muted mb-3">Consistency</h6>
+                    <div className="d-flex justify-content-between mb-2">
+                      <span>Workouts/Week:</span>
+                      <strong>{consistency.workouts_per_week ? consistency.workouts_per_week.toFixed(1) : 0}</strong>
+                    </div>
+                    <div className="d-flex justify-content-between mb-2">
+                      <span>Active Days:</span>
+                      <strong>{consistency.active_days || 0}</strong>
+                    </div>
+                    <div className="d-flex justify-content-between">
+                      <span>Adherence:</span>
+                      <strong>{consistency.adherence_percentage || 0}%</strong>
+                    </div>
                   </div>
                 </div>
               </div>

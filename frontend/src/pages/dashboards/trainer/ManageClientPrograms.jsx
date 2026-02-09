@@ -1086,6 +1086,15 @@ const ManageClientPrograms = () => {
           </li>
           <li className="nav-item">
             <button 
+              className={`nav-link ${activeView === 'analytics' ? 'active' : ''}`}
+              onClick={() => navigate(`/trainer/clients/${clientId}/analytics`)}
+            >
+              <i className="bi bi-graph-up me-2"></i>
+              Analytics
+            </button>
+          </li>
+          <li className="nav-item">
+            <button 
               className={`nav-link ${activeView === 'assign-program' ? 'active' : ''}`}
               onClick={() => setActiveView('assign-program')}
             >

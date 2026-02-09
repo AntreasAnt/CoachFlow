@@ -24,11 +24,14 @@ try {
     $endDate = $_GET['end_date'] ?? null;
     $trainingPeriodId = isset($_GET['training_period_id']) ? intval($_GET['training_period_id']) : null;
 
+    // Allow viewing analytics for oneself (trainee viewing their own analytics)
+    // The userId from checkAuth() is the authenticated user (trainee)
     $analyticsModel = new AnalyticsModel();
     $analytics = $analyticsModel->getUserAnalytics($userId, $startDate, $endDate, $trainingPeriodId);
 
     echo json_encode([
         'success' => true,
+        'user_id' => $userId,
         'analytics' => $analytics
     ]);
 

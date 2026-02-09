@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TrainerDashboardLayout from '../../../components/TrainerDashboardLayout';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import APIClient from '../../../utils/APIClient';
 
 const TrainerClients = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('active');
   const [clients, setClients] = useState([]);
@@ -263,6 +265,13 @@ const TrainerClients = () => {
                             <i className="bi bi-eye me-1"></i>
                             View
                           </button>
+                          <button 
+                            className="btn btn-sm btn-outline-info"
+                            onClick={() => navigate(`/trainer/clients/${client.trainee_id}/analytics`)}
+                            title="View Analytics"
+                          >
+                            <i className="bi bi-graph-up"></i>
+                          </button>
                           <button className="btn btn-sm btn-outline-secondary">
                             <i className="bi bi-chat-dots"></i>
                           </button>
@@ -427,6 +436,17 @@ const TrainerClients = () => {
               </div>
               <div className="modal-footer">
                 <button
+                  type="button" 
+                  className="btn btn-info"
+                  onClick={() => {
+                    setShowClientModal(false);
+                    navigate(`/trainer/clients/${selectedClient.trainee_id}/analytics`);
+                  }}
+                >
+                  <i className="bi bi-graph-up me-2"></i>
+                  View Analytics
+                </button>
+                <button 
                   type="button"
                   className="btn btn-secondary"
                   onClick={() => setShowClientModal(false)}

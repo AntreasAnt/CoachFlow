@@ -21,6 +21,7 @@ import TrainerMessages from "./pages/dashboards/trainer/TrainerMessages";
 import CreatePrograms from "./pages/dashboards/trainer/CreatePrograms";
 import ManageClientPrograms from "./pages/dashboards/trainer/ManageClientPrograms";
 import TrainerClientsManagement from "./pages/dashboards/trainer/TrainerClientsManagement";
+import ClientAnalytics from "./pages/dashboards/trainer/ClientAnalytics";
 
 import TraineeDashboardHome from "./pages/dashboards/trainee/Dashboard";
 import ProfilePage from "./pages/dashboards/trainee/ProfilePage";
@@ -148,6 +149,14 @@ function App() {
           element={
             <AuthRoot allowedPrivileges={['trainer']}>
               <ManageClientPrograms />
+            </AuthRoot>
+          } 
+        />
+        <Route 
+          path="/trainer/clients/:clientId/analytics" 
+          element={
+            <AuthRoot allowedPrivileges={['trainer']}>
+              <ClientAnalytics />
             </AuthRoot>
           } 
         />

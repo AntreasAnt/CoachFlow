@@ -40,7 +40,8 @@ class AnalyticsModel
                 'volume_trends' => $this->getVolumeTrends($userId, $startDate, $endDate, $trainingPeriodId),
                 'body_composition' => $this->getBodyComposition($userId, $startDate, $endDate),
                 'consistency' => $this->getConsistencyStats($userId, $startDate, $endDate),
-                'personal_records' => $this->getPersonalRecords($userId, $trainingPeriodId)
+                'personal_records' => $this->getPersonalRecords($userId, $trainingPeriodId),
+                'program_performance' => $this->getProgramPerformance($userId, $startDate, $endDate)
             ];
 
             return $analytics;
@@ -739,6 +740,51 @@ class AnalyticsModel
         }
 
         return $awarded;
+    }
+
+    /**
+     * Get performance breakdown by program
+     */
+    private function getProgramPerformance($userId, $startDate, $endDate)
+    {
+        try {
+            $query = "SELECT 
+                        ws.program_id,
+                        COALESCE(wp.title, up.title, 'No Program') as program_name,
+                        COUNT(DISTINCT ws.id) as total_workouts,
+                        SUM(ws.duration_minutes) as total_minutes,
+                        SUM(wel.weight_kg * wel.reps_completed) as total_volume_kg,
+                        SUM(wel.reps_completed) as total_reps,
+                        COUNT(wel.id) as total_sets,
+                        AVG(wel.rpe) as avg_rpe,
+                        COUNT(DISTINCT wel.exercise_name) as unique_exercises,
+                        MIN(ws.session_date) as first_workout,
+                        MAX(ws.session_date) as last_workout
+                      FROM workout_sessions ws
+                      LEFT JOIN workout_exercise_logs wel ON ws.id = wel.workout_session_id
+                      LEFT JOIN workout_programs wp ON ws.program_id = wp.id
+                      LEFT JOIN user_programs up ON ws.program_id = up.id
+                      WHERE ws.user_id = ?
+                        AND ws.session_date BETWEEN ? AND ?
+                      GROUP BY ws.program_id, program_name
+                      ORDER BY total_workouts DESC";
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->bind_param("iss", $userId, $startDate, $endDate);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $programs = [];
+            while ($row = $result->fetch_assoc()) {
+                $programs[] = $row;
+            }
+            
+            return $programs;
+
+        } catch (Exception $e) {
+            error_log("Error in getProgramPerformance: " . $e->getMessage());
+            return [];
+        }
     }
 
     /**
