@@ -46,12 +46,12 @@ function MainPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh', backgroundColor: '#f8f9fa' }}>
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh', backgroundColor: 'var(--brand-dark)' }}>
         <div className="text-center">
-          <div className="spinner-border text-primary" role="status">
+          <div className="spinner-border" role="status" style={{color: 'var(--brand-primary)', width: '3rem', height: '3rem'}}>
             <span className="visually-hidden">Loading...</span>
           </div>
-          <p className="mt-3 text-dark">Loading CoachFlow...</p>
+          <p className="mt-3" style={{color: 'var(--brand-primary)', fontSize: '1.2rem', fontWeight: '600'}}>Loading CoachFlow...</p>
         </div>
       </div>
     );
@@ -75,107 +75,188 @@ function MainPage() {
 
   // If user is not logged in, show marketing homepage
   return (
-    <div className="text-dark">
+    <div style={{backgroundColor: 'var(--brand-dark)', minHeight: '100vh'}}>
       {/* Hero Section */}
-      <section className="hero bg-primary bg-gradient text-white py-5">
-        <div className="container position-relative" style={{ zIndex: 1 }}>
-          <div className="row align-items-center">
-            <div className="col-lg-12 text-center mb-4 mb-lg-0">
-              <span className="badge bg-white text-primary px-3 py-2 rounded-pill mb-3">
-                🏋️ Professional Coaching Platform
-              </span>
+      <section className="hero py-5" style={{background: 'linear-gradient(135deg, #000502 0%, #0A0D0A 100%)', minHeight: '100vh', display: 'flex', alignItems: 'center'}}>
+        <div className="container text-center">
+          <span className="badge px-4 py-3 mb-4 d-inline-block" style={{backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-primary)', fontSize: '1.1rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', borderRadius: '50px', border: '2px solid rgba(32, 214, 87, 0.3)', backdropFilter: 'blur(10px)', boxShadow: '0 8px 32px rgba(32, 214, 87, 0.2)'}}>
+            100% Free to Start
+          </span>
+          <h1 className="display-2 fw-bold mt-3" style={{color: 'var(--brand-white)', lineHeight: '1.2'}}>
+            Train Smarter.<br/>
+            <span style={{color: 'var(--brand-primary)', textShadow: '0 0 40px rgba(32, 214, 87, 0.7)'}}>Achieve More.</span>
+          </h1>
+          <p className="lead fs-3 mb-5 mt-4 mx-auto" style={{color: 'var(--text-secondary)', maxWidth: '850px', fontWeight: '400'}}>
+            Train solo with powerful FREE tools, or connect with elite trainers.<br/>
+            Build custom programs, track progress, and achieve your goals. All in one place.
+          </p>
+          
+          <div className="row justify-content-center mb-5">
+            <div className="col-md-4">
+              <div className="p-3" style={{backgroundColor: 'rgba(32, 214, 87, 0.1)', borderRadius: '12px', border: '1px solid var(--brand-primary)'}}>
+                <div className="display-6 fw-bold" style={{color: 'var(--brand-primary)'}}>100% FREE</div>
+                <p className="mb-0 mt-2" style={{color: 'var(--text-primary)'}}>Create Programs</p>
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="p-3" style={{backgroundColor: 'rgba(32, 214, 87, 0.1)', borderRadius: '12px', border: '1px solid var(--brand-primary)'}}>
+                <div className="display-6 fw-bold" style={{color: 'var(--brand-primary)'}}>100% FREE</div>
+                <p className="mb-0 mt-2" style={{color: 'var(--text-primary)'}}>Log Workouts & Food</p>
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="p-3" style={{backgroundColor: 'rgba(32, 214, 87, 0.1)', borderRadius: '12px', border: '1px solid var(--brand-primary)'}}>
+                <div className="display-6 fw-bold" style={{color: 'var(--brand-primary)'}}>100% FREE</div>
+                <p className="mb-0 mt-2" style={{color: 'var(--text-primary)'}}>Track Analytics</p>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="container text-center">
-          <h1 className="display-3 fw-bold text-light mt-0 pt-3">
-            Build Your Coaching Empire
-          </h1>
-          <p className="lead text-light fs-4 mb-4">
-            The all-in-one platform for fitness trainers to manage clients, create custom programs,<br/>
-            track progress, and get paid automatically.
-          </p>
+
           <div className="d-flex flex-wrap justify-content-center gap-4 mt-5">
             <Link
               to="/signup"
-              className="btn btn-light btn-lg rounded-pill shadow px-5 py-3 d-flex align-items-center fw-semibold"
+              className="btn btn-lg rounded-pill px-5 py-3 fw-bold"
+              style={{backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none', boxShadow: '0 8px 32px rgba(32, 214, 87, 0.4)', transition: 'all 0.3s', fontSize: '1.2rem'}}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.boxShadow = '0 12px 40px rgba(32, 214, 87, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(32, 214, 87, 0.4)';
+              }}
             >
-              <i className="bi bi-rocket me-2"></i>
-              Start Free Trial
+              <i className="bi bi-rocket-takeoff me-2"></i>
+              Start Training Free
             </Link>
             <Link
               to="/login"
-              className="btn btn-outline-light btn-lg rounded-pill shadow px-5 py-3 d-flex align-items-center"
+              className="btn btn-lg rounded-pill px-5 py-3 fw-semibold"
+              style={{backgroundColor: 'transparent', color: 'var(--brand-white)', border: '2px solid var(--brand-primary)', fontSize: '1.2rem', transition: 'all 0.3s'}}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(32, 214, 87, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
             >
               <i className="bi bi-box-arrow-in-right me-2"></i>
-              Login
+              Sign In
             </Link>
           </div>
-          <p className="text-light mt-3">
-            <small>✨ No credit card required • 14-day free trial • Cancel anytime</small>
+          <p className="mt-4" style={{color: 'var(--brand-light)', fontSize: '1rem'}}>
+            <strong>✨ No credit card • No hidden fees • Cancel anytime</strong>
           </p>
         </div>
       </section>
 
-      {/* Problem/Solution Section */}
-      <section className="py-5 bg-light">
+      {/* Value Proposition Section */}
+      <section className="py-5" style={{backgroundColor: 'var(--bg-secondary)'}}>
         <div className="container">
-          <div className="row align-items-center">
+          <div className="text-center mb-5">
+            <h2 className="display-4 fw-bold mb-4" style={{color: 'var(--brand-white)'}}>
+              Why Choose <span style={{color: 'var(--brand-primary)'}}>CoachFlow</span>?
+            </h2>
+            <p className="lead fs-4" style={{color: 'var(--text-secondary)', maxWidth: '800px', margin: '0 auto'}}>
+              Whether you're crushing goals solo or seeking expert guidance, we've got everything you need—completely free.
+            </p>
+          </div>
+
+          <div className="row g-4 mt-5">
             <div className="col-lg-6">
-              <h2 className="fw-bold mb-4">Stop Juggling Multiple Apps</h2>
-              <p className="lead text-muted mb-4">
-                Tired of switching between spreadsheets, payment apps, and messaging platforms? 
-                CoachFlow brings everything together in one powerful platform.
-              </p>
-              <ul className="list-unstyled">
-                <li className="d-flex align-items-center mb-3">
-                  <i className="bi bi-check-circle-fill text-success me-3 fs-5"></i>
-                  <span>Custom exercise libraries with videos & instructions</span>
-                </li>
-                <li className="d-flex align-items-center mb-3">
-                  <i className="bi bi-check-circle-fill text-success me-3 fs-5"></i>
-                  <span>Automated client billing & payment processing</span>
-                </li>
-                <li className="d-flex align-items-center mb-3">
-                  <i className="bi bi-check-circle-fill text-success me-3 fs-5"></i>
-                  <span>Real-time progress tracking & analytics</span>
-                </li>
-                <li className="d-flex align-items-center mb-3">
-                  <i className="bi bi-check-circle-fill text-success me-3 fs-5"></i>
-                  <span>Built-in chat & progress photos</span>
-                </li>
-              </ul>
+              <div className="card h-100 rounded-4 p-5" style={{backgroundColor: 'var(--bg-card)', border: '2px solid var(--brand-primary)', boxShadow: 'var(--shadow-xl)'}}>
+                <div className="text-center mb-4">
+                  <div className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                       style={{width: '100px', height: '100px', backgroundColor: 'rgba(32, 214, 87, 0.2)', border: '3px solid var(--brand-primary)'}}>
+                    <i className="bi bi-person-arms-up" style={{fontSize: '3rem', color: 'var(--brand-primary)'}}></i>
+                  </div>
+                  <h3 className="fw-bold mb-3" style={{color: 'var(--brand-white)', fontSize: '2rem'}}>For Athletes & Trainees</h3>
+                  <p className="lead" style={{color: 'var(--text-secondary)'}}>Train smarter, not harder—with tools that actually work.</p>
+                </div>
+                <ul className="list-unstyled" style={{fontSize: '1.1rem'}}>
+                  <li className="d-flex align-items-start mb-3">
+                    <i className="bi bi-check-circle-fill me-3 mt-1" style={{color: 'var(--brand-primary)', fontSize: '1.5rem'}}></i>
+                    <div>
+                      <strong style={{color: 'var(--brand-white)'}}>Build Custom Workout Programs</strong>
+                      <p className="mb-0 mt-1" style={{color: 'var(--text-secondary)'}}>Design programs that fit YOUR schedule and goals</p>
+                    </div>
+                  </li>
+                  <li className="d-flex align-items-start mb-3">
+                    <i className="bi bi-check-circle-fill me-3 mt-1" style={{color: 'var(--brand-primary)', fontSize: '1.5rem'}}></i>
+                    <div>
+                      <strong style={{color: 'var(--brand-white)'}}>Log Every Rep, Every Meal</strong>
+                      <p className="mb-0 mt-1" style={{color: 'var(--text-secondary)'}}>Track workouts, nutrition, and progress photos effortlessly</p>
+                    </div>
+                  </li>
+                  <li className="d-flex align-items-start mb-3">
+                    <i className="bi bi-check-circle-fill me-3 mt-1" style={{color: 'var(--brand-primary)', fontSize: '1.5rem'}}></i>
+                    <div>
+                      <strong style={{color: 'var(--brand-white)'}}>Unlock Advanced Analytics</strong>
+                      <p className="mb-0 mt-1" style={{color: 'var(--text-secondary)'}}>See your strength gains, volume trends, and performance stats</p>
+                    </div>
+                  </li>
+                  <li className="d-flex align-items-start mb-3">
+                    <i className="bi bi-check-circle-fill me-3 mt-1" style={{color: 'var(--brand-primary)', fontSize: '1.5rem'}}></i>
+                    <div>
+                      <strong style={{color: 'var(--brand-white)'}}>Hire Expert Trainers</strong>
+                      <p className="mb-0 mt-1" style={{color: 'var(--text-secondary)'}}>Browse elite coaches, buy programs, or get 1-on-1 coaching</p>
+                    </div>
+                  </li>
+                </ul>
+                <div className="mt-4 text-center">
+                  <Link to="/signup" className="btn btn-lg rounded-pill px-5 py-3 fw-bold" 
+                        style={{backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none', width: '100%'}}>
+                    Start Training Free <i className="bi bi-arrow-right ms-2"></i>
+                  </Link>
+                </div>
+              </div>
             </div>
-            <div className="col-lg-6 text-center">
-              <div className="bg-white rounded-4 shadow-lg p-4">
-                <div className="row g-3">
-                  <div className="col-4">
-                    <div className="bg-primary bg-opacity-10 rounded-3 p-3">
-                      <i className="bi bi-people-fill text-primary fs-1"></i>
-                      <div className="mt-2">
-                        <small className="text-muted">Clients</small>
-                        <div className="fw-bold">247</div>
-                      </div>
-                    </div>
+
+            <div className="col-lg-6">
+              <div className="card h-100 rounded-4 p-5" style={{backgroundColor: 'var(--bg-card)', border: '2px solid var(--brand-light)', boxShadow: 'var(--shadow-xl)'}}>
+                <div className="text-center mb-4">
+                  <div className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                       style={{width: '100px', height: '100px', backgroundColor: 'rgba(227, 255, 236, 0.2)', border: '3px solid var(--brand-light)'}}>
+                    <i className="bi bi-award" style={{fontSize: '3rem', color: 'var(--brand-light)'}}></i>
                   </div>
-                  <div className="col-4">
-                    <div className="bg-success bg-opacity-10 rounded-3 p-3">
-                      <i className="bi bi-currency-dollar text-success fs-1"></i>
-                      <div className="mt-2">
-                        <small className="text-muted">Revenue</small>
-                        <div className="fw-bold">$12.5k</div>
-                      </div>
+                  <h3 className="fw-bold mb-3" style={{color: 'var(--brand-white)', fontSize: '2rem'}}>For Trainers & Coaches</h3>
+                  <p className="lead" style={{color: 'var(--text-secondary)'}}>Turn your expertise into income—effortlessly.</p>
+                </div>
+                <ul className="list-unstyled" style={{fontSize: '1.1rem'}}>
+                  <li className="d-flex align-items-start mb-3">
+                    <i className="bi bi-check-circle-fill me-3 mt-1" style={{color: 'var(--brand-light)', fontSize: '1.5rem'}}></i>
+                    <div>
+                      <strong style={{color: 'var(--brand-white)'}}>Sell Your Programs</strong>
+                      <p className="mb-0 mt-1" style={{color: 'var(--text-secondary)'}}>Create once, sell unlimited times—earn passive income</p>
                     </div>
-                  </div>
-                  <div className="col-4">
-                    <div className="bg-info bg-opacity-10 rounded-3 p-3">
-                      <i className="bi bi-graph-up text-info fs-1"></i>
-                      <div className="mt-2">
-                        <small className="text-muted">Progress</small>
-                        <div className="fw-bold">94%</div>
-                      </div>
+                  </li>
+                  <li className="d-flex align-items-start mb-3">
+                    <i className="bi bi-check-circle-fill me-3 mt-1" style={{color: 'var(--brand-light)', fontSize: '1.5rem'}}></i>
+                    <div>
+                      <strong style={{color: 'var(--brand-white)'}}>Manage Clients Seamlessly</strong>
+                      <p className="mb-0 mt-1" style={{color: 'var(--text-secondary)'}}>Track client progress, send messages, and adjust programs in real-time</p>
                     </div>
-                  </div>
+                  </li>
+                  <li className="d-flex align-items-start mb-3">
+                    <i className="bi bi-check-circle-fill me-3 mt-1" style={{color: 'var(--brand-light)', fontSize: '1.5rem'}}></i>
+                    <div>
+                      <strong style={{color: 'var(--brand-white)'}}>Get Paid Automatically</strong>
+                      <p className="mb-0 mt-1" style={{color: 'var(--text-secondary)'}}>Secure payments, subscription billing, and instant payouts</p>
+                    </div>
+                  </li>
+                  <li className="d-flex align-items-start mb-3">
+                    <i className="bi bi-check-circle-fill me-3 mt-1" style={{color: 'var(--brand-light)', fontSize: '1.5rem'}}></i>
+                    <div>
+                      <strong style={{color: 'var(--brand-white)'}}>Built-in Marketing</strong>
+                      <p className="mb-0 mt-1" style={{color: 'var(--text-secondary)'}}>Get discovered by thousands of motivated athletes</p>
+                    </div>
+                  </li>
+                </ul>
+                <div className="mt-4 text-center">
+                  <Link to="/signup" className="btn btn-lg rounded-pill px-5 py-3 fw-bold" 
+                        style={{backgroundColor: 'var(--brand-light)', color: 'var(--brand-dark)', border: 'none', width: '100%'}}>
+                    Start Coaching <i className="bi bi-arrow-right ms-2"></i>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -183,97 +264,109 @@ function MainPage() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-5">
+      {/* How It Works Section */}
+      <section className="py-5" style={{backgroundColor: 'var(--brand-dark)', paddingTop: '5rem', paddingBottom: '5rem'}}>
         <div className="container">
           <div className="text-center mb-5">
-            <h2 className="fw-bold mb-3">Everything You Need to Scale Your Business</h2>
-            <p className="lead text-muted">From onboarding to payment collection, we've got you covered.</p>
+            <h2 className="display-4 fw-bold mb-4" style={{color: 'var(--brand-white)'}}>
+              Getting Started Is <span style={{color: 'var(--brand-primary)'}}>Ridiculously Easy</span>
+            </h2>
+            <p className="lead fs-4" style={{color: 'var(--text-secondary)'}}>
+              From zero to hero in 3 simple steps
+            </p>
           </div>
-          <div className="row g-4">
-            {[
-              {
-                icon: "bi bi-collection-play",
-                title: "Custom Exercise Library",
-                description: "Build your signature workout programs with videos, instructions, and progression tracking.",
-                color: "primary"
-              },
-              {
-                icon: "bi bi-people",
-                title: "Client Management",
-                description: "Onboard clients seamlessly, track their goals, and manage all relationships in one place.",
-                color: "success"
-              },
-              {
-                icon: "bi bi-credit-card",
-                title: "Automated Payments",
-                description: "Set up subscription plans, process payments automatically, and focus on coaching, not chasing invoices.",
-                color: "warning"
-              },
-              {
-                icon: "bi bi-bar-chart-line",
-                title: "Progress Analytics",
-                description: "Track client adherence, view progress photos, and get insights to improve retention.",
-                color: "info"
-              },
-              {
-                icon: "bi bi-chat-dots",
-                title: "Built-in Messaging",
-                description: "Stay connected with clients through secure in-app chat with file sharing capabilities.",
-                color: "purple"
-              },
-              {
-                icon: "bi bi-phone",
-                title: "Mobile Optimized",
-                description: "Your clients can log workouts and upload progress photos from any device, anywhere.",
-                color: "danger"
-              }
-            ].map((feature, index) => (
-              <div className="col-md-6 col-lg-4" key={index}>
-                <div className="card h-100 border-0 shadow-sm rounded-4 p-4 hover-lift">
-                  <div className="card-body text-center">
-                    <div className={`bg-${feature.color} bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-4`} 
-                         style={{width: '80px', height: '80px'}}>
-                      <i className={`${feature.icon} fs-1 text-${feature.color}`}></i>
-                    </div>
-                    <h4 className="fw-semibold mb-3">{feature.title}</h4>
-                    <p className="text-muted">{feature.description}</p>
-                  </div>
+
+          <div className="row g-5 mt-4">
+            <div className="col-md-4">
+              <div className="text-center">
+                <div className="rounded-circle d-inline-flex align-items-center justify-content-center mb-4" 
+                     style={{width: '120px', height: '120px', backgroundColor: 'rgba(32, 214, 87, 0.15)', border: '3px solid var(--brand-primary)'}}>
+                  <span className="display-3 fw-bold" style={{color: 'var(--brand-primary)'}}>1</span>
                 </div>
+                <h3 className="fw-bold mb-3" style={{color: 'var(--brand-white)', fontSize: '1.8rem'}}>Sign Up Free</h3>
+                <p className="fs-5" style={{color: 'var(--text-secondary)'}}>
+                  Create your account in 30 seconds. No payment info required—ever.
+                </p>
               </div>
-            ))}
+            </div>
+            <div className="col-md-4">
+              <div className="text-center">
+                <div className="rounded-circle d-inline-flex align-items-center justify-content-center mb-4" 
+                     style={{width: '120px', height: '120px', backgroundColor: 'rgba(32, 214, 87, 0.15)', border: '3px solid var(--brand-primary)'}}>
+                  <span className="display-3 fw-bold" style={{color: 'var(--brand-primary)'}}>2</span>
+                </div>
+                <h3 className="fw-bold mb-3" style={{color: 'var(--brand-white)', fontSize: '1.8rem'}}>Create or Connect</h3>
+                <p className="fs-5" style={{color: 'var(--text-secondary)'}}>
+                  Build your own programs OR browse expert trainers to hire.
+                </p>
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="text-center">
+                <div className="rounded-circle d-inline-flex align-items-center justify-content-center mb-4" 
+                     style={{width: '120px', height: '120px', backgroundColor: 'rgba(32, 214, 87, 0.15)', border: '3px solid var(--brand-primary)'}}>
+                  <span className="display-3 fw-bold" style={{color: 'var(--brand-primary)'}}>3</span>
+                </div>
+                <h3 className="fw-bold mb-3" style={{color: 'var(--brand-white)', fontSize: '1.8rem'}}>Start Winning</h3>
+                <p className="fs-5" style={{color: 'var(--text-secondary)'}}>
+                  Log workouts, track progress, smash goals. All your data, forever free.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Social Proof Section */}
-      <section className="py-5 bg-dark text-white">
+      <section className="py-5" style={{background: 'linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%)', paddingTop: '5rem', paddingBottom: '5rem'}}>
         <div className="container text-center">
-          <h2 className="fw-bold mb-4 ">Join 500+ Successful Trainers</h2>
-          <p className="lead mb-5">Coaches worldwide are growing their businesses with CoachFlow</p>
+          <h2 className="display-4 fw-bold mb-5" style={{color: 'var(--brand-white)'}}>
+            Join Thousands Already <span style={{color: 'var(--brand-primary)'}}>Crushing Their Goals</span>
+          </h2>
           
-          <div className="row g-4 mb-5 text-white">
-            <div className="col-md-4">
-              <div className="display-4 fw-bold text-white mb-2">500+</div>
-              <div className="text-light">Active Trainers</div>
+          <div className="row g-4 mb-5">
+            <div className="col-md-3">
+              <div className="p-4 rounded-4" style={{backgroundColor: 'var(--bg-card)', border: '1px solid var(--brand-primary)'}}>
+                <div className="display-3 fw-bold mb-2" style={{color: 'var(--brand-primary)', textShadow: '0 0 20px rgba(32, 214, 87, 0.5)'}}>5,000+</div>
+                <div className="fs-5" style={{color: 'var(--text-secondary)'}}>Active Users</div>
+              </div>
             </div>
-            <div className="col-md-4">
-              <div className="display-4 fw-bold text-white mb-2">10k+</div>
-              <div className="text-light">Client Workouts Logged</div>
+            <div className="col-md-3">
+              <div className="p-4 rounded-4" style={{backgroundColor: 'var(--bg-card)', border: '1px solid var(--brand-primary)'}}>
+                <div className="display-3 fw-bold mb-2" style={{color: 'var(--brand-primary)', textShadow: '0 0 20px rgba(32, 214, 87, 0.5)'}}>50k+</div>
+                <div className="fs-5" style={{color: 'var(--text-secondary)'}}>Workouts Logged</div>
+              </div>
             </div>
-            <div className="col-md-4">
-              <div className="display-4 fw-bold text-white mb-2">$2M+</div>
-              <div className="text-light">Payments Processed</div>
+            <div className="col-md-3">
+              <div className="p-4 rounded-4" style={{backgroundColor: 'var(--bg-card)', border: '1px solid var(--brand-primary)'}}>
+                <div className="display-3 fw-bold mb-2" style={{color: 'var(--brand-primary)', textShadow: '0 0 20px rgba(32, 214, 87, 0.5)'}}>500+</div>
+                <div className="fs-5" style={{color: 'var(--text-secondary)'}}>Expert Trainers</div>
+              </div>
+            </div>
+            <div className="col-md-3">
+              <div className="p-4 rounded-4" style={{backgroundColor: 'var(--bg-card)', border: '1px solid var(--brand-primary)'}}>
+                <div className="display-3 fw-bold mb-2" style={{color: 'var(--brand-primary)', textShadow: '0 0 20px rgba(32, 214, 87, 0.5)'}}>$1M+</div>
+                <div className="fs-5" style={{color: 'var(--text-secondary)'}}>Paid to Trainers</div>
+              </div>
             </div>
           </div>
 
-          <div className="row justify-content-center">
+          <div className="row justify-content-center mt-5">
             <div className="col-lg-8">
-              <div className="card bg-white bg-opacity-10 border-0 rounded-4 p-4">
+              <div className="card rounded-4 p-5" style={{backgroundColor: 'var(--bg-card)', border: '2px solid var(--brand-primary)', boxShadow: 'var(--shadow-xl)'}}>
+                <div className="mb-4">
+                  <i className="bi bi-star-fill" style={{color: '#FFD700', fontSize: '2rem'}}></i>
+                  <i className="bi bi-star-fill mx-1" style={{color: '#FFD700', fontSize: '2rem'}}></i>
+                  <i className="bi bi-star-fill" style={{color: '#FFD700', fontSize: '2rem'}}></i>
+                  <i className="bi bi-star-fill mx-1" style={{color: '#FFD700', fontSize: '2rem'}}></i>
+                  <i className="bi bi-star-fill" style={{color: '#FFD700', fontSize: '2rem'}}></i>
+                </div>
                 <blockquote className="mb-0">
-                  <p className="text-white lead mb-3">"CoachFlow transformed my business. I went from 20 clients to 150+ in just 6 months. The automated billing alone saves me 10 hours per week!"</p>
-                  <footer className="blockquote-footer text-light">
-                    <strong>Sarah Mitchell</strong>, Certified Personal Trainer
+                  <p className="lead fs-3 mb-4" style={{color: 'var(--brand-white)', fontStyle: 'italic'}}>
+                    "I was paying $300/month for scattered apps. CoachFlow gave me everything FREE, then I found the perfect trainer for $50/month. Game changer!"
+                  </p>
+                  <footer className="blockquote-footer fs-5" style={{color: 'var(--text-secondary)'}}>
+                    <strong style={{color: 'var(--brand-light)'}}>Marcus Rivera</strong>, Competitive Powerlifter
                   </footer>
                 </blockquote>
               </div>
@@ -282,188 +375,34 @@ function MainPage() {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section className="py-5 bg-light">
-        <div className="container">
-          <div className="text-center mb-5">
-            <h2 className="fw-bold mb-4">Choose Your Perfect Plan</h2>
-            <p className="lead text-muted mb-5">Scale your coaching business with the right package for your needs</p>
-          </div>
-          
-          <div className="row g-4 justify-content-center">
-            {/* Starter Plan */}
-            <div className="col-lg-4 col-md-6">
-              <div className="card border-0 shadow-sm rounded-4 h-100">
-                <div className="card-body p-4 text-center">
-                  <div className="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
-                       style={{width: '60px', height: '60px'}}>
-                    <i className="bi bi-person text-info fs-3"></i>
-                  </div>
-                  <h3 className="fw-bold mb-3">Starter</h3>
-                  <div className="display-5 fw-bold text-dark mb-2">
-                    $29<small className="fs-6 text-muted">/month</small>
-                  </div>
-                  <p className="text-muted mb-4">Perfect for new trainers getting started</p>
-                  
-                  <div className="bg-info bg-opacity-10 rounded-pill py-2 px-3 mb-4">
-                    <strong className="text-info">Up to 15 trainees</strong>
-                  </div>
-                  
-                  <ul className="list-unstyled text-start mb-4">
-                    <li className="d-flex align-items-center mb-2">
-                      <i className="bi bi-check text-success me-2"></i>
-                      Custom workout programs
-                    </li>
-                    <li className="d-flex align-items-center mb-2">
-                      <i className="bi bi-check text-success me-2"></i>
-                      Progress tracking
-                    </li>
-                    <li className="d-flex align-items-center mb-2">
-                      <i className="bi bi-check text-success me-2"></i>
-                      Basic messaging
-                    </li>
-                    <li className="d-flex align-items-center mb-2">
-                      <i className="bi bi-check text-success me-2"></i>
-                      Payment processing
-                    </li>
-                    <li className="d-flex align-items-center mb-2">
-                      <i className="bi bi-check text-success me-2"></i>
-                      Email support
-                    </li>
-                  </ul>
-                  
-                  <Link
-                    to="/signup"
-                    className="btn btn-outline-info btn-lg rounded-pill px-4 py-3 fw-semibold w-100"
-                  >
-                    Start Free Trial
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            {/* Professional Plan */}
-            <div className="col-lg-4 col-md-6">
-              <div className="card border-primary shadow-lg rounded-4 h-100 position-relative">
-                <div className="badge bg-primary text-white px-3 py-2 rounded-pill position-absolute top-0 start-50 translate-middle">
-                  Most Popular
-                </div>
-                <div className="card-body p-4 text-center">
-                  <div className="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3 mt-3" 
-                       style={{width: '60px', height: '60px'}}>
-                    <i className="bi bi-people text-primary fs-3"></i>
-                  </div>
-                  <h3 className="fw-bold mb-3">Professional</h3>
-                  <div className="display-5 fw-bold text-primary mb-2">
-                    $59<small className="fs-6 text-muted">/month</small>
-                  </div>
-                  <p className="text-muted mb-4">Ideal for growing coaching businesses</p>
-                  
-                  <div className="bg-primary bg-opacity-10 rounded-pill py-2 px-3 mb-4">
-                    <strong className="text-primary">Up to 50 trainees</strong>
-                  </div>
-                  
-                  <ul className="list-unstyled text-start mb-4">
-                    <li className="d-flex align-items-center mb-2">
-                      <i className="bi bi-check text-success me-2"></i>
-                      Everything in Starter
-                    </li>
-                    <li className="d-flex align-items-center mb-2">
-                      <i className="bi bi-check text-success me-2"></i>
-                      Advanced analytics
-                    </li>
-                    <li className="d-flex align-items-center mb-2">
-                      <i className="bi bi-check text-success me-2"></i>
-                      Video messaging
-                    </li>
-                    <li className="d-flex align-items-center mb-2">
-                      <i className="bi bi-check text-success me-2"></i>
-                      Progress photos
-                    </li>
-                    <li className="d-flex align-items-center mb-2">
-                      <i className="bi bi-check text-success me-2"></i>
-                      Priority support
-                    </li>
-                    <li className="d-flex align-items-center mb-2">
-                      <i className="bi bi-check text-success me-2"></i>
-                      Custom branding
-                    </li>
-                  </ul>
-                  
-                  <Link
-                    to="/signup"
-                    className="btn btn-primary btn-lg rounded-pill px-4 py-3 fw-semibold w-100"
-                  >
-                    Start Free Trial
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            {/* Enterprise Plan */}
-            <div className="col-lg-4 col-md-6">
-              <div className="card border-0 shadow-sm rounded-4 h-100">
-                <div className="card-body p-4 text-center">
-                  <div className="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
-                       style={{width: '60px', height: '60px'}}>
-                    <i className="bi bi-building text-warning fs-3"></i>
-                  </div>
-                  <h3 className="fw-bold mb-3">Enterprise</h3>
-                  <div className="display-5 fw-bold text-dark mb-2">
-                    $99<small className="fs-6 text-muted">/month</small>
-                  </div>
-                  <p className="text-muted mb-4">For established coaching businesses</p>
-                  
-                  <div className="bg-warning bg-opacity-10 rounded-pill py-2 px-3 mb-4">
-                    <strong className="text-warning">Unlimited trainees</strong>
-                  </div>
-                  
-                  <ul className="list-unstyled text-start mb-4">
-                    <li className="d-flex align-items-center mb-2">
-                      <i className="bi bi-check text-success me-2"></i>
-                      Everything in Professional
-                    </li>
-                    <li className="d-flex align-items-center mb-2">
-                      <i className="bi bi-check text-success me-2"></i>
-                      Team collaboration tools
-                    </li>
-                    <li className="d-flex align-items-center mb-2">
-                      <i className="bi bi-check text-success me-2"></i>
-                      API access
-                    </li>
-                    <li className="d-flex align-items-center mb-2">
-                      <i className="bi bi-check text-success me-2"></i>
-                      Advanced reporting
-                    </li>
-                    <li className="d-flex align-items-center mb-2">
-                      <i className="bi bi-check text-success me-2"></i>
-                      Dedicated support
-                    </li>
-                    <li className="d-flex align-items-center mb-2">
-                      <i className="bi bi-check text-success me-2"></i>
-                      White-label options
-                    </li>
-                  </ul>
-                  
-                  <Link
-                    to="/signup"
-                    className="btn btn-outline-warning btn-lg rounded-pill px-4 py-3 fw-semibold w-100"
-                  >
-                    Contact Sales
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center mt-5">
-            <p className="text-muted mb-3">
-              <small>✨ All plans include 14-day free trial • No setup fees • Cancel anytime</small>
-            </p>
-            <p className="text-muted">
-              <small>Need a custom solution? <a href="#" className="text-primary text-decoration-none">Contact our sales team</a></small>
-            </p>
-          </div>
+      {/* Final CTA Section */}
+      <section className="py-5" style={{backgroundColor: 'var(--brand-dark)', paddingTop: '6rem', paddingBottom: '6rem'}}>
+        <div className="container text-center">
+          <h2 className="display-3 fw-bold mb-4" style={{color: 'var(--brand-white)'}}>
+            Ready to Transform Your Fitness?
+          </h2>
+          <p className="lead fs-3 mb-5" style={{color: 'var(--text-secondary)', maxWidth: '700px', margin: '0 auto'}}>
+            Stop wasting money on apps you don't need. Start for FREE today.
+          </p>
+          <Link
+            to="/signup"
+            className="btn btn-lg rounded-pill px-5 py-4 fw-bold"
+            style={{backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none', boxShadow: '0 12px 40px rgba(32, 214, 87, 0.5)', transition: 'all 0.3s', fontSize: '1.5rem'}}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-5px)';
+              e.currentTarget.style.boxShadow = '0 16px 50px rgba(32, 214, 87, 0.6)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 12px 40px rgba(32, 214, 87, 0.5)';
+            }}
+          >
+            <i className="bi bi-rocket-takeoff me-3"></i>
+            Join Free—No Credit Card Needed
+          </Link>
+          <p className="mt-4" style={{color: 'var(--brand-light)', fontSize: '1.2rem'}}>
+            <strong>Join 5,000+ athletes already training smarter</strong>
+          </p>
         </div>
       </section>
     </div>

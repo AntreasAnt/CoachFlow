@@ -167,23 +167,30 @@ function MailVerification() {
   return (
     <div
       className="container d-flex flex-column justify-content-center align-items-center"
-      style={{ height: "100vh" }}
+      style={{ minHeight: "100vh", backgroundColor: 'var(--brand-dark)', paddingTop: '2rem', paddingBottom: '2rem' }}
     >
       <form
-        className="p-4 border rounded shadow"
+        className="p-4 p-md-5 rounded-4"
         onSubmit={handleSubmit}
-        style={{ width: "100%", maxWidth: "500px", minWidth: "200px" }}
+        style={{ 
+          width: "100%", 
+          maxWidth: "550px", 
+          backgroundColor: 'rgba(15, 20, 15, 0.6)',
+          border: '1px solid rgba(32, 214, 87, 0.2)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+          backdropFilter: 'blur(10px)'
+        }}
       >
-        <h3 className="text-center mb-4">Email Verification</h3>
+        <h3 className="text-center mb-4" style={{ color: 'var(--brand-white)', fontWeight: '700', fontSize: '2rem' }}>Email Verification</h3>
 
-        <p className="text-muted">
+        <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>
           Please enter the verification code that was sent to{" "}
-          <b>{email}</b>
+          <span style={{ color: 'var(--brand-primary)', fontWeight: '600' }}>{email}</span>
         </p>
 
         {/* Code input field */}
         <div className="mb-3">
-          <label htmlFor="token" className="form-label">
+          <label htmlFor="token" className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
             Verification Code
           </label>
           <input
@@ -195,6 +202,13 @@ function MailVerification() {
             className={`form-control ${
               errors ? "is-invalid" : formData.token ? "is-valid" : ""
             }`}
+            style={{
+              backgroundColor: 'rgba(247, 255, 247, 0.05)',
+              border: '1px solid rgba(74, 74, 90, 0.3)',
+              color: 'var(--brand-white)',
+              padding: '0.75rem 1rem',
+              borderRadius: '12px'
+            }}
           />
           {/* Error message */}
           {errors && <div className="invalid-feedback">{errors}</div>}
@@ -209,7 +223,17 @@ function MailVerification() {
         <button
           type="submit"
           disabled={isVerifying}
-          className="btn btn-primary w-100 mt-1"
+          className="btn w-100 mt-2"
+          style={{
+            backgroundColor: 'var(--brand-primary)',
+            color: 'var(--brand-dark)',
+            border: 'none',
+            padding: '0.875rem',
+            borderRadius: '12px',
+            fontWeight: '600',
+            fontSize: '1.05rem',
+            boxShadow: '0 4px 16px rgba(32, 214, 87, 0.3)'
+          }}
         >
           {isVerifying ? (
             <>
@@ -223,10 +247,17 @@ function MailVerification() {
       </form>
       {/* Resend button */}
       <button
-        className={`btn btn-link mt-3 ${!canResend ? "text-muted" : ""}`}
+        type="button"
+        className="btn mt-3"
         disabled={!canResend || isResending}
         onClick={handleResendCode}
-        style={{ textDecoration: !canResend ? "none" : "underline" }}
+        style={{ 
+          textDecoration: !canResend ? 'none' : 'underline',
+          color: !canResend ? 'var(--text-secondary)' : 'var(--brand-primary)',
+          backgroundColor: 'transparent',
+          border: 'none',
+          fontWeight: '500'
+        }}
       >
         {/* Timer for resent availability*/}
         {!canResend ? (

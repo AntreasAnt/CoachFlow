@@ -1,54 +1,61 @@
-// LUXURY BLACK & WHITE THEME COLORS
-$pure-white:    #ffffff;
-$pure-black:    #000000;
-$rich-black:    #0a0a0a;
-$charcoal:      #1a1a1a;
-$graphite:      #2d2d2d;
-$pearl-white:   #fafafa;
-$platinum:      #f5f5f5;
-$silver:        #e8e8e8;
+// COACHFLOW BRAND COLORS
+$brand-dark:       #000502;    // Deep dark background
+$brand-primary:    #20D657;    // Vibrant green
+$brand-white:      #F7FFF7;    // Off-white
+$brand-secondary:  #4A4A5A;    // Dark gray
+$brand-light:      #E3FFEC;    // Light green
+
+// DERIVED BRAND COLORS
+$brand-primary-dark:   darken($brand-primary, 10%);
+$brand-primary-light:  lighten($brand-primary, 10%);
+$brand-dark-lighter:   lighten($brand-dark, 5%);
+$brand-dark-lightest:  lighten($brand-dark, 10%);
 
 // BOOTSTRAP COLOR OVERRIDES
-$white:    $pure-white;
-$black:    $pure-black;
+$white:    $brand-white;
+$black:    $brand-dark;
 
-$primary:   $pure-black;      // Pure black for primary actions
-$secondary: $pure-white;      // Pure white for contrast
-$success:   $rich-black;      // Rich black for success
-$info:      $charcoal;        // Charcoal for info
-$warning:   $graphite;        // Graphite for warnings
-$danger:    $pure-black;      // Black for errors (sophisticated)
-$light:     $pearl-white;     // Pearl white backgrounds
-$dark:      $rich-black;      // Rich black for text
+$primary:   $brand-primary;      // Vibrant green for primary actions
+$secondary: $brand-secondary;    // Dark gray for secondary elements
+$success:   $brand-primary;      // Green for success
+$info:      $brand-light;        // Light green for info
+$warning:   #FFB347;             // Warm orange for warnings
+$danger:    #FF6B6B;             // Soft red for errors
+$light:     $brand-light;        // Light green backgrounds
+$dark:      $brand-dark;         // Deep dark for text/backgrounds
 
-// LUXURY GRAYS
-$gray-100: #fafafa;
-$gray-200: #f5f5f5;
-$gray-300: #e8e8e8;
-$gray-400: #d1d1d1;
-$gray-500: #b0b0b0;
-$gray-600: #888888;
-$gray-700: #666666;
-$gray-800: #4d4d4d;
-$gray-900: #1a1a1a;
+// BRAND GRAYS (adjusted to work with dark theme)
+$gray-100: $brand-white;
+$gray-200: #E8F5EA;
+$gray-300: #D1EBD6;
+$gray-400: #A5C9AD;
+$gray-500: #7BA785;
+$gray-600: $brand-secondary;
+$gray-700: lighten($brand-secondary, 10%);
+$gray-800: #141A14;
+$gray-900: #0A0F0A;
 
 // PREMIUM TYPOGRAPHY
 $font-family-sans-serif: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 $headings-font-family:   'Montserrat', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
 $headings-font-weight:   700;
-$headings-color:         $rich-black;
+$headings-color:         $brand-white;
+
+// BODY STYLES
+$body-bg:                $brand-dark;
+$body-color:             $brand-white;
 
 // LUXURY SPACING & SIZING
 $spacer: 1rem;
-$border-radius: 8px;          // Smooth, rounded edges
-$border-radius-sm: 6px;
-$border-radius-lg: 12px;
-$border-width: 1px;           // Softer borders
+$border-radius: 12px;         // Smooth, rounded edges
+$border-radius-sm: 8px;
+$border-radius-lg: 16px;
+$border-width: 1px;
 
-// PREMIUM SHADOWS
-$box-shadow-sm:    0 1px 3px rgba(0, 0, 0, 0.08);
-$box-shadow:       0 2px 8px rgba(0, 0, 0, 0.1);
-$box-shadow-lg:    0 4px 12px rgba(0, 0, 0, 0.15);
+// PREMIUM SHADOWS (adjusted for dark theme with green glow)
+$box-shadow-sm:    0 2px 4px rgba(32, 214, 87, 0.1);
+$box-shadow:       0 4px 12px rgba(32, 214, 87, 0.15);
+$box-shadow-lg:    0 8px 24px rgba(32, 214, 87, 0.2);
 
 // SMOOTH COMPONENT OVERRIDES
 $navbar-padding-y: 1rem;
@@ -64,10 +71,16 @@ $btn-border-radius: 8px;
 $input-padding-y: 0.875rem;
 $input-padding-x: 1.25rem;
 $input-border-radius: 8px;
-$input-focus-border-color: $pure-black;
+$input-bg: lighten($brand-dark, 8%);
+$input-color: $brand-white;
+$input-border-color: $brand-secondary;
+$input-focus-border-color: $brand-primary;
+$input-focus-box-shadow: 0 0 0 0.2rem rgba(32, 214, 87, 0.25);
 
-$card-border-width: 0;
-$card-border-radius: 8px;
+$card-bg: lighten($brand-dark, 3%);
+$card-border-width: 1px;
+$card-border-color: rgba($brand-secondary, 0.3);
+$card-border-radius: 12px;
 $card-box-shadow: $box-shadow-lg;
 
 // IMPORT BOOTSTRAP LAST

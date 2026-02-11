@@ -183,10 +183,10 @@ function ChangePasswordAfterReset() {
       // Show loading spinner while validating token
       <div
         className="d-flex flex-column justify-content-center align-items-center"
-        style={{ height: "100vh" }}
+        style={{ minHeight: "100vh", backgroundColor: 'var(--brand-dark)' }}
       >
         {successMessage && (
-          <div className="alert alert-danger text-center mb-3">
+          <div className="alert alert-danger text-center mb-3" style={{ maxWidth: '500px' }}>
             {successMessage}
           </div>
         )}
@@ -198,17 +198,24 @@ function ChangePasswordAfterReset() {
       <>
         <div
           className="container d-flex flex-column justify-content-center align-items-center"
-          style={{ height: "75vh" }}
+          style={{ minHeight: "100vh", backgroundColor: 'var(--brand-dark)', paddingTop: '2rem', paddingBottom: '2rem' }}
         >
           <form
-            className="p-4 border rounded shadow"
+            className="p-4 p-md-5 rounded-4"
             onSubmit={handleSubmit}
-            style={{ width: "100%", maxWidth: "500px", minWidth: "200px" }}
+            style={{ 
+              width: "100%", 
+              maxWidth: "550px", 
+              backgroundColor: 'rgba(15, 20, 15, 0.6)',
+              border: '1px solid rgba(32, 214, 87, 0.2)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+              backdropFilter: 'blur(10px)'
+            }}
           >
-            <h3 className="text-center mb-4">New Password</h3>
+            <h3 className="text-center mb-4" style={{ color: 'var(--brand-white)', fontWeight: '700', fontSize: '2rem' }}>New Password</h3>
             {/* Password input */}
             <div className="mb-3">
-              <label htmlFor="password" className="form-label">
+              <label htmlFor="password" className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
                 Password
               </label>
               <div className="position-relative">
@@ -225,6 +232,14 @@ function ChangePasswordAfterReset() {
                       ? "is-valid"
                       : ""
                   }`}
+                  style={{
+                    backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                    border: '1px solid rgba(74, 74, 90, 0.3)',
+                    color: 'var(--brand-white)',
+                    padding: '0.75rem 1rem',
+                    paddingRight: '3rem',
+                    borderRadius: '12px'
+                  }}
                 />
                 <button
                   type="button"
@@ -245,7 +260,7 @@ function ChangePasswordAfterReset() {
             </div>
             {/* Confirm password input */}
             <div className="mb-3">
-              <label htmlFor="confpassword" className="form-label">
+              <label htmlFor="confpassword" className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
                 Confirm Password
               </label>
               <div className="position-relative">
@@ -262,6 +277,14 @@ function ChangePasswordAfterReset() {
                       ? "is-valid"
                       : ""
                   }`}
+                  style={{
+                    backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                    border: '1px solid rgba(74, 74, 90, 0.3)',
+                    color: 'var(--brand-white)',
+                    padding: '0.75rem 1rem',
+                    paddingRight: '3rem',
+                    borderRadius: '12px'
+                  }}
                 />
                 <button
                   type="button"
@@ -296,7 +319,17 @@ function ChangePasswordAfterReset() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="btn btn-primary w-100 mt-1"
+              className="btn w-100 mt-2"
+              style={{
+                backgroundColor: 'var(--brand-primary)',
+                color: 'var(--brand-dark)',
+                border: 'none',
+                padding: '0.875rem',
+                borderRadius: '12px',
+                fontWeight: '600',
+                fontSize: '1.05rem',
+                boxShadow: '0 4px 16px rgba(32, 214, 87, 0.3)'
+              }}
             >
               {isSubmitting ? (
                 <>

@@ -822,12 +822,18 @@ const MyWorkouts = ({ embedded = false }) => {
   const renderPlansView = () => (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="mb-0">My Workout Plans</h4>
+        <h4 className="mb-0" style={{ color: 'var(--brand-white)', fontWeight: '700' }}>My Workout Plans</h4>
         <button 
-          className="btn btn-primary"
+          className="btn rounded-pill px-4"
           onClick={() => {
             resetPlanForm();
             setActiveView('create');
+          }}
+          style={{
+            backgroundColor: 'var(--brand-primary)',
+            color: 'var(--brand-dark)',
+            border: 'none',
+            fontWeight: '600'
           }}
         >
           <i className="bi bi-plus-circle me-2"></i>
@@ -837,82 +843,90 @@ const MyWorkouts = ({ embedded = false }) => {
 
       {/* Trainer Assigned Programs */}
       {trainerAssignedPrograms && trainerAssignedPrograms.length > 0 && (
-        <div className="card border-0 shadow-sm mb-4">
-          <div className="card-header bg-white border-bottom">
+        <div 
+          className="card border-0 rounded-4 mb-4"
+          style={{
+            backgroundColor: 'rgba(15, 20, 15, 0.6)',
+            border: '1px solid rgba(32, 214, 87, 0.3)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
+          }}
+        >
+          <div className="card-header border-0" style={{ backgroundColor: 'transparent', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', padding: '1.25rem' }}>
             <div className="d-flex justify-content-between align-items-center">
               <div>
-                <h5 className="mb-1">
-                  <i className="bi bi-person-check text-primary me-2"></i>
+                <h5 className="mb-1" style={{ color: 'var(--brand-white)', fontWeight: '700' }}>
+                  <i className="bi bi-person-check me-2" style={{ color: 'var(--brand-primary)' }}></i>
                   Your Trainer's Workout Programs
                 </h5>
-                <small className="text-muted">Follow these programs for best results • Continue using your own plans below</small>
+                <small style={{ color: 'var(--text-secondary)' }}>Follow these programs for best results • Continue using your own plans below</small>
               </div>
-              <span className="badge bg-primary">Priority Programs</span>
+              <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)', padding: '0.5rem 1rem' }}>Priority Programs</span>
             </div>
           </div>
           <div className="card-body">
             {assignedProgramsLoading ? (
               <div className="text-center py-4">
-                <div className="spinner-border text-primary" role="status">
+                <div className="spinner-border" role="status" style={{ color: 'var(--brand-primary)' }}>
                   <span className="visually-hidden">Loading...</span>
                 </div>
-                <p className="text-muted mt-2">Loading assigned programs...</p>
+                <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>Loading assigned programs...</p>
               </div>
             ) : (
               <div className="row">
                 {trainerAssignedPrograms.map(program => (
                   <div key={`assigned-${program.assignment_id}`} className="col-lg-6 mb-3">
-                    <div className="card border-primary h-100" style={{ borderWidth: '2px', borderStyle: 'solid' }}>
-                      <div className="card-body">
+                    <div 
+                      className="card rounded-4 h-100" 
+                      style={{ 
+                        backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                        border: '2px solid var(--brand-primary)',
+                        boxShadow: '0 4px 16px rgba(32, 214, 87, 0.2)'
+                      }}
+                    >
+                      <div className="card-body p-4">
                         <div className="d-flex justify-content-between align-items-start mb-3">
-                          <h5 className="card-title">{program.title}</h5>
-                          <span className="badge bg-primary">
+                          <h5 className="card-title" style={{ color: 'var(--brand-white)', fontWeight: '600' }}>{program.title}</h5>
+                          <span className="badge rounded-pill" style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)' }}>
                             <i className="bi bi-star me-1"></i>
                             Trainer Assigned
                           </span>
                         </div>
                         
                         <div className="mb-2">
-                          <span className="badge bg-light text-dark me-1">{program.difficulty_level}</span>
-                          <span className="badge bg-light text-dark me-1">{program.duration_weeks}w</span>
-                          <span className="badge bg-light text-dark">{program.category}</span>
+                          <span className="badge rounded-pill me-1" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)' }}>{program.difficulty_level}</span>
+                          <span className="badge rounded-pill me-1" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)' }}>{program.duration_weeks}w</span>
+                          <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)' }}>{program.category}</span>
                         </div>
 
                         <div className="mb-3">
-                          <small className="text-muted">Description:</small>
-                          <p className="small text-muted mb-0 mt-1">{program.description || 'No description available'}</p>
+                          <small style={{ color: 'var(--text-secondary)' }}>Description:</small>
+                          <p className="small mb-0 mt-1" style={{ color: 'var(--text-primary)' }}>{program.description || 'No description available'}</p>
                         </div>
 
                         <div className="mb-3">
-                          <small className="text-muted">
-                            Assigned by: <strong>{program.trainer_name}</strong> on {program.assigned_at_formatted}
+                          <small style={{ color: 'var(--text-secondary)' }}>
+                            Assigned by: <strong style={{ color: 'var(--brand-primary)' }}>{program.trainer_name}</strong> on {program.assigned_at_formatted}
                           </small>
                         </div>
 
                         <div className="d-flex gap-2">
                           <button 
-                            className="btn btn-primary flex-fill"
+                            className="btn rounded-pill flex-fill"
                             onClick={() => navigate(`/trainee-dashboard/program/${program.id}`, { 
                               state: { 
                                 programData: program,
                                 fromAssigned: true
                               } 
                             })}
+                            style={{
+                              backgroundColor: 'var(--brand-primary)',
+                              color: 'var(--brand-dark)',
+                              border: 'none',
+                              fontWeight: '600'
+                            }}
                           >
                             <i className="bi bi-play-fill me-1"></i>
                             Start Program
-                          </button>
-                          <button 
-                            className="btn btn-outline-secondary"
-                            onClick={() => navigate(`/trainee/program-details/${program.id}`, { 
-                              state: { 
-                                programData: program,
-                                fromAssigned: true
-                              } 
-                            })}
-                          >
-                            <i className="bi bi-info-circle me-1"></i>
-                            Details
                           </button>
                         </div>
                       </div>
@@ -930,13 +944,13 @@ const MyWorkouts = ({ embedded = false }) => {
         {/* Section Header for Other Programs */}
         {(purchasedPrograms.length > 0 || workoutPlans.length > 0 || premadeWorkoutPlans.length > 0) && 
          trainerAssignedPrograms.length > 0 && (
-          <div className="col-12 mb-3">
+          <div className="col-12 mb-4">
             <div className="d-flex align-items-center">
-              <hr className="flex-grow-1" />
-              <h6 className="mx-3 text-muted mb-0">
+              <hr style={{ flexGrow: 1, borderColor: 'rgba(32, 214, 87, 0.2)' }} />
+              <h6 className="mx-3 mb-0" style={{ color: 'var(--text-secondary)' }}>
                 {trainerAssignedPrograms.length > 0 ? 'Your Other Workout Plans' : 'Your Workout Plans'}
               </h6>
-              <hr className="flex-grow-1" />
+              <hr style={{ flexGrow: 1, borderColor: 'rgba(32, 214, 87, 0.2)' }} />
             </div>
           </div>
         )}
@@ -944,44 +958,73 @@ const MyWorkouts = ({ embedded = false }) => {
         {/* Purchased Programs */}
         {purchasedPrograms.map(program => (
           <div key={`purchased-${program.program_id}`} className="col-lg-6 mb-3">
-            <div className="card border-0 shadow-sm h-100 border-success" style={{ borderWidth: '2px', borderStyle: 'solid' }}>
-              <div className="card-body">
+            <div 
+              className="card border-0 rounded-4 h-100" 
+              style={{ 
+                backgroundColor: 'rgba(15, 20, 15, 0.6)',
+                border: '1px solid rgba(32, 214, 87, 0.3)',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--brand-primary)';
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(32, 214, 87, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(32, 214, 87, 0.3)';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.3)';
+              }}
+            >
+              <div className="card-body p-4">
                 <div className="d-flex justify-content-between align-items-start mb-3">
-                  <h5 className="card-title">{program.title}</h5>
-                  <span className="badge bg-success">
+                  <h5 className="card-title" style={{ color: 'var(--brand-white)', fontWeight: '600' }}>{program.title}</h5>
+                  <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)', padding: '0.5rem 1rem' }}>
                     <i className="bi bi-bag-check me-1"></i>
                     Purchased
                   </span>
                 </div>
                 
                 <div className="mb-2">
-                  <span className="badge bg-light text-dark me-1">{program.difficulty_level}</span>
-                  <span className="badge bg-light text-dark me-1">{program.duration_weeks}w</span>
-                  <span className="badge bg-light text-dark">{program.category}</span>
+                  <span className="badge rounded-pill me-1" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)' }}>{program.difficulty_level}</span>
+                  <span className="badge rounded-pill me-1" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)' }}>{program.duration_weeks}w</span>
+                  <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)' }}>{program.category}</span>
                 </div>
 
                 <div className="mb-3">
-                  <small className="text-muted">Description:</small>
-                  <p className="small text-muted mb-0 mt-1">{program.description || 'No description available'}</p>
+                  <small style={{ color: 'var(--text-secondary)' }}>Description:</small>
+                  <p className="small mb-0 mt-1" style={{ color: 'var(--text-primary)' }}>{program.description || 'No description available'}</p>
                 </div>
 
                 <div className="mb-3">
-                  <small className="text-muted">By: {program.trainer_name}</small>
+                  <small style={{ color: 'var(--text-secondary)' }}>By: <strong style={{ color: 'var(--brand-primary)' }}>{program.trainer_name}</strong></small>
                 </div>
 
                 <div className="d-flex gap-2">
                   <button 
-                    className="btn btn-success flex-fill"
+                    className="btn rounded-pill flex-fill"
                     onClick={() => navigate(`/trainee-dashboard/program/${program.program_id}`)}
+                    style={{
+                      backgroundColor: 'var(--brand-primary)',
+                      color: 'var(--brand-dark)',
+                      border: 'none',
+                      fontWeight: '600'
+                    }}
                   >
                     <i className="bi bi-play-circle me-2"></i>
                     View Program
                   </button>
                   <button 
-                    className="btn btn-outline-danger"
+                    className="btn rounded-pill"
                     onClick={() => {
                       setPlanToDelete({ id: program.program_id, name: program.title, isPurchased: true });
                       setShowDeleteModal(true);
+                    }}
+                    style={{
+                      backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                      color: '#dc3545',
+                      border: '1px solid rgba(220, 53, 69, 0.3)'
                     }}
                   >
                     <i className="bi bi-eye-slash"></i>
@@ -995,47 +1038,76 @@ const MyWorkouts = ({ embedded = false }) => {
         {/* User's Own Workout Plans */}
         {workoutPlans.map(plan => (
           <div key={plan.id} className="col-lg-6 mb-3">
-            <div className="card border-0 shadow-sm h-100">
-              <div className="card-body">
+            <div 
+              className="card border-0 rounded-4 h-100"
+              style={{ 
+                backgroundColor: 'rgba(15, 20, 15, 0.6)',
+                border: '1px solid rgba(32, 214, 87, 0.3)',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--brand-primary)';
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(32, 214, 87, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(32, 214, 87, 0.3)';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.3)';
+              }}
+            >
+              <div className="card-body p-4">
                 <div className="d-flex justify-content-between align-items-start mb-3">
-                  <h5 className="card-title">{plan.name}</h5>
+                  <h5 className="card-title" style={{ color: 'var(--brand-white)', fontWeight: '600' }}>{plan.name}</h5>
                   {plan.is_program_package == 1 ? (
-                    <span className="badge bg-primary">{plan.session_count || 0} sessions</span>
+                    <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)', padding: '0.5rem 1rem' }}>{plan.session_count || 0} sessions</span>
                   ) : (
-                    <span className="badge bg-light text-dark">{plan.exercises?.length || 0} exercises</span>
+                    <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)', padding: '0.5rem 1rem' }}>{plan.exercises?.length || 0} exercises</span>
                   )}
                 </div>
                 
                 {plan.is_program_package == 1 && (
                   <div className="mb-2">
-                    <span className="badge bg-light text-dark me-1">{plan.difficulty_level}</span>
-                    <span className="badge bg-light text-dark me-1">{plan.duration_weeks}w</span>
-                    <span className="badge bg-light text-dark">{plan.category}</span>
+                    <span className="badge rounded-pill me-1" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)' }}>{plan.difficulty_level}</span>
+                    <span className="badge rounded-pill me-1" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)' }}>{plan.duration_weeks}w</span>
+                    <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)' }}>{plan.category}</span>
                   </div>
                 )}
                 
                 <div className="mb-3">
-                  <small className="text-muted">Description:</small>
-                  <p className="small text-muted mb-0 mt-1">{plan.description || 'No description available'}</p>
+                  <small style={{ color: 'var(--text-secondary)' }}>Description:</small>
+                  <p className="small mb-0 mt-1" style={{ color: 'var(--text-primary)' }}>{plan.description || 'No description available'}</p>
                 </div>
 
                 <div className="mb-3">
-                  <small className="text-muted">Last performed: {plan.last_performed || 'Never'}</small>
+                  <small style={{ color: 'var(--text-secondary)' }}>Last performed: {plan.last_performed || 'Never'}</small>
                 </div>
 
                 <div className="d-flex gap-2">
                   {plan.is_program_package == 1 ? (
                     <>
                       <button 
-                        className="btn btn-primary flex-fill"
+                        className="btn rounded-pill flex-fill"
                         onClick={() => navigate(`/trainee-dashboard/user-program/${plan.id}`)}
+                        style={{
+                          backgroundColor: 'var(--brand-primary)',
+                          color: 'var(--brand-dark)',
+                          border: 'none',
+                          fontWeight: '600'
+                        }}
                       >
                         <i className="bi bi-eye me-2"></i>
                         View Program
                       </button>
                       <button 
-                        className="btn btn-outline-primary"
+                        className="btn rounded-pill"
                         onClick={() => navigate(`/trainee-dashboard/user-program/${plan.id}/edit`)}
+                        style={{
+                          backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                          color: 'var(--brand-primary)',
+                          border: '1px solid rgba(32, 214, 87, 0.3)'
+                        }}
                       >
                         <i className="bi bi-pencil"></i>
                       </button>
@@ -1043,14 +1115,20 @@ const MyWorkouts = ({ embedded = false }) => {
                   ) : (
                     <>
                       <button 
-                        className="btn btn-primary flex-fill"
+                        className="btn rounded-pill flex-fill"
                         onClick={() => startWorkout(plan)}
+                        style={{
+                          backgroundColor: 'var(--brand-primary)',
+                          color: 'var(--brand-dark)',
+                          border: 'none',
+                          fontWeight: '600'
+                        }}
                       >
                         <i className="bi bi-play-circle me-2"></i>
                         Start Workout
                       </button>
                       <button 
-                        className="btn btn-outline-primary"
+                        className="btn rounded-pill"
                         onClick={() => {
                           // Pre-fill the create form with existing plan data
                           setNewPlan({
@@ -1062,16 +1140,26 @@ const MyWorkouts = ({ embedded = false }) => {
                           setEditingPlanId(plan.id);
                           setActiveView('create');
                         }}
+                        style={{
+                          backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                          color: 'var(--brand-primary)',
+                          border: '1px solid rgba(32, 214, 87, 0.3)'
+                        }}
                       >
                         <i className="bi bi-pencil"></i>
                       </button>
                     </>
                   )}
                   <button 
-                    className="btn btn-outline-danger"
+                    className="btn rounded-pill"
                     onClick={() => {
                       setPlanToDelete(plan);
                       setShowDeleteModal(true);
+                    }}
+                    style={{
+                      backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                      color: '#dc3545',
+                      border: '1px solid rgba(220, 53, 69, 0.3)'
                     }}
                   >
                     <i className="bi bi-trash"></i>
@@ -1086,11 +1174,20 @@ const MyWorkouts = ({ embedded = false }) => {
       {/* Premium Workout Plans Section */}
       {premadeWorkoutPlans.length > 0 && (
         <div className="mt-5">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h5 className="mb-0">🏆 Premium Workout Programs</h5>
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <h5 className="mb-0" style={{ color: 'var(--brand-white)', fontWeight: '700' }}>
+              <i className="bi bi-trophy-fill me-2" style={{ color: 'var(--brand-primary)' }}></i>
+              Premium Workout Programs
+            </h5>
             <button 
-              className="btn btn-outline-primary btn-sm"
+              className="btn rounded-pill px-4"
               onClick={() => navigate('/trainee-dashboard/marketplace')}
+              style={{
+                backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                color: 'var(--brand-primary)',
+                border: '1px solid rgba(32, 214, 87, 0.3)',
+                fontWeight: '600'
+              }}
             >
               <i className="bi bi-shop me-2"></i>
               View All Programs
@@ -1099,23 +1196,47 @@ const MyWorkouts = ({ embedded = false }) => {
           <div className="row">
             {premadeWorkoutPlans.slice(0, 3).map((plan, index) => (
               <div key={index} className="col-lg-4 mb-3">
-                <div className="card border-0 shadow-sm h-100">
-                  <div className="card-body">
+                <div 
+                  className="card border-0 rounded-4 h-100"
+                  style={{ 
+                    backgroundColor: 'rgba(15, 20, 15, 0.6)',
+                    border: '1px solid rgba(32, 214, 87, 0.3)',
+                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--brand-primary)';
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(32, 214, 87, 0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(32, 214, 87, 0.3)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.3)';
+                  }}
+                >
+                  <div className="card-body p-4">
                     <div className="mb-3">
-                      <h6 className="card-title mb-2">{plan.title}</h6>
-                      <p className="text-muted small mb-0">{plan.description?.substring(0, 100)}...</p>
+                      <h6 className="card-title mb-2" style={{ color: 'var(--brand-white)', fontWeight: '600' }}>{plan.title}</h6>
+                      <p className="small mb-0" style={{ color: 'var(--text-secondary)' }}>{plan.description?.substring(0, 100)}...</p>
                     </div>
                     <div className="mb-3">
-                      <span className="badge bg-light text-dark me-1">{plan.difficulty_level}</span>
-                      <span className="badge bg-light text-dark">{plan.duration_weeks} weeks</span>
+                      <span className="badge rounded-pill me-1" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)' }}>{plan.difficulty_level}</span>
+                      <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)' }}>{plan.duration_weeks} weeks</span>
                     </div>
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                      <span className="badge bg-primary">{plan.category}</span>
-                      <span className="fw-bold text-success">${plan.price}</span>
+                      <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)', padding: '0.5rem 1rem' }}>{plan.category}</span>
+                      <span className="fw-bold" style={{ color: 'var(--brand-primary)', fontSize: '1.25rem' }}>${plan.price}</span>
                     </div>
                     <button 
-                      className="btn btn-outline-primary w-100"
+                      className="btn rounded-pill w-100"
                       onClick={() => navigate(`/trainee-dashboard/marketplace?programId=${plan.id}`)}
+                      style={{
+                        backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                        color: 'var(--brand-primary)',
+                        border: '1px solid rgba(32, 214, 87, 0.3)',
+                        fontWeight: '600'
+                      }}
                     >
                       <i className="bi bi-eye me-2"></i>
                       View Details
@@ -1130,8 +1251,11 @@ const MyWorkouts = ({ embedded = false }) => {
 
       {/* Workout History with Filters */}
       <div className="mt-5">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h5 className="mb-0">Recent Workouts</h5>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h5 className="mb-0" style={{ color: 'var(--brand-white)', fontWeight: '700' }}>
+            <i className="bi bi-clock-history me-2" style={{ color: 'var(--brand-primary)' }}></i>
+            Recent Workouts
+          </h5>
           <div className="d-flex gap-2">
             <input 
               type="date" 
@@ -1139,6 +1263,11 @@ const MyWorkouts = ({ embedded = false }) => {
               value={historyFilter.date}
               onChange={(e) => setHistoryFilter(prev => ({ ...prev, date: e.target.value }))}
               placeholder="Filter by date"
+              style={{
+                backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                border: '1px solid rgba(32, 214, 87, 0.2)',
+                color: 'var(--brand-white)'
+              }}
             />
             <input 
               type="number" 
@@ -1148,11 +1277,21 @@ const MyWorkouts = ({ embedded = false }) => {
               placeholder="Year"
               min="2020"
               max="2030"
+              style={{
+                backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                border: '1px solid rgba(32, 214, 87, 0.2)',
+                color: 'var(--brand-white)'
+              }}
             />
             <select 
               className="form-select form-select-sm"
               value={historyFilter.workoutPlan}
               onChange={(e) => setHistoryFilter(prev => ({ ...prev, workoutPlan: e.target.value }))}
+              style={{
+                backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                border: '1px solid rgba(32, 214, 87, 0.2)',
+                color: 'var(--brand-white)'
+              }}
             >
               <option value="">All Plans</option>
               {workoutPlans.map(plan => (
@@ -1160,32 +1299,53 @@ const MyWorkouts = ({ embedded = false }) => {
               ))}
             </select>
             <button 
-              className="btn btn-outline-secondary btn-sm"
+              className="btn btn-sm rounded-pill"
               onClick={() => setHistoryFilter({ date: '', year: '', workoutPlan: '', sortBy: 'date' })}
+              style={{
+                backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                color: 'var(--brand-primary)',
+                border: '1px solid rgba(32, 214, 87, 0.3)'
+              }}
             >
               Clear
             </button>
           </div>
         </div>
         
-        <div className="card border-0 shadow-sm">
-          <div className="card-body">
+        <div 
+          className="card border-0 rounded-4"
+          style={{ 
+            backgroundColor: 'rgba(15, 20, 15, 0.6)',
+            border: '1px solid rgba(32, 214, 87, 0.3)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
+          }}
+        >
+          <div className="card-body p-4">
             {filteredWorkoutHistory.length === 0 ? (
               <div className="text-center py-4">
-                <i className="bi bi-clock-history text-muted fs-1"></i>
-                <p className="text-muted mt-2">No workout history found.</p>
+                <i className="bi bi-clock-history fs-1" style={{ color: 'var(--text-secondary)' }}></i>
+                <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>No workout history found.</p>
               </div>
             ) : (
               filteredWorkoutHistory.map(workout => (
-                <div key={workout.id} className="border-bottom py-3">
+                <div 
+                  key={workout.id} 
+                  className="py-3"
+                  style={{ borderBottom: '1px solid rgba(32, 214, 87, 0.1)' }}
+                >
                   <div className="d-flex justify-content-between align-items-center">
                     <div>
-                      <h6 className="mb-1">{workout.plan_name}</h6>
-                      <small className="text-muted">{workout.session_date} • {workout.duration_minutes} minutes</small>
+                      <h6 className="mb-1" style={{ color: 'var(--brand-white)', fontWeight: '600' }}>{workout.plan_name}</h6>
+                      <small style={{ color: 'var(--text-secondary)' }}>{workout.session_date} • {workout.duration_minutes} minutes</small>
                     </div>
                     <button 
-                      className="btn btn-outline-primary btn-sm"
+                      className="btn btn-sm rounded-pill"
                       onClick={() => viewWorkoutDetails(workout.id)}
+                      style={{
+                        backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                        color: 'var(--brand-primary)',
+                        border: '1px solid rgba(32, 214, 87, 0.3)'
+                      }}
                     >
                       View Details
                     </button>
@@ -1195,17 +1355,29 @@ const MyWorkouts = ({ embedded = false }) => {
             )}
             <div className="d-flex justify-content-between align-items-center pt-3">
               <button
-                className="btn btn-outline-secondary btn-sm"
+                className="btn btn-sm rounded-pill"
                 onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
                 disabled={historyLoading || historyPage === 1}
+                style={{
+                  backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                  color: 'var(--brand-primary)',
+                  border: '1px solid rgba(32, 214, 87, 0.3)',
+                  opacity: (historyLoading || historyPage === 1) ? 0.5 : 1
+                }}
               >
                 <i className="bi bi-chevron-left"></i> Previous
               </button>
-              <div className="small text-muted">Page {historyPage}</div>
+              <div className="small" style={{ color: 'var(--text-secondary)' }}>Page {historyPage}</div>
               <button
-                className="btn btn-outline-secondary btn-sm"
+                className="btn btn-sm rounded-pill"
                 onClick={() => setHistoryPage(p => p + 1)}
                 disabled={historyLoading || !historyHasMore}
+                style={{
+                  backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                  color: 'var(--brand-primary)',
+                  border: '1px solid rgba(32, 214, 87, 0.3)',
+                  opacity: (historyLoading || !historyHasMore) ? 0.5 : 1
+                }}
               >
                 Next <i className="bi bi-chevron-right"></i>
               </button>
@@ -2455,13 +2627,17 @@ const MyWorkouts = ({ embedded = false }) => {
   );
 
   const content = (
-      <div className="container-fluid px-4 py-3" style={{ paddingBottom: embedded ? '0' : '100px' }}>
+      <div className="container-fluid px-3 px-md-4 py-3" style={{ paddingBottom: embedded ? '0' : '100px', backgroundColor: embedded ? 'transparent' : 'var(--brand-dark)', minHeight: embedded ? 'auto' : '100vh' }}>
         {/* Error State */}
         {error && (
-          <div className="alert alert-danger" role="alert">
+          <div className="alert rounded-4" role="alert" style={{ border: '1px solid rgba(220, 53, 69, 0.3)', backgroundColor: 'rgba(220, 53, 69, 0.1)', color: 'var(--text-primary)' }}>
             <i className="bi bi-exclamation-triangle me-2"></i>
             {error}
-            <button className="btn btn-sm btn-outline-danger ms-3" onClick={fetchWorkoutData}>
+            <button 
+              className="btn btn-sm ms-3" 
+              onClick={fetchWorkoutData}
+              style={{ backgroundColor: 'rgba(220, 53, 69, 0.2)', color: 'var(--text-primary)', border: '1px solid rgba(220, 53, 69, 0.3)' }}
+            >
               Try Again
             </button>
           </div>
@@ -2470,10 +2646,10 @@ const MyWorkouts = ({ embedded = false }) => {
       {/* Loading State */}
       {loading && (
         <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status">
+          <div className="spinner-border" role="status" style={{ color: 'var(--brand-primary)', width: '3rem', height: '3rem' }}>
             <span className="visually-hidden">Loading...</span>
           </div>
-          <p className="mt-3 text-muted">Loading your workouts...</p>
+          <p className="mt-3" style={{ color: 'var(--text-secondary)' }}>Loading your workouts...</p>
         </div>
       )}
 

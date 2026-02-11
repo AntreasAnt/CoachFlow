@@ -176,12 +176,12 @@ const FindTrainersPage = () => {
   if (loading && trainers.length === 0) {
     return (
       <TraineeDashboard>
-        <div className="container-fluid p-4">
+        <div className="container-fluid p-4" style={{ backgroundColor: 'var(--brand-dark)', minHeight: '80vh' }}>
           <div className="text-center py-5">
-            <div className="spinner-border text-primary" role="status">
+            <div className="spinner-border" role="status" style={{ color: 'var(--brand-primary)', width: '3rem', height: '3rem' }}>
               <span className="visually-hidden">Loading...</span>
             </div>
-            <p className="mt-3 text-muted">Loading trainers...</p>
+            <p className="mt-3" style={{ color: 'var(--text-secondary)' }}>Loading trainers...</p>
           </div>
         </div>
       </TraineeDashboard>
@@ -190,27 +190,29 @@ const FindTrainersPage = () => {
 
   return (
     <TraineeDashboard>
-      <div className="container-fluid p-4" style={{ paddingBottom: '100px' }}>
+      <div className="container-fluid px-3 px-md-4 py-3" style={{ paddingBottom: '100px', backgroundColor: 'var(--brand-dark)', minHeight: '100vh' }}>
         {/* Header */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <div>
-            <h2 className="mb-1">Find Your Trainer</h2>
-            <p className="text-muted mb-0">Connect with professional trainers</p>
-          </div>
-        </div>
+        
 
         {/* Search and Filter Bar */}
-        <div className="card border-0 shadow-sm mb-4">
-          <div className="card-body">
+        <div 
+          className="card border-0 rounded-4 mb-4"
+          style={{
+            backgroundColor: 'rgba(15, 20, 15, 0.6)',
+            border: '1px solid rgba(32, 214, 87, 0.2)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
+          }}
+        >
+          <div className="card-body p-4">
             <div className="row g-3">
               <div className="col-md-6">
                 <div className="input-group">
-                  <span className="input-group-text bg-white border-end-0">
+                  <span className="input-group-text" style={{ backgroundColor: 'rgba(247, 255, 247, 0.05)', border: '1px solid rgba(74, 74, 90, 0.3)', color: 'var(--brand-primary)' }}>
                     <i className="bi bi-search"></i>
                   </span>
                   <input
                     type="text"
-                    className="form-control border-start-0"
+                    className="form-control"
                     placeholder="Search by name, specialization, or keywords..."
                     value={filters.search}
                     onChange={(e) => setFilters({ ...filters, search: e.target.value })}
@@ -218,6 +220,12 @@ const FindTrainersPage = () => {
                       if (e.key === 'Enter') {
                         handleApplyFilters();
                       }
+                    }}
+                    style={{
+                      backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                      border: '1px solid rgba(74, 74, 90, 0.3)',
+                      color: 'var(--brand-white)',
+                      borderLeft: 'none'
                     }}
                   />
                 </div>
@@ -230,6 +238,12 @@ const FindTrainersPage = () => {
                     setFilters({ ...filters, sortBy: e.target.value });
                     setAppliedFilters({ ...appliedFilters, sortBy: e.target.value });
                   }}
+                  style={{
+                    backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                    border: '1px solid rgba(74, 74, 90, 0.3)',
+                    color: 'var(--brand-white)',
+                    borderRadius: '12px'
+                  }}
                 >
                   <option value="rating">Highest Rated</option>
                   <option value="price_asc">Price: Low to High</option>
@@ -241,15 +255,27 @@ const FindTrainersPage = () => {
               </div>
               <div className="col-md-3 d-flex gap-2">
                 <button
-                  className="btn btn-primary flex-fill"
+                  className="btn rounded-pill flex-fill"
                   onClick={handleApplyFilters}
+                  style={{
+                    backgroundColor: 'var(--brand-primary)',
+                    color: 'var(--brand-dark)',
+                    border: 'none',
+                    fontWeight: '600'
+                  }}
                 >
                   <i className="bi bi-search me-2"></i>
                   Search
                 </button>
                 <button
-                  className="btn btn-outline-primary"
+                  className="btn rounded-pill"
                   onClick={() => setShowFilterModal(true)}
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: 'var(--brand-primary)',
+                    border: '1px solid var(--brand-primary)',
+                    fontWeight: '600'
+                  }}
                 >
                   <i className="bi bi-funnel"></i>
                 </button>
@@ -260,9 +286,9 @@ const FindTrainersPage = () => {
             {(appliedFilters.specialization || appliedFilters.minRating > 0 || 
               appliedFilters.experienceLevel || appliedFilters.verified) && (
               <div className="mt-3 d-flex flex-wrap gap-2">
-                <small className="text-muted me-2">Active filters:</small>
+                <small className="me-2" style={{ color: 'var(--text-secondary)' }}>Active filters:</small>
                 {appliedFilters.specialization && (
-                  <span className="badge bg-primary">
+                  <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)' }}>
                     {appliedFilters.specialization}
                     <i 
                       className="bi bi-x ms-1" 
@@ -276,7 +302,7 @@ const FindTrainersPage = () => {
                   </span>
                 )}
                 {appliedFilters.minRating > 0 && (
-                  <span className="badge bg-primary">
+                  <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)' }}>
                     {appliedFilters.minRating}+ stars
                     <i 
                       className="bi bi-x ms-1" 
@@ -330,7 +356,7 @@ const FindTrainersPage = () => {
 
         {/* Error Display */}
         {error && (
-          <div className="alert alert-danger" role="alert">
+          <div className="alert rounded-4" role="alert" style={{ border: '1px solid rgba(220, 53, 69, 0.3)', backgroundColor: 'rgba(220, 53, 69, 0.1)', color: 'var(--text-primary)' }}>
             <i className="bi bi-exclamation-triangle me-2"></i>
             {error}
           </div>
@@ -339,10 +365,19 @@ const FindTrainersPage = () => {
         {/* Trainers List */}
         {trainers.length === 0 && !loading ? (
           <div className="text-center py-5">
-            <i className="bi bi-search fs-1 text-muted mb-3 d-block"></i>
-            <h5 className="text-muted">No trainers found</h5>
-            <p className="text-muted">Try adjusting your filters or search criteria</p>
-            <button className="btn btn-primary mt-3" onClick={handleResetFilters}>
+            <i className="bi bi-search fs-1 mb-3 d-block" style={{ color: 'var(--text-secondary)' }}></i>
+            <h5 style={{ color: 'var(--brand-white)' }}>No trainers found</h5>
+            <p style={{ color: 'var(--text-secondary)' }}>Try adjusting your filters or search criteria</p>
+            <button 
+              className="btn rounded-pill px-4 mt-3" 
+              onClick={handleResetFilters}
+              style={{
+                backgroundColor: 'var(--brand-primary)',
+                color: 'var(--brand-dark)',
+                border: 'none',
+                fontWeight: '600'
+              }}
+            >
               Reset Filters
             </button>
           </div>
@@ -350,13 +385,29 @@ const FindTrainersPage = () => {
           <div className="row">
             {trainers.map((trainer) => (
               <div key={trainer.id} className="col-lg-4 col-md-6 mb-4">
-                <div className="card border-0 shadow-sm h-100">
-                  <div className="card-body">
+                <div 
+                  className="card border-0 rounded-4 h-100"
+                  style={{
+                    backgroundColor: 'rgba(15, 20, 15, 0.6)',
+                    border: '1px solid rgba(74, 74, 90, 0.3)',
+                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-8px)';
+                    e.currentTarget.style.borderColor = 'var(--brand-primary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.borderColor = 'rgba(74, 74, 90, 0.3)';
+                  }}
+                >
+                  <div className="card-body p-4">
                     {/* Trainer Header */}
                     <div className="d-flex align-items-start mb-3">
                       <div 
-                        className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3"
-                        style={{ width: '60px', height: '60px', fontSize: '1.5rem', flexShrink: 0 }}
+                        className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                        style={{ width: '60px', height: '60px', fontSize: '1.5rem', flexShrink: 0, backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', fontWeight: '700' }}
                       >
                         {trainer.profile_image ? (
                           <img 
@@ -371,15 +422,15 @@ const FindTrainersPage = () => {
                       <div className="flex-grow-1">
                         <div className="d-flex align-items-start justify-content-between">
                           <div>
-                            <h5 className="mb-1">
+                            <h5 className="mb-1" style={{ color: 'var(--brand-white)', fontWeight: '600' }}>
                               {trainer.name}
                               {trainer.verified && (
-                                <i className="bi bi-patch-check-fill text-primary ms-2" title="Verified"></i>
+                                <i className="bi bi-patch-check-fill ms-2" style={{ color: 'var(--brand-primary)' }} title="Verified"></i>
                               )}
                             </h5>
                             <div className="mb-1">
                               {getRatingStars(trainer.average_rating || 0)}
-                              <small className="text-muted ms-1">
+                              <small className="ms-1" style={{ color: 'var(--text-secondary)' }}>
                                 ({trainer.total_reviews || 0})
                               </small>
                             </div>
@@ -393,7 +444,7 @@ const FindTrainersPage = () => {
                     {trainer.specializations && trainer.specializations.length > 0 && (
                       <div className="mb-3">
                         {trainer.specializations.slice(0, 3).map((spec, idx) => (
-                          <span key={idx} className="badge bg-light text-dark me-1 mb-1">
+                          <span key={idx} className="badge rounded-pill me-1 mb-1" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)' }}>
                             {spec}
                           </span>
                         ))}
@@ -401,62 +452,75 @@ const FindTrainersPage = () => {
                     )}
 
                     {/* Bio */}
-                    <p className="text-muted small mb-3" style={{ 
+                    <p className="small mb-3" style={{ 
                       display: '-webkit-box',
                       WebkitLineClamp: 3,
                       WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
+                      overflow: 'hidden',
+                      color: 'var(--text-secondary)'
                     }}>
                       {trainer.bio || 'No bio available'}
                     </p>
 
                     {/* Stats */}
-                    <div className="d-flex justify-content-between text-muted small mb-3">
+                    <div className="d-flex justify-content-between small mb-3" style={{ color: 'var(--text-secondary)' }}>
                       <div>
-                        <i className="bi bi-briefcase me-1"></i>
+                        <i className="bi bi-briefcase me-1" style={{ color: 'var(--brand-primary)' }}></i>
                         {trainer.experience_years || 0} years
                       </div>
                       <div>
-                        <i className="bi bi-people me-1"></i>
+                        <i className="bi bi-people me-1" style={{ color: 'var(--brand-primary)' }}></i>
                         {trainer.current_clients || 0}/{trainer.max_clients || 0} clients
                       </div>
                     </div>
 
                     {/* Price */}
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                      <span className="fw-bold text-primary fs-5">
+                      <span className="fw-bold fs-5" style={{ color: 'var(--brand-primary)' }}>
                         ${trainer.hourly_rate || 0}/hr
                       </span>
                       {!trainer.accepting_clients && (
-                        <span className="badge bg-secondary">Fully Booked</span>
+                        <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(74, 74, 90, 0.3)', color: 'var(--text-secondary)' }}>Fully Booked</span>
                       )}
                     </div>
 
                     {/* Actions */}
                     <div className="d-flex gap-2">
                       {trainer.connection_status === 'active' ? (
-                        <button className="btn btn-success flex-fill" disabled>
+                        <button className="btn rounded-pill flex-fill" disabled style={{ backgroundColor: 'rgba(32, 214, 87, 0.3)', color: 'var(--brand-white)', border: 'none' }}>
                           <i className="bi bi-check-circle me-2"></i>
                           Connected
                         </button>
                       ) : trainer.connection_status === 'pending' ? (
-                        <button className="btn btn-warning flex-fill" disabled>
+                        <button className="btn rounded-pill flex-fill" disabled style={{ backgroundColor: 'rgba(255, 193, 7, 0.3)', color: 'var(--brand-white)', border: 'none' }}>
                           <i className="bi bi-clock me-2"></i>
                           Pending
                         </button>
                       ) : (
                         <button 
-                          className="btn btn-primary flex-fill"
+                          className="btn rounded-pill flex-fill"
                           onClick={() => handleRequestConnection(trainer)}
                           disabled={!trainer.accepting_clients}
+                          style={{
+                            backgroundColor: 'var(--brand-primary)',
+                            color: 'var(--brand-dark)',
+                            border: 'none',
+                            fontWeight: '600'
+                          }}
                         >
                           <i className="bi bi-person-plus me-2"></i>
                           Request Connection
                         </button>
                       )}
                       <button 
-                        className="btn btn-outline-primary"
+                        className="btn rounded-pill"
                         onClick={() => {/* TODO: View trainer profile */}}
+                        style={{
+                          backgroundColor: 'transparent',
+                          color: 'var(--brand-primary)',
+                          border: '1px solid var(--brand-primary)',
+                          fontWeight: '600'
+                        }}
                       >
                         <i className="bi bi-eye"></i>
                       </button>
@@ -480,25 +544,39 @@ const FindTrainersPage = () => {
 
       {/* Filter Modal */}
       {showFilterModal && (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Filter Trainers</h5>
+            <div 
+              className="modal-content rounded-4 border-0"
+              style={{
+                backgroundColor: 'rgba(15, 20, 15, 0.95)',
+                border: '1px solid rgba(32, 214, 87, 0.3)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
+              }}
+            >
+              <div className="modal-header border-0">
+                <h5 className="modal-title" style={{ color: 'var(--brand-white)', fontWeight: '700' }}>Filter Trainers</h5>
                 <button
                   type="button"
                   className="btn-close"
                   onClick={() => setShowFilterModal(false)}
+                  style={{ filter: 'invert(1)' }}
                 ></button>
               </div>
               <div className="modal-body">
                 {/* Specialization */}
                 <div className="mb-3">
-                  <label className="form-label">Specialization</label>
+                  <label className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>Specialization</label>
                   <select
                     className="form-select"
                     value={filters.specialization}
                     onChange={(e) => setFilters({ ...filters, specialization: e.target.value })}
+                    style={{
+                      backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                      border: '1px solid rgba(74, 74, 90, 0.3)',
+                      color: 'var(--brand-white)',
+                      borderRadius: '12px'
+                    }}
                   >
                     <option value="">All Specializations</option>
                     <option value="Weight Loss">Weight Loss</option>
@@ -514,11 +592,17 @@ const FindTrainersPage = () => {
 
                 {/* Rating */}
                 <div className="mb-3">
-                  <label className="form-label">Minimum Rating</label>
+                  <label className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>Minimum Rating</label>
                   <select
                     className="form-select"
                     value={filters.minRating}
                     onChange={(e) => setFilters({ ...filters, minRating: parseFloat(e.target.value) })}
+                    style={{
+                      backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                      border: '1px solid rgba(74, 74, 90, 0.3)',
+                      color: 'var(--brand-white)',
+                      borderRadius: '12px'
+                    }}
                   >
                     <option value="0">Any Rating</option>
                     <option value="3">3+ Stars</option>
@@ -529,7 +613,7 @@ const FindTrainersPage = () => {
 
                 {/* Price Range */}
                 <div className="mb-3">
-                  <label className="form-label">Hourly Rate Range</label>
+                  <label className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>Hourly Rate Range</label>
                   <div className="row g-2">
                     <div className="col-6">
                       <input
@@ -538,6 +622,12 @@ const FindTrainersPage = () => {
                         placeholder="Min"
                         value={filters.minRate}
                         onChange={(e) => setFilters({ ...filters, minRate: e.target.value })}
+                        style={{
+                          backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                          border: '1px solid rgba(74, 74, 90, 0.3)',
+                          color: 'var(--brand-white)',
+                          borderRadius: '12px'
+                        }}
                       />
                     </div>
                     <div className="col-6">
@@ -547,6 +637,12 @@ const FindTrainersPage = () => {
                         placeholder="Max"
                         value={filters.maxRate}
                         onChange={(e) => setFilters({ ...filters, maxRate: e.target.value })}
+                        style={{
+                          backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                          border: '1px solid rgba(74, 74, 90, 0.3)',
+                          color: 'var(--brand-white)',
+                          borderRadius: '12px'
+                        }}
                       />
                     </div>
                   </div>
@@ -581,18 +677,29 @@ const FindTrainersPage = () => {
                   </label>
                 </div>
               </div>
-              <div className="modal-footer">
+              <div className="modal-footer border-0">
                 <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="btn rounded-pill px-4"
                   onClick={handleResetFilters}
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-secondary)',
+                    border: '1px solid rgba(74, 74, 90, 0.3)'
+                  }}
                 >
                   Reset
                 </button>
                 <button
                   type="button"
-                  className="btn btn-primary"
+                  className="btn rounded-pill px-4"
                   onClick={handleApplyFilters}
+                  style={{
+                    backgroundColor: 'var(--brand-primary)',
+                    color: 'var(--brand-dark)',
+                    border: 'none',
+                    fontWeight: '600'
+                  }}
                 >
                   Apply Filters
                 </button>
@@ -604,40 +711,53 @@ const FindTrainersPage = () => {
 
       {/* Request Connection Modal */}
       {showRequestModal && selectedTrainer && (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
+            <div 
+              className="modal-content rounded-4 border-0"
+              style={{
+                backgroundColor: 'rgba(15, 20, 15, 0.95)',
+                border: '1px solid rgba(32, 214, 87, 0.3)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
+              }}
+            >
               <form onSubmit={handleSendRequest}>
-                <div className="modal-header">
-                  <h5 className="modal-title">Request Connection</h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={() => setShowRequestModal(false)}
-                    disabled={sendingRequest}
-                  ></button>
-                </div>
-                <div className="modal-body">
+                <div className="modal-body pt-4">
+                  <div className="d-flex justify-content-end mb-3">
+                    <button
+                      type="button"
+                      className="btn-close"
+                      onClick={() => setShowRequestModal(false)}
+                      disabled={sendingRequest}
+                      style={{ filter: 'invert(1)' }}
+                    ></button>
+                  </div>
                   <div className="mb-3 text-center">
                     <div 
-                      className="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-2"
-                      style={{ width: '80px', height: '80px', fontSize: '2rem' }}
+                      className="rounded-circle d-inline-flex align-items-center justify-content-center mb-2"
+                      style={{ width: '80px', height: '80px', fontSize: '2rem', backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', fontWeight: '700' }}
                     >
                       {selectedTrainer.name?.charAt(0) || 'T'}
                     </div>
-                    <h5>{selectedTrainer.name}</h5>
-                    <p className="text-muted">${selectedTrainer.hourly_rate}/hr</p>
+                    <h5 style={{ color: 'var(--brand-white)' }}>{selectedTrainer.name}</h5>
+                    <p style={{ color: 'var(--brand-primary)', fontWeight: '600' }}>${selectedTrainer.hourly_rate}/hr</p>
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label">
-                      Your Fitness Experience Level <span className="text-danger">*</span>
+                    <label className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
+                      Your Fitness Experience Level <span style={{ color: 'var(--brand-primary)' }}>*</span>
                     </label>
                     <select
                       className="form-select"
                       value={requestForm.experienceLevel}
                       onChange={(e) => setRequestForm({ ...requestForm, experienceLevel: e.target.value })}
                       required
+                      style={{
+                        backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                        border: '1px solid rgba(74, 74, 90, 0.3)',
+                        color: 'var(--brand-white)',
+                        borderRadius: '12px'
+                      }}
                     >
                       <option value="">Select your level</option>
                       <option value="beginner">Beginner</option>
@@ -647,8 +767,8 @@ const FindTrainersPage = () => {
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label">
-                      Your Goals <span className="text-danger">*</span>
+                    <label className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
+                      Your Goals <span style={{ color: 'var(--brand-primary)' }}>*</span>
                     </label>
                     <textarea
                       className="form-control"
@@ -657,38 +777,61 @@ const FindTrainersPage = () => {
                       value={requestForm.goals}
                       onChange={(e) => setRequestForm({ ...requestForm, goals: e.target.value })}
                       required
+                      style={{
+                        backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                        border: '1px solid rgba(74, 74, 90, 0.3)',
+                        color: 'var(--brand-white)',
+                        borderRadius: '12px'
+                      }}
                     ></textarea>
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label">Message (Optional)</label>
+                    <label className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>Message (Optional)</label>
                     <textarea
                       className="form-control"
                       rows="3"
                       placeholder="Tell the trainer why you'd like to work with them..."
                       value={requestForm.message}
                       onChange={(e) => setRequestForm({ ...requestForm, message: e.target.value })}
+                      style={{
+                        backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                        border: '1px solid rgba(74, 74, 90, 0.3)',
+                        color: 'var(--brand-white)',
+                        borderRadius: '12px'
+                      }}
                     ></textarea>
                   </div>
 
-                  <div className="alert alert-info">
-                    <i className="bi bi-info-circle me-2"></i>
+                  <div className="alert rounded-3" style={{ backgroundColor: 'rgba(32, 214, 87, 0.1)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'var(--brand-light)' }}>
+                    <i className="bi bi-info-circle me-2" style={{ color: 'var(--brand-primary)' }}></i>
                     The trainer will review your request and respond within 24-48 hours.
                   </div>
                 </div>
-                <div className="modal-footer">
+                <div className="modal-footer border-0">
                   <button
                     type="button"
-                    className="btn btn-secondary"
+                    className="btn rounded-pill px-4"
                     onClick={() => setShowRequestModal(false)}
                     disabled={sendingRequest}
+                    style={{
+                      backgroundColor: 'transparent',
+                      color: 'var(--text-secondary)',
+                      border: '1px solid rgba(74, 74, 90, 0.3)'
+                    }}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="btn btn-primary"
+                    className="btn rounded-pill px-4"
                     disabled={sendingRequest}
+                    style={{
+                      backgroundColor: 'var(--brand-primary)',
+                      color: 'var(--brand-dark)',
+                      border: 'none',
+                      fontWeight: '600'
+                    }}
                   >
                     {sendingRequest ? (
                       <>

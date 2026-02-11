@@ -153,18 +153,25 @@ function SignUp() {
     <>
       <div
         className="container d-flex flex-column justify-content-center align-items-center"
-        style={{ height: "85vh" }}
+        style={{ minHeight: "100vh", backgroundColor: 'var(--brand-dark)', paddingTop: '2rem', paddingBottom: '2rem' }}
       >
         <form
-          className="p-4 border rounded shadow"
+          className="p-5 rounded-4"
           onSubmit={handleSubmit}
-          style={{ width: "100%", maxWidth: "500px", minWidth: "200px" }}
+          style={{ 
+            width: "100%", 
+            maxWidth: "550px", 
+            backgroundColor: 'rgba(15, 20, 15, 0.6)',
+            border: '1px solid rgba(32, 214, 87, 0.2)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(10px)'
+          }}
         >
-          <h3 className="text-center mb-4">Sign Up</h3>
+          <h3 className="text-center mb-4" style={{ color: 'var(--brand-white)', fontWeight: '700', fontSize: '2rem' }}>Sign Up</h3>
 
           {/* Username */}
           <div className="mb-3">
-            <label htmlFor="username" className="form-label">
+            <label htmlFor="username" className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
               Username <span className="text-danger">*</span>
             </label>
             <input
@@ -180,13 +187,20 @@ function SignUp() {
                   ? "is-valid"
                   : ""
               }`}
+              style={{
+                backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                border: '1px solid rgba(74, 74, 90, 0.3)',
+                color: 'var(--brand-white)',
+                padding: '0.75rem 1rem',
+                borderRadius: '12px'
+              }}
             />
             {errors.username && <div className="invalid-feedback">{errors.username}</div>}
           </div>
 
           {/* Email */}
           <div className="mb-3">
-            <label htmlFor="email" className="form-label">
+            <label htmlFor="email" className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
               Email <span className="text-danger">*</span>
             </label>
             <input
@@ -198,13 +212,20 @@ function SignUp() {
               className={`form-control ${
                 errors.email ? "is-invalid" : formData.email ? "is-valid" : ""
               }`}
+              style={{
+                backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                border: '1px solid rgba(74, 74, 90, 0.3)',
+                color: 'var(--brand-white)',
+                padding: '0.75rem 1rem',
+                borderRadius: '12px'
+              }}
             />
             {errors.email && <div className="invalid-feedback">{errors.email}</div>}
           </div>
 
           {/* Password */}
           <div className="mb-3">
-            <label htmlFor="password" className="form-label">
+            <label htmlFor="password" className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
               Password <span className="text-danger">*</span>
             </label>
             <div className="position-relative">
@@ -221,6 +242,14 @@ function SignUp() {
                     ? "is-valid"
                     : ""
                 }`}
+                style={{
+                  backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                  border: '1px solid rgba(74, 74, 90, 0.3)',
+                  color: 'var(--brand-white)',
+                  padding: '0.75rem 1rem',
+                  paddingRight: '3rem',
+                  borderRadius: '12px'
+                }}
               />
               <button
                 type="button"
@@ -240,7 +269,7 @@ function SignUp() {
 
           {/* Confirm Password */}
           <div className="mb-3">
-            <label htmlFor="confpassword" className="form-label">
+            <label htmlFor="confpassword" className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
               Confirm Password <span className="text-danger">*</span>
             </label>
             <div className="position-relative">
@@ -257,6 +286,14 @@ function SignUp() {
                     ? "is-valid"
                     : ""
                 }`}
+                style={{
+                  backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                  border: '1px solid rgba(74, 74, 90, 0.3)',
+                  color: 'var(--brand-white)',
+                  padding: '0.75rem 1rem',
+                  paddingRight: '3rem',
+                  borderRadius: '12px'
+                }}
               />
               <button
                 type="button"
@@ -281,21 +318,39 @@ function SignUp() {
           )}
 
           {/* Role selection */}
-          <div className="mb-3">
+          <div className="mb-4">
         
             <div className="form-check form-check-inline">
-              <input className="form-check-input" type="radio" name="role" id="roleTrainee" value="trainee"
+              <input 
+                className="form-check-input" 
+                type="radio" 
+                name="role" 
+                id="roleTrainee" 
+                value="trainee"
                 checked={formData.role === 'trainee'}
                 onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
+                style={{ 
+                  borderColor: 'var(--brand-primary)',
+                  backgroundColor: formData.role === 'trainee' ? 'var(--brand-primary)' : 'transparent'
+                }}
               />
-              <label className="form-check-label" htmlFor="roleTrainee">Trainee</label>
+              <label className="form-check-label" htmlFor="roleTrainee" style={{ color: 'var(--text-primary)', marginLeft: '0.5rem' }}>Trainee</label>
             </div>
             <div className="form-check form-check-inline">
-              <input className="form-check-input" type="radio" name="role" id="roleTrainer" value="trainer"
+              <input 
+                className="form-check-input" 
+                type="radio" 
+                name="role" 
+                id="roleTrainer" 
+                value="trainer"
                 checked={formData.role === 'trainer'}
                 onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
+                style={{ 
+                  borderColor: 'var(--brand-primary)',
+                  backgroundColor: formData.role === 'trainer' ? 'var(--brand-primary)' : 'transparent'
+                }}
               />
-              <label className="form-check-label" htmlFor="roleTrainer">Trainer</label>
+              <label className="form-check-label" htmlFor="roleTrainer" style={{ color: 'var(--text-primary)', marginLeft: '0.5rem' }}>Trainer</label>
             </div>
             {errors.role && <div className="text-danger small mt-1">{errors.role}</div>}
           </div>
@@ -303,7 +358,17 @@ function SignUp() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="btn btn-primary w-100 mt-1"
+            className="btn w-100 mt-2"
+            style={{
+              backgroundColor: 'var(--brand-primary)',
+              color: 'var(--brand-dark)',
+              border: 'none',
+              padding: '0.875rem',
+              borderRadius: '12px',
+              fontWeight: '600',
+              fontSize: '1.05rem',
+              boxShadow: '0 4px 16px rgba(32, 214, 87, 0.3)'
+            }}
           >
             {isSubmitting ? (
               <>
@@ -316,7 +381,7 @@ function SignUp() {
           </button>
         </form>
 
-        <Link to="/login" className="pt-2">
+        <Link to="/login" className="pt-3" style={{ color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: '500' }}>
           Already have an account?
         </Link>
       </div>

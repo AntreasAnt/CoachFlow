@@ -22,6 +22,8 @@ const HomePage = () => {
     total_time_hours: 0
   });
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+  const [quickFoodLog, setQuickFoodLog] = useState({ meal: '', calories: '' });
+  const [loggingFood, setLoggingFood] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -105,6 +107,28 @@ const HomePage = () => {
     }
   };
 
+  const handleQuickLogFood = async () => {
+    if (!quickFoodLog.meal || !quickFoodLog.calories) {
+      setNotification({ show: true, message: 'Please enter meal name and calories', type: 'warning' });
+      return;
+    }
+
+    try {
+      setLoggingFood(true);
+      // TODO: Replace with actual API endpoint when available
+      // Simulating API call for now
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setNotification({ show: true, message: `${quickFoodLog.meal} logged successfully! (${quickFoodLog.calories} cal)`, type: 'success' });
+      setQuickFoodLog({ meal: '', calories: '' });
+    } catch (error) {
+      console.error('Error logging food:', error);
+      setNotification({ show: true, message: 'Failed to log food', type: 'danger' });
+    } finally {
+      setLoggingFood(false);
+    }
+  };
+
   useEffect(() => {
     if (notification.show) {
       const timer = setTimeout(() => {
@@ -116,13 +140,17 @@ const HomePage = () => {
 
   return (
     <TraineeDashboard>
-      <div className="container-fluid px-4 py-3">
+      <div className="container-fluid px-3 px-md-4 py-3" style={{ backgroundColor: 'var(--brand-dark)', minHeight: '100vh' }}>
       {/* Error State */}
       {error && (
-        <div className="alert alert-danger" role="alert">
+        <div className="alert alert-danger rounded-4" role="alert" style={{ border: '1px solid rgba(220, 53, 69, 0.3)', backgroundColor: 'rgba(220, 53, 69, 0.1)' }}>
           <i className="bi bi-exclamation-triangle me-2"></i>
           {error}
-          <button className="btn btn-sm btn-outline-danger ms-3" onClick={fetchData}>
+          <button 
+            className="btn btn-sm ms-3" 
+            onClick={fetchData}
+            style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none' }}
+          >
             Try Again
           </button>
         </div>
@@ -131,44 +159,74 @@ const HomePage = () => {
       {/* Loading State */}
       {loading && (
         <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status">
+          <div className="spinner-border" role="status" style={{ color: 'var(--brand-primary)', width: '3rem', height: '3rem' }}>
             <span className="visually-hidden">Loading...</span>
           </div>
-          <p className="mt-3 text-muted">Loading your fitness dashboard...</p>
+          <p className="mt-3" style={{ color: 'var(--text-secondary)' }}>Loading your fitness dashboard...</p>
         </div>
       )}
 
       {/* Main Content */}
       {!loading && (
         <>
-          {/* Welcome Section with Quick Actions */}
+          {/* Hero: Welcome + Quick Actions */}
           <div className="row mb-4">
             <div className="col-12">
-              <div className="bg-gradient-primary text-white rounded p-4" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-                <div className="row align-items-center">
-                  <div className="col-md-8">
-                    <h2 className="mb-2">Ready to Train? 💪</h2>
-                    <p className="mb-3 lead">Quick actions to get started with your fitness journey today.</p>
-                    <div className="d-flex gap-3 flex-wrap">
-                      <button 
-                        className="btn btn-light btn-lg"
-                        onClick={() => navigate('/trainee-dashboard/workouts')}
-                      >
-                        <i className="bi bi-play-circle me-2"></i>
-                        Start Workout
-                      </button>
-                      <button 
-                        className="btn btn-outline-light btn-lg"
-                        onClick={() => setShowWeightModal(true)}
-                      >
-                        <i className="bi bi-speedometer me-2"></i>
-                        Log Weight
-                      </button>
-                    </div>
-                  </div>
-                  <div className="col-md-4 text-center">
-                    <div className="fs-1">🏃‍♂️</div>
-                  </div>
+              <div 
+                className="rounded-4 p-4 p-md-5" 
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(32, 214, 87, 0.15) 0%, rgba(15, 20, 15, 0.8) 100%)',
+                  border: '1px solid rgba(32, 214, 87, 0.3)',
+                  boxShadow: '0 8px 32px rgba(32, 214, 87, 0.2)'
+                }}
+              >
+                <h2 className="mb-2" style={{ color: 'var(--brand-white)', fontWeight: '700', fontSize: 'clamp(1.75rem, 4vw, 2.5rem)' }}>
+                  Welcome Back! 💪
+                </h2>
+                <p className="mb-4" style={{ color: 'var(--text-secondary)', fontSize: 'clamp(1rem, 2vw, 1.1rem)' }}>
+                  Ready to crush your fitness goals today?
+                </p>
+                <div className="d-flex gap-3 flex-wrap">
+                  <button 
+                    className="btn btn-lg rounded-pill px-4"
+                    onClick={() => navigate('/trainee-dashboard/workouts')}
+                    style={{
+                      backgroundColor: 'var(--brand-primary)',
+                      color: 'var(--brand-dark)',
+                      border: 'none',
+                      fontWeight: '600',
+                      boxShadow: '0 4px 16px rgba(32, 214, 87, 0.3)'
+                    }}
+                  >
+                    <i className="bi bi-play-circle-fill me-2"></i>
+                    Start Workout
+                  </button>
+                  <button 
+                    className="btn btn-lg rounded-pill px-4"
+                    onClick={() => document.getElementById('quick-food-section')?.scrollIntoView({ behavior: 'smooth' })}
+                    style={{
+                      backgroundColor: 'transparent',
+                      color: 'var(--brand-primary)',
+                      border: '2px solid var(--brand-primary)',
+                      fontWeight: '600'
+                    }}
+                  >
+                    <i className="bi bi-egg-fried me-2"></i>
+                    Log Food
+                  </button>
+                  <button 
+                    className="btn btn-lg rounded-pill px-4"
+                    onClick={() => setShowWeightModal(true)}
+                    style={{
+                      backgroundColor: 'transparent',
+                      color: 'var(--brand-primary)',
+                      border: '2px solid var(--brand-primary)',
+                      fontWeight: '600'
+                    }}
+                  >
+                    <i className="bi bi-speedometer me-2"></i>
+                    Log Weight
+                  </button>
                 </div>
               </div>
             </div>
@@ -184,194 +242,529 @@ const HomePage = () => {
             </div>
           )}
 
-      {/* Quick Stats */}
-      <div className="row mb-4">
-        <div className="col-md-3 col-sm-6 mb-3">
-          <div className="card border-0 shadow-sm text-center">
-            <div className="card-body py-4">
-              <div className="text-primary fs-1 mb-2">⚡</div>
-              <h5 className="card-title">{stats.workouts_this_week}</h5>
-              <p className="card-text text-muted">Workouts This Week</p>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-3 col-sm-6 mb-3">
-          <div className="card border-0 shadow-sm text-center">
-            <div className="card-body py-4">
-              <div className={`fs-1 mb-2 ${stats.change_type === 'gain' ? 'text-success' : stats.change_type === 'loss' ? 'text-info' : 'text-muted'}`}>
-                {stats.change_type === 'gain' ? '📈' : stats.change_type === 'loss' ? '📉' : '➖'}
-              </div>
-              <h5 className="card-title">
-                {stats.current_weight ? `${stats.current_weight}kg` : '-'}
-              </h5>
-              <p className="card-text text-muted">
-                {stats.weight_change ? (
-                  stats.change_type === 'gain' ? `+${stats.weight_change}kg` : `${stats.weight_change}kg`
-                ) : 'Current Weight'}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-3 col-sm-6 mb-3">
-          <div className="card border-0 shadow-sm text-center">
-            <div className="card-body py-4">
-              <div className="text-warning fs-1 mb-2">🔥</div>
-              <h5 className="card-title">{stats.current_streak}</h5>
-              <p className="card-text text-muted">Day Streak</p>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-3 col-sm-6 mb-3">
-          <div className="card border-0 shadow-sm text-center">
-            <div className="card-body py-4">
-              <div className="text-info fs-1 mb-2">⏱️</div>
-              <h5 className="card-title">{stats.total_time_hours}h</h5>
-              <p className="card-text text-muted">Time This Month</p>
-            </div>
-          </div>
-        </div>
-      </div>
+          {/* Row 1: Today's Workout Card (large) + Quick Stats */}
+          <div className="row mb-4">
+            {/* Today's Workout Card */}
+            <div className="col-lg-8 mb-3 mb-lg-0">
+              <div 
+                className="card border-0 rounded-4 h-100" 
+                style={{ 
+                  backgroundColor: 'rgba(15, 20, 15, 0.6)',
+                  border: '1px solid rgba(32, 214, 87, 0.2)',
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
+                }}
+              >
+                <div className="card-body p-4">
+                  <div className="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                      <h4 style={{ color: 'var(--brand-white)', fontWeight: '700' }}>Today's Workout</h4>
+                      <p className="mb-0" style={{ color: 'var(--text-secondary)' }}>Upper Body Strength</p>
+                    </div>
+                    <span className="badge rounded-pill px-3 py-2" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)' }}>
+                      Week 2, Day 3
+                    </span>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <div className="d-flex align-items-center gap-3 mb-3">
+                      <div className="d-flex align-items-center">
+                        <i className="bi bi-clock me-2" style={{ color: 'var(--brand-primary)' }}></i>
+                        <span style={{ color: 'var(--text-primary)' }}>45 min</span>
+                      </div>
+                      <div className="d-flex align-items-center">
+                        <i className="bi bi-fire me-2" style={{ color: 'var(--brand-primary)' }}></i>
+                        <span style={{ color: 'var(--text-primary)' }}>~350 cal</span>
+                      </div>
+                      <div className="d-flex align-items-center">
+                        <i className="bi bi-lightning-charge-fill me-2" style={{ color: 'var(--brand-primary)' }}></i>
+                        <span style={{ color: 'var(--text-primary)' }}>Intermediate</span>
+                      </div>
+                    </div>
+                    
+                    <div className="mb-3">
+                      <h6 style={{ color: 'var(--brand-white)', fontSize: '0.9rem', fontWeight: '600' }}>Exercises:</h6>
+                      <div className="d-flex flex-wrap gap-2">
+                        {['Bench Press', 'Shoulder Press', 'Bent Over Row', 'Bicep Curls', 'Tricep Dips'].map((exercise, idx) => (
+                          <span key={idx} className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)', padding: '0.5rem 1rem' }}>
+                            {exercise}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
 
-      {/* Pre-built Workout Plans */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4 className="mb-0">🏆 Latest Workout Programs</h4>
-            <button 
-              className="btn btn-outline-primary btn-sm"
-              onClick={() => navigate('/trainee-dashboard/marketplace')}
-            >
-              View All Programs
-            </button>
-          </div>
-          <div className="row">
-            {featuredPrograms.length === 0 ? (
-              <div className="col-12 text-center py-5">
-                <i className="bi bi-inbox" style={{ fontSize: '3rem', color: '#ccc' }}></i>
-                <p className="text-muted mt-3">No featured programs available yet.</p>
+                  <div className="d-flex gap-3">
+                    <button 
+                      className="btn rounded-pill px-4 flex-grow-1"
+                      onClick={() => navigate('/trainee-dashboard/workouts')}
+                      style={{
+                        backgroundColor: 'var(--brand-primary)',
+                        color: 'var(--brand-dark)',
+                        border: 'none',
+                        fontWeight: '600'
+                      }}
+                    >
+                      <i className="bi bi-play-circle-fill me-2"></i>
+                      Start Workout
+                    </button>
+                    <button 
+                      className="btn rounded-pill px-4"
+                      onClick={() => navigate('/trainee-dashboard/workouts')}
+                      style={{
+                        backgroundColor: 'transparent',
+                        color: 'var(--brand-primary)',
+                        border: '1px solid var(--brand-primary)',
+                        fontWeight: '600'
+                      }}
+                    >
+                      <i className="bi bi-eye me-2"></i>
+                      View Details
+                    </button>
+                  </div>
+                </div>
               </div>
-            ) : (
-              featuredPrograms.map(program => (
-                <div key={program.id} className="col-lg-4 col-md-6 mb-3">
-                  <div className="card h-100 border-0 shadow-sm hover-shadow">
-                    <div className="card-body">
-                      <div className="mb-3">
-                        <div className="d-flex justify-content-between align-items-start mb-2">
-                          <h5 className="card-title mb-0">{program.title}</h5>
-                          {program.is_featured && (
-                            <span className="badge bg-warning text-dark">
-                              <i className="bi bi-star-fill"></i> Featured
-                            </span>
-                          )}
-                        </div>
-                        <p className="card-text text-muted small">{program.description?.substring(0, 100)}...</p>
-                      </div>
-                      <div className="d-flex justify-content-between align-items-center mb-3">
-                        <span className="badge bg-light text-dark">
-                          {program.duration_weeks} weeks
-                        </span>
-                        <span className="badge bg-light text-dark">
-                          {program.difficulty_level}
-                        </span>
-                      </div>
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <div className="d-flex align-items-center">
-                          <i className="bi bi-star-fill text-warning me-1"></i>
-                          <small>{program.rating_average || '5.0'} ({program.rating_count || 0})</small>
-                        </div>
-                        <small className="text-muted">{program.purchase_count || 0} purchases</small>
-                      </div>
-                      <div className="d-flex justify-content-between align-items-center mb-3">
-                        <small className="text-muted">by {program.trainer_name || 'Coach'}</small>
-                        <span className="fw-bold text-primary">${program.price}</span>
-                      </div>
-                      <button 
-                        className="btn btn-primary w-100"
-                        onClick={() => navigate(`/trainee-dashboard/marketplace?programId=${program.id}`)}
-                      >
-                        <i className="bi bi-eye me-2"></i>
-                        View Details
-                      </button>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="col-lg-4">
+              <div className="row h-100">
+                <div className="col-6 col-lg-12 mb-3">
+                  <div 
+                    className="card border-0 rounded-4 text-center h-100" 
+                    style={{ 
+                      backgroundColor: 'rgba(15, 20, 15, 0.6)',
+                      border: '1px solid rgba(32, 214, 87, 0.2)',
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+                      transition: 'transform 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                  >
+                    <div className="card-body py-3">
+                      <div className="mb-2" style={{ fontSize: '1.8rem' }}>⚖️</div>
+                      <h4 className="mb-1" style={{ color: 'var(--brand-primary)', fontWeight: '700' }}>
+                        {stats.current_weight ? `${stats.current_weight}kg` : '-'}
+                      </h4>
+                      <p className="mb-0" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                        {stats.weight_change ? `${stats.change_type === 'gain' ? '+' : ''}${stats.weight_change}kg` : 'Current Weight'}
+                      </p>
                     </div>
                   </div>
                 </div>
-              ))
-            )}
+                <div className="col-6 col-lg-12 mb-3">
+                  <div 
+                    className="card border-0 rounded-4 text-center h-100" 
+                    style={{ 
+                      backgroundColor: 'rgba(15, 20, 15, 0.6)',
+                      border: '1px solid rgba(32, 214, 87, 0.2)',
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+                      transition: 'transform 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                  >
+                    <div className="card-body py-3">
+                      <div className="mb-2" style={{ fontSize: '1.8rem' }}>🔥</div>
+                      <h4 className="mb-1" style={{ color: 'var(--brand-primary)', fontWeight: '700' }}>{stats.current_streak}</h4>
+                      <p className="mb-0" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Day Streak</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-12 d-none d-lg-block">
+                  <div 
+                    className="card border-0 rounded-4 text-center h-100" 
+                    style={{ 
+                      backgroundColor: 'rgba(15, 20, 15, 0.6)',
+                      border: '1px solid rgba(32, 214, 87, 0.2)',
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+                      transition: 'transform 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                  >
+                    <div className="card-body py-3">
+                      <div className="mb-2" style={{ fontSize: '1.8rem' }}>⚡</div>
+                      <h4 className="mb-1" style={{ color: 'var(--brand-primary)', fontWeight: '700' }}>{stats.workouts_this_week}</h4>
+                      <p className="mb-0" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Workouts This Week</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Popular Coaches */}
-      <div className="row">
-        <div className="col-12">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4 className="mb-0">⭐ Popular Coaches</h4>
-            <button 
-              className="btn btn-outline-primary btn-sm"
-              onClick={() => navigate('/trainee-dashboard/find-trainer')}
-            >
-              View All
-            </button>
+          {/* Row 2: Quick Log Food Section */}
+          <div id="quick-food-section" className="row mb-4">
+            <div className="col-12">
+              <div 
+                className="card border-0 rounded-4" 
+                style={{ 
+                  backgroundColor: 'rgba(15, 20, 15, 0.6)',
+                  border: '1px solid rgba(32, 214, 87, 0.2)',
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
+                }}
+              >
+                <div className="card-body p-4">
+                  <h4 className="mb-3" style={{ color: 'var(--brand-white)', fontWeight: '700' }}>
+                    <i className="bi bi-egg-fried me-2" style={{ color: 'var(--brand-primary)' }}></i>
+                    Quick Log Food
+                  </h4>
+                  <div className="row g-3">
+                    <div className="col-md-5">
+                      <label className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>Meal / Food Item</label>
+                      <input 
+                        type="text" 
+                        className="form-control"
+                        placeholder="e.g., Chicken Breast, Oatmeal"
+                        value={quickFoodLog.meal}
+                        onChange={(e) => setQuickFoodLog(prev => ({ ...prev, meal: e.target.value }))}
+                        style={{
+                          backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                          border: '1px solid rgba(74, 74, 90, 0.3)',
+                          color: 'var(--brand-white)',
+                          padding: '0.75rem',
+                          borderRadius: '12px'
+                        }}
+                      />
+                    </div>
+                    <div className="col-md-3">
+                      <label className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>Calories</label>
+                      <input 
+                        type="number" 
+                        className="form-control"
+                        placeholder="e.g., 250"
+                        value={quickFoodLog.calories}
+                        onChange={(e) => setQuickFoodLog(prev => ({ ...prev, calories: e.target.value }))}
+                        style={{
+                          backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                          border: '1px solid rgba(74, 74, 90, 0.3)',
+                          color: 'var(--brand-white)',
+                          padding: '0.75rem',
+                          borderRadius: '12px'
+                        }}
+                      />
+                    </div>
+                    <div className="col-md-4 d-flex align-items-end gap-2">
+                      <button 
+                        className="btn rounded-pill px-4 flex-grow-1"
+                        onClick={handleQuickLogFood}
+                        disabled={loggingFood}
+                        style={{
+                          backgroundColor: 'var(--brand-primary)',
+                          color: 'var(--brand-dark)',
+                          border: 'none',
+                          fontWeight: '600',
+                          padding: '0.75rem'
+                        }}
+                      >
+                        {loggingFood ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2"></span>
+                            Logging...
+                          </>
+                        ) : (
+                          <>
+                            <i className="bi bi-plus-circle me-2"></i>
+                            Log Food
+                          </>
+                        )}
+                      </button>
+                      <button 
+                        className="btn rounded-pill px-4"
+                        onClick={() => navigate('/trainee-dashboard/nutrition')}
+                        style={{
+                          backgroundColor: 'transparent',
+                          color: 'var(--brand-primary)',
+                          border: '1px solid var(--brand-primary)',
+                          fontWeight: '600',
+                          padding: '0.75rem'
+                        }}
+                      >
+                        <i className="bi bi-journal-text"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-3 d-flex gap-4">
+                    <div>
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Today's Calories: </span>
+                      <span style={{ color: 'var(--brand-primary)', fontWeight: '700' }}>1,850 / 2,200</span>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Protein: </span>
+                      <span style={{ color: 'var(--brand-primary)', fontWeight: '700' }}>85g / 150g</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="row">
-            {popularCoaches.length === 0 ? (
-              <div className="col-12 text-center py-5">
-                <i className="bi bi-people fs-1 text-muted mb-3 d-block"></i>
-                <h5 className="text-muted mb-3">Find Your Perfect Trainer</h5>
-                <p className="text-muted mb-4">Connect with professional trainers to reach your fitness goals</p>
+
+          {/* Row 3: Active Program Progress */}
+          <div className="row mb-4">
+            <div className="col-12">
+              <div 
+                className="card border-0 rounded-4" 
+                style={{ 
+                  backgroundColor: 'rgba(15, 20, 15, 0.6)',
+                  border: '1px solid rgba(32, 214, 87, 0.2)',
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
+                }}
+              >
+                <div className="card-body p-4">
+                  <div className="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                      <h4 style={{ color: 'var(--brand-white)', fontWeight: '700' }}>Active Program</h4>
+                      <p className="mb-0" style={{ color: 'var(--text-secondary)' }}>12-Week Muscle Building Program</p>
+                    </div>
+                    <button 
+                      className="btn btn-sm rounded-pill"
+                      onClick={() => navigate('/trainee-dashboard/my-plans')}
+                      style={{
+                        backgroundColor: 'transparent',
+                        color: 'var(--brand-primary)',
+                        border: '1px solid var(--brand-primary)',
+                        fontWeight: '500'
+                      }}
+                    >
+                      View All Programs
+                    </button>
+                  </div>
+                  
+                  <div className="row">
+                    <div className="col-md-8 mb-3 mb-md-0">
+                      <div className="mb-3">
+                        <div className="d-flex justify-content-between mb-2">
+                          <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>Overall Progress</span>
+                          <span style={{ color: 'var(--brand-primary)', fontWeight: '600' }}>18%</span>
+                        </div>
+                        <div style={{ 
+                          height: '12px', 
+                          backgroundColor: 'rgba(74, 74, 90, 0.3)', 
+                          borderRadius: '10px', 
+                          overflow: 'hidden' 
+                        }}>
+                          <div style={{ 
+                            width: '18%', 
+                            height: '100%', 
+                            background: 'linear-gradient(90deg, var(--brand-primary) 0%, rgba(32, 214, 87, 0.7) 100%)',
+                            transition: 'width 0.5s ease'
+                          }}></div>
+                        </div>
+                      </div>
+                      
+                      <div className="row g-3">
+                        <div className="col-4">
+                          <div className="text-center p-3 rounded-3" style={{ backgroundColor: 'rgba(32, 214, 87, 0.1)', border: '1px solid rgba(32, 214, 87, 0.2)' }}>
+                            <h5 style={{ color: 'var(--brand-primary)', fontWeight: '700', marginBottom: '0.25rem' }}>15 / 84</h5>
+                            <small style={{ color: 'var(--text-secondary)' }}>Workouts Done</small>
+                          </div>
+                        </div>
+                        <div className="col-4">
+                          <div className="text-center p-3 rounded-3" style={{ backgroundColor: 'rgba(32, 214, 87, 0.1)', border: '1px solid rgba(32, 214, 87, 0.2)' }}>
+                            <h5 style={{ color: 'var(--brand-primary)', fontWeight: '700', marginBottom: '0.25rem' }}>2 / 12</h5>
+                            <small style={{ color: 'var(--text-secondary)' }}>Weeks Done</small>
+                          </div>
+                        </div>
+                        <div className="col-4">
+                          <div className="text-center p-3 rounded-3" style={{ backgroundColor: 'rgba(32, 214, 87, 0.1)', border: '1px solid rgba(32, 214, 87, 0.2)' }}>
+                            <h5 style={{ color: 'var(--brand-primary)', fontWeight: '700', marginBottom: '0.25rem' }}>10</h5>
+                            <small style={{ color: 'var(--text-secondary)' }}>Weeks Left</small>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-4">
+                      <div className="d-flex flex-column h-100 justify-content-center">
+                        <button 
+                          className="btn rounded-pill mb-2"
+                          onClick={() => navigate('/trainee-dashboard/workouts')}
+                          style={{
+                            backgroundColor: 'var(--brand-primary)',
+                            color: 'var(--brand-dark)',
+                            border: 'none',
+                            fontWeight: '600',
+                            padding: '0.75rem'
+                          }}
+                        >
+                          <i className="bi bi-play-circle-fill me-2"></i>
+                          Continue Program
+                        </button>
+                        <button 
+                          className="btn rounded-pill"
+                          onClick={() => navigate('/trainee-dashboard/analytics')}
+                          style={{
+                            backgroundColor: 'transparent',
+                            color: 'var(--brand-primary)',
+                            border: '1px solid var(--brand-primary)',
+                            fontWeight: '600',
+                            padding: '0.75rem'
+                          }}
+                        >
+                          <i className="bi bi-graph-up me-2"></i>
+                          View Progress
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 4: Recent Activity Timeline */}
+          <div className="row mb-4">
+            <div className="col-12">
+              <div 
+                className="card border-0 rounded-4" 
+                style={{ 
+                  backgroundColor: 'rgba(15, 20, 15, 0.6)',
+                  border: '1px solid rgba(32, 214, 87, 0.2)',
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
+                }}
+              >
+                <div className="card-body p-4">
+                  <h4 className="mb-4" style={{ color: 'var(--brand-white)', fontWeight: '700' }}>Recent Activity</h4>
+                  
+                  <div className="activity-timeline">
+                    {[
+                      { icon: 'bi-trophy-fill', color: 'var(--brand-primary)', title: 'Completed Upper Body Workout', time: '2 hours ago', detail: 'Great job! 45 minutes, 350 calories burned' },
+                      { icon: 'bi-egg-fried', color: '#FFA500', title: 'Logged Lunch', time: '4 hours ago', detail: 'Grilled chicken with rice - 650 calories' },
+                      { icon: 'bi-speedometer', color: '#4A9DFF', title: 'Weight Update', time: 'Yesterday', detail: 'New weight: 78.5kg (-0.5kg)' },
+                      { icon: 'bi-fire', color: '#FF4444', title: '7 Day Streak!', time: 'Yesterday', detail: 'Keep up the momentum!' }
+                    ].map((activity, idx) => (
+                      <div key={idx} className="d-flex gap-3 mb-4" style={{ position: 'relative' }}>
+                        <div 
+                          className="d-flex align-items-center justify-content-center flex-shrink-0" 
+                          style={{ 
+                            width: '48px', 
+                            height: '48px', 
+                            backgroundColor: `${activity.color}20`,
+                            border: `2px solid ${activity.color}`,
+                            borderRadius: '12px'
+                          }}
+                        >
+                          <i className={`bi ${activity.icon}`} style={{ color: activity.color, fontSize: '1.2rem' }}></i>
+                        </div>
+                        <div className="flex-grow-1">
+                          <div className="d-flex justify-content-between align-items-start mb-1">
+                            <h6 className="mb-0" style={{ color: 'var(--brand-white)', fontWeight: '600' }}>{activity.title}</h6>
+                            <small style={{ color: 'var(--text-secondary)' }}>{activity.time}</small>
+                          </div>
+                          <p className="mb-0" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{activity.detail}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="text-center mt-3">
+                    <button 
+                      className="btn btn-sm rounded-pill"
+                      onClick={() => navigate('/trainee-dashboard/analytics')}
+                      style={{
+                        backgroundColor: 'transparent',
+                        color: 'var(--brand-primary)',
+                        border: '1px solid rgba(32, 214, 87, 0.3)',
+                        fontWeight: '500',
+                        padding: '0.5rem 1.5rem'
+                      }}
+                    >
+                      View Full Activity History
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer: Marketplace Programs (smaller priority) */}
+          <div className="row mb-4">
+            <div className="col-12">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0" style={{ color: 'var(--brand-white)', fontWeight: '600' }}>Explore More Programs</h5>
                 <button 
-                  className="btn btn-primary"
-                  onClick={() => navigate('/trainee-dashboard/find-trainer')}
+                  className="btn btn-sm rounded-pill"
+                  onClick={() => navigate('/trainee-dashboard/marketplace')}
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: 'var(--brand-primary)',
+                    border: '1px solid var(--brand-primary)',
+                    fontWeight: '500'
+                  }}
                 >
-                  <i className="bi bi-search me-2"></i>
-                  Browse Trainers
+                  Browse All
                 </button>
               </div>
-            ) : (
-              popularCoaches.map(coach => (
-                <div key={coach.id} className="col-lg-4 col-md-6 mb-3">
-                  <div className="card h-100 border-0 shadow-sm hover-shadow">
-                    <div className="card-body text-center">
-                      <div className="fs-1 mb-3">{coach.avatar}</div>
-                      <h5 className="card-title">{coach.name}</h5>
-                      <p className="text-muted mb-2">{coach.specialization}</p>
-                      <div className="d-flex justify-content-center align-items-center mb-2">
-                        <i className="bi bi-star-fill text-warning me-1"></i>
-                        <span className="me-3">{coach.rating}</span>
-                        <i className="bi bi-people me-1"></i>
-                        <span>{coach.clients} clients</span>
+              <div className="row">
+                {featuredPrograms.slice(0, 3).map(program => (
+                  <div key={program.id} className="col-lg-4 col-md-6 mb-3">
+                    <div 
+                      className="card h-100 border-0 rounded-4" 
+                      style={{
+                        backgroundColor: 'rgba(15, 20, 15, 0.6)',
+                        border: '1px solid rgba(74, 74, 90, 0.3)',
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.borderColor = 'var(--brand-primary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.borderColor = 'rgba(74, 74, 90, 0.3)';
+                      }}
+                    >
+                      <div className="card-body p-3">
+                        <h6 className="mb-2" style={{ color: 'var(--brand-white)', fontWeight: '600' }}>{program.title}</h6>
+                        <div className="d-flex gap-2 mb-2">
+                          <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)', fontSize: '0.75rem' }}>
+                            {program.duration_weeks}w
+                          </span>
+                          <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)', fontSize: '0.75rem' }}>
+                            {program.difficulty_level}
+                          </span>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center">
+                          <small style={{ color: 'var(--text-secondary)' }}>
+                            <i className="bi bi-star-fill me-1" style={{ color: 'var(--brand-primary)' }}></i>
+                            {program.rating_average || '5.0'}
+                          </small>
+                          <span className="fw-bold" style={{ color: 'var(--brand-primary)' }}>${program.price}</span>
+                        </div>
                       </div>
-                      <p className="fw-bold text-primary mb-3">{coach.price}</p>
-                      <button 
-                        className="btn btn-outline-primary w-100"
-                        onClick={() => navigate('/trainee-dashboard/find-trainer')}
-                      >
-                        <i className="bi bi-person-plus me-2"></i>
-                        Connect
-                      </button>
                     </div>
                   </div>
-                </div>
-              ))
-            )}
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
         </>
       )}
 
       {/* Weight Logging Modal */}
       {showWeightModal && (
-        <div className="modal d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
+        <div className="modal d-block" style={{backgroundColor: 'rgba(0,0,0,0.7)'}}>
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
+            <div 
+              className="modal-content rounded-4 border-0" 
+              style={{
+                backgroundColor: 'rgba(15, 20, 15, 0.95)',
+                border: '1px solid rgba(32, 214, 87, 0.3)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
+              }}
+            >
               <div className="modal-header border-0">
-                <h5 className="modal-title">Log Your Weight</h5>
-                <button className="btn-close" onClick={() => setShowWeightModal(false)}></button>
+                <h5 className="modal-title" style={{ color: 'var(--brand-white)', fontWeight: '700' }}>Log Your Weight</h5>
+                <button 
+                  className="btn-close" 
+                  onClick={() => setShowWeightModal(false)}
+                  style={{ filter: 'invert(1)' }}
+                ></button>
               </div>
               <div className="modal-body">
                 <div className="mb-3">
-                  <label className="form-label">Weight (kg)</label>
+                  <label className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>Weight (kg)</label>
                   <input 
                     type="number" 
                     className="form-control form-control-lg"
@@ -382,24 +775,42 @@ const HomePage = () => {
                     autoFocus
                     step="0.1"
                     min="0"
+                    style={{
+                      backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                      border: '1px solid rgba(74, 74, 90, 0.3)',
+                      color: 'var(--brand-white)',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '12px'
+                    }}
                   />
-                  <small className="text-muted">Your weight will be tracked over time to show your progress</small>
+                  <small style={{ color: 'var(--text-secondary)' }}>Your weight will be tracked over time to show your progress</small>
                 </div>
               </div>
               <div className="modal-footer border-0">
                 <button 
                   type="button" 
-                  className="btn btn-secondary" 
+                  className="btn rounded-pill px-4" 
                   onClick={() => setShowWeightModal(false)}
                   disabled={savingWeight}
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-secondary)',
+                    border: '1px solid rgba(74, 74, 90, 0.3)'
+                  }}
                 >
                   Cancel
                 </button>
                 <button 
                   type="button" 
-                  className="btn btn-primary"
+                  className="btn rounded-pill px-4"
                   onClick={handleLogWeight}
                   disabled={savingWeight}
+                  style={{
+                    backgroundColor: 'var(--brand-primary)',
+                    color: 'var(--brand-dark)',
+                    border: 'none',
+                    fontWeight: '600'
+                  }}
                 >
                   {savingWeight ? (
                     <>

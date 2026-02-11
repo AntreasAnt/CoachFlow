@@ -167,20 +167,26 @@ function PasswordReset() {
     <>
       <div
         className="container d-flex flex-column justify-content-center align-items-center"
-        style={{ height: "75vh" }}
+        style={{ minHeight: "100vh", backgroundColor: 'var(--brand-dark)', paddingTop: '2rem', paddingBottom: '2rem' }}
       >
         <form
-          className="p-4 border rounded shadow"
+          className="p-4 p-md-5 rounded-4"
           onSubmit={handleSubmit}
-          style={{ width: "100%", maxWidth: "500px", minWidth: "200px" }}
+          style={{ 
+            width: "100%", 
+            maxWidth: "550px", 
+            backgroundColor: 'rgba(15, 20, 15, 0.6)',
+            border: '1px solid rgba(32, 214, 87, 0.2)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(10px)'
+          }}
         >
-          <h3 className="text-center mb-4">Password Reset</h3>
-          <p className="text-center small">
-            <strong>Having trouble logging in?</strong>
+          <h3 className="text-center mb-4" style={{ color: 'var(--brand-white)', fontWeight: '700', fontSize: '2rem' }}>Password Reset</h3>
+          <p className="text-center small" style={{ color: 'var(--text-primary)', fontWeight: '600' }}>
+            Having trouble logging in?
           </p>
-          <p className="text-muted text-center">
-            Enter your email and we’ll send you instructions to reset your
-            password.
+          <p className="text-center mb-4" style={{ color: 'var(--text-secondary)' }}>
+            Enter your email and we'll send you instructions to reset your password.
           </p>
 
           {/* Display success message or email input */}
@@ -193,7 +199,7 @@ function PasswordReset() {
             </div>
           ) : (
             <div className="mb-3">
-              <label htmlFor="email" className="form-label">
+              <label htmlFor="email" className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
                 Email
               </label>
               <input
@@ -210,6 +216,13 @@ function PasswordReset() {
                     ? "is-valid"
                     : ""
                 }`}
+                style={{
+                  backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                  border: '1px solid rgba(74, 74, 90, 0.3)',
+                  color: 'var(--brand-white)',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '12px'
+                }}
               />
               {errors.email && (
                 <div className="invalid-feedback">{errors.email}</div>
@@ -222,7 +235,17 @@ function PasswordReset() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="btn btn-primary w-100 mt-1"
+              className="btn w-100 mt-2"
+              style={{
+                backgroundColor: 'var(--brand-primary)',
+                color: 'var(--brand-dark)',
+                border: 'none',
+                padding: '0.875rem',
+                borderRadius: '12px',
+                fontWeight: '600',
+                fontSize: '1.05rem',
+                boxShadow: '0 4px 16px rgba(32, 214, 87, 0.3)'
+              }}
             >
               {isSubmitting ? (
                 <>
@@ -238,32 +261,36 @@ function PasswordReset() {
           {/* Resend button */}
           {showResend && (
             <button
-              className={`btn text-center w-100 btn-link mt-3 ${
-                !canResend ? "text-muted" : ""
-              }`}
+              type="button"
+              className="btn text-center w-100 mt-3"
               disabled={!canResend || isResending}
               onClick={handleResendCode}
-              style={{ textDecoration: !canResend ? "none" : "underline" }}
+              style={{ 
+                textDecoration: !canResend ? 'none' : 'underline',
+                color: !canResend ? 'var(--text-secondary)' : 'var(--brand-primary)',
+                backgroundColor: 'transparent',
+                border: 'none'
+              }}
             >
               {!canResend
                 ? `Resend available in ${timeLeft}s`
-                : isResending && (
+                : isResending ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2"></span>
                       Resending...
                     </>
-                  )}
+                  ) : 'Resend Reset Link'}
             </button>
           )}
         </form>
 
         {/* Login and Sign Up links */}
-        <div className="d-flex pt-4 justify-content-center">
-          <Link to="/login" className="text-decoration-none">
+        <div className="d-flex flex-column flex-sm-row align-items-center pt-3" style={{ gap: '0.5rem' }}>
+          <Link to="/login" className="text-decoration-none" style={{ color: 'var(--brand-primary)', fontWeight: '500' }}>
             Login
           </Link>
-          <span className="px-2">|</span>
-          <Link to="/signup" className="text-decoration-none">
+          <span className="d-none d-sm-inline px-2" style={{ color: 'var(--text-secondary)' }}>|</span>
+          <Link to="/signup" className="text-decoration-none" style={{ color: 'var(--brand-primary)', fontWeight: '500' }}>
             Sign Up
           </Link>
         </div>
