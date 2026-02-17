@@ -38,15 +38,15 @@ try {
     }
 
     // Debug: Check individual fields
-    error_log("SaveWorkoutSession - workoutPlanId: " . (isset($input['workoutPlanId']) ? $input['workoutPlanId'] : 'NOT SET'));
+    error_log("SaveWorkoutSession - workoutPlanId: " . (isset($input['workoutPlanId']) ? ($input['workoutPlanId'] ?? 'NULL') : 'NOT SET'));
     error_log("SaveWorkoutSession - planName: " . (isset($input['planName']) ? $input['planName'] : 'NOT SET'));
     error_log("SaveWorkoutSession - duration: " . (isset($input['duration']) ? $input['duration'] : 'NOT SET'));
 
-    // Validate required fields
-    if (!isset($input['workoutPlanId']) || !isset($input['planName']) || !isset($input['duration'])) {
+    // Validate required fields (workoutPlanId can be null but must be set)
+    if (!isset($input['planName']) || !isset($input['duration'])) {
         error_log("SaveWorkoutSession - Missing required fields");
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Workout plan ID, plan name, and duration are required']);
+        echo json_encode(['success' => false, 'message' => 'Plan name and duration are required']);
         exit();
     }
 
@@ -54,7 +54,7 @@ try {
     $workoutController = new WorkoutController();
     $response = $workoutController->createWorkoutSession(
         $userId,
-        $input['workoutPlanId'],
+        $input['workoutPlanId'] ?? null,
         $input['planName'],
         $input['duration'],
         $input['rating'] ?? null

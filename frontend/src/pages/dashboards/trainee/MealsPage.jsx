@@ -747,16 +747,16 @@ const MealsPage = ({ embedded = false }) => {
       )}
 
     {/* Page Header */}
-    <div className="bg-white border-bottom">
+    <div style={{ backgroundColor: 'transparent', borderBottom: '1px solid rgba(32, 214, 87, 0.2)' }}>
       <div className="container-fluid px-4 py-3">
           <div className="d-flex justify-content-between align-items-center">
             <div>
-              <h2 className="h5 mb-0 fw-bold text-dark">Meals & Nutrition</h2>
-              <p className="small text-muted mb-0">Track your food and macros</p>
+              <h2 className="h5 mb-0 fw-bold" style={{ color: '#ffffff' }}>Meals & Nutrition</h2>
+              <p className="small mb-0" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Track your food and macros</p>
             </div>
             <div className="d-flex gap-2">
               <button
-                className="btn btn-outline-primary btn-sm"
+                className="btn btn-sm rounded-pill"
                 onClick={() => {
                   if (nutritionGoal) {
                     setGoalForm({
@@ -769,13 +769,15 @@ const MealsPage = ({ embedded = false }) => {
                   }
                   setShowGoalModal(true);
                 }}
+                style={{ backgroundColor: 'rgba(32, 214, 87, 0.1)', color: 'var(--brand-primary)', border: '1px solid rgba(32, 214, 87, 0.3)' }}
               >
                 <i className="bi bi-target me-1"></i>
                 {nutritionGoal ? 'Edit Goal' : 'Set Goal'}
               </button>
               <button
-                className="btn btn-primary btn-sm"
+                className="btn btn-sm rounded-pill"
                 onClick={() => { resetSearchState(); setShowLogModal(true); }}
+                style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none', fontWeight: '600' }}
               >
                 <i className="bi bi-plus-lg me-1"></i>
                 Log Food
@@ -789,20 +791,20 @@ const MealsPage = ({ embedded = false }) => {
         {dailySummary && (
           <div className="row g-3 mb-4">
             <div className="col-md-3">
-              <div className="card border-0 shadow-sm">
+              <div className="card border-0 rounded-4" style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' }}>
                 <div className="card-body">
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <h6 className="mb-0 text-muted">Calories</h6>
-                    <i className="bi bi-fire text-danger"></i>
+                    <h6 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Calories</h6>
+                    <i className="bi bi-fire" style={{ color: '#dc3545' }}></i>
                   </div>
-                  <h3 className="mb-1">{Math.round(dailySummary.total_calories || 0)}</h3>
+                  <h3 className="mb-1" style={{ color: 'rgba(255, 255, 255, 0.95)' }}>{Math.round(dailySummary.total_calories || 0)}</h3>
                   {nutritionGoal && (
                     <>
-                      <small className="text-muted">of {nutritionGoal.target_calories} kcal</small>
-                      <div className="progress mt-2" style={{height: '4px'}}>
+                      <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>of {nutritionGoal.target_calories} kcal</small>
+                      <div className="progress mt-2" style={{height: '4px', backgroundColor: 'rgba(220, 53, 69, 0.2)'}}>
                         <div 
-                          className="progress-bar bg-danger" 
-                          style={{width: `${calculateProgress(dailySummary.total_calories, nutritionGoal.target_calories)}%`}}
+                          className="progress-bar" 
+                          style={{width: `${calculateProgress(dailySummary.total_calories, nutritionGoal.target_calories)}%`, backgroundColor: '#dc3545'}}
                         ></div>
                       </div>
                     </>
@@ -811,20 +813,20 @@ const MealsPage = ({ embedded = false }) => {
               </div>
             </div>
             <div className="col-md-3">
-              <div className="card border-0 shadow-sm">
+              <div className="card border-0 rounded-4" style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' }}>
                 <div className="card-body">
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <h6 className="mb-0 text-muted">Protein</h6>
-                    <i className="bi bi-egg text-primary"></i>
+                    <h6 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Protein</h6>
+                    <i className="bi bi-egg" style={{ color: 'var(--brand-primary)' }}></i>
                   </div>
-                  <h3 className="mb-1">{Math.round(dailySummary.total_protein || 0)}g</h3>
+                  <h3 className="mb-1" style={{ color: 'rgba(255, 255, 255, 0.95)' }}>{Math.round(dailySummary.total_protein || 0)}g</h3>
                   {nutritionGoal && nutritionGoal.target_protein && (
                     <>
-                      <small className="text-muted">of {nutritionGoal.target_protein}g</small>
-                      <div className="progress mt-2" style={{height: '4px'}}>
+                      <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>of {nutritionGoal.target_protein}g</small>
+                      <div className="progress mt-2" style={{height: '4px', backgroundColor: 'rgba(32, 214, 87, 0.2)'}}>
                         <div 
-                          className="progress-bar bg-primary" 
-                          style={{width: `${calculateProgress(dailySummary.total_protein, nutritionGoal.target_protein)}%`}}
+                          className="progress-bar" 
+                          style={{width: `${calculateProgress(dailySummary.total_protein, nutritionGoal.target_protein)}%`, backgroundColor: 'var(--brand-primary)'}}
                         ></div>
                       </div>
                     </>
@@ -833,20 +835,20 @@ const MealsPage = ({ embedded = false }) => {
               </div>
             </div>
             <div className="col-md-3">
-              <div className="card border-0 shadow-sm">
+              <div className="card border-0 rounded-4" style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' }}>
                 <div className="card-body">
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <h6 className="mb-0 text-muted">Carbs</h6>
-                    <i className="bi bi-clipboard-data text-warning"></i>
+                    <h6 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Carbs</h6>
+                    <i className="bi bi-clipboard-data" style={{ color: '#ffc107' }}></i>
                   </div>
-                  <h3 className="mb-1">{Math.round(dailySummary.total_carbs || 0)}g</h3>
+                  <h3 className="mb-1" style={{ color: 'rgba(255, 255, 255, 0.95)' }}>{Math.round(dailySummary.total_carbs || 0)}g</h3>
                   {nutritionGoal && nutritionGoal.target_carbs && (
                     <>
-                      <small className="text-muted">of {nutritionGoal.target_carbs}g</small>
-                      <div className="progress mt-2" style={{height: '4px'}}>
+                      <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>of {nutritionGoal.target_carbs}g</small>
+                      <div className="progress mt-2" style={{height: '4px', backgroundColor: 'rgba(255, 193, 7, 0.2)'}}>
                         <div 
-                          className="progress-bar bg-warning" 
-                          style={{width: `${calculateProgress(dailySummary.total_carbs, nutritionGoal.target_carbs)}%`}}
+                          className="progress-bar" 
+                          style={{width: `${calculateProgress(dailySummary.total_carbs, nutritionGoal.target_carbs)}%`, backgroundColor: '#ffc107'}}
                         ></div>
                       </div>
                     </>
@@ -855,20 +857,20 @@ const MealsPage = ({ embedded = false }) => {
               </div>
             </div>
             <div className="col-md-3">
-              <div className="card border-0 shadow-sm">
+              <div className="card border-0 rounded-4" style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' }}>
                 <div className="card-body">
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <h6 className="mb-0 text-muted">Fat</h6>
-                    <i className="bi bi-droplet text-info"></i>
+                    <h6 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Fat</h6>
+                    <i className="bi bi-droplet" style={{ color: '#0dcaf0' }}></i>
                   </div>
-                  <h3 className="mb-1">{Math.round(dailySummary.total_fat || 0)}g</h3>
+                  <h3 className="mb-1" style={{ color: 'rgba(255, 255, 255, 0.95)' }}>{Math.round(dailySummary.total_fat || 0)}g</h3>
                   {nutritionGoal && nutritionGoal.target_fat && (
                     <>
-                      <small className="text-muted">of {nutritionGoal.target_fat}g</small>
-                      <div className="progress mt-2" style={{height: '4px'}}>
+                      <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>of {nutritionGoal.target_fat}g</small>
+                      <div className="progress mt-2" style={{height: '4px', backgroundColor: 'rgba(13, 202, 240, 0.2)'}}>
                         <div 
-                          className="progress-bar bg-info" 
-                          style={{width: `${calculateProgress(dailySummary.total_fat, nutritionGoal.target_fat)}%`}}
+                          className="progress-bar" 
+                          style={{width: `${calculateProgress(dailySummary.total_fat, nutritionGoal.target_fat)}%`, backgroundColor: '#0dcaf0'}}
                         ></div>
                       </div>
                     </>
@@ -881,50 +883,50 @@ const MealsPage = ({ embedded = false }) => {
 
         {/* Trainer Assigned Meal Plan */}
         {trainerMealPlan && Array.isArray(trainerMealPlan) && trainerMealPlan.length > 0 && (
-          <div className="card border-0 shadow-sm mb-4">
-            <div className="card-header bg-white border-bottom">
+          <div className="card border-0 rounded-4 mb-4" style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' }}>
+            <div className="card-header border-0" style={{ backgroundColor: '#000000 !important', background: '#000000 !important', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', padding: '1.25rem', borderRadius: '1rem 1rem 0 0', backdropFilter: 'none' }}>
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <h5 className="mb-1">
-                    <i className="bi bi-person-check text-primary me-2"></i>
+                  <h5 className="mb-1" style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: '700' }}>
+                    <i className="bi bi-person-check me-2" style={{ color: 'var(--brand-primary)' }}></i>
                     Your Trainer's Meal Plan
                   </h5>
-                  <small className="text-muted">Follow this plan for best results • Continue logging your actual meals below</small>
+                  <small style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Follow this plan for best results • Continue logging your actual meals below</small>
                 </div>
-                <span className="badge bg-primary">Priority Plan</span>
+                <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)', padding: '0.5rem 1rem' }}>Priority Plan</span>
               </div>
             </div>
             <div className="card-body">
               {mealPlanLoading ? (
                 <div className="text-center py-4">
-                  <div className="spinner-border text-primary" role="status">
+                  <div className="spinner-border" role="status" style={{ color: 'var(--brand-primary)' }}>
                     <span className="visually-hidden">Loading...</span>
                   </div>
-                  <p className="text-muted mt-2">Loading meal plan...</p>
+                  <p className="mt-2" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Loading meal plan...</p>
                 </div>
               ) : (
                 <div className="table-responsive">
-                  <table className="table table-hover">
+                  <table className="table table-hover" style={{ color: '#ffffff' }}>
                     <thead>
                       <tr>
-                        <th>Day</th>
-                        <th>Meal</th>
-                        <th>Foods</th>
-                        <th>Notes</th>
+                        <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Day</th>
+                        <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Meal</th>
+                        <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Foods</th>
+                        <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Notes</th>
                       </tr>
                     </thead>
                     <tbody>
                       {trainerMealPlan.map((meal, index) => (
-                        <tr key={index}>
-                          <td>
-                            <strong>{getDayName(meal.day_of_week)}</strong>
+                        <tr key={index} style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
+                          <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
+                            <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{getDayName(meal.day_of_week)}</strong>
                           </td>
-                          <td>
-                            <span className="badge bg-primary">
+                          <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
+                            <span className="badge rounded-pill" style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)' }}>
                               {getMealTypeDisplay(meal.meal_type)}
                             </span>
                           </td>
-                          <td>
+                          <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
                             {(() => {
                               const foodItems = parseFoodItems(meal.food_items);
                               return foodItems.length > 0 ? (
@@ -932,22 +934,22 @@ const MealsPage = ({ embedded = false }) => {
                                   {foodItems.map((food, foodIndex) => (
                                     <div key={foodIndex} className="mb-1">
                                       <small className="d-block">
-                                        <strong>{food.food_name}</strong>
+                                        <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{food.food_name}</strong>
                                         {food.quantity && food.serving_unit && (
-                                          <span className="text-muted"> - {food.quantity} {food.serving_unit}</span>
+                                          <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}> - {food.quantity} {food.serving_unit}</span>
                                         )}
                                       </small>
                                     </div>
                                   ))}
                                 </div>
                               ) : (
-                                <small className="text-muted">No foods assigned</small>
+                                <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>No foods assigned</small>
                               );
                             })()}
                           </td>
-                          <td>
+                          <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
                             {meal.notes && (
-                              <small className="text-muted">{meal.notes}</small>
+                              <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{meal.notes}</small>
                             )}
                           </td>
                         </tr>
@@ -961,15 +963,15 @@ const MealsPage = ({ embedded = false }) => {
         )}
 
         {/* Today's Meals */}
-        <div className="card border-0 shadow-sm mb-4">
-          <div className="card-header bg-white border-bottom">
+        <div className="card border-0 rounded-4 mb-4" style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' }}>
+          <div className="card-header border-0" style={{ backgroundColor: '#000000', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', padding: '1.25rem', borderRadius: '1rem 1rem 0 0' }}>
             <div className="d-flex justify-content-between align-items-center">
               <div>
-                <h5 className="mb-0">Today's Meals</h5>
+                <h5 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: '700' }}>Today's Meals</h5>
                 {trainerMealPlan && trainerMealPlan.length > 0 ? (
-                  <small className="text-muted">Track what you actually eat vs. your trainer's plan</small>
+                  <small style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Track what you actually eat vs. your trainer's plan</small>
                 ) : (
-                  <small className="text-muted">Track your daily nutrition</small>
+                  <small style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Track your daily nutrition</small>
                 )}
               </div>
             </div>
@@ -977,11 +979,12 @@ const MealsPage = ({ embedded = false }) => {
           <div className="card-body">
             {todayLogs.length === 0 ? (
               <div className="text-center py-5">
-                <i className="bi bi-journal-plus display-4 text-muted mb-3"></i>
-                <p className="text-muted">No meals logged today. Start tracking your nutrition!</p>
+                <i className="bi bi-journal-plus display-4 mb-3" style={{ color: 'rgba(255, 255, 255, 0.4)' }}></i>
+                <p style={{ color: 'rgba(255, 255, 255, 0.6)' }}>No meals logged today. Start tracking your nutrition!</p>
                 <button 
-                  className="btn btn-primary"
+                  className="btn rounded-pill"
                   onClick={() => setShowLogModal(true)}
+                  style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none', fontWeight: '600' }}
                 >
                   <i className="bi bi-plus-lg me-2"></i>
                   Log Your First Meal
@@ -992,40 +995,41 @@ const MealsPage = ({ embedded = false }) => {
                 {Object.entries(groupedLogs).map(([mealType, logs]) => (
                   logs.length > 0 && (
                     <div key={mealType} className="mb-4">
-                      <h6 className="text-capitalize text-muted mb-3">
-                        <i className="bi bi-circle-fill me-2" style={{fontSize: '8px'}}></i>
+                      <h6 className="text-capitalize mb-3" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                        <i className="bi bi-circle-fill me-2" style={{fontSize: '8px', color: 'var(--brand-primary)'}}></i>
                         {mealType}
                       </h6>
                       <div className="table-responsive">
-                        <table className="table table-hover">
+                        <table className="table table-hover" style={{ color: '#ffffff' }}>
                           <thead>
                             <tr>
-                              <th>Food</th>
-                              <th>Serving</th>
-                              <th>Calories</th>
-                              <th>Protein</th>
-                              <th>Carbs</th>
-                              <th>Fat</th>
-                              <th>Delete</th>
+                              <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Food</th>
+                              <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Serving</th>
+                              <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Calories</th>
+                              <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Protein</th>
+                              <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Carbs</th>
+                              <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Fat</th>
+                              <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Delete</th>
                             </tr>
                           </thead>
                           <tbody>
                             {logs.map((log) => (
-                              <tr key={log.id}>
-                                <td>
-                                  <strong>{toTitleCase(log.food_name)}</strong>
-                                  {log.notes && <><br/><small className="text-muted">{log.notes}</small></>}
+                              <tr key={log.id} style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
+                                <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>
+                                  <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{toTitleCase(log.food_name)}</strong>
+                                  {log.notes && <><br/><small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{log.notes}</small></>}
                                 </td>
-                                <td>{formatServing(log.quantity, log.serving_unit)}</td>
-                                <td>{Math.round(log.calories)} kcal</td>
-                                <td>{Math.round(log.protein)}g</td>
-                                <td>{Math.round(log.carbs)}g</td>
-                                <td>{Math.round(log.fat)}g</td>
-                                <td>
+                                <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{formatServing(log.quantity, log.serving_unit)}</td>
+                                <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(log.calories)} kcal</td>
+                                <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(log.protein)}g</td>
+                                <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(log.carbs)}g</td>
+                                <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(log.fat)}g</td>
+                                <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
                                   <button
-                                    className="btn btn-sm btn-outline-danger"
+                                    className="btn btn-sm rounded-pill"
                                     onClick={() => handleDeleteLog(log.id)}
                                     title="Delete"
+                                    style={{ backgroundColor: 'rgba(220, 53, 69, 0.1)', color: '#dc3545', border: '1px solid rgba(220, 53, 69, 0.3)' }}
                                   >
                                     <i className="bi bi-trash"></i>
                                   </button>
@@ -1044,17 +1048,17 @@ const MealsPage = ({ embedded = false }) => {
         </div>
 
     {/* Meal History (7-day windows) */}
-    <div className="card border-0 shadow-sm mb-5">
-          <div className="card-header bg-white d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">Meal History</h5>
+    <div className="card border-0 rounded-4 mb-5" style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' }}>
+          <div className="card-header border-0 d-flex justify-content-between align-items-center" style={{ backgroundColor: '#000000', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', padding: '1.25rem', borderRadius: '1rem 1rem 0 0' }}>
+            <h5 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: '700' }}>Meal History</h5>
             <div className="d-flex align-items-center gap-2">
-              <button className="btn btn-sm btn-outline-secondary" onClick={goOlder} disabled={historyLoading}>
+              <button className="btn btn-sm rounded-pill" onClick={goOlder} disabled={historyLoading} style={{ backgroundColor: 'rgba(32, 214, 87, 0.1)', color: 'var(--brand-primary)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
                 <i className="bi bi-chevron-left"></i> Previous 7 days
               </button>
-              <div className="small text-muted">
+              <div className="small" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                 {historyStartDate} – {historyEndDate}
               </div>
-              <button className="btn btn-sm btn-outline-secondary" onClick={goNewer} disabled={!canGoNewer || historyLoading}>
+              <button className="btn btn-sm rounded-pill" onClick={goNewer} disabled={!canGoNewer || historyLoading} style={{ backgroundColor: 'rgba(32, 214, 87, 0.1)', color: 'var(--brand-primary)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
                 Next 7 days <i className="bi bi-chevron-right"></i>
               </button>
             </div>
@@ -1063,7 +1067,7 @@ const MealsPage = ({ embedded = false }) => {
             {historyLoading ? (
               <div className="text-center py-4"><div className="spinner-border" role="status"></div></div>
             ) : historyDates.length === 0 ? (
-              <div className="text-center text-muted py-4">No meals in this range.</div>
+              <div className="text-center py-4" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>No meals in this range.</div>
             ) : (
               historyDates.map(date => {
                 const weekday = new Date(date).toLocaleDateString(undefined, { weekday: 'long' });
@@ -1076,49 +1080,50 @@ const MealsPage = ({ embedded = false }) => {
                   return acc;
                 }, { calories:0, protein:0, carbs:0, fat:0 });
                 return (
-                  <div key={date} className="mb-3 border rounded">
-                    <div className="d-flex justify-content-between align-items-center px-3 py-2 bg-light">
+                  <div key={date} className="mb-3 border rounded" style={{ borderColor: 'rgba(32, 214, 87, 0.3)' }}>
+                    <div className="d-flex justify-content-between align-items-center px-3 py-2" style={{ backgroundColor: 'rgba(32, 214, 87, 0.05)' }}>
                       <div>
-                        <strong>{weekday}</strong> <span className="text-muted">{date}</span><br/>
-                        <small className="text-muted">{allLogs.length} item(s) • {Math.round(totals.calories)} kcal • P {Math.round(totals.protein)}g • C {Math.round(totals.carbs)}g • F {Math.round(totals.fat)}g</small>
+                        <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{weekday}</strong> <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>{date}</span><br/>
+                        <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{allLogs.length} item(s) • {Math.round(totals.calories)} kcal • P {Math.round(totals.protein)}g • C {Math.round(totals.carbs)}g • F {Math.round(totals.fat)}g</small>
                       </div>
                       <button
-                        className="btn btn-sm btn-outline-primary"
+                        className="btn btn-sm rounded-pill"
                         type="button"
                         onClick={() => {
                           const section = document.getElementById(`history-details-${date}`);
                           if (section) section.classList.toggle('d-none');
                         }}
+                        style={{ backgroundColor: 'rgba(32, 214, 87, 0.1)', color: 'var(--brand-primary)', border: '1px solid rgba(32, 214, 87, 0.3)' }}
                       >
                         View Details
                       </button>
                     </div>
-                    <div id={`history-details-${date}`} className="px-3 py-3 d-none">
+                    <div id={`history-details-${date}`} className="px-3 py-3 d-none" style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}>
                       {['breakfast','lunch','dinner','snack','other'].map(meal => (
                         historyByDate[date][meal].length > 0 && (
                           <div key={`${date}-${meal}`} className="mb-3">
-                            <div className="fw-semibold text-capitalize mb-2">{meal}</div>
+                            <div className="fw-semibold text-capitalize mb-2" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{meal}</div>
                             <div className="table-responsive">
-                              <table className="table table-sm">
+                              <table className="table table-sm" style={{ color: '#ffffff' }}>
                                 <thead>
                                   <tr>
-                                    <th>Food</th>
-                                    <th>Serving</th>
-                                    <th>Calories</th>
-                                    <th>Protein</th>
-                                    <th>Carbs</th>
-                                    <th>Fat</th>
+                                    <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Food</th>
+                                    <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Serving</th>
+                                    <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Calories</th>
+                                    <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Protein</th>
+                                    <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Carbs</th>
+                                    <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Fat</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {historyByDate[date][meal].map(item => (
-                                    <tr key={item.id}>
-                                      <td><strong>{toTitleCase(item.food_name)}</strong></td>
-                                      <td>{formatServing(item.quantity, item.serving_unit)}</td>
-                                      <td>{Math.round(item.calories)} kcal</td>
-                                      <td>{Math.round(item.protein)}g</td>
-                                      <td>{Math.round(item.carbs)}g</td>
-                                      <td>{Math.round(item.fat)}g</td>
+                                    <tr key={item.id} style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
+                                      <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}><strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{toTitleCase(item.food_name)}</strong></td>
+                                      <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{formatServing(item.quantity, item.serving_unit)}</td>
+                                      <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(item.calories)} kcal</td>
+                                      <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(item.protein)}g</td>
+                                      <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(item.carbs)}g</td>
+                                      <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(item.fat)}g</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -1140,70 +1145,75 @@ const MealsPage = ({ embedded = false }) => {
       {showGoalModal && (
         <div className="modal show d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Set Nutrition Goal</h5>
-                <button type="button" className="btn-close" onClick={() => setShowGoalModal(false)}></button>
+            <div className="modal-content" style={{ backgroundColor: 'rgba(15, 20, 15, 0.95)', color: '#ffffff', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem' }}>
+              <div className="modal-header dark-modal-header" style={{ borderBottom: '1px solid rgba(32, 214, 87, 0.3) !important', background: 'rgba(15, 20, 15, 0.95) !important', backgroundColor: 'rgba(15, 20, 15, 0.95) !important', borderRadius: '1rem 1rem 0 0 !important' }}>
+                <h5 className="modal-title" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Set Nutrition Goal</h5>
+                <button type="button" className="btn-close btn-close-white" onClick={() => setShowGoalModal(false)}></button>
               </div>
               <form onSubmit={handleSetGoal}>
                 <div className="modal-body">
                   <div className="mb-3">
-                    <label className="form-label">Goal Type</label>
+                    <label className="form-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Goal Type</label>
                     <select
                       className="form-select"
                       value={goalForm.goal_type}
                       onChange={(e) => setGoalForm({...goalForm, goal_type: e.target.value})}
+                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', borderColor: 'rgba(32, 214, 87, 0.3)' }}
                       required
                     >
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
+                      <option value="daily" style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}>Daily</option>
+                      <option value="weekly" style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}>Weekly</option>
                     </select>
                   </div>
                   <div className="mb-3">
-                    <label className="form-label">Target Calories *</label>
+                    <label className="form-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Target Calories *</label>
                     <input
                       type="number"
                       className="form-control"
                       value={goalForm.target_calories}
                       onChange={(e) => setGoalForm({...goalForm, target_calories: e.target.value})}
+                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', borderColor: 'rgba(32, 214, 87, 0.3)' }}
                       required
                     />
                   </div>
                   <div className="row">
                     <div className="col-md-4 mb-3">
-                      <label className="form-label">Protein (g)</label>
+                      <label className="form-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Protein (g)</label>
                       <input
                         type="number"
                         className="form-control"
                         value={goalForm.target_protein}
                         onChange={(e) => setGoalForm({...goalForm, target_protein: e.target.value})}
+                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', borderColor: 'rgba(32, 214, 87, 0.3)' }}
                       />
                     </div>
                     <div className="col-md-4 mb-3">
-                      <label className="form-label">Carbs (g)</label>
+                      <label className="form-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Carbs (g)</label>
                       <input
                         type="number"
                         className="form-control"
                         value={goalForm.target_carbs}
                         onChange={(e) => setGoalForm({...goalForm, target_carbs: e.target.value})}
+                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', borderColor: 'rgba(32, 214, 87, 0.3)' }}
                       />
                     </div>
                     <div className="col-md-4 mb-3">
-                      <label className="form-label">Fat (g)</label>
+                      <label className="form-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Fat (g)</label>
                       <input
                         type="number"
                         className="form-control"
                         value={goalForm.target_fat}
                         onChange={(e) => setGoalForm({...goalForm, target_fat: e.target.value})}
+                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', borderColor: 'rgba(32, 214, 87, 0.3)' }}
                       />
                     </div>
                   </div>
                 </div>
-                <div className="modal-footer">
+                <div className="modal-footer dark-modal-footer" style={{ borderTop: '1px solid rgba(32, 214, 87, 0.3) !important', background: 'rgba(15, 20, 15, 0.95) !important', backgroundColor: 'rgba(15, 20, 15, 0.95) !important', borderRadius: '0 0 1rem 1rem !important' }}>
                   <button type="button" className="btn btn-secondary" onClick={() => setShowGoalModal(false)}>
                     Cancel
                   </button>
-                  <button type="submit" className="btn btn-primary" disabled={loading}>
+                  <button type="submit" className="btn" disabled={loading} style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none' }}>
                     {loading ? 'Saving...' : 'Save Goal'}
                   </button>
                 </div>
@@ -1217,22 +1227,23 @@ const MealsPage = ({ embedded = false }) => {
       {showLogModal && (
         <div className="modal show d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
           <div className="modal-dialog modal-dialog-centered modal-lg">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Log Food</h5>
-                <button type="button" className="btn-close" onClick={() => {setShowLogModal(false); resetLogForm(); resetSearchState();}}></button>
+            <div className="modal-content" style={{ backgroundColor: 'rgba(15, 20, 15, 0.95)', color: '#ffffff', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem' }}>
+              <div className="modal-header dark-modal-header" style={{ borderBottom: '1px solid rgba(32, 214, 87, 0.3) !important', background: 'rgba(15, 20, 15, 0.95) !important', backgroundColor: 'rgba(15, 20, 15, 0.95) !important', borderRadius: '1rem 1rem 0 0 !important' }}>
+                <h5 className="modal-title" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Log Food</h5>
+                <button type="button" className="btn-close btn-close-white" onClick={() => {setShowLogModal(false); resetLogForm(); resetSearchState();}}></button>
               </div>
               <form onSubmit={handleLogFood}>
                 <div className="modal-body">
               {/* Search Foods */}
                   <div className="mb-4">
-                    <label className="form-label">Search Food</label>
+                    <label className="form-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Search Food</label>
                     <div className="input-group">
                       <input 
                         type="text" 
                         className="form-control"
                         placeholder="Search USDA database..."
                         value={searchQuery}
+                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', borderColor: 'rgba(32, 214, 87, 0.3)' }}
                         onChange={(e) => {
                           const v = e.target.value;
                           setSearchQuery(v);
@@ -1258,33 +1269,35 @@ const MealsPage = ({ embedded = false }) => {
                     {/* Search state feedback */}
                     <div className="mt-1" aria-live="polite">
             {((searching || isDebouncing) || (pendingQuery && pendingQuery === searchQuery.trim())) && (
-                        <small className="text-muted">
+                        <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                           <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
                           Searching…
                         </small>
                       )}
             {!searching && !isDebouncing && !pendingQuery && searchQuery.trim().length > 0 && searchQuery.trim().length < 2 && (
-                        <small className="text-muted">Type at least 2 characters to search</small>
+                        <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Type at least 2 characters to search</small>
                       )}
             {!searching && !isDebouncing && !pendingQuery && searchQuery.trim().length >= 2 && (resultsFor === searchQuery.trim()) && (searchResults.usda_foods.length + searchResults.custom_foods.length === 0) && (
-                        <small className="text-muted">No results for "{searchQuery.trim()}"</small>
+                        <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>No results for "{searchQuery.trim()}"</small>
                       )}
                     </div>
                     
                     {/* Search Results */}
                     {(searchResults.usda_foods.length > 0 || searchResults.custom_foods.length > 0) && (
-                      <div className="mt-2" style={{maxHeight: '300px', overflowY: 'auto', border: '1px solid #dee2e6', borderRadius: '4px'}}>
+                      <div className="mt-2" style={{maxHeight: '300px', overflowY: 'auto', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '4px', backgroundColor: 'rgba(0, 0, 0, 0.3)'}}>
             {searchResults.usda_foods.map((food, idx) => (
                           <div 
                             key={`usda-${idx}`}
-                            className="p-2 border-bottom cursor-pointer hover-bg-light"
-                            style={{cursor: 'pointer'}}
+                            className="p-2 border-bottom"
+                            style={{cursor: 'pointer', borderColor: 'rgba(32, 214, 87, 0.2) !important', transition: 'background-color 0.2s'}}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(32, 214, 87, 0.1)'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               onMouseDown={(e) => { e.preventDefault(); selectFood(food, 'usda'); }}
                           >
-                            <div><strong>{toTitleCase(food.description)}</strong></div>
-                            {food.brand_name && <div><small className="text-muted">{toTitleCase(food.brand_name)}</small></div>}
+                            <div><strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{toTitleCase(food.description)}</strong></div>
+                            {food.brand_name && <div><small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{toTitleCase(food.brand_name)}</small></div>}
                             <div className="mt-1">
-                              <small className="text-muted">
+                              <small style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                                 {food.nutrients.calories || 0} cal • 
                                 P: {food.nutrients.protein || 0}g • 
                                 C: {food.nutrients.carbs || 0}g • 
@@ -1297,16 +1310,18 @@ const MealsPage = ({ embedded = false }) => {
             {searchResults.custom_foods.map((food) => (
                           <div 
                             key={`custom-${food.id}`}
-                            className="p-2 border-bottom cursor-pointer hover-bg-light"
-                            style={{cursor: 'pointer'}}
+                            className="p-2 border-bottom"
+                            style={{cursor: 'pointer', borderColor: 'rgba(32, 214, 87, 0.2) !important', transition: 'background-color 0.2s'}}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(32, 214, 87, 0.1)'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               onMouseDown={(e) => { e.preventDefault(); selectFood(food, 'custom'); }}
                           >
                             <div>
-                              <strong>{toTitleCase(food.name)}</strong> <span className="badge bg-info">Custom</span>
+                              <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{toTitleCase(food.name)}</strong> <span className="badge" style={{ backgroundColor: '#0dcaf0', color: '#000' }}>Custom</span>
                             </div>
-                            {food.brand_name && <div><small className="text-muted">{toTitleCase(food.brand_name)}</small></div>}
+                            {food.brand_name && <div><small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{toTitleCase(food.brand_name)}</small></div>}
                             <div className="mt-1">
-                              <small className="text-muted">
+                              <small style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                                 {food.calories || 0} cal • 
                                 P: {food.protein || 0}g • 
                                 C: {food.carbs || 0}g • 
@@ -1322,58 +1337,61 @@ const MealsPage = ({ embedded = false }) => {
 
                   {logForm.food_name && (
                     <>
-                      <div className="alert alert-info">
+                      <div className="alert" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', border: '1px solid rgba(32, 214, 87, 0.4)', color: 'rgba(255, 255, 255, 0.9)' }}>
                         <strong>Selected:</strong> {logForm.food_name}
                       </div>
                       
                       <div className="row">
                         <div className="col-md-6 mb-3">
-                          <label className="form-label">Date *</label>
+                          <label className="form-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Date *</label>
                           <input 
                             type="date" 
                             className="form-control"
                             value={logForm.log_date}
                             onChange={(e) => setLogForm({...logForm, log_date: e.target.value})}
+                            style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', borderColor: 'rgba(32, 214, 87, 0.3)', colorScheme: 'dark' }}
                             required
                           />
                         </div>
                         <div className="col-md-6 mb-3">
-                          <label className="form-label">Meal Type *</label>
+                          <label className="form-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Meal Type *</label>
                           <select 
                             className="form-select"
                             value={logForm.meal_type}
                             onChange={(e) => setLogForm({...logForm, meal_type: e.target.value})}
+                            style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', borderColor: 'rgba(32, 214, 87, 0.3)' }}
                             required
                           >
-                            <option value="breakfast">Breakfast</option>
-                            <option value="lunch">Lunch</option>
-                            <option value="dinner">Dinner</option>
-                            <option value="snack">Snack</option>
-                            <option value="other">Other</option>
+                            <option value="breakfast" style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}>Breakfast</option>
+                            <option value="lunch" style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}>Lunch</option>
+                            <option value="dinner" style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}>Dinner</option>
+                            <option value="snack" style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}>Snack</option>
+                            <option value="other" style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}>Other</option>
                           </select>
                         </div>
                       </div>
 
                       <div className="row">
                         <div className="col-md-6 mb-3">
-                          <label className="form-label">Measurement Type *</label>
+                          <label className="form-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Measurement Type *</label>
                           <select 
                             className="form-select"
                             value={logForm.serving_unit}
                             onChange={(e) => handleMeasurementTypeChange(e.target.value)}
+                            style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', borderColor: 'rgba(32, 214, 87, 0.3)' }}
                             required
                           >
-                            <option value="g">Grams (g)</option>
-                            <option value="ml">Milliliters (ml)</option>
+                            <option value="g" style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}>Grams (g)</option>
+                            <option value="ml" style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}>Milliliters (ml)</option>
                             {availablePortions.map((portion, index) => (
-                              <option key={index} value={`portion_${index}`}>
+                              <option key={index} value={`portion_${index}`} style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}>
                                 Per {portion.label} ({portion.gram_weight}g)
                               </option>
                             ))}
                           </select>
                         </div>
                         <div className="col-md-6 mb-3">
-                          <label className="form-label">
+                          <label className="form-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
                             Quantity ({
                               logForm.serving_unit === 'g' ? 'grams' : 
                               logForm.serving_unit === 'ml' ? 'ml' : 
@@ -1392,6 +1410,7 @@ const MealsPage = ({ embedded = false }) => {
                                   ? Math.round(logForm.quantity || 0)
                                   : logForm.quantity)
                             }
+                            style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', borderColor: 'rgba(32, 214, 87, 0.3)' }}
                             onChange={(e) => {
                               const raw = e.target.value;
                               if (typeof logForm.serving_unit === 'string' && logForm.serving_unit.startsWith('portion_')) {
@@ -1411,69 +1430,70 @@ const MealsPage = ({ embedded = false }) => {
 
                       <div className="row">
                         <div className="col-md-3 mb-3">
-                          <label className="form-label">Calories *</label>
+                          <label className="form-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Calories *</label>
                           <input 
                             type="number" 
                             step="0.01"
                             className="form-control"
                             value={logForm.calories}
                             readOnly
-                            style={{backgroundColor: '#f8f9fa'}}
+                            style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', borderColor: 'rgba(32, 214, 87, 0.3)'}}
                           />
-                          <small className="text-muted">Auto-calculated based on quantity</small>
+                          <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Auto-calculated based on quantity</small>
                         </div>
                         <div className="col-md-3 mb-3">
-                          <label className="form-label">Protein (g) *</label>
+                          <label className="form-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Protein (g) *</label>
                           <input 
                             type="number" 
                             step="0.01"
                             className="form-control"
                             value={logForm.protein}
                             readOnly
-                            style={{backgroundColor: '#f8f9fa'}}
+                            style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', borderColor: 'rgba(32, 214, 87, 0.3)'}}
                           />
                         </div>
                         <div className="col-md-3 mb-3">
-                          <label className="form-label">Carbs (g) *</label>
+                          <label className="form-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Carbs (g) *</label>
                           <input 
                             type="number" 
                             step="0.01"
                             className="form-control"
                             value={logForm.carbs}
                             readOnly
-                            style={{backgroundColor: '#f8f9fa'}}
+                            style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', borderColor: 'rgba(32, 214, 87, 0.3)'}}
                           />
                         </div>
                         <div className="col-md-3 mb-3">
-                          <label className="form-label">Fat (g) *</label>
+                          <label className="form-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Fat (g) *</label>
                           <input 
                             type="number" 
                             step="0.01"
                             className="form-control"
                             value={logForm.fat}
                             readOnly
-                            style={{backgroundColor: '#f8f9fa'}}
+                            style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', borderColor: 'rgba(32, 214, 87, 0.3)'}}
                           />
                         </div>
                       </div>
 
                       <div className="mb-3">
-                        <label className="form-label">Notes</label>
+                        <label className="form-label" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Notes</label>
                         <textarea 
                           className="form-control"
                           rows="2"
                           value={logForm.notes}
                           onChange={(e) => setLogForm({...logForm, notes: e.target.value})}
+                          style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', borderColor: 'rgba(32, 214, 87, 0.3)' }}
                         ></textarea>
                       </div>
                     </>
                   )}
                 </div>
-                <div className="modal-footer">
+                <div className="modal-footer dark-modal-footer" style={{ borderTop: '1px solid rgba(32, 214, 87, 0.3) !important', background: 'rgba(15, 20, 15, 0.95) !important', backgroundColor: 'rgba(15, 20, 15, 0.95) !important', borderRadius: '0 0 1rem 1rem !important' }}>
                   <button type="button" className="btn btn-secondary" onClick={() => {setShowLogModal(false); resetLogForm(); resetSearchState();}}>
                     Cancel
                   </button>
-                  <button type="submit" className="btn btn-primary" disabled={loading || !logForm.food_name}>
+                  <button type="submit" className="btn" disabled={loading || !logForm.food_name} style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none' }}>
                     {loading ? 'Logging...' : 'Log Food'}
                   </button>
                 </div>

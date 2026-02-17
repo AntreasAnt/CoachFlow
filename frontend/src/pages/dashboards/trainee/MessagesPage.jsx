@@ -5,6 +5,7 @@ import { ChatProvider, useChat } from '../../../context/ChatProvider';
 import { ConversationList } from '../../../components/chat/ConversationList';
 import { ChatWindow } from '../../../components/chat/ChatWindow';
 import { MessageInput } from '../../../components/chat/MessageInput';
+import TraineeDashboard from '../../../components/TraineeDashboard';
 import '../../../styles/trainee-dashboard.css';
 import '../../../styles/messages.css';
 
@@ -108,14 +109,7 @@ const MessagesContent = ({ currentUser }) => {
       <div className={`conversations-sidebar ${chat.activeConversationId ? 'mobile-hidden' : ''}`}>
         <div className="sidebar-header">
           <div className="d-flex align-items-center">
-            <button 
-              className="btn btn-link text-dark p-0 me-3"
-              onClick={() => navigate(-1)}
-              title="Go back"
-            >
-              <i className="bi bi-arrow-left fs-5"></i>
-            </button>
-            <h5 className="mb-0 fw-bold">Messages</h5>
+            <h5 className="mb-0 fw-bold text-white">Messages</h5>
           </div>
         </div>
 
@@ -151,7 +145,7 @@ const MessagesContent = ({ currentUser }) => {
                   </div>
                 ))
               ) : (
-                <div className="text-center text-muted py-3">
+                <div className="text-center text-white-50 py-3">
                   {isSearching ? 'Searching...' : 'No users found'}
                 </div>
               )}
@@ -224,29 +218,27 @@ const MessagesPage = () => {
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
+      <TraineeDashboard>
+        <div className="d-flex justify-content-center align-items-center" style={{ height: 'calc(100vh - 140px)' }}>
+          <div className="spinner-border text-success" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
         </div>
-      </div>
+      </TraineeDashboard>
     );
   }
 
   return (
-    <div className="messages-page-wrapper">
-      {/* Header - Only visible on mobile and when no active conversation */}
-      <header className="messages-header">
-       
-      </header>
-
-      {/* Main Content */}
-      {currentUser && (
-        <ChatProvider currentUserBackend={currentUser}>
-          <MessagesContent currentUser={currentUser} />
-        </ChatProvider>
-      )}
-
-    </div>
+    <TraineeDashboard>
+      <div className="messages-page-wrapper" style={{ height: 'calc(100vh - 140px)' }}>
+        {/* Main Content */}
+        {currentUser && (
+          <ChatProvider currentUserBackend={currentUser}>
+            <MessagesContent currentUser={currentUser} />
+          </ChatProvider>
+        )}
+      </div>
+    </TraineeDashboard>
   );
 };
 

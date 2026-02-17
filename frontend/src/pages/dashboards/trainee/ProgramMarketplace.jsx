@@ -47,9 +47,9 @@ const CheckoutForm = ({ clientSecret, onSuccess, onCancel, programTitle, amount 
   return (
     <form onSubmit={handleSubmit}>
       <div className="mb-4">
-        <h5 className="mb-3">Complete Your Purchase</h5>
-        <div className="alert alert-info">
-          <strong>{programTitle}</strong>
+        <h5 className="mb-3 text-white">Complete Your Purchase</h5>
+        <div className="alert" style={{ backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}>
+          <strong className="text-white">{programTitle}</strong>
           <br />
           <span className="h4 text-success">${amount}</span>
         </div>
@@ -83,7 +83,7 @@ const CheckoutForm = ({ clientSecret, onSuccess, onCancel, programTitle, amount 
         </button>
         <button 
           type="button" 
-          className="btn btn-outline-secondary"
+          className="btn btn-outline-light"
           onClick={onCancel}
           disabled={isProcessing}
         >
@@ -91,7 +91,7 @@ const CheckoutForm = ({ clientSecret, onSuccess, onCancel, programTitle, amount 
         </button>
       </div>
 
-      <p className="text-muted small mt-3 text-center">
+      <p className="text-white-50 small mt-3 text-center">
         <i className="bi bi-shield-check me-1"></i>
         Secure payment powered by Stripe
       </p>
@@ -305,10 +305,10 @@ const ProgramMarketplace = () => {
 
   const renderProgramCard = (program, isPurchased = false) => (
     <div key={program.id || program.program_id} className="col-lg-3 col-md-4 col-sm-6 mb-4">
-      <div className="card border-0 shadow-sm h-100">
+      <div className="card border-0 shadow-sm h-100 dark-card">
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-start mb-3">
-            <h6 className="card-title mb-0">{program.title}</h6>
+            <h6 className="card-title mb-0 text-white">{program.title}</h6>
             {!isPurchased && program.is_featured && (
               <span className="badge bg-warning text-dark">
                 <i className="bi bi-star-fill"></i>
@@ -316,26 +316,26 @@ const ProgramMarketplace = () => {
             )}
           </div>
           
-          <p className="text-muted small" style={{ minHeight: '60px' }}>
+          <p className="text-white-50 small" style={{ minHeight: '60px' }}>
             {program.description?.substring(0, 80)}...
           </p>
           
           <div className="mb-3">
-            <span className="badge bg-light text-dark me-1 mb-1" style={{ fontSize: '0.7rem' }}>
+            <span className="badge bg-secondary me-1 mb-1" style={{ fontSize: '0.7rem' }}>
               {program.difficulty_level}
             </span>
-            <span className="badge bg-light text-dark me-1 mb-1" style={{ fontSize: '0.7rem' }}>
+            <span className="badge bg-secondary me-1 mb-1" style={{ fontSize: '0.7rem' }}>
               {program.duration_weeks}w
             </span>
-            <span className="badge bg-light text-dark mb-1" style={{ fontSize: '0.7rem' }}>
+            <span className="badge bg-secondary mb-1" style={{ fontSize: '0.7rem' }}>
               {program.category}
             </span>
           </div>
 
           {!isPurchased && (
             <div className="mb-2">
-              <small className="text-muted d-block">By {program.trainer_name || 'Coach'}</small>
-              <small className="text-muted">
+              <small className="text-white-50 d-block">By {program.trainer_name || 'Coach'}</small>
+              <small className="text-white-50">
                 {program.purchase_count || 0} purchases
                 {program.rating_average > 0 && (
                   <span className="ms-2">
@@ -348,7 +348,7 @@ const ProgramMarketplace = () => {
 
           {isPurchased ? (
             <div>
-              <small className="text-muted d-block mb-2">
+              <small className="text-white-50 d-block mb-2">
                 Purchased: {new Date(program.purchased_at).toLocaleDateString()}
               </small>
               <button className="btn btn-primary btn-sm w-100">
@@ -358,7 +358,7 @@ const ProgramMarketplace = () => {
             </div>
           ) : (
             <div className="d-flex justify-content-between align-items-center">
-              <span className="fw-bold text-primary">${parseFloat(program.price).toFixed(2)}</span>
+              <span className="fw-bold text-success">${parseFloat(program.price).toFixed(2)}</span>
               <button 
                 className="btn btn-success btn-sm"
                 onClick={() => handleBuyProgram(program)}
@@ -377,17 +377,24 @@ const ProgramMarketplace = () => {
     <div className={`modal fade ${showCheckout ? 'show d-block' : ''}`} 
          style={{ backgroundColor: showCheckout ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
       <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">Checkout</h5>
+        <div className="modal-content dark-modal">
+          <div className="modal-header dark-modal-header">
+            <h5 className="modal-title text-white">Checkout</h5>
             <button 
               type="button" 
-              className="btn-close" 
+              className="btn-close btn-close-white" 
               onClick={handlePaymentCancel}
             ></button>
           </div>
           <div className="modal-body">
-            {clientSecret && stripePromise && (
+            {!clientSecret || !stripePromise ? (
+              <div className="text-center py-5">
+                <div className="spinner-border text-success mb-3" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="text-white-50">Loading payment form...</p>
+              </div>
+            ) : (
               <Elements stripe={stripePromise} options={{ clientSecret }}>
                 <CheckoutForm 
                   clientSecret={clientSecret}
@@ -408,7 +415,7 @@ const ProgramMarketplace = () => {
     <div className={`modal fade ${showSuccessModal ? 'show d-block' : ''}`} 
          style={{ backgroundColor: showSuccessModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
       <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content">
+        <div className="modal-content dark-modal">
           <div className="modal-body text-center p-5">
             <div className="mb-4">
               <div className="rounded-circle bg-success d-inline-flex align-items-center justify-content-center" 
@@ -416,9 +423,9 @@ const ProgramMarketplace = () => {
                 <i className="bi bi-check-lg text-white" style={{ fontSize: '3rem' }}></i>
               </div>
             </div>
-            <h3 className="mb-3">Purchase Successful!</h3>
-            <p className="text-muted mb-4">
-              Congratulations! You now have access to <strong>{selectedProgram?.title}</strong>
+            <h3 className="mb-3 text-white">Purchase Successful!</h3>
+            <p className="text-white-50 mb-4">
+              Congratulations! You now have access to <strong className="text-white">{selectedProgram?.title}</strong>
             </p>
             <div className="d-flex gap-2 justify-content-center">
               <button 
@@ -429,7 +436,7 @@ const ProgramMarketplace = () => {
                 View My Programs
               </button>
               <button 
-                className="btn btn-outline-dark"
+                className="btn btn-outline-light"
                 onClick={() => {
                   setShowSuccessModal(false);
                   setSelectedProgram(null);
@@ -450,7 +457,7 @@ const ProgramMarketplace = () => {
         <BackButton className="mb-3" />
         
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h4 className="mb-0">Program Marketplace</h4>
+          <h4 className="mb-0 text-white">Program Marketplace</h4>
           
           <ul className="nav nav-pills">
             <li className="nav-item">
@@ -520,10 +527,10 @@ const ProgramMarketplace = () => {
                 </div>
               ) : programs.length === 0 ? (
                 <div className="text-center py-5">
-                  <i className="bi bi-inbox text-muted" style={{ fontSize: '3rem' }}></i>
-                  <p className="text-muted mt-3">No programs available matching your filters.</p>
+                  <i className="bi bi-inbox text-white-50" style={{ fontSize: '3rem' }}></i>
+                  <p className="text-white-50 mt-3">No programs available matching your filters.</p>
                   <button 
-                    className="btn btn-outline-primary"
+                    className="btn btn-outline-light"
                     onClick={() => {
                       setFilters({
                         search: '',
@@ -607,8 +614,8 @@ const ProgramMarketplace = () => {
           <>
             {purchasedPrograms.length === 0 && hiddenPrograms.length === 0 ? (
               <div className="text-center py-5">
-                <i className="bi bi-bag-x text-muted" style={{ fontSize: '3rem' }}></i>
-                <p className="text-muted mt-3">
+                <i className="bi bi-bag-x text-white-50" style={{ fontSize: '3rem' }}></i>
+                <p className="text-white-50 mt-3">
                   You haven't purchased any programs yet.
                   <br />
                   Browse the marketplace to find the perfect program for you!
@@ -631,31 +638,31 @@ const ProgramMarketplace = () => {
 
                 {hiddenPrograms.length > 0 && (
                   <div className="mt-5">
-                    <h5 className="mb-3">
+                    <h5 className="mb-3 text-white">
                       <i className="bi bi-archive me-2"></i>
                       Hidden Programs ({hiddenPrograms.length})
                     </h5>
                     <div className="row">
                       {hiddenPrograms.map(program => (
                         <div key={program.program_id} className="col-lg-3 col-md-4 col-sm-6 mb-4">
-                          <div className="card border-0 shadow-sm h-100" style={{ opacity: 0.7 }}>
+                          <div className="card border-0 shadow-sm h-100 dark-card" style={{ opacity: 0.7 }}>
                             <div className="card-body">
                               <div className="d-flex justify-content-between align-items-start mb-3">
-                                <h6 className="card-title mb-0">{program.title}</h6>
+                                <h6 className="card-title mb-0 text-white">{program.title}</h6>
                               </div>
                               
-                              <p className="text-muted small" style={{ minHeight: '60px' }}>
+                              <p className="text-white-50 small" style={{ minHeight: '60px' }}>
                                 {program.description?.substring(0, 80)}...
                               </p>
                               
                               <div className="mb-3">
-                                <span className="badge bg-light text-dark me-1 mb-1" style={{ fontSize: '0.7rem' }}>
+                                <span className="badge bg-secondary me-1 mb-1" style={{ fontSize: '0.7rem' }}>
                                   {program.difficulty_level}
                                 </span>
-                                <span className="badge bg-light text-dark me-1 mb-1" style={{ fontSize: '0.7rem' }}>
+                                <span className="badge bg-secondary me-1 mb-1" style={{ fontSize: '0.7rem' }}>
                                   {program.duration_weeks}w
                                 </span>
-                                <span className="badge bg-light text-dark mb-1" style={{ fontSize: '0.7rem' }}>
+                                <span className="badge bg-secondary mb-1" style={{ fontSize: '0.7rem' }}>
                                   {program.category}
                                 </span>
                               </div>

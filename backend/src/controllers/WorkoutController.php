@@ -100,15 +100,15 @@ class WorkoutController
         try {
             // Debug: Log the received parameters
             error_log("WorkoutController::createWorkoutSession - userId: " . ($userId ?: 'NULL'));
-            error_log("WorkoutController::createWorkoutSession - workoutPlanId: " . ($workoutPlanId ?: 'NULL'));
+            error_log("WorkoutController::createWorkoutSession - workoutPlanId: " . ($workoutPlanId === null ? 'NULL' : $workoutPlanId));
             error_log("WorkoutController::createWorkoutSession - planName: " . ($planName ?: 'NULL'));
             error_log("WorkoutController::createWorkoutSession - duration: " . ($duration ?: 'NULL'));
             error_log("WorkoutController::createWorkoutSession - rating: " . ($rating ?: 'NULL'));
 
-            // Validate input
-            if (!$userId || !$workoutPlanId || !$planName || !$duration) {
+            // Validate input (workoutPlanId can be null for program workouts)
+            if (!$userId || !$planName || !$duration) {
                 error_log("WorkoutController::createWorkoutSession - Validation failed");
-                throw new Exception('All required fields must be provided');
+                throw new Exception('User ID, plan name, and duration are required');
             }
 
             $result = $this->workoutModel->createWorkoutSession($userId, $workoutPlanId, $planName, $duration, $rating);

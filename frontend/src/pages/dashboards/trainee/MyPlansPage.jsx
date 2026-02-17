@@ -9,15 +9,6 @@ const MyPlansPage = () => {
   return (
     <TraineeDashboard>
       <div className="container-fluid px-3 px-md-4 py-3" style={{ paddingBottom: '100px', backgroundColor: 'var(--brand-dark)', minHeight: '100vh' }}>
-        {/* Header */}
-        <div className="mb-4">
-          <h2 className="mb-2" style={{ color: 'var(--brand-white)', fontWeight: '700', fontSize: 'clamp(1.75rem, 4vw, 2.5rem)' }}>
-            <i className="bi bi-clipboard-check me-2" style={{ color: 'var(--brand-primary)' }}></i>
-            My Plans
-          </h2>
-          <p className="mb-0" style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>Track your workouts and meals</p>
-        </div>
-
         {/* Tabs */}
         <ul className="nav nav-tabs mb-4" style={{ borderBottom: '2px solid rgba(32, 214, 87, 0.2)' }}>
           <li className="nav-item">

@@ -174,7 +174,7 @@ const ProfilePage = () => {
           <div className="spinner-border text-primary mb-3 loading-pulse" style={{width: '3rem', height: '3rem'}}>
             <span className="visually-hidden">Loading...</span>
           </div>
-          <h5 className="text-muted">Loading profile...</h5>
+          <h5 className="text-white-50">Loading profile...</h5>
         </div>
       </div>
     );
@@ -182,7 +182,7 @@ const ProfilePage = () => {
 
   if (!currentUser) {
     return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-secondary bg-opacity-25">
         <div className="text-center">
           <h5 className="text-danger">Unable to load user data</h5>
           <p>Please try refreshing the page or log in again.</p>
@@ -278,84 +278,6 @@ const ProfilePage = () => {
   return (
     <TraineeDashboard>
       <div className="profile-page">
-      {/* Page Title */}
-      <div className="bg-white border-bottom">
-        <div className="container-fluid px-4 py-3">
-          <div className="d-flex justify-content-between align-items-center">
-            <div className="d-flex align-items-center">
-              <div>
-                <h2 className="h4 mb-0 fw-bold text-dark">
-                  {isOwnProfile ? 'My Profile' : `${profileData.full_name}'s Profile`}
-                </h2>
-                <p className="small text-muted mb-0">
-                  {isOwnProfile ? 'Manage your account settings' : 'View profile information'}
-                </p>
-              </div>
-            </div>
-            
-            <div className="d-flex align-items-center gap-2">
-              {isOwnProfile && (
-                <>
-                  {isEditing ? (
-                    <>
-                      <button 
-                        className="btn btn-success rounded-pill"
-                        onClick={handleSaveProfile}
-                      >
-                        <i className="bi bi-check-lg me-2"></i>Save Changes
-                      </button>
-                      <button 
-                        className="btn btn-outline-secondary rounded-pill"
-                        onClick={() => {
-                          setIsEditing(false);
-                          setEditData(profileData);
-                        }}
-                      >
-                        <i className="bi bi-x-lg me-2"></i>Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <button 
-                      className="btn btn-primary rounded-pill"
-                      onClick={() => setIsEditing(true)}
-                    >
-                      <i className="bi bi-pencil me-2"></i>Edit Profile
-                    </button>
-                  )}
-
-                  {/* Visible logout button for the profile owner */}
-                  <LogoutButton className="btn btn-outline-danger rounded-pill" />
-                </>
-              )}
-              
-              <div className="dropdown">
-                <button className="btn btn-outline-dark dropdown-toggle rounded-pill" type="button" data-bs-toggle="dropdown">
-                  <i className="bi bi-three-dots-vertical"></i>
-                </button>
-                <ul className="dropdown-menu dropdown-menu-end shadow">
-                  {isOwnProfile && (
-                    <>
-                      <li><a className="dropdown-item" href="#"><i className="bi bi-gear me-2"></i>Settings</a></li>
-                      <li><a className="dropdown-item" href="#"><i className="bi bi-shield-check me-2"></i>Privacy</a></li>
-                      <li><a className="dropdown-item" href="#"><i className="bi bi-bell me-2"></i>Notifications</a></li>
-                      <li><hr className="dropdown-divider" /></li>
-                      <li><LogoutButton className="dropdown-item text-danger" /></li>
-                    </>
-                  )}
-                  {!isOwnProfile && (
-                    <>
-                      <li><a className="dropdown-item" href="#"><i className="bi bi-share me-2"></i>Share Profile</a></li>
-                      <li><hr className="dropdown-divider" /></li>
-                      <li><a className="dropdown-item text-danger" href="#"><i className="bi bi-flag me-2"></i>Report</a></li>
-                    </>
-                  )}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
       <main className="container-fluid px-4 py-4 pb-5" style={{ minHeight: 'calc(100vh - 140px)' }}>
         {/* Profile Header Card */}
@@ -368,6 +290,39 @@ const ProfilePage = () => {
                   className="profile-header-gradient position-relative"
                   style={{height: '200px'}}
                 >
+                  {/* Profile Actions - Top Right */}
+                  {isOwnProfile && (
+                    <div className="position-absolute top-0 end-0 p-3 d-flex gap-2" style={{zIndex: 3}}>
+                      {isEditing ? (
+                        <>
+                          <button 
+                            className="btn btn-success btn-sm rounded-pill"
+                            onClick={handleSaveProfile}
+                          >
+                            <i className="bi bi-check-lg me-1"></i>Save
+                          </button>
+                          <button 
+                            className="btn btn-outline-light btn-sm rounded-pill"
+                            onClick={() => {
+                              setIsEditing(false);
+                              setEditData(profileData);
+                            }}
+                          >
+                            <i className="bi bi-x-lg me-1"></i>Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button 
+                          className="btn btn-primary btn-sm rounded-pill"
+                          onClick={() => setIsEditing(true)}
+                        >
+                          <i className="bi bi-pencil me-1"></i>Edit
+                        </button>
+                      )}
+                      <LogoutButton className="btn btn-outline-danger btn-sm rounded-pill" />
+                    </div>
+                  )}
+                  
                   <div className="position-absolute bottom-0 start-0 w-100 h-100 d-flex align-items-end p-4" style={{zIndex: 2}}>
                     <div className="d-flex align-items-end w-100">
                       {/* Profile Photo */}
@@ -440,7 +395,7 @@ const ProfilePage = () => {
               <div className="card-body p-4">
                 <div className="row g-4">
                   <div className="col-md-6">
-                    <label className="form-label fw-medium text-muted small">Full Name</label>
+                    <label className="form-label fw-medium text-white-50 small">Full Name</label>
                     {isEditing ? (
                       <input
                         type="text"
@@ -449,16 +404,16 @@ const ProfilePage = () => {
                         onChange={(e) => setEditData({...editData, full_name: e.target.value})}
                       />
                     ) : (
-                      <p className="mb-0 text-dark fw-medium">{profileData.full_name || 'Not set'}</p>
+                      <p className="mb-0 text-white fw-medium">{profileData.full_name || 'Not set'}</p>
                     )}
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label fw-medium text-muted small">Email</label>
-                    <p className="mb-0 text-dark fw-medium">{profileData.email}</p>
-                    {isOwnProfile && <small className="text-muted">Contact admin to change email</small>}
+                    <label className="form-label fw-medium text-white-50 small">Email</label>
+                    <p className="mb-0 text-white fw-medium">{profileData.email}</p>
+                    {isOwnProfile && <small className="text-white-50">Contact admin to change email</small>}
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label fw-medium text-muted small">Phone</label>
+                    <label className="form-label fw-medium text-white-50 small">Phone</label>
                     {isEditing ? (
                       <input
                         type="tel"
@@ -468,11 +423,11 @@ const ProfilePage = () => {
                         placeholder="Enter your phone number"
                       />
                     ) : (
-                      <p className="mb-0 text-dark fw-medium">{profileData.phone || 'Not set'}</p>
+                      <p className="mb-0 text-white fw-medium">{profileData.phone || 'Not set'}</p>
                     )}
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label fw-medium text-muted small">Date of Birth</label>
+                    <label className="form-label fw-medium text-white-50 small">Date of Birth</label>
                     {isEditing ? (
                       <input
                         type="date"
@@ -481,11 +436,11 @@ const ProfilePage = () => {
                         onChange={(e) => setEditData({...editData, date_of_birth: e.target.value})}
                       />
                     ) : (
-                      <p className="mb-0 text-dark fw-medium">{formatDate(profileData.date_of_birth)}</p>
+                      <p className="mb-0 text-white fw-medium">{formatDate(profileData.date_of_birth)}</p>
                     )}
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label fw-medium text-muted small">Age</label>
+                    <label className="form-label fw-medium text-white-50 small">Age</label>
                     {isEditing ? (
                       <input
                         type="number"
@@ -497,11 +452,11 @@ const ProfilePage = () => {
                         max="120"
                       />
                     ) : (
-                      <p className="mb-0 text-dark fw-medium">{profileData.age ? `${profileData.age} years old` : 'Not set'}</p>
+                      <p className="mb-0 text-white fw-medium">{profileData.age ? `${profileData.age} years old` : 'Not set'}</p>
                     )}
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label fw-medium text-muted small">Sex</label>
+                    <label className="form-label fw-medium text-white-50 small">Sex</label>
                     {isEditing ? (
                       <select
                         className="form-select modern-input"
@@ -515,7 +470,7 @@ const ProfilePage = () => {
                         <option value="prefer_not_to_say">Prefer not to say</option>
                       </select>
                     ) : (
-                      <p className="mb-0 text-dark fw-medium">{
+                      <p className="mb-0 text-white fw-medium">{
                         profileData.sex ? 
                         (profileData.sex === 'prefer_not_to_say' ? 'Prefer not to say' : 
                          profileData.sex.charAt(0).toUpperCase() + profileData.sex.slice(1)) : 
@@ -538,7 +493,7 @@ const ProfilePage = () => {
                 <div className="card-body p-4">
                   <div className="row g-4">
                     <div className="col-md-6">
-                      <label className="form-label fw-medium text-muted small">Specialization</label>
+                      <label className="form-label fw-medium text-white-50 small">Specialization</label>
                       {isEditing ? (
                         <input
                           type="text"
@@ -548,11 +503,11 @@ const ProfilePage = () => {
                           placeholder="e.g., Weight Training, Cardio, Yoga"
                         />
                       ) : (
-                        <p className="mb-0 text-dark fw-medium">{profileData.specialization || 'Not set'}</p>
+                        <p className="mb-0 text-white fw-medium">{profileData.specialization || 'Not set'}</p>
                       )}
                     </div>
                     <div className="col-md-6">
-                      <label className="form-label fw-medium text-muted small">Experience (Years)</label>
+                      <label className="form-label fw-medium text-white-50 small">Experience (Years)</label>
                       {isEditing ? (
                         <input
                           type="number"
@@ -563,11 +518,11 @@ const ProfilePage = () => {
                           max="50"
                         />
                       ) : (
-                        <p className="mb-0 text-dark fw-medium">{profileData.experience_years ? `${profileData.experience_years} years` : 'Not set'}</p>
+                        <p className="mb-0 text-white fw-medium">{profileData.experience_years ? `${profileData.experience_years} years` : 'Not set'}</p>
                       )}
                     </div>
                     <div className="col-12">
-                      <label className="form-label fw-medium text-muted small">Certifications</label>
+                      <label className="form-label fw-medium text-white-50 small">Certifications</label>
                       {isEditing ? (
                         <textarea
                           className="form-control modern-input"
@@ -577,11 +532,11 @@ const ProfilePage = () => {
                           placeholder="List your certifications (e.g., NASM-CPT, ACE-CPT, etc.)"
                         />
                       ) : (
-                        <p className="mb-0 text-dark fw-medium">{profileData.certifications || 'Not set'}</p>
+                        <p className="mb-0 text-white fw-medium">{profileData.certifications || 'Not set'}</p>
                       )}
                     </div>
                     <div className="col-12">
-                      <label className="form-label fw-medium text-muted small">Bio</label>
+                      <label className="form-label fw-medium text-white-50 small">Bio</label>
                       {isEditing ? (
                         <textarea
                           className="form-control modern-input"
@@ -591,7 +546,7 @@ const ProfilePage = () => {
                           placeholder="Tell us about yourself and your training philosophy..."
                         />
                       ) : (
-                        <p className="mb-0 text-dark fw-medium">{profileData.bio || 'Not set'}</p>
+                        <p className="mb-0 text-white fw-medium">{profileData.bio || 'Not set'}</p>
                       )}
                     </div>
                   </div>
@@ -609,7 +564,7 @@ const ProfilePage = () => {
                 <div className="card-body p-4">
                   <div className="row g-4">
                     <div className="col-md-6">
-                      <label className="form-label fw-medium text-muted small">Height (cm)</label>
+                      <label className="form-label fw-medium text-white-50 small">Height (cm)</label>
                       {isEditing ? (
                         <input
                           type="number"
@@ -621,11 +576,11 @@ const ProfilePage = () => {
                           max="250"
                         />
                       ) : (
-                        <p className="mb-0 text-dark fw-medium">{profileData.height ? `${profileData.height} cm` : 'Not set'}</p>
+                        <p className="mb-0 text-white fw-medium">{profileData.height ? `${profileData.height} cm` : 'Not set'}</p>
                       )}
                     </div>
                     <div className="col-md-6">
-                      <label className="form-label fw-medium text-muted small">Weight (kg)</label>
+                      <label className="form-label fw-medium text-white-50 small">Weight (kg)</label>
                       {isEditing ? (
                         <input
                           type="number"
@@ -637,11 +592,11 @@ const ProfilePage = () => {
                           max="300"
                         />
                       ) : (
-                        <p className="mb-0 text-dark fw-medium">{profileData.weight ? `${profileData.weight} kg` : 'Not set'}</p>
+                        <p className="mb-0 text-white fw-medium">{profileData.weight ? `${profileData.weight} kg` : 'Not set'}</p>
                       )}
                     </div>
                     <div className="col-md-6">
-                      <label className="form-label fw-medium text-muted small">Fitness Goals</label>
+                      <label className="form-label fw-medium text-white-50 small">Fitness Goals</label>
                       {isEditing ? (
                         <input
                           type="text"
@@ -651,11 +606,11 @@ const ProfilePage = () => {
                           placeholder="e.g., Weight Loss, Muscle Gain, Endurance"
                         />
                       ) : (
-                        <p className="mb-0 text-dark fw-medium">{profileData.fitness_goals || 'Not set'}</p>
+                        <p className="mb-0 text-white fw-medium">{profileData.fitness_goals || 'Not set'}</p>
                       )}
                     </div>
                     <div className="col-md-6">
-                      <label className="form-label fw-medium text-muted small">Experience Level</label>
+                      <label className="form-label fw-medium text-white-50 small">Experience Level</label>
                       {isEditing ? (
                         <select
                           className="form-select modern-input"
@@ -668,11 +623,11 @@ const ProfilePage = () => {
                           <option value="Advanced">Advanced</option>
                         </select>
                       ) : (
-                        <p className="mb-0 text-dark fw-medium">{profileData.experience_level || 'Not set'}</p>
+                        <p className="mb-0 text-white fw-medium">{profileData.experience_level || 'Not set'}</p>
                       )}
                     </div>
                     <div className="col-12">
-                      <label className="form-label fw-medium text-muted small">Medical Notes & Considerations</label>
+                      <label className="form-label fw-medium text-white-50 small">Medical Notes & Considerations</label>
                       {isEditing ? (
                         <textarea
                           className="form-control modern-input"
@@ -682,7 +637,7 @@ const ProfilePage = () => {
                           placeholder="Any injuries, limitations, or medical considerations..."
                         />
                       ) : (
-                        <p className="mb-0 text-dark fw-medium">{profileData.medical_notes || 'None specified'}</p>
+                        <p className="mb-0 text-white fw-medium">{profileData.medical_notes || 'None specified'}</p>
                       )}
                     </div>
                   </div>
@@ -732,7 +687,7 @@ const ProfilePage = () => {
                     />
                     <div>
                       <p className="fw-medium mb-0">{profileData.assigned_trainer.name}</p>
-                      <small className="text-muted">Personal Trainer</small>
+                      <small className="text-white-50">Personal Trainer</small>
                     </div>
                   </div>
                   <Link 
@@ -765,8 +720,8 @@ const ProfilePage = () => {
                           className="rounded-circle me-3"
                           style={{width: '32px', height: '32px', objectFit: 'cover'}}
                         />
-                        <span className="text-dark fw-medium">{client.name}</span>
-                        <i className="bi bi-chevron-right ms-auto text-muted"></i>
+                        <span className="text-white fw-medium">{client.name}</span>
+                        <i className="bi bi-chevron-right ms-auto text-white-50"></i>
                       </Link>
                     ))}
                     {profileData.clients.length > 5 && (
@@ -802,31 +757,31 @@ const ProfilePage = () => {
                 </h6>
                 {currentUser?.role === 'trainee' ? (
                   <>
-                    <div className="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 bg-light">
-                      <span className="text-muted small">Total Workouts:</span>
+                    <div className="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 bg-secondary bg-opacity-25">
+                      <span className="text-white-50 small">Total Workouts:</span>
                       <span className="fw-bold text-primary">{profileData.workouts_completed}</span>
                     </div>
-                    <div className="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 bg-light">
-                      <span className="text-muted small">Total Time:</span>
+                    <div className="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 bg-secondary bg-opacity-25">
+                      <span className="text-white-50 small">Total Time:</span>
                       <span className="fw-bold text-primary">{formatWorkoutTime(profileData.total_workout_time)}</span>
                     </div>
-                    <div className="d-flex justify-content-between align-items-center p-2 rounded-3 bg-light">
-                      <span className="text-muted small">This Month:</span>
+                    <div className="d-flex justify-content-between align-items-center p-2 rounded-3 bg-secondary bg-opacity-25">
+                      <span className="text-white-50 small">This Month:</span>
                       <span className="fw-bold text-success">12 Workouts</span>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 bg-light">
-                      <span className="text-muted small">Active Clients:</span>
+                    <div className="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 bg-secondary bg-opacity-25">
+                      <span className="text-white-50 small">Active Clients:</span>
                       <span className="fw-bold text-primary">{profileData.clients?.length || 0}</span>
                     </div>
-                    <div className="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 bg-light">
-                      <span className="text-muted small">Experience:</span>
+                    <div className="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 bg-secondary bg-opacity-25">
+                      <span className="text-white-50 small">Experience:</span>
                       <span className="fw-bold text-primary">{profileData.experience_years || 0} Years</span>
                     </div>
-                    <div className="d-flex justify-content-between align-items-center p-2 rounded-3 bg-light">
-                      <span className="text-muted small">Member Since:</span>
+                    <div className="d-flex justify-content-between align-items-center p-2 rounded-3 bg-secondary bg-opacity-25">
+                      <span className="text-white-50 small">Member Since:</span>
                       <span className="fw-bold text-success">{new Date(profileData.member_since).getFullYear()}</span>
                     </div>
                   </>

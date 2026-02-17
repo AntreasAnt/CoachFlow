@@ -115,7 +115,8 @@ background-color: rgba(255, 255, 255, 0.612);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
 }
 
-.modal-header {
+/* Light theme modal header - does not apply to dark theme modals */
+.modal-header:not(.dark-modal-header) {
   border-bottom: 1px solid #f1f3f4;
   border-radius: 15px 15px 0 0;
   background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
@@ -522,4 +523,104 @@ background-color: rgba(255, 255, 255, 0.612);
   60% {
     transform: translateY(-5px);
   }
+}
+
+/* Dark Theme Components */
+.dark-card {
+  background-color: #1a1a1a !important;
+  border: 1px solid #2d2d2d !important;
+}
+
+.dark-card:hover {
+  background-color: #222222 !important;
+  border-color: #3d3d3d !important;
+}
+
+.dark-modal {
+  background-color: #1a1a1a !important;
+  border: 1px solid #2d2d2d !important;
+  color: #ffffff;
+}
+
+.dark-modal .modal-header {
+  border-color: #2d2d2d !important;
+}
+
+.dark-modal .modal-footer {
+  border-color: #2d2d2d !important;
+}
+
+.dark-modal-header {
+  background-color: #1a1a1a !important;
+  border-bottom: 1px solid #2d2d2d !important;
+}
+
+.dark-input {
+  background-color: #2d2d2d !important;
+  border: 1px solid #3d3d3d !important;
+  color: #ffffff !important;
+}
+
+.dark-input::placeholder {
+  color: #888888 !important;
+}
+
+.dark-input:focus {
+  background-color: #333333 !important;
+  border-color: #4d4d4d !important;
+  box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark-input option {
+  background-color: #2d2d2d;
+  color: #ffffff;
+}
+
+/* Dark theme pagination */
+.page-link {
+  background-color: #2d2d2d;
+  border-color: #3d3d3d;
+  color: #ffffff;
+}
+
+.page-link:hover {
+  background-color: #3d3d3d;
+  border-color: #4d4d4d;
+  color: #ffffff;
+}
+
+.page-item.active .page-link {
+  background-color: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+}
+
+.page-item.disabled .page-link {
+  background-color: #1a1a1a;
+  border-color: #2d2d2d;
+  color: #666666;
+}
+/* Dark theme nav-tabs */
+.nav-tabs.border-secondary {
+  border-bottom: 1px solid #3d3d3d !important;
+}
+
+.nav-tabs.border-secondary .nav-link {
+  color: #888888;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 0.375rem 0.375rem 0 0;
+  transition: all 0.2s ease;
+}
+
+.nav-tabs.border-secondary .nav-link:hover {
+  color: #ffffff;
+  border-color: #3d3d3d #3d3d3d transparent;
+}
+
+.nav-tabs.border-secondary .nav-link.active {
+  color: #10b981 !important;
+  background-color: #1a1a1a;
+  border-color: #3d3d3d #3d3d3d #1a1a1a;
+  font-weight: 500;
 }

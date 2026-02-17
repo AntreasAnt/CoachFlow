@@ -15,15 +15,15 @@ const ProgramFilters = ({ filters, onFilterChange, onClearFilters }) => {
   const difficultyLevels = ['beginner', 'intermediate', 'advanced'];
 
   return (
-    <div className="card border-0 shadow-sm mb-4">
+    <div className="card border-0 shadow-sm mb-4 dark-card">
       <div className="card-body">
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h5 className="mb-0">
+          <h5 className="mb-0 text-white">
             <i className="bi bi-funnel me-2"></i>
             Filters
           </h5>
           <button 
-            className="btn btn-sm btn-outline-secondary"
+            className="btn btn-sm btn-outline-light"
             onClick={onClearFilters}
           >
             <i className="bi bi-x-circle me-1"></i>
@@ -34,10 +34,10 @@ const ProgramFilters = ({ filters, onFilterChange, onClearFilters }) => {
         <div className="row g-3">
           {/* Search */}
           <div className="col-md-12">
-            <label className="form-label small fw-bold">Search Programs</label>
+            <label className="form-label small fw-bold text-white">Search Programs</label>
             <input
               type="text"
-              className="form-control"
+              className="form-control dark-input"
               placeholder="Search by title or description..."
               value={filters.search || ''}
               onChange={(e) => onFilterChange({ ...filters, search: e.target.value })}
@@ -46,9 +46,9 @@ const ProgramFilters = ({ filters, onFilterChange, onClearFilters }) => {
 
           {/* Category */}
           <div className="col-md-12">
-            <label className="form-label small fw-bold">Category</label>
+            <label className="form-label small fw-bold text-white">Category</label>
             <select
-              className="form-select"
+              className="form-select dark-input"
               value={filters.category || ''}
               onChange={(e) => onFilterChange({ ...filters, category: e.target.value })}
             >
@@ -61,9 +61,9 @@ const ProgramFilters = ({ filters, onFilterChange, onClearFilters }) => {
 
           {/* Difficulty */}
           <div className="col-md-12">
-            <label className="form-label small fw-bold">Difficulty Level</label>
+            <label className="form-label small fw-bold text-white">Difficulty Level</label>
             <select
-              className="form-select"
+              className="form-select dark-input"
               value={filters.difficulty_level || ''}
               onChange={(e) => onFilterChange({ ...filters, difficulty_level: e.target.value })}
             >
@@ -78,12 +78,12 @@ const ProgramFilters = ({ filters, onFilterChange, onClearFilters }) => {
 
           {/* Duration */}
           <div className="col-md-12">
-            <label className="form-label small fw-bold">Duration (weeks)</label>
+            <label className="form-label small fw-bold text-white">Duration (weeks)</label>
             <div className="row g-2">
               <div className="col-6">
                 <input
                   type="number"
-                  className="form-control"
+                  className="form-control dark-input"
                   placeholder="Min"
                   min="1"
                   value={filters.min_duration || ''}
@@ -93,7 +93,7 @@ const ProgramFilters = ({ filters, onFilterChange, onClearFilters }) => {
               <div className="col-6">
                 <input
                   type="number"
-                  className="form-control"
+                  className="form-control dark-input"
                   placeholder="Max"
                   min="1"
                   value={filters.max_duration || ''}
@@ -105,12 +105,12 @@ const ProgramFilters = ({ filters, onFilterChange, onClearFilters }) => {
 
           {/* Price Range */}
           <div className="col-md-12">
-            <label className="form-label small fw-bold">Price Range ($)</label>
+            <label className="form-label small fw-bold text-white">Price Range ($)</label>
             <div className="row g-2">
               <div className="col-6">
                 <input
                   type="number"
-                  className="form-control"
+                  className="form-control dark-input"
                   placeholder="Min"
                   min="0"
                   value={filters.min_price || ''}
@@ -120,7 +120,7 @@ const ProgramFilters = ({ filters, onFilterChange, onClearFilters }) => {
               <div className="col-6">
                 <input
                   type="number"
-                  className="form-control"
+                  className="form-control dark-input"
                   placeholder="Max"
                   min="0"
                   value={filters.max_price || ''}
@@ -132,10 +132,10 @@ const ProgramFilters = ({ filters, onFilterChange, onClearFilters }) => {
 
           {/* Trainer Name */}
           <div className="col-md-12">
-            <label className="form-label small fw-bold">Trainer Name</label>
+            <label className="form-label small fw-bold text-white">Trainer Name</label>
             <input
               type="text"
-              className="form-control"
+              className="form-control dark-input"
               placeholder="Search by trainer name..."
               value={filters.trainer_name || ''}
               onChange={(e) => onFilterChange({ ...filters, trainer_name: e.target.value })}
@@ -144,9 +144,9 @@ const ProgramFilters = ({ filters, onFilterChange, onClearFilters }) => {
 
           {/* Sort By */}
           <div className="col-md-12">
-            <label className="form-label small fw-bold">Sort By</label>
+            <label className="form-label small fw-bold text-white">Sort By</label>
             <select
-              className="form-select"
+              className="form-select dark-input"
               value={filters.sort_by || 'popular'}
               onChange={(e) => onFilterChange({ ...filters, sort_by: e.target.value })}
             >

@@ -370,7 +370,7 @@ const TrainingPeriodManager = () => {
           <div className="modal d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content">
-                <div className="modal-header border-0">
+                <div className="modal-header border-0 dark-modal-header">
                   <h5 className="modal-title">Create Training Period</h5>
                   <button className="btn-close" onClick={() => setShowCreateModal(false)}></button>
                 </div>
@@ -438,7 +438,7 @@ const TrainingPeriodManager = () => {
           <div className="modal d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content">
-                <div className="modal-header border-0">
+                <div className="modal-header border-0 dark-modal-header">
                   <h5 className="modal-title">Edit Training Period</h5>
                   <button className="btn-close" onClick={() => setShowEditModal(false)}></button>
                 </div>
@@ -502,7 +502,7 @@ const TrainingPeriodManager = () => {
           <div className="modal d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
             <div className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
               <div className="modal-content">
-                <div className="modal-header border-0">
+                <div className="modal-header border-0 dark-modal-header">
                   <h5 className="modal-title">Training Period Comparison</h5>
                   <button className="btn-close" onClick={() => setShowCompareModal(false)}></button>
                 </div>

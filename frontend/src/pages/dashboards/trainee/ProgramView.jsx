@@ -13,6 +13,8 @@ const ProgramView = () => {
   const [error, setError] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
   const [isTrainerAssigned, setIsTrainerAssigned] = useState(false);
+  const [completedSessions, setCompletedSessions] = useState(new Set());
+  const [sessionCompletionCounts, setSessionCompletionCounts] = useState({});
 
   useEffect(() => {
     // Check if this is a trainer-assigned program from navigation state
@@ -20,7 +22,57 @@ const ProgramView = () => {
       setIsTrainerAssigned(true);
     }
     fetchProgramDetails();
+    fetchWorkoutHistory();
   }, [programId, location.state]);
+
+  const fetchWorkoutHistory = async () => {
+    try {
+      const response = await fetch(`${BACKEND_ROUTES_API}GetRecentWorkouts.php?page=1&pageSize=100`, {
+        credentials: 'include'
+      });
+      const data = await response.json();
+      if (data.success && data.sessions) {
+        const completed = new Set();
+        const counts = {};
+        
+        data.sessions.forEach(workout => {
+          const planName = (workout.plan_name || '').toString().toLowerCase().trim();
+          const workoutPlanId = (workout.workout_plan_id || '').toString().toLowerCase().trim();
+          
+          // Check if this workout matches any session in the current program
+          if (workoutPlanId.includes(`program_${programId}`)) {
+            // Extract session ID from the workout_plan_id
+            const match = workoutPlanId.match(/session_(\d+)/);
+            if (match) {
+              const sessionId = parseInt(match[1]);
+              completed.add(sessionId);
+              counts[sessionId] = (counts[sessionId] || 0) + 1;
+            }
+          }
+          // Also check by plan name
+          if (planName) {
+            completed.add(planName);
+            counts[planName] = (counts[planName] || 0) + 1;
+          }
+        });
+        
+        setCompletedSessions(completed);
+        setSessionCompletionCounts(counts);
+      }
+    } catch (error) {
+      console.error('Error fetching workout history:', error);
+    }
+  };
+
+  const isSessionCompleted = (session) => {
+    const sessionName = (session.session_name || session.name || '').toLowerCase().trim();
+    return completedSessions.has(session.id) || completedSessions.has(sessionName);
+  };
+
+  const getSessionCompletionCount = (session) => {
+    const sessionName = (session.session_name || session.name || '').toLowerCase().trim();
+    return sessionCompletionCounts[session.id] || sessionCompletionCounts[sessionName] || 0;
+  };
 
   const fetchProgramDetails = async () => {
     try {
@@ -104,21 +156,22 @@ const ProgramView = () => {
     if (loading) {
       return (
         <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status">
+          <div className="spinner-border" style={{ color: 'rgba(32, 214, 87, 0.8)', width: '3rem', height: '3rem' }} role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
-          <p className="mt-3 text-muted">Loading program details...</p>
+          <p className="mt-3" style={{ color: 'rgba(255,255,255,0.7)' }}>Loading program details...</p>
         </div>
       );
     }
 
     if (error) {
       return (
-        <div className="alert alert-danger">
+        <div className="alert" style={{ background: 'rgba(220, 53, 69, 0.1)', border: '1px solid rgba(220, 53, 69, 0.3)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.75rem' }}>
           <i className="bi bi-exclamation-triangle me-2"></i>
           {error}
           <button 
-            className="btn btn-sm btn-outline-danger ms-3"
+            className="btn btn-sm ms-3"
+            style={{ background: 'rgba(220, 53, 69, 0.2)', border: '1px solid rgba(220, 53, 69, 0.4)', color: 'rgba(220, 53, 69, 0.95)' }}
             onClick={() => navigate('/trainee-dashboard/workouts')}
           >
             Back to My Workouts
@@ -129,11 +182,12 @@ const ProgramView = () => {
 
     if (!program) {
       return (
-        <div className="alert alert-warning">
+        <div className="alert" style={{ background: 'rgba(255, 193, 7, 0.1)', border: '1px solid rgba(255, 193, 7, 0.3)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.75rem' }}>
           <i className="bi bi-info-circle me-2"></i>
           Program not found.
           <button 
-            className="btn btn-sm btn-outline-warning ms-3"
+            className="btn btn-sm ms-3"
+            style={{ background: 'rgba(255, 193, 7, 0.2)', border: '1px solid rgba(255, 193, 7, 0.4)', color: 'rgba(255, 193, 7, 0.95)' }}
             onClick={() => navigate('/trainee-dashboard/workouts')}
           >
             Back to My Workouts
@@ -147,22 +201,23 @@ const ProgramView = () => {
         {/* Header */}
         <div className="d-flex align-items-center mb-4">
           <button 
-            className="btn btn-outline-secondary me-3"
+            className="btn me-3"
+            style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}
             onClick={() => navigate('/trainee-dashboard/workouts')}
           >
             <i className="bi bi-arrow-left"></i>
           </button>
           <div className="flex-grow-1">
-            <h2 className="mb-1">{program.title}</h2>
-            <p className="text-muted mb-0">By {program.trainer_name}</p>
+            <h2 className="mb-1" style={{ color: 'rgba(255,255,255,0.95)', fontWeight: '600' }}>{program.title}</h2>
+            <p className="mb-0" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem' }}>By {program.trainer_name}</p>
           </div>
           {isTrainerAssigned ? (
-            <span className="badge bg-primary fs-6">
+            <span className="badge fs-6" style={{ background: 'rgba(32, 214, 87, 0.2)', color: 'rgba(32, 214, 87, 0.95)', padding: '0.5rem 1rem', borderRadius: '0.5rem' }}>
               <i className="bi bi-person-check me-1"></i>
               Trainer Assigned
             </span>
           ) : (
-            <span className="badge bg-success fs-6">
+            <span className="badge fs-6" style={{ background: 'rgba(32, 214, 87, 0.2)', color: 'rgba(32, 214, 87, 0.95)', padding: '0.5rem 1rem', borderRadius: '0.5rem' }}>
               <i className="bi bi-bag-check me-1"></i>
               Purchased
             </span>
@@ -170,31 +225,31 @@ const ProgramView = () => {
         </div>
 
         {/* Program Info */}
-        <div className="card border-0 shadow-sm mb-4">
-          <div className="card-body">
+        <div className="card mb-4" style={{ background: 'rgba(15, 20, 15, 0.7)', border: '1px solid rgba(32, 214, 87, 0.2)', borderRadius: '1rem' }}>
+          <div className="card-body p-4">
             <div className="row">
               <div className="col-md-8">
-                <h5>About This Program</h5>
-                <p className="text-muted">{program.description}</p>
+                <h5 className="mb-3" style={{ color: 'rgba(255,255,255,0.95)', fontWeight: '600' }}>About This Program</h5>
+                <p style={{ color: 'rgba(255,255,255,0.75)', lineHeight: '1.6' }}>{program.description}</p>
                 {program.long_description && (
                   <div className="mt-3">
-                    <p>{program.long_description}</p>
+                    <p style={{ color: 'rgba(255,255,255,0.75)', lineHeight: '1.6' }}>{program.long_description}</p>
                   </div>
                 )}
               </div>
               <div className="col-md-4">
-                <div className="d-flex flex-column gap-2">
+                <div className="d-flex flex-column gap-3">
                   <div>
-                    <small className="text-muted">Category</small>
-                    <div><span className="badge bg-primary">{program.category}</span></div>
+                    <small className="d-block mb-2" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', fontWeight: '500' }}>Category</small>
+                    <div><span className="badge" style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.9)', padding: '0.4rem 0.8rem', borderRadius: '0.5rem', fontSize: '0.85rem' }}>{program.category}</span></div>
                   </div>
                   <div>
-                    <small className="text-muted">Difficulty</small>
-                    <div><span className="badge bg-light text-dark">{program.difficulty_level}</span></div>
+                    <small className="d-block mb-2" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', fontWeight: '500' }}>Difficulty</small>
+                    <div><span className="badge" style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.9)', padding: '0.4rem 0.8rem', borderRadius: '0.5rem', fontSize: '0.85rem' }}>{program.difficulty_level}</span></div>
                   </div>
                   <div>
-                    <small className="text-muted">Duration</small>
-                    <div><span className="badge bg-light text-dark">{program.duration_weeks} weeks</span></div>
+                    <small className="d-block mb-2" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', fontWeight: '500' }}>Duration</small>
+                    <div><span className="badge" style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.9)', padding: '0.4rem 0.8rem', borderRadius: '0.5rem', fontSize: '0.85rem' }}>{program.duration_weeks} WEEKS</span></div>
                   </div>
                 </div>
               </div>
@@ -204,38 +259,49 @@ const ProgramView = () => {
 
         {/* Sessions */}
         <div className="mb-4">
-          <h4 className="mb-3">
+          <h4 className="mb-4" style={{ color: 'rgba(255,255,255,0.95)', fontWeight: '600' }}>
             <i className="bi bi-calendar-week me-2"></i>
             Workout Sessions ({program.sessions?.length || 0})
           </h4>
           
           {program.sessions && program.sessions.length > 0 ? (
             <div className="row">
-              {program.sessions.map((session, index) => (
+              {program.sessions.map((session, index) => {
+                const completed = isSessionCompleted(session);
+                const completionCount = getSessionCompletionCount(session);
+                return (
                 <div key={session.id} className="col-lg-6 mb-3">
-                  <div className="card border-0 shadow-sm h-100">
-                    <div className="card-body">
+                  <div className="card h-100" style={{ background: completed ? 'rgba(32, 214, 87, 0.1)' : 'rgba(15, 20, 15, 0.7)', border: completed ? '1px solid rgba(32, 214, 87, 0.4)' : '1px solid rgba(32, 214, 87, 0.2)', borderRadius: '1rem', transition: 'all 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = completed ? 'rgba(32, 214, 87, 0.15)' : 'rgba(20, 25, 20, 0.8)'} onMouseLeave={(e) => e.currentTarget.style.background = completed ? 'rgba(32, 214, 87, 0.1)' : 'rgba(15, 20, 15, 0.7)'}>
+                    <div className="card-body p-4">
                       <div className="d-flex justify-content-between align-items-start mb-3">
                         <div>
-                          <span className="badge bg-light text-dark mb-2">Session {index + 1}</span>
-                          <h5 className="card-title mb-1">{session.session_name || session.name}</h5>
+                          <div className="d-flex align-items-center gap-2 mb-2">
+                            <span className="badge" style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.9)', padding: '0.35rem 0.7rem', borderRadius: '0.4rem', fontSize: '0.8rem', fontWeight: '500' }}>SESSION {index + 1}</span>
+                            {completed && (
+                              <span className="badge" style={{ background: 'rgba(32, 214, 87, 0.3)', color: 'rgba(32, 214, 87, 0.95)', padding: '0.35rem 0.7rem', borderRadius: '0.4rem', fontSize: '0.75rem' }}>
+                                <i className="bi bi-check-circle-fill me-1"></i>
+                                Done{completionCount > 1 ? ` (${completionCount}x)` : ''}
+                              </span>
+                            )}
+                          </div>
+                          <h5 className="card-title mb-2" style={{ color: 'rgba(255,255,255,0.95)', fontWeight: '600' }}>{session.session_name || session.name}</h5>
                           {(session.session_description || session.description) && (
-                            <p className="text-muted small mb-0">{session.session_description || session.description}</p>
+                            <p className="small mb-0" style={{ color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>{session.session_description || session.description}</p>
                           )}
                         </div>
                       </div>
 
                       <div className="mb-3">
-                        <small className="text-muted fw-bold">Exercises:</small>
-                        <ul className="list-unstyled mt-2 mb-0">
+                        <small className="fw-bold d-block mb-2" style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem' }}>Exercises:</small>
+                        <ul className="list-unstyled mt-2 mb-0" style={{ paddingLeft: '0.5rem' }}>
                           {session.exercises?.slice(0, 3).map((ex, idx) => (
-                            <li key={idx} className="small text-muted">
-                              <i className="bi bi-circle-fill me-2" style={{ fontSize: '0.3rem' }}></i>
+                            <li key={idx} className="small mb-1" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                              <i className="bi bi-circle-fill me-2" style={{ fontSize: '0.3rem', color: 'rgba(32, 214, 87, 0.7)' }}></i>
                               {ex.name} - {ex.sets} sets x {ex.reps} reps
                             </li>
                           ))}
                           {session.exercises?.length > 3 && (
-                            <li className="small text-muted">
+                            <li className="small" style={{ color: 'rgba(255,255,255,0.7)' }}>
                               <i className="bi bi-three-dots me-2"></i>
                               +{session.exercises.length - 3} more exercises
                             </li>
@@ -245,15 +311,21 @@ const ProgramView = () => {
 
                       <div className="d-flex gap-2">
                         <button 
-                          className="btn btn-primary flex-fill"
+                          className="btn flex-fill"
+                          style={{ background: 'rgba(32, 214, 87, 0.2)', border: '1px solid rgba(32, 214, 87, 0.4)', color: 'rgba(32, 214, 87, 0.95)', borderRadius: '0.5rem', fontWeight: '500', padding: '0.6rem' }}
                           onClick={() => startSession(session)}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(32, 214, 87, 0.3)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(32, 214, 87, 0.2)'; }}
                         >
-                          <i className="bi bi-play-circle me-2"></i>
-                          Start Session
+                          <i className={`bi ${completed ? 'bi-arrow-repeat' : 'bi-play-circle'} me-2`}></i>
+                          {completed ? 'Do Again' : 'Start Session'}
                         </button>
                         <button 
-                          className="btn btn-outline-secondary"
+                          className="btn"
+                          style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem', padding: '0.6rem 1rem' }}
                           onClick={() => setSelectedSession(session)}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(30, 35, 30, 0.7)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(30, 35, 30, 0.5)'; }}
                         >
                           <i className="bi bi-eye"></i>
                         </button>
@@ -261,10 +333,11 @@ const ProgramView = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
           ) : (
-            <div className="alert alert-info">
+            <div className="alert" style={{ background: 'rgba(13, 202, 240, 0.1)', border: '1px solid rgba(13, 202, 240, 0.3)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.75rem' }}>
               <i className="bi bi-info-circle me-2"></i>
               No sessions available for this program yet.
             </div>
@@ -276,38 +349,38 @@ const ProgramView = () => {
 
   return (
     <TraineeDashboard>
-      <div className="container-fluid">
+      <div className="container-fluid px-3 px-md-4 py-3" style={{ backgroundColor: 'var(--brand-dark)', minHeight: '100vh', paddingBottom: '100px' }}>
         {mainContent()}
 
         {/* Session Details Modal */}
         {selectedSession && (
           <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-lg modal-dialog-scrollable">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">{selectedSession.session_name || selectedSession.name}</h5>
+              <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem' }}>
+                <div className="modal-header" style={{ borderBottom: '1px solid rgba(32, 214, 87, 0.2)', background: 'rgba(15, 20, 15, 0.95)' }}>
+                  <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.95)', fontWeight: '600' }}>{selectedSession.session_name || selectedSession.name}</h5>
                   <button 
                     type="button" 
-                    className="btn-close"
+                    className="btn-close btn-close-white"
                     onClick={() => setSelectedSession(null)}
                   ></button>
                 </div>
-                <div className="modal-body">
+                <div className="modal-body" style={{ background: 'rgba(15, 20, 15, 0.95)' }}>
                   {(selectedSession.session_description || selectedSession.description) && (
-                    <div className="mb-3">
-                      <p className="text-muted">{selectedSession.session_description || selectedSession.description}</p>
+                    <div className="mb-4">
+                      <p style={{ color: 'rgba(255,255,255,0.75)', lineHeight: '1.6' }}>{selectedSession.session_description || selectedSession.description}</p>
                     </div>
                   )}
 
-                  <h6 className="mb-3">Exercises ({selectedSession.exercises?.length || 0})</h6>
+                  <h6 className="mb-3" style={{ color: 'rgba(255,255,255,0.9)', fontWeight: '600' }}>Exercises ({selectedSession.exercises?.length || 0})</h6>
                   
                   {selectedSession.exercises?.map((ex, idx) => (
-                    <div key={idx} className="card border-0 bg-light mb-2">
+                    <div key={idx} className="card mb-2" style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', borderRadius: '0.75rem' }}>
                       <div className="card-body p-3">
                         <div className="d-flex justify-content-between align-items-start">
-                          <div>
-                            <h6 className="mb-1">{idx + 1}. {ex.name}</h6>
-                            <div className="small text-muted">
+                          <div className="flex-grow-1">
+                            <h6 className="mb-2" style={{ color: 'rgba(255,255,255,0.95)', fontWeight: '600' }}>{idx + 1}. {ex.name}</h6>
+                            <div className="small" style={{ color: 'rgba(255,255,255,0.75)' }}>
                               <span className="me-3">
                                 <i className="bi bi-layers me-1"></i>
                                 {ex.sets} sets
@@ -324,7 +397,7 @@ const ProgramView = () => {
                               )}
                             </div>
                             {ex.notes && (
-                              <p className="small text-muted mb-0 mt-2">
+                              <p className="small mb-0 mt-2" style={{ color: 'rgba(255,255,255,0.7)', fontStyle: 'italic' }}>
                                 <i className="bi bi-info-circle me-1"></i>
                                 {ex.notes}
                               </p>
@@ -335,17 +408,19 @@ const ProgramView = () => {
                     </div>
                   ))}
                 </div>
-                <div className="modal-footer">
+                <div className="modal-footer" style={{ background: 'rgba(20, 25, 20, 0.95)', borderTop: '1px solid rgba(32, 214, 87, 0.2)' }}>
                   <button 
                     type="button" 
-                    className="btn btn-secondary"
+                    className="btn"
+                    style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}
                     onClick={() => setSelectedSession(null)}
                   >
                     Close
                   </button>
                   <button 
                     type="button" 
-                    className="btn btn-primary"
+                    className="btn"
+                    style={{ background: 'rgba(32, 214, 87, 0.2)', border: '1px solid rgba(32, 214, 87, 0.4)', color: 'rgba(32, 214, 87, 0.95)', borderRadius: '0.5rem' }}
                     onClick={() => {
                       setSelectedSession(null);
                       startSession(selectedSession);

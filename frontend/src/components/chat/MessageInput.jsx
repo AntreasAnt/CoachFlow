@@ -38,12 +38,12 @@ export function MessageInput() {
   };
 
   return (
-    <div className="message-input-container p-3 border-top bg-white">
+    <div className="message-input-container p-3">
       <form onSubmit={onSend}>
         <div className="d-flex gap-2 align-items-center">
           <div className="flex-fill">
             <textarea
-              className="form-control"
+              className="form-control dark-input"
               rows={1}
               placeholder={activeConversationId ? 'Type a message...' : 'Select a conversation first'}
               value={text}
@@ -56,9 +56,9 @@ export function MessageInput() {
           
           <button 
             type="submit"
-            className="btn btn-primary btn-sm px-3" 
+            className="btn btn-sm px-3" 
             disabled={sending || !activeConversationId || !text.trim()}
-            style={{ height: '40px' }}
+            style={{ height: '40px', backgroundColor: '#10b981', borderColor: '#10b981', color: 'white' }}
           >
             <i className="bi bi-send-fill"></i>
           </button>

@@ -61,6 +61,24 @@ const TraineeHeader = () => {
           <div className="d-flex align-items-center gap-2 gap-md-3">
             <button 
               className="btn btn-sm"
+              onClick={() => navigate('/trainee-dashboard/marketplace')}
+              onMouseEnter={() => setHoveredBtn('marketplace')}
+              onMouseLeave={() => setHoveredBtn(null)}
+              title="Marketplace"
+              style={{
+                backgroundColor: hoveredBtn === 'marketplace' ? 'rgba(32, 214, 87, 0.1)' : 'transparent',
+                color: 'var(--brand-primary)',
+                border: hoveredBtn === 'marketplace' ? '1px solid rgba(32, 214, 87, 0.6)' : '1px solid rgba(32, 214, 87, 0.3)',
+                borderRadius: '10px',
+                padding: '0.5rem 0.75rem',
+                transform: hoveredBtn === 'marketplace' ? 'translateY(-2px)' : 'translateY(0)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <i className="bi bi-shop"></i>
+            </button>
+            <button 
+              className="btn btn-sm"
               onClick={() => navigate('/trainee-dashboard/analytics')}
               onMouseEnter={() => setHoveredBtn('analytics')}
               onMouseLeave={() => setHoveredBtn(null)}

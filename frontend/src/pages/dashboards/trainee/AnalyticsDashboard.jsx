@@ -11,7 +11,6 @@ const AnalyticsDashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState(null);
-  const [achievements, setAchievements] = useState({ earned: [], available: [] });
   const [alerts, setAlerts] = useState([]);
   const [bodyComposition, setBodyComposition] = useState([]);
   
@@ -44,7 +43,6 @@ const AnalyticsDashboard = () => {
 
   useEffect(() => {
     fetchAnalytics();
-    fetchAchievements();
     fetchAlerts();
   }, [startDate, endDate]);
 
@@ -63,23 +61,6 @@ const AnalyticsDashboard = () => {
     } catch (error) {
       console.error('Error fetching analytics:', error);
       setLoading(false);
-    }
-  };
-
-  const fetchAchievements = async () => {
-    try {
-      const response = await fetch(`${BACKEND_ROUTES_API}GetAchievements.php`, {
-        credentials: 'include'
-      });
-      const data = await response.json();
-      if (data.success) {
-        setAchievements({
-          earned: data.earned,
-          available: data.available
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching achievements:', error);
     }
   };
 
@@ -141,18 +122,18 @@ const AnalyticsDashboard = () => {
         {/* Header */}
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
-            <h2><i className="bi bi-graph-up me-2"></i>My Analytics</h2>
-            <p className="text-muted">Track your progress and achievements</p>
+            <h2 className="text-white mb-0"><i className="bi bi-graph-up me-2"></i>My Analytics</h2>
+            <p className="text-white-50 mb-0">Track your training progress</p>
           </div>
           <div className="d-flex gap-2 align-items-center">
             <button 
-              className="btn btn-outline-primary btn-sm"
+              className="btn btn-outline-light btn-sm"
               onClick={() => navigate('/trainee-dashboard/training-periods')}
             >
               <i className="bi bi-arrow-left-right me-2"></i>Compare Periods
             </button>
             <select
-              className="form-select form-select-sm"
+              className="form-select form-select-sm dark-input"
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
               style={{ width: 'auto' }}
@@ -164,7 +145,7 @@ const AnalyticsDashboard = () => {
               <option value="365">Last Year</option>
             </select>
             <div className="d-none align-items-center gap-2">
-              <label className="text-muted small mb-0">From:</label>
+              <label className="text-white-50 small mb-0">From:</label>
               <input 
                 type="date" 
                 className="form-control form-control-sm"
@@ -175,10 +156,10 @@ const AnalyticsDashboard = () => {
               />
             </div>
             <div className="d-flex align-items-center gap-2">
-              <label className="text-muted small mb-0">To:</label>
+              <label className="text-white-50 small mb-0">To:</label>
               <input 
                 type="date" 
-                className="form-control form-control-sm"
+                className="form-control form-control-sm dark-input"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 min={startDate}
@@ -203,7 +184,7 @@ const AnalyticsDashboard = () => {
         )}
 
         {/* Tabs */}
-        <ul className="nav nav-tabs mb-4">
+        <ul className="nav nav-tabs mb-4 border-secondary">
           <li className="nav-item">
             <button className={`nav-link ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>
               <i className="bi bi-speedometer2 me-2"></i>Overview
@@ -224,14 +205,6 @@ const AnalyticsDashboard = () => {
               <i className="bi bi-person-badge me-2"></i>Body Composition
             </button>
           </li>
-          <li className="nav-item">
-            <button className={`nav-link ${activeTab === 'achievements' ? 'active' : ''}`} onClick={() => setActiveTab('achievements')}>
-              <i className="bi bi-trophy me-2"></i>Achievements
-              {achievements.earned.length > 0 && (
-                <span className="badge bg-warning text-dark ms-2">{achievements.earned.length}</span>
-              )}
-            </button>
-          </li>
         </ul>
 
         {/* Overview Tab */}
@@ -240,12 +213,12 @@ const AnalyticsDashboard = () => {
             {/* Stats Cards */}
             <div className="row mb-4">
               <div className="col-md-3 mb-3">
-                <div className="card border-0 shadow-sm">
+                <div className="card border-0 shadow-sm dark-card">
                   <div className="card-body">
                     <div className="d-flex justify-content-between">
                       <div>
-                        <p className="text-muted mb-1 small">Total Workouts</p>
-                        <h3 className="mb-0">{overview.total_workouts || 0}</h3>
+                        <p className="text-white-50 mb-1 small">Total Workouts</p>
+                        <h3 className="mb-0 text-white">{overview.total_workouts || 0}</h3>
                       </div>
                       <div className="bg-primary bg-opacity-10 p-3 rounded">
                         <i className="bi bi-calendar-check text-primary fs-4"></i>
@@ -255,12 +228,12 @@ const AnalyticsDashboard = () => {
                 </div>
               </div>
               <div className="col-md-3 mb-3">
-                <div className="card border-0 shadow-sm">
+                <div className="card border-0 shadow-sm dark-card">
                   <div className="card-body">
                     <div className="d-flex justify-content-between">
                       <div>
-                        <p className="text-muted mb-1 small">Total Volume</p>
-                        <h3 className="mb-0">{(overview.total_volume_kg || 0).toLocaleString()}kg</h3>
+                        <p className="text-white-50 mb-1 small">Total Volume</p>
+                        <h3 className="mb-0 text-white">{(overview.total_volume_kg || 0).toLocaleString()}kg</h3>
                       </div>
                       <div className="bg-success bg-opacity-10 p-3 rounded">
                         <i className="bi bi-box-seam text-success fs-4"></i>
@@ -270,12 +243,12 @@ const AnalyticsDashboard = () => {
                 </div>
               </div>
               <div className="col-md-3 mb-3">
-                <div className="card border-0 shadow-sm">
+                <div className="card border-0 shadow-sm dark-card">
                   <div className="card-body">
                     <div className="d-flex justify-content-between">
                       <div>
-                        <p className="text-muted mb-1 small">Avg RPE</p>
-                        <h3 className="mb-0">{(overview.avg_rpe || 0).toFixed(1)}</h3>
+                        <p className="text-white-50 mb-1 small">Avg RPE</p>
+                        <h3 className="mb-0 text-white">{(overview.avg_rpe || 0).toFixed(1)}</h3>
                       </div>
                       <div className="bg-warning bg-opacity-10 p-3 rounded">
                         <i className="bi bi-speedometer text-warning fs-4"></i>
@@ -285,12 +258,12 @@ const AnalyticsDashboard = () => {
                 </div>
               </div>
               <div className="col-md-3 mb-3">
-                <div className="card border-0 shadow-sm">
+                <div className="card border-0 shadow-sm dark-card">
                   <div className="card-body">
                     <div className="d-flex justify-content-between">
                       <div>
-                        <p className="text-muted mb-1 small">Current Streak</p>
-                        <h3 className="mb-0">
+                        <p className="text-white-50 mb-1 small">Current Streak</p>
+                        <h3 className="mb-0 text-white">
                           {consistency.streaks?.workout_streak?.current_streak || 0} 🔥
                         </h3>
                       </div>
@@ -306,24 +279,24 @@ const AnalyticsDashboard = () => {
             {/* Volume Trends Chart */}
             <div className="row mb-4">
               <div className="col-12">
-                <div className="card border-0 shadow-sm">
-                  <div className="card-header bg-white">
-                    <h5 className="mb-0">Weekly Volume Trends</h5>
+                <div className="card border-0 shadow-sm dark-card">
+                  <div className="card-header dark-card border-0">
+                    <h5 className="mb-0 text-white">Weekly Volume Trends</h5>
                   </div>
                   <div className="card-body">
                     {volumeTrends.length > 0 ? (
                       <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={volumeTrends}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="week_start_date" />
-                          <YAxis />
-                          <Tooltip />
+                          <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                          <XAxis dataKey="week_start_date" stroke="#888" />
+                          <YAxis stroke="#888" />
+                          <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
                           <Legend />
-                          <Bar dataKey="total_volume_kg" fill="#0088FE" name="Volume (kg)" />
+                          <Bar dataKey="total_volume_kg" fill="#10b981" name="Volume (kg)" />
                         </BarChart>
                       </ResponsiveContainer>
                     ) : (
-                      <p className="text-muted text-center">No volume data available</p>
+                      <p className="text-white-50 text-center">No volume data available</p>
                     )}
                   </div>
                 </div>
@@ -333,33 +306,33 @@ const AnalyticsDashboard = () => {
             {/* Personal Records */}
             <div className="row mt-4">
               <div className="col-12">
-                <div className="card border-0 shadow-sm">
-                  <div className="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 className="mb-0">Recent Personal Records</h5>
+                <div className="card border-0 shadow-sm dark-card">
+                  <div className="card-header dark-card border-0 d-flex justify-content-between align-items-center">
+                    <h5 className="mb-0 text-white">Recent Personal Records</h5>
                     <span className="badge bg-warning">{personalRecords.length} PRs</span>
                   </div>
                   <div className="card-body">
                     {personalRecords.length > 0 ? (
                       <div className="list-group list-group-flush">
                         {personalRecords.slice(0, 5).map((pr, index) => (
-                          <div key={index} className="list-group-item d-flex justify-content-between align-items-center">
+                          <div key={index} className="list-group-item d-flex justify-content-between align-items-center dark-card border-secondary">
                             <div>
-                              <strong>{pr.exercise_name}</strong>
+                              <strong className="text-white">{pr.exercise_name}</strong>
                               <br />
-                              <small className="text-muted">
+                              <small className="text-white-50">
                                 {pr.based_on_weight}kg × {pr.based_on_reps} reps
                               </small>
                             </div>
                             <div className="text-end">
                               <div className="badge bg-primary">{pr.estimated_1rm || pr.record_value}kg (1RM)</div>
                               <br />
-                              <small className="text-muted">{new Date(pr.achieved_date || pr.recorded_date).toLocaleDateString()}</small>
+                              <small className="text-white-50">{new Date(pr.achieved_date || pr.recorded_date).toLocaleDateString()}</small>
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-muted text-center">No personal records yet. Keep training!</p>
+                      <p className="text-white-50 text-center">No personal records yet. Keep training!</p>
                     )}
                   </div>
                 </div>
@@ -370,13 +343,13 @@ const AnalyticsDashboard = () => {
             {volumeTrends.length > 0 && (
               <div className="row mt-4">
                 <div className="col-12">
-                  <div className="card border-0 shadow-sm">
-                    <div className="card-header bg-white">
-                      <h5 className="mb-0">Weekly Breakdown</h5>
+                  <div className="card border-0 shadow-sm dark-card">
+                    <div className="card-header dark-card border-0">
+                      <h5 className="mb-0 text-white">Weekly Breakdown</h5>
                     </div>
                     <div className="card-body">
                       <div className="table-responsive">
-                        <table className="table table-hover">
+                        <table className="table table-dark table-hover">
                           <thead>
                             <tr>
                               <th>Week</th>
@@ -392,7 +365,7 @@ const AnalyticsDashboard = () => {
                             {volumeTrends.slice(0, 12).map((week, index) => (
                               <tr key={index}>
                                 <td>
-                                  <small className="text-muted">
+                                  <small className="text-white-50">
                                     {new Date(week.week_start_date).toLocaleDateString()}
                                   </small>
                                 </td>
@@ -420,58 +393,58 @@ const AnalyticsDashboard = () => {
             {/* Training Summary */}
             <div className="row mt-4">
               <div className="col-md-4 mb-3">
-                <div className="card border-0 shadow-sm">
+                <div className="card border-0 shadow-sm dark-card">
                   <div className="card-body">
-                    <h6 className="text-muted mb-3">Volume Stats</h6>
+                    <h6 className="text-white-50 mb-3">Volume Stats</h6>
                     <div className="d-flex justify-content-between mb-2">
-                      <span>Total Reps:</span>
-                      <strong>{(overview.total_reps || 0).toLocaleString()}</strong>
+                      <span className="text-white-50">Total Reps:</span>
+                      <strong className="text-white">{(overview.total_reps || 0).toLocaleString()}</strong>
                     </div>
                     <div className="d-flex justify-content-between mb-2">
-                      <span>Total Sets:</span>
-                      <strong>{(overview.total_sets || 0).toLocaleString()}</strong>
+                      <span className="text-white-50">Total Sets:</span>
+                      <strong className="text-white">{(overview.total_sets || 0).toLocaleString()}</strong>
                     </div>
                     <div className="d-flex justify-content-between">
-                      <span>Avg Sets/Workout:</span>
-                      <strong>{overview.total_workouts ? ((overview.total_sets || 0) / overview.total_workouts).toFixed(1) : 0}</strong>
+                      <span className="text-white-50">Avg Sets/Workout:</span>
+                      <strong className="text-white">{overview.total_workouts ? ((overview.total_sets || 0) / overview.total_workouts).toFixed(1) : 0}</strong>
                     </div>
                   </div>
                 </div>
               </div>
               <div className="col-md-4 mb-3">
-                <div className="card border-0 shadow-sm">
+                <div className="card border-0 shadow-sm dark-card">
                   <div className="card-body">
-                    <h6 className="text-muted mb-3">Training Time</h6>
+                    <h6 className="text-white-50 mb-3">Training Time</h6>
                     <div className="d-flex justify-content-between mb-2">
-                      <span>Total Time:</span>
-                      <strong>{Math.floor((overview.total_minutes || 0) / 60)}h {(overview.total_minutes || 0) % 60}m</strong>
+                      <span className="text-white-50">Total Time:</span>
+                      <strong className="text-white">{Math.floor((overview.total_minutes || 0) / 60)}h {(overview.total_minutes || 0) % 60}m</strong>
                     </div>
                     <div className="d-flex justify-content-between mb-2">
-                      <span>Avg Duration:</span>
-                      <strong>{overview.total_workouts ? ((overview.total_minutes || 0) / overview.total_workouts).toFixed(0) : 0} min</strong>
+                      <span className="text-white-50">Avg Duration:</span>
+                      <strong className="text-white">{overview.total_workouts ? ((overview.total_minutes || 0) / overview.total_workouts).toFixed(0) : 0} min</strong>
                     </div>
                     <div className="d-flex justify-content-between">
-                      <span>Unique Exercises:</span>
-                      <strong>{overview.unique_exercises || 0}</strong>
+                      <span className="text-white-50">Unique Exercises:</span>
+                      <strong className="text-white">{overview.unique_exercises || 0}</strong>
                     </div>
                   </div>
                 </div>
               </div>
               <div className="col-md-4 mb-3">
-                <div className="card border-0 shadow-sm">
+                <div className="card border-0 shadow-sm dark-card">
                   <div className="card-body">
-                    <h6 className="text-muted mb-3">Consistency</h6>
+                    <h6 className="text-white-50 mb-3">Consistency</h6>
                     <div className="d-flex justify-content-between mb-2">
-                      <span>Workouts/Week:</span>
-                      <strong>{consistency.workouts_per_week ? consistency.workouts_per_week.toFixed(1) : 0}</strong>
+                      <span className="text-white-50">Workouts/Week:</span>
+                      <strong className="text-white">{consistency.workouts_per_week ? consistency.workouts_per_week.toFixed(1) : 0}</strong>
                     </div>
                     <div className="d-flex justify-content-between mb-2">
-                      <span>Active Days:</span>
-                      <strong>{consistency.active_days || 0}</strong>
+                      <span className="text-white-50">Active Days:</span>
+                      <strong className="text-white">{consistency.active_days || 0}</strong>
                     </div>
                     <div className="d-flex justify-content-between">
-                      <span>Adherence:</span>
-                      <strong>{consistency.adherence_percentage || 0}%</strong>
+                      <span className="text-white-50">Adherence:</span>
+                      <strong className="text-white">{consistency.adherence_percentage || 0}%</strong>
                     </div>
                   </div>
                 </div>
@@ -487,19 +460,19 @@ const AnalyticsDashboard = () => {
               {Object.keys(strengthProgress).length > 0 ? (
                 Object.entries(strengthProgress).map(([exercise, data]) => (
                   <div key={exercise} className="col-md-6 mb-4">
-                    <div className="card border-0 shadow-sm">
-                      <div className="card-header bg-white">
-                        <h6 className="mb-0">{exercise}</h6>
+                    <div className="card border-0 shadow-sm dark-card">
+                      <div className="card-header dark-card border-0">
+                        <h6 className="mb-0 text-white">{exercise}</h6>
                       </div>
                       <div className="card-body">
                         <ResponsiveContainer width="100%" height={250}>
                           <LineChart data={data}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="recorded_date" />
-                            <YAxis />
-                            <Tooltip />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                            <XAxis dataKey="recorded_date" stroke="#888" />
+                            <YAxis stroke="#888" />
+                            <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
                             <Legend />
-                            <Line type="monotone" dataKey="estimated_1rm" stroke="#0088FE" name="Est. 1RM (kg)" />
+                            <Line type="monotone" dataKey="estimated_1rm" stroke="#10b981" name="Est. 1RM (kg)" />
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
@@ -523,26 +496,26 @@ const AnalyticsDashboard = () => {
           <div>
             <div className="row mb-4">
               <div className="col-12">
-                <div className="card border-0 shadow-sm">
-                  <div className="card-header bg-white">
-                    <h5 className="mb-0">Weekly Training Volume</h5>
+                <div className="card border-0 shadow-sm dark-card">
+                  <div className="card-header dark-card border-0">
+                    <h5 className="mb-0 text-white">Weekly Training Volume</h5>
                   </div>
                   <div className="card-body">
                     {volumeTrends.length > 0 ? (
                       <ResponsiveContainer width="100%" height={400}>
                         <LineChart data={volumeTrends}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="week_start_date" />
-                          <YAxis yAxisId="left" />
-                          <YAxis yAxisId="right" orientation="right" />
-                          <Tooltip />
+                          <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                          <XAxis dataKey="week_start_date" stroke="#888" />
+                          <YAxis yAxisId="left" stroke="#888" />
+                          <YAxis yAxisId="right" orientation="right" stroke="#888" />
+                          <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
                           <Legend />
-                          <Line yAxisId="left" type="monotone" dataKey="total_volume_kg" stroke="#0088FE" name="Volume (kg)" />
+                          <Line yAxisId="left" type="monotone" dataKey="total_volume_kg" stroke="#10b981" name="Volume (kg)" />
                           <Line yAxisId="right" type="monotone" dataKey="avg_rpe" stroke="#FF8042" name="Avg RPE" />
                         </LineChart>
                       </ResponsiveContainer>
                     ) : (
-                      <p className="text-muted text-center">No volume data available</p>
+                      <p className="text-white-50 text-center">No volume data available</p>
                     )}
                   </div>
                 </div>
@@ -551,26 +524,26 @@ const AnalyticsDashboard = () => {
 
             <div className="row">
               <div className="col-md-4 mb-3">
-                <div className="card border-0 shadow-sm">
+                <div className="card border-0 shadow-sm dark-card">
                   <div className="card-body text-center">
-                    <h6 className="text-muted">Total Reps</h6>
-                    <h2>{(overview.total_reps || 0).toLocaleString()}</h2>
+                    <h6 className="text-white-50">Total Reps</h6>
+                    <h2 className="text-white">{(overview.total_reps || 0).toLocaleString()}</h2>
                   </div>
                 </div>
               </div>
               <div className="col-md-4 mb-3">
-                <div className="card border-0 shadow-sm">
+                <div className="card border-0 shadow-sm dark-card">
                   <div className="card-body text-center">
-                    <h6 className="text-muted">Total Sets</h6>
-                    <h2>{(overview.total_sets || 0).toLocaleString()}</h2>
+                    <h6 className="text-white-50">Total Sets</h6>
+                    <h2 className="text-white">{(overview.total_sets || 0).toLocaleString()}</h2>
                   </div>
                 </div>
               </div>
               <div className="col-md-4 mb-3">
-                <div className="card border-0 shadow-sm">
+                <div className="card border-0 shadow-sm dark-card">
                   <div className="card-body text-center">
-                    <h6 className="text-muted">Unique Exercises</h6>
-                    <h2>{overview.unique_exercises || 0}</h2>
+                    <h6 className="text-white-50">Unique Exercises</h6>
+                    <h2 className="text-white">{overview.unique_exercises || 0}</h2>
                   </div>
                 </div>
               </div>
@@ -586,8 +559,8 @@ const AnalyticsDashboard = () => {
                 {/* Weight Progress Chart */}
                 <div className="row mb-4">
                   <div className="col-12">
-                    <div className="card border-0 shadow-sm">
-                      <div className="card-header bg-white">
+                    <div className="card border-0 shadow-sm dark-card">
+                      <div className="card-header dark-card border-0">
                         <h5 className="mb-0">Weight Progress</h5>
                       </div>
                       <div className="card-body">
@@ -609,8 +582,8 @@ const AnalyticsDashboard = () => {
                 {/* Body Composition Metrics */}
                 <div className="row mb-4">
                   <div className="col-md-6">
-                    <div className="card border-0 shadow-sm">
-                      <div className="card-header bg-white">
+                    <div className="card border-0 shadow-sm dark-card">
+                      <div className="card-header dark-card border-0">
                         <h5 className="mb-0">Body Fat %</h5>
                       </div>
                       <div className="card-body">
@@ -626,14 +599,14 @@ const AnalyticsDashboard = () => {
                             </LineChart>
                           </ResponsiveContainer>
                         ) : (
-                          <p className="text-muted text-center">No body fat data available</p>
+                          <p className="text-white-50 text-center">No body fat data available</p>
                         )}
                       </div>
                     </div>
                   </div>
                   <div className="col-md-6">
-                    <div className="card border-0 shadow-sm">
-                      <div className="card-header bg-white">
+                    <div className="card border-0 shadow-sm dark-card">
+                      <div className="card-header dark-card border-0">
                         <h5 className="mb-0">Muscle Mass</h5>
                       </div>
                       <div className="card-body">
@@ -649,7 +622,7 @@ const AnalyticsDashboard = () => {
                             </LineChart>
                           </ResponsiveContainer>
                         ) : (
-                          <p className="text-muted text-center">No muscle mass data available</p>
+                          <p className="text-white-50 text-center">No muscle mass data available</p>
                         )}
                       </div>
                     </div>
@@ -659,8 +632,8 @@ const AnalyticsDashboard = () => {
                 {/* Measurements Table */}
                 <div className="row">
                   <div className="col-12">
-                    <div className="card border-0 shadow-sm">
-                      <div className="card-header bg-white">
+                    <div className="card border-0 shadow-sm dark-card">
+                      <div className="card-header dark-card border-0">
                         <h5 className="mb-0">Recent Measurements</h5>
                       </div>
                       <div className="card-body">
@@ -698,76 +671,14 @@ const AnalyticsDashboard = () => {
                 </div>
               </>
             ) : (
-              <div className="card border-0 shadow-sm">
+              <div className="card border-0 shadow-sm dark-card">
                 <div className="card-body text-center py-5">
-                  <i className="bi bi-person-badge display-1 text-muted"></i>
+                  <i className="bi bi-person-badge display-1 text-white-50"></i>
                   <h5 className="mt-3">No Body Composition Data</h5>
-                  <p className="text-muted">Start logging your weight and measurements to track your body composition progress</p>
+                  <p className="text-white-50">Start logging your weight and measurements to track your body composition progress</p>
                   <button className="btn btn-primary" onClick={() => navigate('/progress')}>
                     <i className="bi bi-plus-circle me-2"></i>Add Measurement
                   </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Achievements Tab */}
-        {activeTab === 'achievements' && (
-          <div>
-            <div className="row mb-4">
-              <div className="col-12">
-                <div className="card border-0 shadow-sm bg-gradient-primary text-white">
-                  <div className="card-body text-center py-4">
-                    <h1 className="display-4 mb-0">{achievements.earned.length}</h1>
-                    <p className="mb-0">Achievements Unlocked</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {achievements.earned.length > 0 && (
-              <div className="mb-4">
-                <h5 className="mb-3">Earned Achievements</h5>
-                <div className="row">
-                  {achievements.earned.map((achievement, index) => (
-                    <div key={index} className="col-md-4 mb-3">
-                      <div className="card border-0 shadow-sm h-100">
-                        <div className="card-body text-center">
-                          <i className={`bi ${achievement.icon} ${achievement.color || 'text-warning'} display-4`}></i>
-                          <h6 className="mt-3 mb-2">{achievement.achievement_name}</h6>
-                          <p className="text-muted small mb-2">{achievement.description}</p>
-                          {achievement.value && (
-                            <span className="badge bg-primary">{achievement.value}</span>
-                          )}
-                          <div className="mt-2">
-                            <small className="text-muted">
-                              {new Date(achievement.achieved_date).toLocaleDateString()}
-                            </small>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {achievements.available.length > 0 && (
-              <div>
-                <h5 className="mb-3">Available Achievements</h5>
-                <div className="row">
-                  {achievements.available.slice(0, 6).map((achievement, index) => (
-                    <div key={index} className="col-md-4 mb-3">
-                      <div className="card border-0 shadow-sm h-100 opacity-75">
-                        <div className="card-body text-center">
-                          <i className={`bi ${achievement.icon} text-secondary display-4`}></i>
-                          <h6 className="mt-3 mb-2">{achievement.name}</h6>
-                          <p className="text-muted small mb-0">{achievement.description}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             )}

@@ -299,6 +299,8 @@ class WorkoutModel
                 throw new Exception("Prepare failed: " . $this->conn->error);
             }
 
+            // Handle NULL for workout_plan_id (for program workouts that don't have user_workout_plan entries)
+            // Use bind_param with nullable integer by using "i" type but passing null reference
             $stmt->bind_param("iisii", $userId, $workoutPlanId, $planName, $duration, $rating);
             $result = $stmt->execute();
             
@@ -731,10 +733,15 @@ class WorkoutModel
             }
 
             foreach ($logs as $log) {
-                $exerciseName = $log['exerciseName'];
-                $setNumber = $log['setNumber'];
-                $reps = $log['reps'];
-                $weight = $log['weight'] ?? null;
+                // Handle multiple possible key names for exercise name
+                $exerciseName = $log['exerciseName'] ?? $log['exercise_name'] ?? $log['name'] ?? null;
+                if (empty($exerciseName)) {
+                    error_log("Skipping log entry - no exercise name found: " . json_encode($log));
+                    continue;
+                }
+                $setNumber = $log['setNumber'] ?? $log['set_number'] ?? 1;
+                $reps = $log['reps'] ?? $log['reps_completed'] ?? 0;
+                $weight = $log['weight'] ?? $log['weight_kg'] ?? null;
                 $rpe = $log['rpe'] ?? null;
                 $notes = $log['notes'] ?? null;
 

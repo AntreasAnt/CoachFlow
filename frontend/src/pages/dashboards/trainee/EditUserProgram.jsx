@@ -238,11 +238,13 @@ const EditUserProgram = () => {
   if (loading) {
     return (
       <TraineeDashboard>
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Loading...</span>
+        <div className="container-fluid px-3 px-md-4 py-3" style={{ backgroundColor: 'var(--brand-dark)', minHeight: '100vh', paddingBottom: '100px' }}>
+          <div className="text-center py-5">
+            <div className="spinner-border" style={{ color: 'rgba(32, 214, 87, 0.8)', width: '3rem', height: '3rem' }} role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-3" style={{ color: 'rgba(255,255,255,0.7)' }}>Loading program...</p>
           </div>
-          <p className="mt-3 text-muted">Loading program...</p>
         </div>
       </TraineeDashboard>
     );
@@ -251,12 +253,13 @@ const EditUserProgram = () => {
   if (error) {
     return (
       <TraineeDashboard>
-        <div className="container-fluid py-4">
-          <div className="alert alert-danger">
+        <div className="container-fluid px-3 px-md-4 py-3" style={{ backgroundColor: 'var(--brand-dark)', minHeight: '100vh', paddingBottom: '100px' }}>
+          <div className="alert" style={{ background: 'rgba(220, 53, 69, 0.1)', border: '1px solid rgba(220, 53, 69, 0.3)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.75rem' }}>
             <i className="bi bi-exclamation-triangle me-2"></i>
             {error}
             <button 
-              className="btn btn-sm btn-outline-danger ms-3"
+              className="btn btn-sm ms-3"
+              style={{ background: 'rgba(220, 53, 69, 0.2)', border: '1px solid rgba(220, 53, 69, 0.4)', color: 'rgba(220, 53, 69, 0.95)' }}
               onClick={() => navigate('/trainee-dashboard/workouts')}
             >
               Back to My Workouts
@@ -269,25 +272,43 @@ const EditUserProgram = () => {
 
   return (
     <TraineeDashboard>
-      <div className="container-fluid py-4">
+      <>
+      <style>{`
+        .form-control::placeholder,
+        .form-select::placeholder {
+          color: rgba(255, 255, 255, 0.5) !important;
+        }
+        .form-control:focus,
+        .form-select:focus {
+          background: rgba(30, 35, 30, 0.9) !important;
+          border-color: rgba(32, 214, 87, 0.6) !important;
+          box-shadow: 0 0 0 0.25rem rgba(32, 214, 87, 0.15) !important;
+          color: rgba(255, 255, 255, 0.9) !important;
+        }
+        .list-group-item-action:hover {
+          background: rgba(32, 214, 87, 0.2) !important;
+        }
+      `}</style>
+      <div className="container-fluid px-3 px-md-4 py-3" style={{ backgroundColor: 'var(--brand-dark)', minHeight: '100vh', paddingBottom: '100px' }}>
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h4 className="mb-0">Edit Workout Program</h4>
-          <button className="btn btn-outline-secondary" onClick={() => navigate(`/trainee-dashboard/user-program/${programId}`)}>
+          <h4 className="mb-0" style={{ color: 'rgba(255,255,255,0.95)', fontWeight: '600' }}>Edit Workout Program</h4>
+          <button className="btn" style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }} onClick={() => navigate(`/trainee-dashboard/user-program/${programId}`)}>
             <i className="bi bi-arrow-left me-2"></i>Cancel
           </button>
         </div>
 
         {/* Program Details */}
-        <div className="card border-0 shadow-sm mb-4">
-          <div className="card-header bg-primary text-white">
-            <h6 className="mb-0">Program Details</h6>
+        <div className="card mb-4" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem' }}>
+          <div className="card-header" style={{ background: 'rgba(32, 214, 87, 0.2)', borderBottom: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem 1rem 0 0' }}>
+            <h6 className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Program Details</h6>
           </div>
           <div className="card-body">
             <div className="mb-3">
-              <label className="form-label">Program Title *</label>
+              <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Program Title *</label>
               <input 
                 type="text" 
                 className="form-control"
+                style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                 value={programPackage.title}
                 onChange={(e) => setProgramPackage(prev => ({ ...prev, title: e.target.value }))}
                 placeholder="e.g., 12-Week Strength Builder"
@@ -295,9 +316,10 @@ const EditUserProgram = () => {
             </div>
 
             <div className="mb-3">
-              <label className="form-label">Description</label>
+              <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Description</label>
               <textarea 
                 className="form-control"
+                style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                 rows="3"
                 value={programPackage.description}
                 onChange={(e) => setProgramPackage(prev => ({ ...prev, description: e.target.value }))}
@@ -307,9 +329,10 @@ const EditUserProgram = () => {
 
             <div className="row">
               <div className="col-md-4 mb-3">
-                <label className="form-label">Category</label>
+                <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Category</label>
                 <select 
                   className="form-select"
+                  style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                   value={programPackage.category}
                   onChange={(e) => setProgramPackage(prev => ({ ...prev, category: e.target.value }))}
                 >
@@ -319,9 +342,10 @@ const EditUserProgram = () => {
                 </select>
               </div>
               <div className="col-md-4 mb-3">
-                <label className="form-label">Difficulty Level</label>
+                <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Difficulty Level</label>
                 <select 
                   className="form-select"
+                  style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                   value={programPackage.difficulty_level}
                   onChange={(e) => setProgramPackage(prev => ({ ...prev, difficulty_level: e.target.value }))}
                 >
@@ -331,10 +355,11 @@ const EditUserProgram = () => {
                 </select>
               </div>
               <div className="col-md-4 mb-3">
-                <label className="form-label">Duration (weeks)</label>
+                <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Duration (weeks)</label>
                 <input 
                   type="number" 
                   className="form-control"
+                  style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                   value={programPackage.duration_weeks}
                   onChange={(e) => setProgramPackage(prev => ({ ...prev, duration_weeks: parseInt(e.target.value) || 1 }))}
                   min="1"
@@ -345,28 +370,28 @@ const EditUserProgram = () => {
         </div>
 
         {/* Workout Sessions List */}
-        <div className="card border-0 shadow-sm mb-4">
-          <div className="card-header bg-white d-flex justify-content-between align-items-center">
-            <h6 className="mb-0">Workout Sessions ({workoutSessions.length})</h6>
-            <small className="text-muted">Individual workouts in this program</small>
+        <div className="card mb-4" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem' }}>
+          <div className="card-header d-flex justify-content-between align-items-center" style={{ background: 'rgba(32, 214, 87, 0.2)', borderBottom: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem 1rem 0 0' }}>
+            <h6 className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Workout Sessions ({workoutSessions.length})</h6>
+            <small style={{ color: 'rgba(255,255,255,0.7)' }}>Individual workouts in this program</small>
           </div>
           <div className="card-body">
             {workoutSessions.length === 0 ? (
-              <p className="text-muted text-center py-3">
+              <p className="text-center py-3" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 No workout sessions added yet. Create one below!
               </p>
             ) : (
               <div className="list-group">
                 {workoutSessions.map((session, index) => (
-                  <div key={index} className="list-group-item">
+                  <div key={index} className="list-group-item" style={{ background: 'rgba(30, 35, 30, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)', marginBottom: '0.5rem', borderRadius: '0.5rem' }}>
                     <div className="d-flex justify-content-between align-items-start">
                       <div className="flex-grow-1">
-                        <h6 className="mb-1">{session.name}</h6>
-                        <p className="mb-1 text-muted small">{session.description}</p>
+                        <h6 className="mb-1" style={{ color: 'rgba(255,255,255,0.9)' }}>{session.name}</h6>
+                        <p className="mb-1 small" style={{ color: 'rgba(255,255,255,0.7)' }}>{session.description}</p>
                         <div className="d-flex gap-2">
-                          <span className="badge bg-info">Week {session.week_number}</span>
-                          <span className="badge bg-info">Day {session.day_number}</span>
-                          <span className="badge bg-secondary">{session.exercises.length} exercises</span>
+                          <span className="badge" style={{ background: 'rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}>Week {session.week_number}</span>
+                          <span className="badge" style={{ background: 'rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}>Day {session.day_number}</span>
+                          <span className="badge" style={{ background: 'rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}>{session.exercises.length} exercises</span>
                         </div>
                       </div>
                       <div className="d-flex gap-2">
@@ -401,29 +426,31 @@ const EditUserProgram = () => {
         </div>
 
         {/* Current Session Builder */}
-        <div className="card border-0 shadow-sm mb-4">
-          <div className="card-header bg-primary text-white">
-            <h6 className="mb-0">
+        <div className="card mb-4" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem' }}>
+          <div className="card-header" style={{ background: 'rgba(32, 214, 87, 0.2)', borderBottom: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem 1rem 0 0' }}>
+            <h6 className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>
               {isEditingSession ? 'Edit Workout Session' : 'Create New Workout Session'}
             </h6>
           </div>
           <div className="card-body">
             <div className="row mb-3">
               <div className="col-md-6">
-                <label className="form-label">Session Name *</label>
+                <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Session Name *</label>
                 <input 
                   type="text" 
                   className="form-control"
+                  style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                   value={currentSession.name}
                   onChange={(e) => setCurrentSession(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="e.g., Upper Body Strength"
                 />
               </div>
               <div className="col-md-6">
-                <label className="form-label">Description</label>
+                <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Description</label>
                 <input 
                   type="text" 
                   className="form-control"
+                  style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                   value={currentSession.description}
                   onChange={(e) => setCurrentSession(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Session description..."
@@ -433,20 +460,22 @@ const EditUserProgram = () => {
 
             <div className="row mb-4">
               <div className="col-md-6">
-                <label className="form-label">Week Number</label>
+                <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Week Number</label>
                 <input 
                   type="number" 
                   className="form-control"
+                  style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                   value={currentSession.week_number}
                   onChange={(e) => setCurrentSession(prev => ({ ...prev, week_number: parseInt(e.target.value) || 1 }))}
                   min="1"
                 />
               </div>
               <div className="col-md-6">
-                <label className="form-label">Day Number</label>
+                <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Day Number</label>
                 <input 
                   type="number" 
                   className="form-control"
+                  style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                   value={currentSession.day_number}
                   onChange={(e) => setCurrentSession(prev => ({ ...prev, day_number: parseInt(e.target.value) || 1 }))}
                   min="1"
@@ -457,7 +486,7 @@ const EditUserProgram = () => {
             {/* Exercises in Current Session */}
             <div className="mb-3">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <label className="form-label mb-0">Exercises</label>
+                <label className="form-label mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Exercises</label>
                 <button 
                   className="btn btn-primary btn-sm"
                   onClick={openExerciseModal}
@@ -468,16 +497,16 @@ const EditUserProgram = () => {
               </div>
               
               {currentSession.exercises.length === 0 ? (
-                <p className="text-muted small">No exercises added yet</p>
+                <p className="small" style={{ color: 'rgba(255,255,255,0.6)' }}>No exercises added yet</p>
               ) : (
                 <div className="list-group">
                   {currentSession.exercises.map((exercise, index) => (
-                    <div key={index} className="list-group-item">
+                    <div key={index} className="list-group-item" style={{ background: 'rgba(30, 35, 30, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)', marginBottom: '0.5rem', borderRadius: '0.5rem' }}>
                       <div className="d-flex justify-content-between align-items-center">
                         <div>
-                          <strong>{exercise.name}</strong>
+                          <strong style={{ color: 'rgba(255,255,255,0.9)' }}>{exercise.name}</strong>
                           <br />
-                          <small className="text-muted">
+                          <small style={{ color: 'rgba(255,255,255,0.7)' }}>
                             {exercise.sets} sets × {exercise.type === 'reps' ? `${exercise.reps} reps` : `${exercise.duration}`}
                             {exercise.rpe && ` • RPE ${exercise.rpe}`}
                             <br />
@@ -538,20 +567,21 @@ const EditUserProgram = () => {
         {showExerciseModal && (
           <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-lg modal-dialog-scrollable">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">Add Exercise</h5>
+              <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem' }}>
+                <div className="modal-header" style={{ borderBottom: '1px solid rgba(32, 214, 87, 0.2)', background: 'rgba(15, 20, 15, 0.95)' }}>
+                  <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.95)', fontWeight: '600' }}>Add Exercise</h5>
                   <button 
                     type="button" 
-                    className="btn-close"
+                    className="btn-close btn-close-white"
                     onClick={() => setShowExerciseModal(false)}
                   ></button>
                 </div>
-                <div className="modal-body">
+                <div className="modal-body" style={{ background: 'rgba(15, 20, 15, 0.95)' }}>
                   <div className="mb-3">
                     <input 
                       type="text" 
                       className="form-control"
+                      style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                       placeholder="Search exercises..."
                       value={exerciseSearch}
                       onChange={(e) => setExerciseSearch(e.target.value)}
@@ -564,33 +594,36 @@ const EditUserProgram = () => {
                         key={exercise.id}
                         type="button"
                         className={`list-group-item list-group-item-action ${selectedExercise?.id === exercise.id ? 'active' : ''}`}
+                        style={selectedExercise?.id === exercise.id ? { background: 'rgba(32, 214, 87, 0.3)', border: '1px solid rgba(32, 214, 87, 0.5)', color: 'rgba(255,255,255,0.95)' } : { background: 'rgba(30, 35, 30, 0.6)', border: '1px solid rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)' }}
                         onClick={() => selectExercise(exercise)}
                       >
-                        <strong>{exercise.name}</strong>
+                        <strong style={{ color: selectedExercise?.id === exercise.id ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.9)' }}>{exercise.name}</strong>
                         <br />
-                        <small>{exercise.category} • {exercise.muscle_group}</small>
+                        <small style={{ color: selectedExercise?.id === exercise.id ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.7)' }}>{exercise.category} • {exercise.muscle_group}</small>
                       </button>
                     ))}
                   </div>
 
                   {selectedExercise && (
-                    <div className="border rounded p-3">
-                      <h6>Configure Exercise: {selectedExercise.name}</h6>
+                    <div className="border rounded p-3" style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
+                      <h6 style={{ color: 'rgba(255,255,255,0.9)' }}>Configure Exercise: {selectedExercise.name}</h6>
                       <div className="row">
                         <div className="col-md-3 mb-2">
-                          <label className="form-label small">Sets</label>
+                          <label className="form-label small" style={{ color: 'rgba(255,255,255,0.9)' }}>Sets</label>
                           <input 
                             type="number" 
                             className="form-control"
+                            style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                             value={exerciseToAdd.sets}
                             onChange={(e) => setExerciseToAdd(prev => ({ ...prev, sets: e.target.value }))}
                             min="1"
                           />
                         </div>
                         <div className="col-md-3 mb-2">
-                          <label className="form-label small">Type</label>
+                          <label className="form-label small" style={{ color: 'rgba(255,255,255,0.9)' }}>Type</label>
                           <select 
                             className="form-select"
+                            style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                             value={exerciseToAdd.type}
                             onChange={(e) => setExerciseToAdd(prev => ({ ...prev, type: e.target.value }))}
                           >
@@ -599,20 +632,22 @@ const EditUserProgram = () => {
                           </select>
                         </div>
                         <div className="col-md-3 mb-2">
-                          <label className="form-label small">{exerciseToAdd.type === 'reps' ? 'Reps' : 'Duration'}</label>
+                          <label className="form-label small" style={{ color: 'rgba(255,255,255,0.9)' }}>{exerciseToAdd.type === 'reps' ? 'Reps' : 'Duration'}</label>
                           <input 
                             type="text" 
                             className="form-control"
+                            style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                             value={exerciseToAdd.reps}
                             onChange={(e) => setExerciseToAdd(prev => ({ ...prev, reps: e.target.value }))}
                             placeholder={exerciseToAdd.type === 'reps' ? '10-12' : '30s'}
                           />
                         </div>
                         <div className="col-md-3 mb-2">
-                          <label className="form-label small">RPE (optional)</label>
+                          <label className="form-label small" style={{ color: 'rgba(255,255,255,0.9)' }}>RPE (optional)</label>
                           <input 
                             type="text" 
                             className="form-control"
+                            style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                             value={exerciseToAdd.rpe}
                             onChange={(e) => setExerciseToAdd(prev => ({ ...prev, rpe: e.target.value }))}
                             placeholder="7-8"
@@ -622,17 +657,19 @@ const EditUserProgram = () => {
                     </div>
                   )}
                 </div>
-                <div className="modal-footer">
+                <div className="modal-footer" style={{ background: 'rgba(20, 25, 20, 0.95)', borderTop: '1px solid rgba(32, 214, 87, 0.2)' }}>
                   <button 
                     type="button" 
-                    className="btn btn-secondary"
+                    className="btn"
+                    style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}
                     onClick={() => setShowExerciseModal(false)}
                   >
                     Cancel
                   </button>
                   <button 
                     type="button" 
-                    className="btn btn-primary"
+                    className="btn"
+                    style={{ background: 'rgba(32, 214, 87, 0.2)', border: '1px solid rgba(32, 214, 87, 0.4)', color: 'rgba(32, 214, 87, 0.95)', borderRadius: '0.5rem' }}
                     onClick={addExerciseToSession}
                     disabled={!selectedExercise || !exerciseToAdd.sets || !exerciseToAdd.reps}
                   >
@@ -644,6 +681,7 @@ const EditUserProgram = () => {
           </div>
         )}
       </div>
+      </>
     </TraineeDashboard>
   );
 };

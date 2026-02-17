@@ -100,8 +100,8 @@ export function ConversationList() {
 
   if (!conversations.length) {
     return (
-      <div className="text-center text-muted py-5">
-        <i className="bi bi-chat-dots display-4 d-block mb-2"></i>
+      <div className="text-center text-white-50 py-5">
+        <i className="bi bi-chat-dots display-4 d-block mb-2" style={{ color: '#10b981' }}></i>
         <p className="mb-0">No conversations yet</p>
         <small>Start a new conversation</small>
       </div>
@@ -130,17 +130,17 @@ export function ConversationList() {
               </div>
               <div className="flex-fill" style={{ minWidth: 0 }}>
                 <div className="d-flex justify-content-between align-items-start mb-1">
-                  <div className="fw-semibold text-truncate" style={{ maxWidth: '180px' }}>
+                  <div className="fw-semibold text-truncate text-white" style={{ maxWidth: '180px' }}>
                     {displayName}
                   </div>
                   {timeAgo && (
-                    <div className="small text-muted ms-2" style={{ whiteSpace: 'nowrap', fontSize: '0.75rem' }}>
+                    <div className="small text-white-50 ms-2" style={{ whiteSpace: 'nowrap', fontSize: '0.75rem' }}>
                       {timeAgo}
                     </div>
                   )}
                 </div>
                 <div className="d-flex align-items-center">
-                  <div className={`last-message text-truncate ${isUnread ? 'fw-semibold text-dark' : 'text-muted'}`}>
+                  <div className={`last-message text-truncate ${isUnread ? 'fw-semibold text-white' : 'text-white-50'}`}>
                     {c.lastMessage || 'Start a conversation'}
                   </div>
                   {isUnread && (
@@ -162,7 +162,7 @@ export function ConversationList() {
       )}
       
       {!hasMoreConversations && conversations.length > 0 && (
-        <div className="text-center py-2 text-muted small">
+        <div className="text-center py-2 text-white-50 small">
           No more conversations
         </div>
       )}

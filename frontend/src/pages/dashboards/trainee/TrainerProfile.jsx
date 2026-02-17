@@ -310,7 +310,7 @@ const TrainerProfile = () => {
           <div className="modal d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content">
-                <div className="modal-header">
+                <div className="modal-header dark-modal-header">
                   <h5 className="modal-title">Send Connection Request</h5>
                   <button className="btn-close" onClick={() => setShowRequestModal(false)}></button>
                 </div>

@@ -754,7 +754,7 @@ const HomePage = () => {
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
               }}
             >
-              <div className="modal-header border-0">
+              <div className="modal-header border-0 dark-modal-header">
                 <h5 className="modal-title" style={{ color: 'var(--brand-white)', fontWeight: '700' }}>Log Your Weight</h5>
                 <button 
                   className="btn-close" 

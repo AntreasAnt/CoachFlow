@@ -1,12 +1,11 @@
-import React, { useRef, useEffect, useState, useMemo } from 'react';
+import React, { useRef, useEffect, useMemo, useState } from 'react';
 import { useChat } from '../../context/ChatProvider';
-import { useNavigate } from 'react-router-dom';
 
 export function ChatWindow() {
   const { messages, firebaseUser, typingMap, activeConversationId, conversations, blocked, blockUser, unblockUser, deleteConversation, allUsers, markAsRead, setActiveConversationId } = useChat();
   const bottomRef = useRef(null);
   const [showActions, setShowActions] = useState(false);
-  const navigate = useNavigate();
+  const actionsRef = useRef(null);
 
   const activeConversation = useMemo(() => conversations.find(c => c.id === activeConversationId), [conversations, activeConversationId]);
   const participants = activeConversation?.participants || [];
@@ -24,6 +23,23 @@ export function ChatWindow() {
     return match?.displayName || match?.username || match?.name || otherParticipantUid;
   }, [otherParticipantUid, allUsers]);
 
+  // Close actions menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (actionsRef.current && !actionsRef.current.contains(event.target)) {
+        setShowActions(false);
+      }
+    };
+    
+    if (showActions) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showActions]);
+
   // Mark messages as read when viewing
   useEffect(() => {
     if (messages.length > 0 && firebaseUser) {
@@ -40,56 +56,94 @@ export function ChatWindow() {
   }, [messages]);
 
   if (!activeConversationId) {
-    return <div className="text-muted">Select or start a conversation.</div>;
+    return <div className="text-white-50">Select or start a conversation.</div>;
   }
 
   const isOwnMessage = (senderId) => firebaseUser && String(senderId) === String(firebaseUser.uid);
   const isMessageUnread = (msg) => firebaseUser && !msg.readBy?.includes(firebaseUser.uid);
 
   return (
-    <div className="d-flex flex-column h-100">
-      {/* Chat Header */}
-      <div className="chat-window-header d-flex justify-content-between align-items-center p-3 border-bottom bg-white">
+    <div className="d-flex flex-column h-100" style={{ minHeight: 0 }}>
+      {/* Compact Chat Header */}
+      <div className="d-flex justify-content-between align-items-center px-3 py-2" style={{ backgroundColor: '#1a1a1a', borderBottom: '1px solid #2d2d2d', flexShrink: 0 }}>
         <div className="d-flex align-items-center">
           <button 
-            className="btn btn-link text-dark d-md-none p-0 me-3"
+            className="btn btn-link text-white d-md-none p-0 me-2"
             onClick={() => setActiveConversationId(null)}
           >
-            <i className="bi bi-arrow-left fs-5"></i>
+            <i className="bi bi-arrow-left"></i>
           </button>
-          <div className="user-avatar me-2">
+          <div className="user-avatar me-2" style={{ width: '32px', height: '32px', fontSize: '0.9rem' }}>
             {otherDisplayName[0]?.toUpperCase()}
           </div>
-          <div className="fw-semibold">{otherDisplayName}</div>
+          <span className="fw-semibold text-white">{otherDisplayName}</span>
         </div>
-        <button className="btn btn-sm btn-outline-secondary" onClick={() => setShowActions(a => !a)}>
-          <i className="bi bi-three-dots-vertical"></i>
-        </button>
+        <div className="position-relative" ref={actionsRef}>
+          <button 
+            className="btn btn-sm text-white-50 p-1" 
+            onClick={() => setShowActions(!showActions)}
+          >
+            <i className="bi bi-three-dots-vertical"></i>
+          </button>
+          {showActions && (
+            <div 
+              className="position-absolute end-0 mt-1 rounded shadow-lg" 
+              style={{ 
+                backgroundColor: '#2d2d2d', 
+                border: '1px solid #3d3d3d',
+                minWidth: '180px',
+                zIndex: 1000
+              }}
+            >
+              <div className="py-1">
+                {otherParticipantUid && !blocked.includes(String(otherParticipantUid)) && (
+                  <button 
+                    className="btn btn-sm w-100 text-start text-warning px-3 py-2" 
+                    style={{ border: 'none', backgroundColor: 'transparent' }}
+                    onClick={() => {
+                      blockUser(otherParticipantUid);
+                      setShowActions(false);
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255, 193, 7, 0.1)'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                  >
+                    <i className="bi bi-slash-circle me-2"></i>Block
+                  </button>
+                )}
+                {otherParticipantUid && blocked.includes(String(otherParticipantUid)) && (
+                  <button 
+                    className="btn btn-sm w-100 text-start text-success px-3 py-2" 
+                    style={{ border: 'none', backgroundColor: 'transparent' }}
+                    onClick={() => {
+                      unblockUser(otherParticipantUid);
+                      setShowActions(false);
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(25, 135, 84, 0.1)'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                  >
+                    <i className="bi bi-check-circle me-2"></i>Unblock
+                  </button>
+                )}
+                <button 
+                  className="btn btn-sm w-100 text-start text-danger px-3 py-2" 
+                  style={{ border: 'none', backgroundColor: 'transparent' }}
+                  onClick={() => {
+                    deleteConversation();
+                    setShowActions(false);
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(220, 53, 69, 0.1)'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                >
+                  <i className="bi bi-trash me-2"></i>Delete
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Actions Menu */}
-      {showActions && (
-        <div className="bg-light border-bottom p-2">
-          <div className="d-flex flex-wrap gap-2">
-            {otherParticipantUid && !blocked.includes(String(otherParticipantUid)) && (
-              <button type="button" className="btn btn-sm btn-warning" onClick={() => blockUser(otherParticipantUid)}>
-                <i className="bi bi-slash-circle me-1"></i>Block User
-              </button>
-            )}
-            {otherParticipantUid && blocked.includes(String(otherParticipantUid)) && (
-              <button type="button" className="btn btn-sm btn-success" onClick={() => unblockUser(otherParticipantUid)}>
-                <i className="bi bi-check-circle me-1"></i>Unblock User
-              </button>
-            )}
-            <button type="button" className="btn btn-sm btn-danger" onClick={() => deleteConversation()}>
-              <i className="bi bi-trash me-1"></i>Delete Conversation
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Messages Area */}
-      <div className="flex-fill p-3" style={{ overflowY: 'auto' }}>
+      <div className="flex-fill p-3" style={{ overflowY: 'auto', minHeight: 0 }}>
         {messages.map(m => {
           const isOwn = isOwnMessage(m.senderId);
           const isUnread = isMessageUnread(m);
@@ -113,7 +167,7 @@ export function ChatWindow() {
       {otherParticipantUid && typingMap[otherParticipantUid] && (
         <div className="typing-indicator-container">
           <div className="typing-indicator-small">
-            <span className="text-muted small">{otherDisplayName} is typing</span>
+            <span className="text-white-50 small">{otherDisplayName} is typing</span>
             <div className="typing-dots">
               <div className="dot-small"></div>
               <div className="dot-small"></div>

@@ -2,25 +2,19 @@
 .messages-page-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  background-color: #f8f9fa;
+  height: 100%;
+  background-color: #0f0f0f;
 }
 
 .messages-header {
-  background: white;
-  border-bottom: 1px solid #dee2e6;
-  padding: 1rem 1.5rem;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  display: none;
 }
 
 .messages-page {
   display: flex;
   flex: 1;
   overflow: hidden;
-  margin-bottom: 60px; /* Space for bottom nav */
+  margin-bottom: 0;
 }
 
 /* Conversations Sidebar */
@@ -99,7 +93,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -160,7 +154,7 @@
 
 /* Your messages - right side */
 .message-bubble.own {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   align-self: flex-end;
   margin-left: auto;
@@ -189,13 +183,13 @@
 
 /* Attachment links in other messages */
 .message-bubble.other a {
-  color: #667eea;
+  color: #10b981;
   text-decoration: none;
   font-weight: 500;
 }
 
 .message-bubble.other a:hover {
-  color: #764ba2;
+  color: #059669;
   text-decoration: underline;
 }
 
@@ -313,13 +307,13 @@
 }
 
 .conversation-item.active {
-  background: #e7f5ff;
-  border-left: 3px solid #667eea;
+  background: rgba(16, 185, 129, 0.15);
+  border-left: 3px solid #10b981;
 }
 
 .conversation-item.unread {
   font-weight: 600;
-  background: #f8f9ff;
+  background: rgba(16, 185, 129, 0.1);
 }
 
 .conversation-item .unread-badge {
@@ -327,7 +321,7 @@
   right: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  background: #667eea;
+  background: #10b981;
   color: white;
   font-size: 0.7rem;
   font-weight: 700;
@@ -341,7 +335,7 @@
 .unread-dot {
   width: 8px;
   height: 8px;
-  background: #007bff;
+  background: #10b981;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -431,12 +425,15 @@
 .message-input-container textarea {
   border-radius: 20px;
   padding: 0.75rem 1rem;
-  border: 1px solid #dee2e6;
+  border: 1px solid #3d3d3d;
+  background: #2d2d2d;
+  color: #ffffff;
 }
 
 .message-input-container textarea:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+  border-color: #10b981;
+  box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.15);
+  background: #333333;
 }
 
 .message-input-container .btn {
@@ -620,4 +617,235 @@
 
 .btn-remove-file i {
   font-size: 1rem;
+}
+/* Dark Theme for Messages Page */
+.messages-page-wrapper {
+  background-color: #0f0f0f;
+}
+
+.messages-header {
+  display: none;
+}
+
+.conversations-sidebar {
+  background: #1a1a1a;
+  border-right: 1px solid #2d2d2d;
+}
+
+.sidebar-header {
+  background: #1a1a1a;
+  border-bottom: 1px solid #2d2d2d;
+}
+
+.sidebar-header h5 {
+  color: #ffffff;
+}
+
+.sidebar-header .btn-link {
+  color: #ffffff !important;
+}
+
+.search-panel {
+  background: #1a1a1a;
+  border-bottom: 1px solid #2d2d2d;
+}
+
+.search-input-wrapper .form-control,
+.search-input-wrapper .form-control-sm {
+  background: #2d2d2d;
+  border: 1px solid #3d3d3d;
+  color: #ffffff;
+}
+
+.search-input-wrapper .form-control::placeholder,
+.search-input-wrapper .form-control-sm::placeholder {
+  color: #888888;
+}
+
+.search-input-wrapper .form-control:focus,
+.search-input-wrapper .form-control-sm:focus {
+  background: #333333;
+  border-color: #10b981;
+  box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.15);
+  color: #ffffff;
+}
+
+.search-results {
+  background: #1a1a1a;
+}
+
+.search-result-item {
+  border-bottom: 1px solid #2d2d2d;
+}
+
+.search-result-item:hover {
+  background: #2d2d2d;
+}
+
+.user-name {
+  color: #ffffff;
+}
+
+.user-role {
+  color: #888888;
+}
+
+.conversations-list {
+  background: #1a1a1a;
+}
+
+.conversation-item {
+  border-bottom: 1px solid #2d2d2d;
+}
+
+.conversation-item:hover {
+  background: #2d2d2d;
+}
+
+.conversation-item.active {
+  background: rgba(16, 185, 129, 0.15);
+  border-left: 3px solid #10b981;
+}
+
+.conversation-item.unread {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.conversation-item .last-message {
+  color: #888888;
+}
+
+.conversation-item.unread .last-message {
+  color: #ffffff;
+}
+
+.chat-area {
+  background: #0f0f0f;
+}
+
+.empty-state {
+  color: #888888;
+}
+
+.empty-state h5,
+.empty-state p {
+  color: #888888 !important;
+}
+
+.empty-state i {
+  color: #10b981 !important;
+}
+
+.message-input-container {
+  background: #1a1a1a;
+  border-top: 1px solid #2d2d2d;
+}
+
+.message-input-container textarea {
+  background: #2d2d2d !important;
+  border: 1px solid #3d3d3d !important;
+  color: #ffffff !important;
+}
+
+.message-input-container textarea::placeholder {
+  color: #888888 !important;
+}
+
+.message-input-container textarea:focus {
+  background: #333333 !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.15) !important;
+}
+
+.message-input-container .btn-outline-secondary {
+  color: #888888 !important;
+  border-color: #3d3d3d !important;
+}
+
+.message-input-container .btn-outline-secondary:hover {
+  color: #ffffff !important;
+  border-color: #4d4d4d !important;
+  background: #2d2d2d !important;
+}
+
+.message-bubble.other {
+  background: #2d2d2d;
+  color: #ffffff;
+}
+
+.typing-indicator {
+  background: #2d2d2d;
+}
+
+.typing-indicator-small {
+  background: #2d2d2d;
+}
+
+/* Scrollbar Styling for Dark Theme */
+.conversations-list::-webkit-scrollbar-thumb,
+.search-results::-webkit-scrollbar-thumb {
+  background: #3d3d3d;
+}
+
+.conversations-list::-webkit-scrollbar-thumb:hover,
+.search-results::-webkit-scrollbar-thumb:hover {
+  background: #4d4d4d;
+}
+
+.conversations-list::-webkit-scrollbar-track,
+.search-results::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.attached-files-preview {
+  background: #2d2d2d;
+}
+
+.file-preview-item {
+  background: #2d2d2d;
+  border: 1px solid #3d3d3d;
+}
+
+.file-preview-icon {
+  background: #3d3d3d;
+  color: #888888;
+}
+
+.file-preview-name {
+  color: #ffffff;
+}
+
+.file-preview-size {
+  color: #888888;
+}
+
+.file-preview-inline-icon {
+  background: #3d3d3d;
+  color: #888888;
+}
+
+/* Chat dropdown menu dark theme */
+.chat-area .dropdown-menu {
+  background-color: #2d2d2d;
+  border: 1px solid #3d3d3d;
+}
+
+.chat-area .dropdown-item {
+  color: #ffffff;
+}
+
+.chat-area .dropdown-item:hover {
+  background-color: #3d3d3d;
+}
+
+.chat-area .dropdown-item.text-warning:hover {
+  background-color: rgba(255, 193, 7, 0.1);
+}
+
+.chat-area .dropdown-item.text-danger:hover {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+.chat-area .dropdown-item.text-success:hover {
+  background-color: rgba(25, 135, 84, 0.1);
 }

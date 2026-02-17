@@ -663,8 +663,12 @@ const MyWorkouts = ({ embedded = false }) => {
     
     const duration = Math.max(1, Math.floor(workoutTimer / 60)); // Ensure at least 1 minute
     
+    // For program workouts (with programId), use null since they don't have user_workout_plan entries
+    // For regular workout plans, use the plan ID
+    const workoutPlanId = activeWorkout.programId ? null : activeWorkout.id;
+    
     const requestData = {
-      workoutPlanId: activeWorkout.id,
+      workoutPlanId: workoutPlanId,
       planName: activeWorkout.name + ' (Ended Early)',
       duration: duration
     };
@@ -753,8 +757,12 @@ const MyWorkouts = ({ embedded = false }) => {
     
     const duration = Math.max(1, Math.floor(workoutTimer / 60)); // Ensure at least 1 minute
     
+    // For program workouts (with programId), use null since they don't have user_workout_plan entries
+    // For regular workout plans, use the plan ID
+    const workoutPlanId = activeWorkout.programId ? null : activeWorkout.id;
+    
     const requestData = {
-      workoutPlanId: activeWorkout.id,
+      workoutPlanId: workoutPlanId,
       planName: activeWorkout.name,
       duration: duration
     };
@@ -851,14 +859,14 @@ const MyWorkouts = ({ embedded = false }) => {
             boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
           }}
         >
-          <div className="card-header border-0" style={{ backgroundColor: 'transparent', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', padding: '1.25rem' }}>
+          <div className="card-header border-0" style={{ backgroundColor: '#000000 !important', background: '#000000 !important', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', padding: '1.25rem', borderRadius: '1rem 1rem 0 0', backdropFilter: 'none' }}>
             <div className="d-flex justify-content-between align-items-center">
               <div>
-                <h5 className="mb-1" style={{ color: 'var(--brand-white)', fontWeight: '700' }}>
+                <h5 className="mb-1" style={{ color: '#ffffff', fontWeight: '700' }}>
                   <i className="bi bi-person-check me-2" style={{ color: 'var(--brand-primary)' }}></i>
                   Your Trainer's Workout Programs
                 </h5>
-                <small style={{ color: 'var(--text-secondary)' }}>Follow these programs for best results • Continue using your own plans below</small>
+                <small style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Follow these programs for best results • Continue using your own plans below</small>
               </div>
               <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)', padding: '0.5rem 1rem' }}>Priority Programs</span>
             </div>
@@ -878,14 +886,14 @@ const MyWorkouts = ({ embedded = false }) => {
                     <div 
                       className="card rounded-4 h-100" 
                       style={{ 
-                        backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.03)',
                         border: '2px solid var(--brand-primary)',
                         boxShadow: '0 4px 16px rgba(32, 214, 87, 0.2)'
                       }}
                     >
                       <div className="card-body p-4">
                         <div className="d-flex justify-content-between align-items-start mb-3">
-                          <h5 className="card-title" style={{ color: 'var(--brand-white)', fontWeight: '600' }}>{program.title}</h5>
+                          <h5 className="card-title" style={{ color: '#ffffff', fontWeight: '600' }}>{program.title}</h5>
                           <span className="badge rounded-pill" style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)' }}>
                             <i className="bi bi-star me-1"></i>
                             Trainer Assigned
@@ -893,18 +901,18 @@ const MyWorkouts = ({ embedded = false }) => {
                         </div>
                         
                         <div className="mb-2">
-                          <span className="badge rounded-pill me-1" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)' }}>{program.difficulty_level}</span>
-                          <span className="badge rounded-pill me-1" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)' }}>{program.duration_weeks}w</span>
-                          <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)' }}>{program.category}</span>
+                          <span className="badge rounded-pill me-1" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: '#ffffff' }}>{program.difficulty_level}</span>
+                          <span className="badge rounded-pill me-1" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: '#ffffff' }}>{program.duration_weeks}w</span>
+                          <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: '#ffffff' }}>{program.category}</span>
                         </div>
 
                         <div className="mb-3">
-                          <small style={{ color: 'var(--text-secondary)' }}>Description:</small>
-                          <p className="small mb-0 mt-1" style={{ color: 'var(--text-primary)' }}>{program.description || 'No description available'}</p>
+                          <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Description:</small>
+                          <p className="small mb-0 mt-1" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{program.description || 'No description available'}</p>
                         </div>
 
                         <div className="mb-3">
-                          <small style={{ color: 'var(--text-secondary)' }}>
+                          <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                             Assigned by: <strong style={{ color: 'var(--brand-primary)' }}>{program.trainer_name}</strong> on {program.assigned_at_formatted}
                           </small>
                         </div>
@@ -1391,7 +1399,7 @@ const MyWorkouts = ({ embedded = false }) => {
   const renderCreateView = () => (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="mb-0">{isEditMode ? 'Edit Workout Plan' : 'Create Workout Plan'}</h4>
+        <h4 className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>{isEditMode ? 'Edit Workout Plan' : 'Create Workout Plan'}</h4>
         <button 
           className="btn btn-outline-secondary"
           onClick={() => {
@@ -1406,26 +1414,28 @@ const MyWorkouts = ({ embedded = false }) => {
 
       <div className="row">
         <div className="col-lg-8">
-          <div className="card border-0 shadow-sm">
+          <div className="card" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem' }}>
             <div className="card-body">
               {/* Plan Details */}
               <div className="mb-4">
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Plan Name</label>
+                    <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Plan Name</label>
                     <input 
                       type="text" 
                       className="form-control"
+                      style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                       value={newPlan.name}
                       onChange={(e) => setNewPlan(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="Enter plan name..."
                     />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Description</label>
+                    <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Description</label>
                     <input 
                       type="text" 
                       className="form-control"
+                      style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                       value={newPlan.description}
                       onChange={(e) => setNewPlan(prev => ({ ...prev, description: e.target.value }))}
                       placeholder="Plan description..."
@@ -1436,11 +1446,12 @@ const MyWorkouts = ({ embedded = false }) => {
 
               {/* Exercise Search */}
               <div className="mb-4">
-                <h6 className="mb-3">Available Exercises</h6>
+                <h6 className="mb-3" style={{ color: 'rgba(255,255,255,0.9)' }}>Available Exercises</h6>
                 <div className="mb-3">
                   <input 
                     type="text" 
                     className="form-control"
+                    style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                     placeholder="Search exercises by name, category, or muscle group..."
                     value={exerciseSearch}
                     onChange={(e) => setExerciseSearch(e.target.value)}
@@ -1452,15 +1463,16 @@ const MyWorkouts = ({ embedded = false }) => {
                     {filteredExercises.map((exercise, index) => (
                       <div key={exercise.id || index} className="col-md-6 mb-2">
                         <div 
-                          className="card card-hover border-1 cursor-pointer"
+                          className="card card-hover cursor-pointer"
+                          style={{ background: 'rgba(30, 35, 30, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)' }}
                           onClick={() => addExerciseToPlan(exercise)}
                         >
                           <div className="card-body py-2">
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
-                                <small className="fw-bold">{exercise.name}</small>
+                                <small className="fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>{exercise.name}</small>
                                 <br />
-                                <small className="text-muted">
+                                <small style={{ color: 'rgba(255,255,255,0.7)' }}>
                                   {exercise.category} • {exercise.muscle_group}
                                   {Boolean(exercise.is_custom) && <span className="badge bg-success ms-1">Custom</span>}
                                 </small>
@@ -1478,12 +1490,13 @@ const MyWorkouts = ({ embedded = false }) => {
               <hr />
 
               {/* Add Custom Exercise */}
-              <h6 className="mb-3">Create Your Own Exercise</h6>
+              <h6 className="mb-3" style={{ color: 'rgba(255,255,255,0.9)' }}>Create Your Own Exercise</h6>
               <div className="row">
                 <div className="col-md-4 mb-3">
                   <input 
                     type="text" 
                     className="form-control"
+                    style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                     placeholder="Exercise name"
                     value={newExercise.name}
                     onChange={(e) => setNewExercise(prev => ({ ...prev, name: e.target.value }))}
@@ -1492,6 +1505,7 @@ const MyWorkouts = ({ embedded = false }) => {
                 <div className="col-md-3 mb-3">
                   <select 
                     className="form-select"
+                    style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                     value={newExercise.category}
                     onChange={(e) => setNewExercise(prev => ({ ...prev, category: e.target.value }))}
                   >
@@ -1505,6 +1519,7 @@ const MyWorkouts = ({ embedded = false }) => {
                   <input 
                     type="text" 
                     className="form-control"
+                    style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                     placeholder="Muscle groups (comma separated)"
                     value={newExercise.muscle_group}
                     onChange={(e) => setNewExercise(prev => ({ ...prev, muscle_group: e.target.value }))}
@@ -1525,6 +1540,7 @@ const MyWorkouts = ({ embedded = false }) => {
                   <input 
                     type="text" 
                     className="form-control"
+                    style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                     placeholder="Equipment needed"
                     value={newExercise.equipment}
                     onChange={(e) => setNewExercise(prev => ({ ...prev, equipment: e.target.value }))}
@@ -1533,6 +1549,7 @@ const MyWorkouts = ({ embedded = false }) => {
                 <div className="col-md-6 mb-3">
                   <textarea 
                     className="form-control"
+                    style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
                     placeholder="Exercise instructions..."
                     value={newExercise.instructions}
                     onChange={(e) => setNewExercise(prev => ({ ...prev, instructions: e.target.value }))}
@@ -1545,14 +1562,14 @@ const MyWorkouts = ({ embedded = false }) => {
 
               {/* Buy Existing Workout Plans Tab */}
               <div className="mt-4">
-                <h6 className="mb-3">Buy Existing Workout Plans</h6>
+                <h6 className="mb-3" style={{ color: 'rgba(255,255,255,0.9)' }}>Buy Existing Workout Plans</h6>
                 <div className="row">
                   {premadeWorkoutPlans.slice(0, 3).map((plan, index) => (
                     <div key={index} className="col-md-4 mb-3">
-                      <div className="card border-1">
+                      <div className="card" style={{ background: 'rgba(30, 35, 30, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
                         <div className="card-body p-3">
-                          <h6 className="card-title mb-2">{plan.title}</h6>
-                          <p className="text-muted small mb-2">{plan.category} • {plan.difficulty_level}</p>
+                          <h6 className="card-title mb-2" style={{ color: 'rgba(255,255,255,0.9)' }}>{plan.title}</h6>
+                          <p className="small mb-2" style={{ color: 'rgba(255,255,255,0.7)' }}>{plan.category} • {plan.difficulty_level}</p>
                           <div className="d-flex justify-content-between align-items-center">
                             <span className="fw-bold text-success">${plan.price}</span>
                             <button className="btn btn-outline-primary btn-sm">
@@ -1570,26 +1587,26 @@ const MyWorkouts = ({ embedded = false }) => {
         </div>
 
         <div className="col-lg-4">
-          <div className="card border-0 shadow-sm sticky-top">
-            <div className="card-header bg-white">
-              <h6 className="mb-0">Plan Preview</h6>
+          <div className="card sticky-top" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem' }}>
+            <div className="card-header" style={{ background: 'rgba(32, 214, 87, 0.2)', borderBottom: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem 1rem 0 0' }}>
+              <h6 className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Plan Preview</h6>
             </div>
             <div className="card-body">
-              <h6>{newPlan.name || 'Untitled Plan'}</h6>
-              <p className="text-muted small">{newPlan.description || 'No description'}</p>
+              <h6 style={{ color: 'rgba(255,255,255,0.9)' }}>{newPlan.name || 'Untitled Plan'}</h6>
+              <p className="small" style={{ color: 'rgba(255,255,255,0.7)' }}>{newPlan.description || 'No description'}</p>
               
               {newPlan.exercises.length === 0 ? (
-                <p className="text-muted small">No exercises added yet</p>
+                <p className="small" style={{ color: 'rgba(255,255,255,0.6)' }}>No exercises added yet</p>
               ) : (
                 <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                   {newPlan.exercises.map((exercise, index) => (
-                    <div key={index} className="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                    <div key={index} className="d-flex justify-content-between align-items-center mb-2 p-2 rounded" style={{ background: 'rgba(30, 35, 30, 0.6)' }}>
                       <div>
-                        <small className="fw-bold d-block">{exercise.name}</small>
-                        <small className="text-muted">{exercise.sets} sets x {exercise.reps}</small>
-                        {exercise.rpe && <small className="text-muted"> • RPE {exercise.rpe}</small>}
+                        <small className="fw-bold d-block" style={{ color: 'rgba(255,255,255,0.9)' }}>{exercise.name}</small>
+                        <small style={{ color: 'rgba(255,255,255,0.7)' }}>{exercise.sets} sets x {exercise.reps}</small>
+                        {exercise.rpe && <small style={{ color: 'rgba(255,255,255,0.7)' }}> • RPE {exercise.rpe}</small>}
                         <br />
-                        <small className="text-muted">{exercise.muscle_group}</small>
+                        <small style={{ color: 'rgba(255,255,255,0.7)' }}>{exercise.muscle_group}</small>
                       </div>
                       <button 
                         className="btn btn-sm btn-outline-danger"
@@ -1624,18 +1641,18 @@ const MyWorkouts = ({ embedded = false }) => {
     <div>
       {/* Workout Timer - Top Left Corner */}
       <div className="position-fixed" style={{ top: '80px', left: '20px', zIndex: 1000 }}>
-        <div className="card border-0 shadow-sm">
+        <div className="card" style={{ background: 'rgba(15, 20, 15, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '0.75rem', backdropFilter: 'blur(10px)' }}>
           <div className="card-body p-2">
             <div className="d-flex align-items-center">
-              <i className="bi bi-stopwatch me-2 text-primary"></i>
-              <span className="fw-bold">{formatTime(workoutTimer)}</span>
+              <i className="bi bi-stopwatch me-2" style={{ color: 'rgba(32, 214, 87, 0.9)' }}></i>
+              <span className="fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>{formatTime(workoutTimer)}</span>
             </div>
           </div>
         </div>
       </div>
 
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="mb-0">Active Workout: {activeWorkout?.name}</h4>
+        <h4 className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Active Workout: {activeWorkout?.name}</h4>
         <div className="d-flex gap-2">
           <button 
             className="btn btn-outline-danger"
@@ -1659,25 +1676,28 @@ const MyWorkouts = ({ embedded = false }) => {
       {activeWorkout && (
         <div className="row">
           <div className="col-lg-8">
-            <div className="card border-0 shadow-sm">
+            <div className="card" style={{ background: 'rgba(15, 20, 15, 0.7)', border: '1px solid rgba(32, 214, 87, 0.2)', borderRadius: '1rem' }}>
               <div className="card-body">
-                <div className="mb-3">
-                  <div className="d-flex justify-content-between align-items-center">
-                    <h6>Exercise {currentExerciseIndex + 1} of {activeWorkout.exercises.length}</h6>
-                    <span className="badge bg-primary">Set {currentSetIndex + 1} of {activeWorkout.exercises[currentExerciseIndex]?.sets}</span>
+                <div className="mb-4">
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <small style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.875rem', fontWeight: '500' }}>Exercise {currentExerciseIndex + 1} of {activeWorkout.exercises.length}</small>
+                    <span className="badge" style={{ background: 'rgba(32, 214, 87, 0.2)', color: 'rgba(32, 214, 87, 1)', border: '1px solid rgba(32, 214, 87, 0.3)', padding: '0.35rem 0.75rem' }}>Set {currentSetIndex + 1} of {activeWorkout.exercises[currentExerciseIndex]?.sets}</span>
                   </div>
-                  <h5>{activeWorkout.exercises[currentExerciseIndex]?.name}</h5>
-                  <p className="text-muted small">{activeWorkout.exercises[currentExerciseIndex]?.instructions}</p>
+                  <h4 style={{ color: 'rgba(255,255,255,0.95)', marginBottom: '0.5rem', fontWeight: '600' }}>{activeWorkout.exercises[currentExerciseIndex]?.name}</h4>
+                  {activeWorkout.exercises[currentExerciseIndex]?.instructions && (
+                    <p className="small mb-0" style={{ color: 'rgba(255,255,255,0.6)' }}>{activeWorkout.exercises[currentExerciseIndex]?.instructions}</p>
+                  )}
                 </div>
 
                 {/* Exercise Logging Form */}
                 <div className="mb-4">
                   <div className="row">
                     <div className="col-md-3 mb-3">
-                      <label className="form-label">Weight (kg)</label>
+                      <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Weight (kg)</label>
                       <input 
                         type="number" 
                         className="form-control" 
+                        style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}
                         placeholder="0" 
                         step="0.5"
                         value={currentSetData.weight}
@@ -1685,20 +1705,22 @@ const MyWorkouts = ({ embedded = false }) => {
                       />
                     </div>
                     <div className="col-md-3 mb-3">
-                      <label className="form-label">Reps</label>
+                      <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Reps</label>
                       <input 
                         type="number" 
                         className="form-control" 
+                        style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}
                         placeholder="0"
                         value={currentSetData.reps}
                         onChange={(e) => setCurrentSetData(prev => ({ ...prev, reps: e.target.value }))}
                       />
                     </div>
                     <div className="col-md-3 mb-3">
-                      <label className="form-label">RPE (1-10)</label>
+                      <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>RPE (1-10)</label>
                       <input 
                         type="number" 
                         className="form-control" 
+                        style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}
                         placeholder="5" 
                         min="1" 
                         max="10"
@@ -1707,10 +1729,11 @@ const MyWorkouts = ({ embedded = false }) => {
                       />
                     </div>
                     <div className="col-md-3 mb-3">
-                      <label className="form-label">Notes</label>
+                      <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Notes</label>
                       <input 
                         type="text" 
                         className="form-control" 
+                        style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}
                         placeholder="Optional notes"
                         value={currentSetData.notes}
                         onChange={(e) => setCurrentSetData(prev => ({ ...prev, notes: e.target.value }))}
@@ -1718,9 +1741,10 @@ const MyWorkouts = ({ embedded = false }) => {
                     </div>
                   </div>
                   
-                  <div className="d-flex gap-2 mb-3">
+                  <div className="d-flex gap-2 mb-4">
                     <button 
                       className="btn btn-success"
+                      style={{ borderRadius: '0.5rem' }}
                       onClick={completeSet}
                       disabled={!currentSetData.reps}
                     >
@@ -1729,6 +1753,7 @@ const MyWorkouts = ({ embedded = false }) => {
                     </button>
                     <button 
                       className="btn btn-outline-secondary"
+                      style={{ borderRadius: '0.5rem' }}
                       onClick={() => {
                         setCurrentSetIndex(currentSetIndex + 1);
                         setCurrentSetData({ weight: '', reps: '', rpe: '', notes: '' });
@@ -1740,6 +1765,7 @@ const MyWorkouts = ({ embedded = false }) => {
                     </button>
                     <button 
                       className="btn btn-outline-primary"
+                      style={{ borderRadius: '0.5rem' }}
                       onClick={nextExercise}
                     >
                       <i className="bi bi-arrow-right me-2"></i>
@@ -1748,10 +1774,10 @@ const MyWorkouts = ({ embedded = false }) => {
                   </div>
 
                   {/* Break Timer Controls */}
-                  <div className="card bg-light border-0">
+                  <div className="card border-0" style={{ background: 'rgba(30, 35, 30, 0.3)', border: '1px solid rgba(32, 214, 87, 0.2)', borderRadius: '0.75rem' }}>
                     <div className="card-body p-3">
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <h6 className="mb-0">Rest Timer</h6>
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h6 className="mb-0" style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.95rem', fontWeight: '600' }}>Rest Timer</h6>
                         <div className="form-check form-switch">
                           <input 
                             className="form-check-input" 
@@ -1762,7 +1788,7 @@ const MyWorkouts = ({ embedded = false }) => {
                               resetBreakTimer();
                             }}
                           />
-                          <label className="form-check-label small">
+                          <label className="form-check-label small" style={{ color: 'rgba(255,255,255,0.9)' }}>
                             {isTimerMode ? 'Countdown' : 'Stopwatch'}
                           </label>
                         </div>
@@ -1772,10 +1798,11 @@ const MyWorkouts = ({ embedded = false }) => {
                         <div className="col-md-4">
                           {isTimerMode && (
                             <div>
-                              <label className="form-label small">Rest Time (seconds)</label>
+                              <label className="form-label small" style={{ color: 'rgba(255,255,255,0.9)' }}>Rest Time (seconds)</label>
                               <input 
                                 type="number" 
                                 className="form-control form-control-sm"
+                                style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}
                                 value={breakTimerSetting}
                                 onChange={(e) => {
                                   setBreakTimerSetting(parseInt(e.target.value) || 60);
@@ -1790,7 +1817,7 @@ const MyWorkouts = ({ embedded = false }) => {
                           )}
                         </div>
                         <div className="col-md-4 text-center">
-                          <div className="fs-4 fw-bold text-primary">
+                          <div className="fs-3 fw-bold" style={{ color: 'rgba(32, 214, 87, 0.9)' }}>
                             {formatTime(breakTimer)}
                           </div>
                         </div>
@@ -1798,6 +1825,7 @@ const MyWorkouts = ({ embedded = false }) => {
                           <div className="d-flex gap-1">
                             <button 
                               className={`btn btn-sm ${isBreakTimerRunning ? 'btn-warning' : 'btn-success'}`}
+                              style={{ borderRadius: '0.5rem', fontSize: '0.875rem' }}
                               onClick={() => {
                                 if (isBreakTimerRunning) {
                                   setIsBreakTimerRunning(false);
@@ -1810,6 +1838,7 @@ const MyWorkouts = ({ embedded = false }) => {
                             </button>
                             <button 
                               className="btn btn-sm btn-outline-secondary"
+                              style={{ borderRadius: '0.5rem', fontSize: '0.875rem' }}
                               onClick={resetBreakTimer}
                             >
                               Reset
@@ -1822,35 +1851,35 @@ const MyWorkouts = ({ embedded = false }) => {
                 </div>
 
                 {/* Previous Sets */}
-                <div className="border-top pt-3">
-                  <h6>Sets Progress</h6>
+                <div className="border-top pt-3" style={{ borderColor: 'rgba(32, 214, 87, 0.2) !important' }}>
+                  <h6 style={{ color: 'rgba(255,255,255,0.9)' }}>Sets Progress</h6>
                   <div className="table-responsive">
-                    <table className="table table-sm">
+                    <table className="table table-sm table-borderless">
                       <thead>
-                        <tr>
-                          <th>Set</th>
-                          <th>Weight</th>
-                          <th>Reps</th>
-                          <th>RPE</th>
-                          <th>Notes</th>
-                          <th>Status</th>
+                        <tr style={{ borderBottom: '1px solid rgba(32, 214, 87, 0.2)' }}>
+                          <th style={{ color: 'rgba(255,255,255,0.7)', fontWeight: '500', paddingBottom: '0.75rem' }}>Set</th>
+                          <th style={{ color: 'rgba(255,255,255,0.7)', fontWeight: '500', paddingBottom: '0.75rem' }}>Weight</th>
+                          <th style={{ color: 'rgba(255,255,255,0.7)', fontWeight: '500', paddingBottom: '0.75rem' }}>Reps</th>
+                          <th style={{ color: 'rgba(255,255,255,0.7)', fontWeight: '500', paddingBottom: '0.75rem' }}>RPE</th>
+                          <th style={{ color: 'rgba(255,255,255,0.7)', fontWeight: '500', paddingBottom: '0.75rem' }}>Notes</th>
+                          <th style={{ color: 'rgba(255,255,255,0.7)', fontWeight: '500', paddingBottom: '0.75rem' }}>Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         {Array.from({ length: activeWorkout.exercises[currentExerciseIndex]?.sets || 0 }, (_, i) => {
                           const setData = activeWorkout.completedSets?.[currentExerciseIndex]?.[i];
                           return (
-                            <tr key={i}>
-                              <td>{i + 1}</td>
-                              <td>{setData?.completed ? setData.weight : '-'}</td>
-                              <td>{setData?.completed ? setData.reps : '-'}</td>
-                              <td>{setData?.completed ? setData.rpe || '-' : '-'}</td>
-                              <td>{setData?.completed ? setData.notes || '-' : '-'}</td>
-                              <td>
+                            <tr key={i} style={{ borderBottom: '1px solid rgba(32, 214, 87, 0.1)' }}>
+                              <td style={{ color: 'rgba(255,255,255,0.9)', paddingTop: '0.75rem', paddingBottom: '0.75rem' }}>{i + 1}</td>
+                              <td style={{ color: 'rgba(255,255,255,0.9)', paddingTop: '0.75rem', paddingBottom: '0.75rem' }}>{setData?.completed ? setData.weight : '-'}</td>
+                              <td style={{ color: 'rgba(255,255,255,0.9)', paddingTop: '0.75rem', paddingBottom: '0.75rem' }}>{setData?.completed ? setData.reps : '-'}</td>
+                              <td style={{ color: 'rgba(255,255,255,0.9)', paddingTop: '0.75rem', paddingBottom: '0.75rem' }}>{setData?.completed ? setData.rpe || '-' : '-'}</td>
+                              <td style={{ color: 'rgba(255,255,255,0.8)', paddingTop: '0.75rem', paddingBottom: '0.75rem' }}>{setData?.completed ? setData.notes || '-' : '-'}</td>
+                              <td style={{ paddingTop: '0.75rem', paddingBottom: '0.75rem' }}>
                                 <span className={`badge ${
                                   setData?.completed ? 'bg-success' : 
-                                  i === currentSetIndex ? 'bg-warning' : 'bg-light text-dark'
-                                }`}>
+                                  i === currentSetIndex ? 'bg-warning text-dark' : ''
+                                }`} style={!setData?.completed && i !== currentSetIndex ? { background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' } : {}}>
                                   {setData?.completed ? 'Completed' : 
                                    i === currentSetIndex ? 'In Progress' : 'Pending'}
                                 </span>
@@ -1867,42 +1896,43 @@ const MyWorkouts = ({ embedded = false }) => {
           </div>
 
           <div className="col-lg-4">
-            <div className="card border-0 shadow-sm sticky-top">
-              <div className="card-header bg-white">
-                <h6 className="mb-0">Workout Summary</h6>
+            <div className="card sticky-top" style={{ background: 'rgba(15, 20, 15, 0.7)', border: '1px solid rgba(32, 214, 87, 0.2)', borderRadius: '1rem' }}>
+              <div className="card-header" style={{ background: 'rgba(32, 214, 87, 0.1)', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', borderRadius: '1rem 1rem 0 0' }}>
+                <h6 className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Workout Summary</h6>
               </div>
               <div className="card-body">
-                <div className="mb-3">
-                  <small className="text-muted">Duration</small>
-                  <h6>{formatTime(workoutTimer)}</h6>
+                <div className="mb-3 pb-2" style={{ borderBottom: '1px solid rgba(32, 214, 87, 0.1)' }}>
+                  <small style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem' }}>Duration</small>
+                  <h6 style={{ color: 'rgba(255,255,255,0.95)', fontSize: '1.25rem', marginTop: '0.25rem', marginBottom: '0' }}>{formatTime(workoutTimer)}</h6>
+                </div>
+                <div className="mb-3 pb-2" style={{ borderBottom: '1px solid rgba(32, 214, 87, 0.1)' }}>
+                  <small style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem' }}>Exercises Completed</small>
+                  <h6 style={{ color: 'rgba(255,255,255,0.95)', fontSize: '1.25rem', marginTop: '0.25rem', marginBottom: '0' }}>{currentExerciseIndex} of {activeWorkout.exercises.length}</h6>
+                </div>
+                <div className="mb-3 pb-2" style={{ borderBottom: '1px solid rgba(32, 214, 87, 0.1)' }}>
+                  <small style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem' }}>Current Exercise</small>
+                  <h6 style={{ color: 'rgba(255,255,255,0.95)', fontSize: '1.1rem', marginTop: '0.25rem', marginBottom: '0' }}>{activeWorkout.exercises[currentExerciseIndex]?.name}</h6>
                 </div>
                 <div className="mb-3">
-                  <small className="text-muted">Exercises Completed</small>
-                  <h6>{currentExerciseIndex} of {activeWorkout.exercises.length}</h6>
+                  <small style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem' }}>Sets Progress</small>
+                  <h6 style={{ color: 'rgba(255,255,255,0.95)', fontSize: '1.25rem', marginTop: '0.25rem', marginBottom: '0' }}>{currentSetIndex + 1} of {activeWorkout.exercises[currentExerciseIndex]?.sets}</h6>
                 </div>
-                <div className="mb-3">
-                  <small className="text-muted">Current Exercise</small>
-                  <h6>{activeWorkout.exercises[currentExerciseIndex]?.name}</h6>
-                </div>
-                <div className="mb-3">
-                  <small className="text-muted">Sets Progress</small>
-                  <h6>{currentSetIndex + 1} of {activeWorkout.exercises[currentExerciseIndex]?.sets}</h6>
-                </div>
+
+                <hr style={{ borderColor: 'rgba(32, 214, 87, 0.15)', margin: '1.5rem 0' }} />
                 
-                <hr />
-                
-                <h6 className="mb-2">Exercise List</h6>
+                <h6 className="mb-2" style={{ color: 'rgba(255,255,255,0.9)' }}>Exercise List</h6>
                 <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                   {activeWorkout.exercises.map((exercise, index) => (
                     <div 
                       key={index} 
-                      className={`p-2 rounded mb-2 cursor-pointer ${index === currentExerciseIndex ? 'bg-primary text-white' : 'bg-light'}`}
+                      className={`p-2 rounded mb-2 cursor-pointer ${index === currentExerciseIndex ? 'bg-primary text-white' : ''}`}
+                      style={index !== currentExerciseIndex ? { background: 'rgba(30, 35, 30, 0.4)', border: '1px solid rgba(32, 214, 87, 0.15)' } : {}}
                       onClick={() => setCurrentExerciseIndex(index)}
                     >
-                      <small className="fw-bold d-block">{exercise.name}</small>
-                      <small className="opacity-75">{exercise.sets} sets x {exercise.reps}</small>
+                      <small className="fw-bold d-block" style={index !== currentExerciseIndex ? { color: 'rgba(255,255,255,0.9)' } : {}}>{exercise.name}</small>
+                      <small className="opacity-75" style={index !== currentExerciseIndex ? { color: 'rgba(255,255,255,0.7)' } : {}}>{exercise.sets} sets x {exercise.reps}</small>
                       <br />
-                      <small className="opacity-75">{exercise.muscle_group}</small>
+                      <small className="opacity-75" style={index !== currentExerciseIndex ? { color: 'rgba(255,255,255,0.7)' } : {}}>{exercise.muscle_group}</small>
                     </div>
                   ))}
                 </div>
@@ -1929,9 +1959,9 @@ const MyWorkouts = ({ embedded = false }) => {
   const DeleteModal = () => (
     <div className={`modal fade ${showDeleteModal ? 'show d-block' : ''}`} style={{ backgroundColor: showDeleteModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
       <div className="modal-dialog">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">{planToDelete?.isPurchased ? 'Hide' : 'Delete'} Workout Plan</h5>
+        <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
+          <div className="modal-header dark-modal-header">
+            <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>{planToDelete?.isPurchased ? 'Hide' : 'Delete'} Workout Plan</h5>
             <button 
               type="button" 
               className="btn-close" 
@@ -1939,14 +1969,14 @@ const MyWorkouts = ({ embedded = false }) => {
             ></button>
           </div>
           <div className="modal-body">
-            <p>Are you sure you want to {planToDelete?.isPurchased ? 'hide' : 'delete'} the workout plan "<strong>{planToDelete?.name}</strong>"?</p>
+            <p style={{ color: 'rgba(255,255,255,0.9)' }}>Are you sure you want to {planToDelete?.isPurchased ? 'hide' : 'delete'} the workout plan "<strong>{planToDelete?.name}</strong>"?</p>
             {planToDelete?.isPurchased ? (
-              <p className="text-muted small">This will hide the program from your library. You can restore it later from the marketplace.</p>
+              <p className="small" style={{ color: 'rgba(255,255,255,0.7)' }}>This will hide the program from your library. You can restore it later from the marketplace.</p>
             ) : (
-              <p className="text-muted small">This action cannot be undone.</p>
+              <p className="small" style={{ color: 'rgba(255,255,255,0.7)' }}>This action cannot be undone.</p>
             )}
           </div>
-          <div className="modal-footer">
+          <div className="modal-footer" style={{ background: 'rgba(20, 25, 20, 0.95)', borderTop: '1px solid rgba(32, 214, 87, 0.3)' }}>
             <button 
               type="button" 
               className="btn btn-secondary" 
@@ -1973,9 +2003,9 @@ const MyWorkouts = ({ embedded = false }) => {
   const EditModal = () => (
     <div className={`modal fade ${showEditModal ? 'show d-block' : ''}`} style={{ backgroundColor: showEditModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
       <div className="modal-dialog modal-lg">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">Edit Workout Plan</h5>
+        <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
+          <div className="modal-header dark-modal-header">
+            <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>Edit Workout Plan</h5>
             <button 
               type="button" 
               className="btn-close" 
@@ -1986,32 +2016,34 @@ const MyWorkouts = ({ embedded = false }) => {
             {planToEdit && (
               <div>
                 <div className="mb-3">
-                  <label className="form-label">Plan Name</label>
+                  <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Plan Name</label>
                   <input 
                     type="text" 
                     className="form-control"
+                    style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)' }}
                     value={planToEdit.name}
                     onChange={(e) => setPlanToEdit(prev => ({ ...prev, name: e.target.value }))}
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Description</label>
+                  <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Description</label>
                   <textarea 
                     className="form-control"
+                    style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)' }}
                     value={planToEdit.description || ''}
                     onChange={(e) => setPlanToEdit(prev => ({ ...prev, description: e.target.value }))}
                     rows="3"
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Exercises ({planToEdit.exercises?.length || 0})</label>
-                  <div className="border rounded p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                  <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Exercises ({planToEdit.exercises?.length || 0})</label>
+                  <div className="border rounded p-3" style={{ maxHeight: '200px', overflowY: 'auto', background: 'rgba(30, 35, 30, 0.5)', borderColor: 'rgba(32, 214, 87, 0.2) !important' }}>
                     {planToEdit.exercises?.map((exercise, index) => (
                       <div key={index} className="d-flex justify-content-between align-items-center mb-2">
                         <div>
-                          <strong>{exercise.name}</strong>
+                          <strong style={{ color: 'rgba(255,255,255,0.9)' }}>{exercise.name}</strong>
                           <br />
-                          <small className="text-muted">{exercise.sets} sets x {exercise.reps}</small>
+                          <small style={{ color: 'rgba(255,255,255,0.7)' }}>{exercise.sets} sets x {exercise.reps}</small>
                         </div>
                         <button 
                           className="btn btn-sm btn-outline-danger"
@@ -2029,7 +2061,7 @@ const MyWorkouts = ({ embedded = false }) => {
               </div>
             )}
           </div>
-          <div className="modal-footer">
+          <div className="modal-footer" style={{ background: 'rgba(20, 25, 20, 0.95)', borderTop: '1px solid rgba(32, 214, 87, 0.3)' }}>
             <button 
               type="button" 
               className="btn btn-secondary" 
@@ -2099,9 +2131,9 @@ const MyWorkouts = ({ embedded = false }) => {
     return (
       <div className={`modal fade ${showWorkoutDetails ? 'show d-block' : ''}`} style={{ backgroundColor: showWorkoutDetails ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
         <div className="modal-dialog modal-xl">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">
+          <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
+            <div className="modal-header dark-modal-header">
+              <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>
                 <i className="bi bi-clipboard-data me-2"></i>
                 Workout Details
               </h5>
@@ -2115,15 +2147,15 @@ const MyWorkouts = ({ embedded = false }) => {
               {selectedWorkoutDetails && (
                 <div>
                   {/* Workout Overview */}
-                  <div className="card border-0 bg-light mb-4">
+                  <div className="card border-0 mb-4" style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)' }}>
                     <div className="card-body p-3">
                       <div className="row">
                         <div className="col-md-8">
-                          <h6 className="card-title mb-2">
-                            <i className="bi bi-clipboard-check me-2 text-primary"></i>
+                          <h6 className="card-title mb-2" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                            <i className="bi bi-clipboard-check me-2" style={{ color: 'rgba(32, 214, 87, 0.9)' }}></i>
                             {selectedWorkoutDetails.plan_name}
                           </h6>
-                          <p className="text-muted small mb-0">
+                          <p className="small mb-0" style={{ color: 'rgba(255,255,255,0.7)' }}>
                             <i className="bi bi-calendar3 me-1"></i>
                             {new Date(selectedWorkoutDetails.session_date).toLocaleDateString('en-US', {
                               weekday: 'long',
@@ -2136,7 +2168,7 @@ const MyWorkouts = ({ embedded = false }) => {
                         <div className="col-md-4 text-end">
                           {selectedWorkoutDetails.rating && (
                             <div className="mb-2">
-                              <span className="badge bg-warning text-dark">
+                              <span className="badge" style={{ background: 'rgba(255, 193, 7, 0.2)', color: 'rgba(255, 193, 7, 0.9)' }}>
                                 <i className="bi bi-star-fill me-1"></i>
                                 Rating: {selectedWorkoutDetails.rating}/10
                               </span>
@@ -2150,75 +2182,75 @@ const MyWorkouts = ({ embedded = false }) => {
                   {/* Statistics Cards */}
                   <div className="row mb-4">
                     <div className="col-md-2 col-6 mb-3">
-                      <div className="card border-0 h-100 text-center">
+                      <div className="card border-0 h-100 text-center" style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)' }}>
                         <div className="card-body p-3">
-                          <div className="text-primary fs-4">
+                          <div className="fs-4" style={{ color: 'rgba(32, 214, 87, 0.9)' }}>
                             <i className="bi bi-clock"></i>
                           </div>
-                          <div className="fw-bold">{selectedWorkoutDetails.duration_minutes}</div>
-                          <small className="text-muted">Minutes</small>
+                          <div className="fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>{selectedWorkoutDetails.duration_minutes}</div>
+                          <small style={{ color: 'rgba(255,255,255,0.7)' }}>Minutes</small>
                         </div>
                       </div>
                     </div>
                     <div className="col-md-2 col-6 mb-3">
-                      <div className="card border-0 h-100 text-center">
+                      <div className="card border-0 h-100 text-center" style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)' }}>
                         <div className="card-body p-3">
-                          <div className="text-success fs-4">
+                          <div className="fs-4" style={{ color: 'rgba(32, 214, 87, 0.9)' }}>
                             <i className="bi bi-list-ol"></i>
                           </div>
-                          <div className="fw-bold">{selectedWorkoutDetails.total_sets}</div>
-                          <small className="text-muted">Total Sets</small>
+                          <div className="fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>{selectedWorkoutDetails.total_sets}</div>
+                          <small style={{ color: 'rgba(255,255,255,0.7)' }}>Total Sets</small>
                         </div>
                       </div>
                     </div>
                     <div className="col-md-2 col-6 mb-3">
-                      <div className="card border-0 h-100 text-center">
+                      <div className="card border-0 h-100 text-center" style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)' }}>
                         <div className="card-body p-3">
-                          <div className="text-info fs-4">
+                          <div className="fs-4" style={{ color: 'rgba(32, 214, 87, 0.9)' }}>
                             <i className="bi bi-arrow-repeat"></i>
                           </div>
-                          <div className="fw-bold">{stats.totalReps}</div>
-                          <small className="text-muted">Total Reps</small>
+                          <div className="fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>{stats.totalReps}</div>
+                          <small style={{ color: 'rgba(255,255,255,0.7)' }}>Total Reps</small>
                         </div>
                       </div>
                     </div>
                     <div className="col-md-2 col-6 mb-3">
-                      <div className="card border-0 h-100 text-center">
+                      <div className="card border-0 h-100 text-center" style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)' }}>
                         <div className="card-body p-3">
-                          <div className="text-warning fs-4">
+                          <div className="fs-4" style={{ color: 'rgba(255, 193, 7, 0.9)' }}>
                             <i className="bi bi-trophy"></i>
                           </div>
-                          <div className="fw-bold">{stats.uniqueExercises}</div>
-                          <small className="text-muted">Exercises</small>
+                          <div className="fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>{stats.uniqueExercises}</div>
+                          <small style={{ color: 'rgba(255,255,255,0.7)' }}>Exercises</small>
                         </div>
                       </div>
                     </div>
                     <div className="col-md-2 col-6 mb-3">
-                      <div className="card border-0 h-100 text-center">
+                      <div className="card border-0 h-100 text-center" style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)' }}>
                         <div className="card-body p-3">
-                          <div className="text-danger fs-4">
+                          <div className="fs-4" style={{ color: 'rgba(220, 53, 69, 0.9)' }}>
                             <i className="bi bi-speedometer2"></i>
                           </div>
-                          <div className="fw-bold">{stats.totalVolume}</div>
-                          <small className="text-muted">Volume (kg)</small>
+                          <div className="fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>{stats.totalVolume}</div>
+                          <small style={{ color: 'rgba(255,255,255,0.7)' }}>Volume (kg)</small>
                         </div>
                       </div>
                     </div>
                     <div className="col-md-2 col-6 mb-3">
-                      <div className="card border-0 h-100 text-center">
+                      <div className="card border-0 h-100 text-center" style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)' }}>
                         <div className="card-body p-3">
-                          <div className="text-secondary fs-4">
+                          <div className="fs-4" style={{ color: 'rgba(108, 117, 125, 0.9)' }}>
                             <i className="bi bi-graph-up"></i>
                           </div>
-                          <div className="fw-bold">{stats.avgRpe || '-'}</div>
-                          <small className="text-muted">Avg RPE</small>
+                          <div className="fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>{stats.avgRpe || '-'}</div>
+                          <small style={{ color: 'rgba(255,255,255,0.7)' }}>Avg RPE</small>
                         </div>
                       </div>
                     </div>
                   </div>
                 
                   {/* Exercise Breakdown */}
-                  <h6 className="mb-3">
+                  <h6 className="mb-3" style={{ color: 'rgba(255,255,255,0.9)' }}>
                     <i className="bi bi-list-check me-2"></i>
                     Exercise Breakdown
                   </h6>
@@ -2228,10 +2260,10 @@ const MyWorkouts = ({ embedded = false }) => {
                       {Object.entries(groupedExercises).map(([exerciseName, sets], exerciseIndex) => {
                         const isExpanded = expandedExercise === exerciseIndex;
                         return (
-                          <div key={exerciseIndex} className="card border-0 mb-2">
+                          <div key={exerciseIndex} className="card border-0 mb-2" style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)' }}>
                             <div 
-                              className={`btn btn-light text-start p-3 rounded ${isExpanded ? 'shadow-sm' : ''}`}
-                              style={{ cursor: 'pointer' }}
+                              className={`btn text-start p-3 rounded ${isExpanded ? 'shadow-sm' : ''}`}
+                              style={{ cursor: 'pointer', background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)' }}
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -2240,14 +2272,14 @@ const MyWorkouts = ({ embedded = false }) => {
                             >
                               <div className="d-flex justify-content-between align-items-center w-100">
                                 <div>
-                                  <strong>{exerciseName}</strong>
+                                  <strong style={{ color: 'rgba(255,255,255,0.9)' }}>{exerciseName}</strong>
                                 </div>
                                 <div className="d-flex align-items-center">
-                                  <span className="badge bg-primary me-2">{sets.length} sets</span>
-                                  <span className="badge bg-secondary me-2">
+                                  <span className="badge me-2" style={{ background: 'rgba(32, 214, 87, 0.2)', color: 'rgba(32, 214, 87, 0.9)' }}>{sets.length} sets</span>
+                                  <span className="badge me-2" style={{ background: 'rgba(108, 117, 125, 0.2)', color: 'rgba(255,255,255,0.7)' }}>
                                     {sets.reduce((sum, set) => sum + (parseInt(set.reps_completed) || 0), 0)} reps
                                   </span>
-                                  <i className={`bi bi-chevron-${isExpanded ? 'up' : 'down'}`}></i>
+                                  <i className={`bi bi-chevron-${isExpanded ? 'up' : 'down'}`} style={{ color: 'rgba(255,255,255,0.9)' }}></i>
                                 </div>
                               </div>
                             </div>
@@ -2255,15 +2287,15 @@ const MyWorkouts = ({ embedded = false }) => {
                             {isExpanded && (
                               <div className="card-body pt-0">
                                 <div className="table-responsive">
-                                  <table className="table table-sm table-striped">
+                                  <table className="table table-sm">
                                     <thead>
-                                      <tr>
-                                        <th>Set</th>
-                                        <th>Weight (kg)</th>
-                                        <th>Reps</th>
-                                        <th>RPE</th>
-                                        <th>Volume (kg)</th>
-                                        <th>Notes</th>
+                                      <tr style={{ borderBottom: '1px solid rgba(32, 214, 87, 0.2)' }}>
+                                        <th style={{ color: 'rgba(255,255,255,0.9)' }}>Set</th>
+                                        <th style={{ color: 'rgba(255,255,255,0.9)' }}>Weight (kg)</th>
+                                        <th style={{ color: 'rgba(255,255,255,0.9)' }}>Reps</th>
+                                        <th style={{ color: 'rgba(255,255,255,0.9)' }}>RPE</th>
+                                        <th style={{ color: 'rgba(255,255,255,0.9)' }}>Volume (kg)</th>
+                                        <th style={{ color: 'rgba(255,255,255,0.9)' }}>Notes</th>
                                       </tr>
                                     </thead>
                                     <tbody>
@@ -2272,25 +2304,27 @@ const MyWorkouts = ({ embedded = false }) => {
                                           (parseFloat(set.weight_kg) * parseInt(set.reps_completed)).toFixed(1) : '-';
                                         
                                         return (
-                                          <tr key={setIndex}>
-                                            <td>
-                                              <span className="badge bg-outline-primary">{set.set_number}</span>
+                                          <tr key={setIndex} style={{ borderBottom: '1px solid rgba(32, 214, 87, 0.1)' }}>
+                                            <td style={{ color: 'rgba(255,255,255,0.9)' }}>
+                                              <span className="badge" style={{ background: 'rgba(32, 214, 87, 0.2)', color: 'rgba(32, 214, 87, 0.9)' }}>{set.set_number}</span>
                                             </td>
-                                            <td>{set.weight_kg || '-'}</td>
-                                            <td>{set.reps_completed}</td>
+                                            <td style={{ color: 'rgba(255,255,255,0.9)' }}>{set.weight_kg || '-'}</td>
+                                            <td style={{ color: 'rgba(255,255,255,0.9)' }}>{set.reps_completed}</td>
                                             <td>
                                               {set.rpe ? (
-                                                <span className={`badge ${
-                                                  set.rpe <= 6 ? 'bg-success' : 
-                                                  set.rpe <= 8 ? 'bg-warning text-dark' : 'bg-danger'
-                                                }`}>
+                                                <span className={`badge`} style={{ 
+                                                  background: set.rpe <= 6 ? 'rgba(25, 135, 84, 0.2)' : 
+                                                              set.rpe <= 8 ? 'rgba(255, 193, 7, 0.2)' : 'rgba(220, 53, 69, 0.2)',
+                                                  color: set.rpe <= 6 ? 'rgba(25, 135, 84, 0.9)' : 
+                                                         set.rpe <= 8 ? 'rgba(255, 193, 7, 0.9)' : 'rgba(220, 53, 69, 0.9)'
+                                                }}>
                                                   {set.rpe}
                                                 </span>
-                                              ) : '-'}
+                                              ) : <span style={{ color: 'rgba(255,255,255,0.7)' }}>-</span>}
                                             </td>
-                                            <td>{volume}</td>
+                                            <td style={{ color: 'rgba(255,255,255,0.9)' }}>{volume}</td>
                                             <td>
-                                              <small className="text-muted">
+                                              <small style={{ color: 'rgba(255,255,255,0.7)' }}>
                                                 {set.notes || '-'}
                                               </small>
                                             </td>
@@ -2307,7 +2341,7 @@ const MyWorkouts = ({ embedded = false }) => {
                       })}
                     </div>
                   ) : (
-                    <div className="text-center text-muted py-4">
+                    <div className="text-center py-4" style={{ color: 'rgba(255,255,255,0.7)' }}>
                       <i className="bi bi-inbox fs-1"></i>
                       <p>No exercise data recorded for this workout.</p>
                     </div>
@@ -2315,7 +2349,7 @@ const MyWorkouts = ({ embedded = false }) => {
                 </div>
               )}
             </div>
-            <div className="modal-footer">
+            <div className="modal-footer" style={{ background: 'rgba(20, 25, 20, 0.95)', borderTop: '1px solid rgba(32, 214, 87, 0.3)' }}>
               <button 
                 type="button" 
                 className="btn btn-secondary" 
@@ -2334,9 +2368,9 @@ const MyWorkouts = ({ embedded = false }) => {
   const CancelWorkoutModal = () => (
     <div className={`modal fade ${showCancelWorkoutModal ? 'show d-block' : ''}`} style={{ backgroundColor: showCancelWorkoutModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
       <div className="modal-dialog">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">Cancel Workout</h5>
+        <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
+          <div className="modal-header dark-modal-header">
+            <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>Cancel Workout</h5>
             <button 
               type="button" 
               className="btn-close" 
@@ -2344,11 +2378,11 @@ const MyWorkouts = ({ embedded = false }) => {
             ></button>
           </div>
           <div className="modal-body">
-            <p>Are you sure you want to cancel this workout?</p>
-            <p className="text-danger small"><strong>Warning:</strong> All progress will be lost and cannot be recovered.</p>
-            <p className="text-muted small">If you want to save your progress, use "End Workout Early" instead.</p>
+            <p style={{ color: 'rgba(255,255,255,0.9)' }}>Are you sure you want to cancel this workout?</p>
+            <p className="small" style={{ color: 'rgba(220, 53, 69, 0.9)' }}><strong>Warning:</strong> All progress will be lost and cannot be recovered.</p>
+            <p className="small" style={{ color: 'rgba(255,255,255,0.7)' }}>If you want to save your progress, use "End Workout Early" instead.</p>
           </div>
-          <div className="modal-footer">
+          <div className="modal-footer" style={{ background: 'rgba(20, 25, 20, 0.95)', borderTop: '1px solid rgba(32, 214, 87, 0.3)' }}>
             <button 
               type="button" 
               className="btn btn-secondary" 
@@ -2373,9 +2407,9 @@ const MyWorkouts = ({ embedded = false }) => {
   const EndWorkoutModal = () => (
     <div className={`modal fade ${showEndWorkoutModal ? 'show d-block' : ''}`} style={{ backgroundColor: showEndWorkoutModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
       <div className="modal-dialog">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">End Workout Early</h5>
+        <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
+          <div className="modal-header dark-modal-header">
+            <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>End Workout Early</h5>
             <button 
               type="button" 
               className="btn-close" 
@@ -2383,11 +2417,11 @@ const MyWorkouts = ({ embedded = false }) => {
             ></button>
           </div>
           <div className="modal-body">
-            <p>Do you want to end your workout early?</p>
-            <p className="text-success small"><strong>Your current progress will be saved.</strong></p>
-            <p className="text-muted small">You can continue this workout later or start a new one.</p>
+            <p style={{ color: 'rgba(255,255,255,0.9)' }}>Do you want to end your workout early?</p>
+            <p className="small" style={{ color: 'rgba(32, 214, 87, 0.9)' }}><strong>Your current progress will be saved.</strong></p>
+            <p className="small" style={{ color: 'rgba(255,255,255,0.7)' }}>You can continue this workout later or start a new one.</p>
           </div>
-          <div className="modal-footer">
+          <div className="modal-footer" style={{ background: 'rgba(20, 25, 20, 0.95)', borderTop: '1px solid rgba(32, 214, 87, 0.3)' }}>
             <button 
               type="button" 
               className="btn btn-secondary" 
@@ -2415,9 +2449,9 @@ const MyWorkouts = ({ embedded = false }) => {
   const FinishWorkoutModal = () => (
     <div className={`modal fade ${showFinishWorkoutModal ? 'show d-block' : ''}`} style={{ backgroundColor: showFinishWorkoutModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
       <div className="modal-dialog">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">Finish Workout</h5>
+        <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
+          <div className="modal-header dark-modal-header">
+            <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>Finish Workout</h5>
             <button 
               type="button" 
               className="btn-close" 
@@ -2425,20 +2459,20 @@ const MyWorkouts = ({ embedded = false }) => {
             ></button>
           </div>
           <div className="modal-body">
-            <p>Great job! You're about to finish your workout.</p>
+            <p style={{ color: 'rgba(255,255,255,0.9)' }}>Great job! You're about to finish your workout.</p>
             <div className="workout-summary">
               <div className="row">
-                <div className="col-6">
+                <div className="col-6" style={{ color: 'rgba(255,255,255,0.9)' }}>
                   <strong>Duration:</strong> {formatTime(workoutTimer)}
                 </div>
-                <div className="col-6">
+                <div className="col-6" style={{ color: 'rgba(255,255,255,0.9)' }}>
                   <strong>Sets Completed:</strong> {workoutLogs.length}
                 </div>
               </div>
             </div>
-            <p className="text-muted small mt-3">This will save your workout and all logged sets.</p>
+            <p className="small mt-3" style={{ color: 'rgba(255,255,255,0.7)' }}>This will save your workout and all logged sets.</p>
           </div>
-          <div className="modal-footer">
+          <div className="modal-footer" style={{ background: 'rgba(20, 25, 20, 0.95)', borderTop: '1px solid rgba(32, 214, 87, 0.3)' }}>
             <button 
               type="button" 
               className="btn btn-secondary" 
@@ -2463,10 +2497,10 @@ const MyWorkouts = ({ embedded = false }) => {
   const BreakOverModal = () => (
     <div className={`modal fade ${showBreakOverModal ? 'show d-block' : ''}`} style={{ backgroundColor: showBreakOverModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
       <div className="modal-dialog">
-        <div className="modal-content">
-          <div className="modal-header bg-warning">
-            <h5 className="modal-title">
-              <i className="bi bi-alarm text-dark me-2"></i>
+        <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
+          <div className="modal-header dark-modal-header">
+            <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>
+              <i className="bi bi-alarm me-2" style={{ color: 'rgba(255, 193, 7, 0.9)' }}></i>
               Break Time Over!
             </h5>
             <button 
@@ -2477,12 +2511,12 @@ const MyWorkouts = ({ embedded = false }) => {
           </div>
           <div className="modal-body text-center">
             <div className="mb-3">
-              <i className="bi bi-stopwatch text-warning" style={{ fontSize: '3rem' }}></i>
+              <i className="bi bi-stopwatch" style={{ fontSize: '3rem', color: 'rgba(255, 193, 7, 0.9)' }}></i>
             </div>
-            <h6>Your rest period is complete!</h6>
-            <p className="text-muted">Time to get back to your workout.</p>
+            <h6 style={{ color: 'rgba(255,255,255,0.9)' }}>Your rest period is complete!</h6>
+            <p style={{ color: 'rgba(255,255,255,0.7)' }}>Time to get back to your workout.</p>
           </div>
-          <div className="modal-footer">
+          <div className="modal-footer" style={{ background: 'rgba(20, 25, 20, 0.95)', borderTop: '1px solid rgba(32, 214, 87, 0.3)' }}>
             <button 
               type="button" 
               className="btn btn-warning w-100" 
@@ -2501,10 +2535,10 @@ const MyWorkouts = ({ embedded = false }) => {
   const SuccessModal = () => (
     <div className={`modal fade ${showSuccessModal ? 'show d-block' : ''}`} style={{ backgroundColor: showSuccessModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
       <div className="modal-dialog">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">
-              <i className="bi bi-check-circle-fill text-success me-2"></i>
+        <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
+          <div className="modal-header dark-modal-header">
+            <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>
+              <i className="bi bi-check-circle-fill me-2" style={{ color: 'rgba(32, 214, 87, 0.9)' }}></i>
               Success!
             </h5>
             <button 
@@ -2514,9 +2548,9 @@ const MyWorkouts = ({ embedded = false }) => {
             ></button>
           </div>
           <div className="modal-body">
-            <p>{successMessage}</p>
+            <p style={{ color: 'rgba(255,255,255,0.9)' }}>{successMessage}</p>
           </div>
-          <div className="modal-footer">
+          <div className="modal-footer" style={{ background: 'rgba(20, 25, 20, 0.95)', borderTop: '1px solid rgba(32, 214, 87, 0.3)' }}>
             <button 
               type="button" 
               className="btn btn-primary" 
@@ -2533,9 +2567,9 @@ const MyWorkouts = ({ embedded = false }) => {
   const ExerciseSelectionModal = () => (
     <div className={`modal fade ${showExerciseModal ? 'show d-block' : ''}`} style={{ backgroundColor: showExerciseModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
       <div className="modal-dialog">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">Add Exercise to Plan</h5>
+        <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
+          <div className="modal-header dark-modal-header">
+            <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>Add Exercise to Plan</h5>
             <button 
               type="button" 
               className="btn-close" 
@@ -2546,19 +2580,20 @@ const MyWorkouts = ({ embedded = false }) => {
             {selectedExercise && (
               <div>
                 <div className="mb-3">
-                  <h6>{selectedExercise.name}</h6>
-                  <p className="text-muted small mb-0">{selectedExercise.category} • {selectedExercise.muscle_group}</p>
+                  <h6 style={{ color: 'rgba(255,255,255,0.9)' }}>{selectedExercise.name}</h6>
+                  <p className="small mb-0" style={{ color: 'rgba(255,255,255,0.7)' }}>{selectedExercise.category} • {selectedExercise.muscle_group}</p>
                   {selectedExercise.instructions && (
-                    <p className="text-muted small mt-2">{selectedExercise.instructions}</p>
+                    <p className="small mt-2" style={{ color: 'rgba(255,255,255,0.7)' }}>{selectedExercise.instructions}</p>
                   )}
                 </div>
                 
                 <div className="row">
                   <div className="col-md-4 mb-3">
-                    <label className="form-label">Sets</label>
+                    <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Sets</label>
                     <input 
                       type="number" 
                       className="form-control"
+                      style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)' }}
                       value={exerciseToAdd.sets}
                       onChange={(e) => setExerciseToAdd(prev => ({ ...prev, sets: parseInt(e.target.value) || 0 }))}
                       min="1"
@@ -2566,20 +2601,22 @@ const MyWorkouts = ({ embedded = false }) => {
                     />
                   </div>
                   <div className="col-md-4 mb-3">
-                    <label className="form-label">Reps/Time</label>
+                    <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Reps/Time</label>
                     <input 
                       type="text" 
                       className="form-control"
+                      style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)' }}
                       placeholder="e.g., 8-12, 30s"
                       value={exerciseToAdd.reps}
                       onChange={(e) => setExerciseToAdd(prev => ({ ...prev, reps: e.target.value }))}
                     />
                   </div>
                   <div className="col-md-4 mb-3">
-                    <label className="form-label">Target RPE (Optional)</label>
+                    <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Target RPE (Optional)</label>
                     <input 
                       type="number" 
                       className="form-control"
+                      style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)' }}
                       placeholder="1-10"
                       value={exerciseToAdd.rpe}
                       onChange={(e) => setExerciseToAdd(prev => ({ ...prev, rpe: e.target.value }))}
@@ -2590,9 +2627,10 @@ const MyWorkouts = ({ embedded = false }) => {
                 </div>
                 
                 <div className="mb-3">
-                  <label className="form-label">Type</label>
+                  <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Type</label>
                   <select 
                     className="form-select"
+                    style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)' }}
                     value={exerciseToAdd.type}
                     onChange={(e) => setExerciseToAdd(prev => ({ ...prev, type: e.target.value }))}
                   >
@@ -2604,7 +2642,7 @@ const MyWorkouts = ({ embedded = false }) => {
               </div>
             )}
           </div>
-          <div className="modal-footer">
+          <div className="modal-footer" style={{ background: 'rgba(20, 25, 20, 0.95)', borderTop: '1px solid rgba(32, 214, 87, 0.3)' }}>
             <button 
               type="button" 
               className="btn btn-secondary" 
@@ -2627,6 +2665,28 @@ const MyWorkouts = ({ embedded = false }) => {
   );
 
   const content = (
+    <>
+      <style>{`
+        .form-control::placeholder,
+        .form-select::placeholder {
+          color: rgba(255, 255, 255, 0.4) !important;
+        }
+        .form-control:focus,
+        .form-select:focus {
+          background: rgba(30, 35, 30, 0.6) !important;
+          border-color: rgba(32, 214, 87, 0.5) !important;
+          box-shadow: 0 0 0 0.2rem rgba(32, 214, 87, 0.1) !important;
+          color: rgba(255, 255, 255, 0.9) !important;
+        }
+        .card-hover:hover {
+          background: rgba(32, 214, 87, 0.15) !important;
+          cursor: pointer;
+          transition: background 0.2s ease;
+        }
+        .table-borderless td {
+          border: none !important;
+        }
+      `}</style>
       <div className="container-fluid px-3 px-md-4 py-3" style={{ paddingBottom: embedded ? '0' : '100px', backgroundColor: embedded ? 'transparent' : 'var(--brand-dark)', minHeight: embedded ? 'auto' : '100vh' }}>
         {/* Error State */}
         {error && (
@@ -2684,6 +2744,7 @@ const MyWorkouts = ({ embedded = false }) => {
 
       {/* Bottom navigation provided by TraineeDashboard */}
       </div>
+    </>
   );
 
   return embedded ? content : <TraineeDashboard>{content}</TraineeDashboard>;

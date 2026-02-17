@@ -16,7 +16,7 @@ const BackButton = ({ className = '', style = {} }) => {
 
   return (
     <button 
-      className={`btn btn-secondary ${className}`}
+      className={`btn btn-outline-light ${className}`}
       onClick={handleBack}
       style={style}
     >
