@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 // Check authentication
-checkAuth(['trainee', 'trainer']);
+checkAuth(['trainee', 'trainer', 'admin']);
 
 try {
     // Get user ID from session

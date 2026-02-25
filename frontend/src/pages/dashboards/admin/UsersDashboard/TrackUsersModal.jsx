@@ -14,12 +14,12 @@ const selectedUser=user[0];
         role="dialog"
       >
         <div className="modal-dialog modal-dialog-centered" role="document">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">User tracking:</h5>
+          <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div className="modal-header dark-modal-header" style={{ backgroundColor: '#1a1a1a', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <h5 className="modal-title" style={{ color: '#fff' }}>User tracking:</h5>
               <button
   type="button"
-  className="btn-close"
+  className="btn-close btn-close-white"
   onClick={() => {
     setshowTrackedUsersModal(false);
     setSelectedUsers([]);
@@ -28,23 +28,23 @@ const selectedUser=user[0];
 ></button>
             </div>
 
-<div className="modal-body">
+<div className="modal-body" style={{ backgroundColor: '#2d2d2d' }}>
   <div className="mb-4">
-    <h6 className="border-bottom pb-2">
+    <h6 className="border-bottom pb-2" style={{ color: '#fff', borderColor: 'rgba(16, 185, 129, 0.2) !important' }}>
     
       Αυτο-παρακολούθηση
     </h6>
     {selectedUser && selectedUser.trackmyself ? (
-      <p>
+      <p style={{ color: '#fff' }}>
                <ul className="list-unstyled ms-3">
-       <li  className="mb-1">
-        <i className="bi bi-person me-2"></i> {selectedUser.trackmyself}
+       <li  className="mb-1" style={{ color: '#fff' }}>
+        <i className="bi bi-person me-2" style={{ color: '#10b981' }}></i> {selectedUser.trackmyself}
         </li>
        </ul>
 
       </p>
     ) : (
-      <p className="text-muted">
+      <p style={{ color: '#9ca3af' }}>
         <i className="bi bi-x-circle me-2"></i>
         Δεν έχει ενεργοποιήσει την αυτο-παρακολούθηση
       </p>
@@ -52,19 +52,19 @@ const selectedUser=user[0];
   </div>
 
   <div>
-    <h6 className="border-bottom pb-2">
+    <h6 className="border-bottom pb-2" style={{ color: '#fff', borderColor: 'rgba(16, 185, 129, 0.2) !important' }}>
       {/* <i className="bi bi-people-fill me-2"></i> */}
       Παρακολουθεί τους υποψηφίους
     </h6>
 
                 {selectedUser && selectedUser.trackothers ? (
                   
-                  <p>
+                  <p style={{ color: '#fff' }}>
                   <ul className="list-unstyled ms-3">
                     {selectedUser.trackothers.split(",").map((track, index) => (
-                      <li key={index} className="mb-1">
+                      <li key={index} className="mb-1" style={{ color: '#fff' }}>
                        
-                        <i className="bi bi-person me-2"></i>
+                        <i className="bi bi-person me-2" style={{ color: '#10b981' }}></i>
                         {track.trim()}
                       </li>
                     ))}
@@ -72,17 +72,18 @@ const selectedUser=user[0];
                   </p>
                 ) : (
                  
-                  <p className="text-muted">
+                  <p style={{ color: '#9ca3af' }}>
         <i className="bi bi-x-circle me-2"></i>
         Δεν παρακολουθεί κανέναν υποψήφιο
       </p>
                 )}
               </div>
             </div>
-            <div className="modal-footer">
+            <div className="modal-footer" style={{ backgroundColor: '#1a1a1a', borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
               <button
   type="button"
-  className="btn btn-danger"
+  className="btn"
+  style={{ backgroundColor: '#6b7280', color: '#fff', border: 'none' }}
   onClick={() => {
     setshowTrackedUsersModal(false);
     setSelectedUsers([]); 

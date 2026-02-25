@@ -271,6 +271,7 @@ export const UsersTable = ({
           height: "100%",
           backgroundColor: "#2d2d2d !important",
           color: "#fff",
+          "--DataGrid-rowBorderColor": "rgba(16, 185, 129, 0.1) !important",
           ".MuiDataGrid-main": {
             maxHeight: "none !important",
           },
@@ -298,6 +299,17 @@ export const UsersTable = ({
           },
           ".MuiDataGrid-columnHeaderTitleContainer": {
             color: "#fff !important",
+          },
+          ".MuiDataGrid-row--borderBottom .MuiDataGrid-columnHeader": {
+            borderBottom: "none !important",
+          },
+          ".MuiDataGrid-row--borderBottom .MuiDataGrid-filler": {
+            borderBottom: "none !important",
+            backgroundColor: "#1a1a1a !important",
+          },
+          ".MuiDataGrid-row--borderBottom .MuiDataGrid-scrollbarFiller": {
+            borderBottom: "none !important",
+            backgroundColor: "#1a1a1a !important",
           },
           ".MuiDataGrid-row": {
             backgroundColor: "#2d2d2d",

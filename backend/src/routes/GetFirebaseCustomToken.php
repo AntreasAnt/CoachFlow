@@ -14,7 +14,7 @@ include_once("../config/cors.php");
 include_once("../config/Auth.php");
 
 // Require authentication (any logged-in user can get their own token)
-checkAuth(['trainee', 'trainer']);
+checkAuth(['trainee', 'trainer', 'admin']);
 
 // Autoload + optional dotenv loading
 require_once __DIR__ . '/../../vendor/autoload.php';

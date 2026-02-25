@@ -768,7 +768,7 @@ class UserModel
         try {
             if (empty($searchQuery)) {
                 // Return sample users when no query
-                $query = "SELECT userid as id, username, role 
+                $query = "SELECT userid as id, username, email, role 
                           FROM {$this->table}
                           WHERE userid != ? 
                           AND isdeleted = 0 
@@ -802,6 +802,7 @@ class UserModel
                 $users[] = [
                     'id' => $row['id'],
                     'username' => $row['username'],
+                    'email' => $row['email'] ?? null,
                     'role' => $row['role']
                 ];
             }

@@ -41,6 +41,8 @@ import MyCoach from "./pages/dashboards/trainee/MyCoach";
 import TrainerProfileView from "./pages/dashboards/trainee/TrainerProfile";
 
 import AdminUserDashboard from "./pages/dashboards/admin/UsersDashboard/UsersDashboard";
+import EmailMarketing from "./pages/dashboards/admin/EmailMarketing";
+import AdminMessages from "./pages/dashboards/admin/AdminMessages";
 
 // Trainee Connection System Pages
 import FindTrainersPage from "./pages/dashboards/trainee/FindTrainersPage";
@@ -331,6 +333,24 @@ function App() {
           element={
             <AuthRoot allowedPrivileges={['admin']}>
               <AdminUserDashboard />
+            </AuthRoot>
+          } 
+        />
+
+        <Route 
+          path="/admin/email-marketing" 
+          element={
+            <AuthRoot allowedPrivileges={['admin']}>
+              <EmailMarketing />
+            </AuthRoot>
+          } 
+        />
+
+        <Route 
+          path="/admin/messages" 
+          element={
+            <AuthRoot allowedPrivileges={['admin']}>
+              <AdminMessages />
             </AuthRoot>
           } 
         />
