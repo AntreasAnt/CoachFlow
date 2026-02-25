@@ -267,7 +267,7 @@ const TrainerClients = () => {
                           </button>
                           <button 
                             className="btn btn-sm btn-outline-info"
-                            onClick={() => navigate(`/trainer/clients/${client.trainee_id}/analytics`)}
+                            onClick={() => navigate(`/clients/${client.trainee_id}/analytics`)}
                             title="View Analytics"
                           >
                             <i className="bi bi-graph-up"></i>
@@ -440,7 +440,7 @@ const TrainerClients = () => {
                   className="btn btn-info"
                   onClick={() => {
                     setShowClientModal(false);
-                    navigate(`/trainer/clients/${selectedClient.trainee_id}/analytics`);
+                    navigate(`/clients/${selectedClient.trainee_id}/analytics`);
                   }}
                 >
                   <i className="bi bi-graph-up me-2"></i>

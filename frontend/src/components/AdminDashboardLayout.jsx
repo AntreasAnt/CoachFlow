@@ -2,29 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import LogoutButton from './LogoutButton';
 
-const TrainerDashboardLayout = ({ children }) => {
+const AdminDashboardLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   
   // Initialize sidebar state from localStorage, default to false (expanded)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
-    const saved = localStorage.getItem('trainerSidebarCollapsed');
+    const saved = localStorage.getItem('adminSidebarCollapsed');
     return saved === 'true';
   });
 
   // Save sidebar state to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('trainerSidebarCollapsed', isSidebarCollapsed);
+    localStorage.setItem('adminSidebarCollapsed', isSidebarCollapsed);
   }, [isSidebarCollapsed]);
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    if (path === '/admin-dashboard') {
+      return location.pathname === path || location.pathname === '/';
+    }
+    return location.pathname === path;
+  };
 
   const navItems = [
-    { path: '/', icon: 'speedometer2', label: 'Overview' },
-    { path: '/profile', icon: 'person-circle', label: 'Profile' },
-    { path: '/programs', icon: 'grid-3x3-gap', label: 'Programs' },
-    { path: '/clients', icon: 'people', label: 'Clients' },
-    { path: '/payments', icon: 'credit-card', label: 'Payments' },
+    { path: '/admin-dashboard', icon: 'speedometer2', label: 'Dashboard' },
+    { path: '/admin/users', icon: 'people', label: 'User Management' },
   ];
 
   return (
@@ -67,7 +69,7 @@ const TrainerDashboardLayout = ({ children }) => {
                 <i className="bi bi-lightning-charge-fill me-2" style={{ color: '#10b981' }}></i>
                 CoachFlow
               </h4>
-              <small className="d-block mt-1" style={{ color: '#9ca3af' }}>Trainer Dashboard</small>
+              <small className="d-block mt-1" style={{ color: '#9ca3af' }}>Admin Panel</small>
             </div>
           )}
         </div>
@@ -129,4 +131,4 @@ const TrainerDashboardLayout = ({ children }) => {
   );
 };
 
-export default TrainerDashboardLayout;
+export default AdminDashboardLayout;

@@ -13,7 +13,6 @@ import AuthRoot from "./contexts/AuthRoot";
 // Import dashboard components for direct routing
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import ManagerDashboard from "./pages/dashboards/ManagerDashboard";
-import TrainerDashboard from "./pages/dashboards/TrainerDashboard";
 import TrainerDashboardHome from "./pages/dashboards/trainer/TrainerDashboardHome";
 import TrainerProfile from "./pages/dashboards/trainer/TrainerProfile";
 import TrainerPayments from "./pages/dashboards/trainer/TrainerPayments";
@@ -112,15 +111,7 @@ function App() {
           } 
         />
         <Route 
-          path="/trainer-dashboard" 
-          element={
-            <AuthRoot allowedPrivileges={['trainer']}>
-              <TrainerDashboardHome />
-            </AuthRoot>
-          } 
-        />
-        <Route 
-          path="/trainer-dashboard/profile" 
+          path="/profile" 
           element={
             <AuthRoot allowedPrivileges={['trainer']}>
               <TrainerProfile />
@@ -128,7 +119,7 @@ function App() {
           } 
         />
         <Route 
-          path="/trainer-dashboard/programs" 
+          path="/programs" 
           element={
             <AuthRoot allowedPrivileges={['trainer', 'trainee']}>
               <CreatePrograms />
@@ -137,7 +128,7 @@ function App() {
         />
 
         <Route 
-          path="/trainer-dashboard/clients" 
+          path="/clients" 
           element={
             <AuthRoot allowedPrivileges={['trainer']}>
               <TrainerClientsManagement />
@@ -145,7 +136,7 @@ function App() {
           } 
         />
         <Route 
-          path="/trainer/clients/:clientId/manage" 
+          path="/clients/:clientId/manage" 
           element={
             <AuthRoot allowedPrivileges={['trainer']}>
               <ManageClientPrograms />
@@ -153,7 +144,7 @@ function App() {
           } 
         />
         <Route 
-          path="/trainer/clients/:clientId/analytics" 
+          path="/clients/:clientId/analytics" 
           element={
             <AuthRoot allowedPrivileges={['trainer']}>
               <ClientAnalytics />
@@ -161,7 +152,7 @@ function App() {
           } 
         />
         <Route 
-          path="/trainer-dashboard/payments" 
+          path="/payments" 
           element={
             <AuthRoot allowedPrivileges={['trainer']}>
               <TrainerPayments />
@@ -169,7 +160,7 @@ function App() {
           } 
         />
         <Route 
-          path="/trainer-dashboard/messages" 
+          path="/messages" 
           element={
             <AuthRoot allowedPrivileges={['trainer']}>
               <TrainerMessages />

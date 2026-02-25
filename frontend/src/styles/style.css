@@ -307,7 +307,6 @@ em, i {
   border: none !important;
   border-radius: 12px !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  background-color: var(--pure-white);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -317,9 +316,7 @@ em, i {
 }
 
 .card-header {
-  background-color: var(--pure-black) !important;
-  color: var(--pure-white) !important;
-  border-bottom: none !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
   padding: 1.25rem 1.75rem !important;
   font-weight: 600;
   letter-spacing: 0.025em;
@@ -330,6 +327,81 @@ em, i {
 
 .card-body {
   padding: 1.75rem !important;
+}
+
+/* LIST GROUPS */
+.list-group {
+  background-color: transparent !important;
+}
+
+.list-group-item {
+  background-color: var(--pure-white) !important;
+  color: var(--text-dark) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.list-group-item:hover {
+  background-color: var(--pearl-white) !important;
+}
+
+.list-group-flush .list-group-item {
+  background-color: transparent !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+}
+
+/* NAV TABS */
+.nav-tabs {
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+.nav-tabs .nav-link {
+  color: #6c757d !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-bottom: 2px solid transparent !important;
+  margin-bottom: -2px !important;
+  transition: all 0.3s ease !important;
+}
+
+.nav-tabs .nav-link:hover {
+  color: #000000 !important;
+  border-bottom-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+.nav-tabs .nav-link.active {
+  color: #000000 !important;
+  background-color: transparent !important;
+  border-bottom: 2px solid #000000 !important;
+  font-weight: 600 !important;
+}
+
+/* DARK THEME FORM CONTROLS */
+.form-control, .form-select {
+  background-color: #1a1a1a;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #fff;
+}
+
+.form-control:focus, .form-select:focus {
+  background-color: #1a1a1a;
+  border-color: #10b981;
+  color: #fff;
+  box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.25);
+}
+
+.form-control::placeholder {
+  color: #6b7280;
+}
+
+.form-control:disabled {
+  background-color: #2d2d2d;
+  color: #9ca3af;
+}
+
+.form-label {
+  color: #fff;
+  font-weight: 500;
 }
 
 /* PREMIUM DIVIDERS */

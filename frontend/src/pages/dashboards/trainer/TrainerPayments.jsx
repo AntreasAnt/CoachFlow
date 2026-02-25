@@ -84,11 +84,9 @@ const TrainerPayments = () => {
   if (loading) {
     return (
       <TrainerDashboardLayout>
-        <div className="container-fluid p-4">
-          <div className="text-center py-5">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
+        <div className="text-center py-5" style={{ backgroundColor: '#1a1a1a', minHeight: '100vh' }}>
+          <div className="spinner-border" style={{ color: '#10b981' }} role="status">
+            <span className="visually-hidden">Loading...</span>
           </div>
         </div>
       </TrainerDashboardLayout>
@@ -97,27 +95,27 @@ const TrainerPayments = () => {
 
   return (
     <TrainerDashboardLayout>
-      <div className="container p-4" style={{ minHeight: 'calc(100vh - 0px)' }}>
+      <div style={{ backgroundColor: '#1a1a1a', minHeight: '100vh', color: '#fff' }}>
         {/* Header */}
         <div className="mb-4">
-          <h2 className="mb-1">Payments & Earnings</h2>
-          <p className="text-muted">Manage your earnings and payment settings</p>
+          <h2 className="mb-1 fw-bold" style={{ color: '#fff' }}>Payments & Earnings</h2>
+          <p style={{ color: '#9ca3af' }}>Manage your earnings and payment settings</p>
         </div>
 
         {/* Stripe Connect Status */}
         {!stripeConnected && (
-          <div className="alert alert-warning border-0 shadow-sm mb-4">
+          <div className="alert border-0 shadow-sm mb-4" style={{ backgroundColor: 'rgba(251, 191, 36, 0.2)', border: '1px solid rgba(251, 191, 36, 0.3)' }}>
             <div className="d-flex align-items-center justify-content-between">
               <div>
-                <h5 className="alert-heading mb-2">
+                <h5 className="mb-2" style={{ color: '#fbbf24' }}>
                   <i className="bi bi-exclamation-triangle me-2"></i>
                   Connect Your Stripe Account
                 </h5>
-                <p className="mb-0">
+                <p className="mb-0" style={{ color: '#d1d5db' }}>
                   You need to connect your Stripe account to receive payments from clients and program sales.
                 </p>
               </div>
-              <button className="btn btn-primary" onClick={handleConnectStripe}>
+              <button className="btn" style={{ backgroundColor: '#fbbf24', color: '#1a1a1a', border: 'none' }} onClick={handleConnectStripe}>
                 <i className="bi bi-stripe me-2"></i>
                 Connect Stripe
               </button>
@@ -128,15 +126,15 @@ const TrainerPayments = () => {
         {/* Earnings Summary Cards */}
         <div className="row mb-4">
           <div className="col-lg-3 col-md-6 mb-3">
-            <div className="card border-0 shadow-sm">
+            <div className="card border-0 shadow-sm" style={{ borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
-                    <p className="text-muted mb-1 small">Total Earnings</p>
-                    <h3 className="mb-0">{formatCurrency(earnings.total)}</h3>
+                    <p className="mb-1 small" style={{ color: '#9ca3af' }}>Total Earnings</p>
+                    <h3 className="mb-0" style={{ color: '#fff' }}>{formatCurrency(earnings.total)}</h3>
                   </div>
-                  <div className="bg-primary bg-opacity-10 rounded-circle p-3">
-                    <i className="bi bi-currency-dollar text-primary fs-4"></i>
+                  <div className="rounded-circle p-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
+                    <i className="bi bi-currency-dollar fs-4" style={{ color: '#10b981' }}></i>
                   </div>
                 </div>
               </div>
@@ -144,15 +142,15 @@ const TrainerPayments = () => {
           </div>
 
           <div className="col-lg-3 col-md-6 mb-3">
-            <div className="card border-0 shadow-sm">
+            <div className="card border-0 shadow-sm" style={{ borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
-                    <p className="text-muted mb-1 small">This Month</p>
-                    <h3 className="mb-0">{formatCurrency(earnings.thisMonth)}</h3>
+                    <p className="mb-1 small" style={{ color: '#9ca3af' }}>This Month</p>
+                    <h3 className="mb-0" style={{ color: '#fff' }}>{formatCurrency(earnings.thisMonth)}</h3>
                   </div>
-                  <div className="bg-success bg-opacity-10 rounded-circle p-3">
-                    <i className="bi bi-graph-up-arrow text-success fs-4"></i>
+                  <div className="rounded-circle p-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
+                    <i className="bi bi-graph-up-arrow fs-4" style={{ color: '#10b981' }}></i>
                   </div>
                 </div>
               </div>
@@ -160,15 +158,15 @@ const TrainerPayments = () => {
           </div>
 
           <div className="col-lg-3 col-md-6 mb-3">
-            <div className="card border-0 shadow-sm">
+            <div className="card border-0 shadow-sm" style={{ borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
-                    <p className="text-muted mb-1 small">Available Balance</p>
-                    <h3 className="mb-0">{formatCurrency(earnings.available)}</h3>
+                    <p className="mb-1 small" style={{ color: '#9ca3af' }}>Available Balance</p>
+                    <h3 className="mb-0" style={{ color: '#fff' }}>{formatCurrency(earnings.available)}</h3>
                   </div>
-                  <div className="bg-info bg-opacity-10 rounded-circle p-3">
-                    <i className="bi bi-wallet2 text-info fs-4"></i>
+                  <div className="rounded-circle p-3" style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)' }}>
+                    <i className="bi bi-wallet2 fs-4" style={{ color: '#3b82f6' }}></i>
                   </div>
                 </div>
               </div>
@@ -176,15 +174,15 @@ const TrainerPayments = () => {
           </div>
 
           <div className="col-lg-3 col-md-6 mb-3">
-            <div className="card border-0 shadow-sm">
+            <div className="card border-0 shadow-sm" style={{ borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
-                    <p className="text-muted mb-1 small">Pending</p>
-                    <h3 className="mb-0">{formatCurrency(earnings.pending)}</h3>
+                    <p className="mb-1 small" style={{ color: '#9ca3af' }}>Pending</p>
+                    <h3 className="mb-0" style={{ color: '#fff' }}>{formatCurrency(earnings.pending)}</h3>
                   </div>
-                  <div className="bg-warning bg-opacity-10 rounded-circle p-3">
-                    <i className="bi bi-clock-history text-warning fs-4"></i>
+                  <div className="rounded-circle p-3" style={{ backgroundColor: 'rgba(251, 191, 36, 0.2)' }}>
+                    <i className="bi bi-clock-history fs-4" style={{ color: '#fbbf24' }}></i>
                   </div>
                 </div>
               </div>
@@ -193,11 +191,32 @@ const TrainerPayments = () => {
         </div>
 
         {/* Tabs */}
-        <ul className="nav nav-tabs mb-4">
+        <style>
+          {`
+            .payment-tab {
+              transition: all 0.3s ease;
+              padding: 12px 20px;
+              margin-right: 4px;
+              border-radius: 8px 8px 0 0;
+            }
+            .payment-tab:hover {
+              background-color: rgba(16, 185, 129, 0.1) !important;
+              color: #10b981 !important;
+            }
+          `}
+        </style>
+        <ul className="nav nav-tabs mb-4" style={{ borderBottom: '2px solid rgba(16, 185, 129, 0.2)' }}>
           <li className="nav-item">
             <button
-              className={`nav-link ${activeTab === 'overview' ? 'active' : ''}`}
+              className="payment-tab"
               onClick={() => setActiveTab('overview')}
+              style={{
+                color: activeTab === 'overview' ? '#fff' : '#9ca3af',
+                backgroundColor: activeTab === 'overview' ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
+                border: 'none',
+                borderBottom: activeTab === 'overview' ? '3px solid #10b981' : 'none',
+                fontWeight: activeTab === 'overview' ? '600' : '400'
+              }}
             >
               <i className="bi bi-bar-chart me-2"></i>
               Overview
@@ -205,8 +224,15 @@ const TrainerPayments = () => {
           </li>
           <li className="nav-item">
             <button
-              className={`nav-link ${activeTab === 'sales' ? 'active' : ''}`}
+              className="payment-tab"
               onClick={() => setActiveTab('sales')}
+              style={{
+                color: activeTab === 'sales' ? '#fff' : '#9ca3af',
+                backgroundColor: activeTab === 'sales' ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
+                border: 'none',
+                borderBottom: activeTab === 'sales' ? '3px solid #10b981' : 'none',
+                fontWeight: activeTab === 'sales' ? '600' : '400'
+              }}
             >
               <i className="bi bi-cart-check me-2"></i>
               Sales History
@@ -214,8 +240,15 @@ const TrainerPayments = () => {
           </li>
           <li className="nav-item">
             <button
-              className={`nav-link ${activeTab === 'transactions' ? 'active' : ''}`}
+              className="payment-tab"
               onClick={() => setActiveTab('transactions')}
+              style={{
+                color: activeTab === 'transactions' ? '#fff' : '#9ca3af',
+                backgroundColor: activeTab === 'transactions' ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
+                border: 'none',
+                borderBottom: activeTab === 'transactions' ? '3px solid #10b981' : 'none',
+                fontWeight: activeTab === 'transactions' ? '600' : '400'
+              }}
             >
               <i className="bi bi-receipt me-2"></i>
               Transactions
@@ -223,8 +256,15 @@ const TrainerPayments = () => {
           </li>
           <li className="nav-item">
             <button
-              className={`nav-link ${activeTab === 'settings' ? 'active' : ''}`}
+              className="payment-tab"
               onClick={() => setActiveTab('settings')}
+              style={{
+                color: activeTab === 'settings' ? '#fff' : '#9ca3af',
+                backgroundColor: activeTab === 'settings' ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
+                border: 'none',
+                borderBottom: activeTab === 'settings' ? '3px solid #10b981' : 'none',
+                fontWeight: activeTab === 'settings' ? '600' : '400'
+              }}
             >
               <i className="bi bi-gear me-2"></i>
               Settings
@@ -236,13 +276,13 @@ const TrainerPayments = () => {
         {activeTab === 'overview' && (
           <div className="row">
             <div className="col-lg-8">
-              <div className="card border-0 shadow-sm mb-4">
-                <div className="card-header bg-white border-bottom">
-                  <h5 className="mb-0">Earnings Chart</h5>
+              <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <div className="card-header border-bottom" style={{ borderTopLeftRadius: '12px', borderTopRightRadius: '12px', backgroundColor: 'transparent', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+                  <h5 className="mb-0 fw-semibold" style={{ color: '#fff' }}>Earnings Chart</h5>
                 </div>
                 <div className="card-body">
-                  <div className="text-center py-5 text-muted">
-                    <i className="bi bi-graph-up fs-1 mb-3 d-block"></i>
+                  <div className="text-center py-5" style={{ color: '#9ca3af' }}>
+                    <i className="bi bi-graph-up fs-1 mb-3 d-block" style={{ color: '#10b981' }}></i>
                     <p>Earnings chart will be displayed here</p>
                   </div>
                 </div>
@@ -250,22 +290,22 @@ const TrainerPayments = () => {
             </div>
 
             <div className="col-lg-4">
-              <div className="card border-0 shadow-sm">
-                <div className="card-header bg-white border-bottom">
-                  <h5 className="mb-0">Quick Stats</h5>
+              <div className="card border-0 shadow-sm" style={{ borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <div className="card-header border-bottom" style={{ borderTopLeftRadius: '12px', borderTopRightRadius: '12px', backgroundColor: 'transparent', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+                  <h5 className="mb-0 fw-semibold" style={{ color: '#fff' }}>Quick Stats</h5>
                 </div>
                 <div className="card-body">
                   <div className="mb-3">
                     <div className="d-flex justify-content-between mb-2">
-                      <span className="text-muted">Total Sales</span>
-                      <strong>{sales.length}</strong>
+                      <span style={{ color: '#9ca3af' }}>Total Sales</span>
+                      <strong style={{ color: '#fff' }}>{sales.length}</strong>
                     </div>
                     <div className="d-flex justify-content-between mb-2">
-                      <span className="text-muted">Avg. Sale Value</span>
-                      <strong>{formatCurrency(earnings.total / (sales.length || 1))}</strong>
+                      <span style={{ color: '#9ca3af' }}>Avg. Sale Value</span>
+                      <strong style={{ color: '#fff' }}>{formatCurrency(earnings.total / (sales.length || 1))}</strong>
                     </div>
                     <div className="d-flex justify-content-between">
-                      <span className="text-muted">Stripe Status</span>
+                      <span style={{ color: '#9ca3af' }}>Stripe Status</span>
                       <span className={`badge ${stripeConnected ? 'bg-success' : 'bg-warning'}`}>
                         {stripeConnected ? 'Connected' : 'Not Connected'}
                       </span>
@@ -278,37 +318,48 @@ const TrainerPayments = () => {
         )}
 
         {activeTab === 'sales' && (
-          <div className="card border-0 shadow-sm">
-            <div className="card-header bg-white border-bottom">
-              <h5 className="mb-0">Program Sales</h5>
+          <div className="card border-0 shadow-sm" style={{ borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div className="card-header border-bottom" style={{ borderTopLeftRadius: '12px', borderTopRightRadius: '12px', backgroundColor: 'transparent', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+              <h5 className="mb-0 fw-semibold" style={{ color: '#fff' }}>Program Sales</h5>
             </div>
             <div className="card-body">
               {sales.length === 0 ? (
-                <div className="text-center py-5 text-muted">
-                  <i className="bi bi-cart-x fs-1 mb-3 d-block"></i>
+                <div className="text-center py-5" style={{ color: '#9ca3af' }}>
+                  <i className="bi bi-cart-x fs-1 mb-3 d-block" style={{ color: '#6b7280' }}></i>
                   <p>No sales yet</p>
                 </div>
               ) : (
                 <div className="table-responsive">
-                  <table className="table table-hover">
+                  <style>
+                    {`
+                      .payment-table tbody tr {
+                        transition: all 0.2s ease;
+                      }
+                      .payment-table tbody tr:hover {
+                        background-color: rgba(16, 185, 129, 0.05);
+                        transform: scale(1.01);
+                      }
+                    `}
+                  </style>
+                  <table className="table payment-table" style={{ color: '#fff', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
                     <thead>
                       <tr>
-                        <th>Date</th>
-                        <th>Program</th>
-                        <th>Customer</th>
-                        <th>Amount</th>
-                        <th>Status</th>
+                        <th style={{ color: '#9ca3af', backgroundColor: '#1a1a1a', padding: '12px', borderBottom: '2px solid rgba(16, 185, 129, 0.2)', border: 'none' }}>Date</th>
+                        <th style={{ color: '#9ca3af', backgroundColor: '#1a1a1a', padding: '12px', borderBottom: '2px solid rgba(16, 185, 129, 0.2)', border: 'none' }}>Program</th>
+                        <th style={{ color: '#9ca3af', backgroundColor: '#1a1a1a', padding: '12px', borderBottom: '2px solid rgba(16, 185, 129, 0.2)', border: 'none' }}>Customer</th>
+                        <th style={{ color: '#9ca3af', backgroundColor: '#1a1a1a', padding: '12px', borderBottom: '2px solid rgba(16, 185, 129, 0.2)', border: 'none' }}>Amount</th>
+                        <th style={{ color: '#9ca3af', backgroundColor: '#1a1a1a', padding: '12px', borderBottom: '2px solid rgba(16, 185, 129, 0.2)', border: 'none' }}>Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {sales.map((sale, index) => (
                         <tr key={index}>
-                          <td>{formatDate(sale.purchased_at)}</td>
-                          <td>{sale.program_title}</td>
-                          <td>{sale.trainee_name}</td>
-                          <td>{formatCurrency(sale.amount)}</td>
-                          <td>
-                            <span className="badge bg-success">Completed</span>
+                          <td style={{ color: '#fff', padding: '16px 12px', backgroundColor: '#1a1a1a', border: 'none', borderRadius: index === 0 ? '8px 0 0 8px' : '0' }}>{formatDate(sale.purchased_at)}</td>
+                          <td style={{ color: '#fff', padding: '16px 12px', backgroundColor: '#1a1a1a', border: 'none' }}>{sale.program_title}</td>
+                          <td style={{ color: '#fff', padding: '16px 12px', backgroundColor: '#1a1a1a', border: 'none' }}>{sale.trainee_name}</td>
+                          <td style={{ color: '#fff', padding: '16px 12px', backgroundColor: '#1a1a1a', border: 'none' }}>{formatCurrency(sale.amount)}</td>
+                          <td style={{ padding: '16px 12px', backgroundColor: '#1a1a1a', border: 'none', borderRadius: index === 0 ? '0 8px 8px 0' : '0' }}>
+                            <span className="badge" style={{ backgroundColor: '#10b981', padding: '6px 12px' }}>COMPLETED</span>
                           </td>
                         </tr>
                       ))}
@@ -321,40 +372,51 @@ const TrainerPayments = () => {
         )}
 
         {activeTab === 'transactions' && (
-          <div className="card border-0 shadow-sm">
-            <div className="card-header bg-white border-bottom">
-              <h5 className="mb-0">Transaction History</h5>
+          <div className="card border-0 shadow-sm" style={{ borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div className="card-header border-bottom" style={{ borderTopLeftRadius: '12px', borderTopRightRadius: '12px', backgroundColor: 'transparent', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+              <h5 className="mb-0 fw-semibold" style={{ color: '#fff' }}>Transaction History</h5>
             </div>
             <div className="card-body">
               {transactions.length === 0 ? (
-                <div className="text-center py-5 text-muted">
-                  <i className="bi bi-receipt fs-1 mb-3 d-block"></i>
+                <div className="text-center py-5" style={{ color: '#9ca3af' }}>
+                  <i className="bi bi-receipt fs-1 mb-3 d-block" style={{ color: '#6b7280' }}></i>
                   <p>No transactions yet</p>
                 </div>
               ) : (
                 <div className="table-responsive">
-                  <table className="table table-hover">
+                  <style>
+                    {`
+                      .payment-table tbody tr {
+                        transition: all 0.2s ease;
+                      }
+                      .payment-table tbody tr:hover {
+                        background-color: rgba(16, 185, 129, 0.05);
+                        transform: scale(1.01);
+                      }
+                    `}
+                  </style>
+                  <table className="table payment-table" style={{ color: '#fff', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
                     <thead>
                       <tr>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th>Description</th>
-                        <th>Amount</th>
-                        <th>Status</th>
+                        <th style={{ color: '#9ca3af', backgroundColor: '#1a1a1a', padding: '12px', borderBottom: '2px solid rgba(16, 185, 129, 0.2)', border: 'none' }}>Date</th>
+                        <th style={{ color: '#9ca3af', backgroundColor: '#1a1a1a', padding: '12px', borderBottom: '2px solid rgba(16, 185, 129, 0.2)', border: 'none' }}>Type</th>
+                        <th style={{ color: '#9ca3af', backgroundColor: '#1a1a1a', padding: '12px', borderBottom: '2px solid rgba(16, 185, 129, 0.2)', border: 'none' }}>Description</th>
+                        <th style={{ color: '#9ca3af', backgroundColor: '#1a1a1a', padding: '12px', borderBottom: '2px solid rgba(16, 185, 129, 0.2)', border: 'none' }}>Amount</th>
+                        <th style={{ color: '#9ca3af', backgroundColor: '#1a1a1a', padding: '12px', borderBottom: '2px solid rgba(16, 185, 129, 0.2)', border: 'none' }}>Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {transactions.map((transaction, index) => (
                         <tr key={index}>
-                          <td>{formatDate(transaction.date)}</td>
-                          <td>
-                            <span className="badge bg-info">{transaction.type}</span>
+                          <td style={{ color: '#fff', padding: '16px 12px', backgroundColor: '#1a1a1a', border: 'none', borderRadius: index === 0 ? '8px 0 0 8px' : '0' }}>{formatDate(transaction.date)}</td>
+                          <td style={{ padding: '16px 12px', backgroundColor: '#1a1a1a', border: 'none' }}>
+                            <span className="badge" style={{ backgroundColor: '#3b82f6', padding: '6px 12px' }}>{transaction.type.toUpperCase()}</span>
                           </td>
-                          <td>{transaction.description}</td>
-                          <td>{formatCurrency(transaction.amount)}</td>
-                          <td>
-                            <span className={`badge ${transaction.status === 'completed' ? 'bg-success' : 'bg-warning'}`}>
-                              {transaction.status}
+                          <td style={{ color: '#fff', padding: '16px 12px', backgroundColor: '#1a1a1a', border: 'none' }}>{transaction.description}</td>
+                          <td style={{ color: '#fff', padding: '16px 12px', backgroundColor: '#1a1a1a', border: 'none' }}>{formatCurrency(transaction.amount)}</td>
+                          <td style={{ padding: '16px 12px', backgroundColor: '#1a1a1a', border: 'none', borderRadius: index === 0 ? '0 8px 8px 0' : '0' }}>
+                            <span className="badge" style={{ backgroundColor: transaction.status === 'completed' ? '#10b981' : '#fbbf24', padding: '6px 12px' }}>
+                              {transaction.status.toUpperCase()}
                             </span>
                           </td>
                         </tr>
@@ -368,26 +430,26 @@ const TrainerPayments = () => {
         )}
 
         {activeTab === 'settings' && (
-          <div className="card border-0 shadow-sm">
-            <div className="card-header bg-white border-bottom">
-              <h5 className="mb-0">Payment Settings</h5>
+          <div className="card border-0 shadow-sm" style={{ borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div className="card-header border-bottom" style={{ borderTopLeftRadius: '12px', borderTopRightRadius: '12px', backgroundColor: 'transparent', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+              <h5 className="mb-0 fw-semibold" style={{ color: '#fff' }}>Payment Settings</h5>
             </div>
             <div className="card-body">
               <div className="row">
                 <div className="col-md-6 mb-4">
-                  <h6 className="mb-3">Stripe Account</h6>
+                  <h6 className="mb-3" style={{ color: '#fff' }}>Stripe Account</h6>
                   {stripeConnected ? (
-                    <div className="alert alert-success">
+                    <div className="alert" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981' }}>
                       <i className="bi bi-check-circle me-2"></i>
                       Your Stripe account is connected
                       {stripeAccountId && (
-                        <div className="small mt-2">
+                        <div className="small mt-2" style={{ color: '#9ca3af' }}>
                           Account ID: {stripeAccountId}
                         </div>
                       )}
                     </div>
                   ) : (
-                    <button className="btn btn-primary" onClick={handleConnectStripe}>
+                    <button className="btn" style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }} onClick={handleConnectStripe}>
                       <i className="bi bi-stripe me-2"></i>
                       Connect Stripe Account
                     </button>
@@ -395,18 +457,27 @@ const TrainerPayments = () => {
                 </div>
 
                 <div className="col-md-6 mb-4">
-                  <h6 className="mb-3">Payout Schedule</h6>
-                  <select className="form-select" disabled={!stripeConnected}>
-                    <option>Daily</option>
-                    <option>Weekly</option>
-                    <option>Monthly</option>
+                  <h6 className="mb-3" style={{ color: '#fff' }}>Payout Schedule</h6>
+                  <select 
+                    className="form-select" 
+                    style={{
+                      backgroundColor: '#1a1a1a',
+                      color: '#fff',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      padding: '10px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option style={{ backgroundColor: '#1a1a1a', color: '#fff' }}>Daily</option>
+                    <option style={{ backgroundColor: '#1a1a1a', color: '#fff' }}>Weekly</option>
+                    <option style={{ backgroundColor: '#1a1a1a', color: '#fff' }}>Monthly</option>
                   </select>
-                  <small className="text-muted">Choose how often you receive payouts</small>
+                  <small style={{ color: '#9ca3af' }}>Choose how often you receive payouts</small>
                 </div>
 
                 <div className="col-12">
-                  <h6 className="mb-3">Payment Information</h6>
-                  <p className="text-muted">
+                  <h6 className="mb-3" style={{ color: '#fff' }}>Payment Information</h6>
+                  <p style={{ color: '#9ca3af' }}>
                     Payments are processed through Stripe. You'll receive earnings directly to your connected bank account
                     according to your payout schedule. Platform fee: 10% + Stripe fees (2.9% + $0.30).
                   </p>

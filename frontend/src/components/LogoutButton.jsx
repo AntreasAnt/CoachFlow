@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BACKEND_ROUTES_API } from "../config/config";
 
-const LogoutButton = ({ className = "btn btn-outline-danger" }) => {
+const LogoutButton = ({ className = "btn btn-outline-danger", children, style }) => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -40,10 +40,15 @@ const LogoutButton = ({ className = "btn btn-outline-danger" }) => {
     <button 
       onClick={handleLogout}
       className={className}
+      style={style}
       title="Logout"
     >
-      <i className="bi bi-box-arrow-right me-1"></i>
-      Logout
+      {children || (
+        <>
+          <i className="bi bi-box-arrow-right me-1"></i>
+          Logout
+        </>
+      )}
     </button>
   );
 };

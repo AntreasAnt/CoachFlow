@@ -225,14 +225,19 @@ export const UsersTable = ({
         height: `calc(100vh - ${250 + extraHeight}px)`,
         width: "100%",
         minHeight: "200px !important",
+        backgroundColor: "#2d2d2d !important",
+        border: "1px solid rgba(16, 185, 129, 0.2)",
+        borderRadius: "12px",
+        overflow: "hidden",
+        boxShadow: "none !important",
       }}
     >
       <DataGrid
         rows={users}
         columns={columns.map((col) => ({
           ...col,
-          sortable: false, // Disables sorting on each column
-          filterable: false, // Disables filtering on each column
+          sortable: false,
+          filterable: false,
         }))}
         loading={isLoading}
         paginationMode="server"
@@ -245,7 +250,7 @@ export const UsersTable = ({
           onPageSizeChange(pageSize);
           onPageChange(page + 1);
         }}
-        disableColumnMenu // Removes the column menu (filter & sort actions)
+        disableColumnMenu
         rowsPerPageOptions={[25, 50, 100]}
         getRowId={(row) => row.id || `temp-${Math.random()}`}
         getRowClassName={(params) =>
@@ -264,12 +269,96 @@ export const UsersTable = ({
         sx={{
           border: 0,
           height: "100%",
+          backgroundColor: "#2d2d2d !important",
+          color: "#fff",
           ".MuiDataGrid-main": {
             maxHeight: "none !important",
           },
+          ".MuiDataGrid-cell": {
+            borderColor: "rgba(16, 185, 129, 0.1)",
+            color: "#fff",
+          },
+          ".MuiDataGrid-columnHeaders": {
+            backgroundColor: "#1a1a1a !important",
+            color: "#fff !important",
+            borderColor: "rgba(16, 185, 129, 0.2) !important",
+            borderBottom: "1px solid rgba(16, 185, 129, 0.2) !important",
+          },
+          ".MuiDataGrid-columnHeader": {
+            backgroundColor: "#1a1a1a !important",
+            color: "#fff !important",
+            borderBottom: "none !important",
+          },
+          ".MuiDataGrid-columnHeadersInner": {
+            backgroundColor: "#1a1a1a !important",
+          },
+          ".MuiDataGrid-columnHeaderTitle": {
+            color: "#fff !important",
+            fontWeight: 600,
+          },
+          ".MuiDataGrid-columnHeaderTitleContainer": {
+            color: "#fff !important",
+          },
+          ".MuiDataGrid-row": {
+            backgroundColor: "#2d2d2d",
+            borderTop: "none !important",
+            "&:hover": {
+              backgroundColor: "rgba(16, 185, 129, 0.1)",
+            },
+            "&:first-of-type": {
+              borderTop: "none !important",
+            },
+          },
+          ".MuiDataGrid-footerContainer": {
+            backgroundColor: "#1a1a1a",
+            borderColor: "rgba(16, 185, 129, 0.2)",
+            color: "#fff",
+          },
+          ".MuiTablePagination-root": {
+            color: "#fff",
+          },
+          ".MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows": {
+            color: "#9ca3af",
+          },
+          ".MuiTablePagination-select": {
+            color: "#fff",
+          },
+          ".MuiTablePagination-selectIcon": {
+            color: "#10b981",
+          },
+          ".MuiIconButton-root": {
+            color: "#10b981",
+          },
+          ".Mui-disabled": {
+            color: "#6b7280 !important",
+          },
           ".Mui-disabled-user": {
-            backgroundColor: "#f5f5f5",
-            color: "#9e9e9e",
+            backgroundColor: "rgba(107, 114, 128, 0.2)",
+            color: "#6b7280",
+          },
+          ".MuiDataGrid-columnSeparator": {
+            color: "rgba(16, 185, 129, 0.1)",
+          },
+          ".MuiCircularProgress-root": {
+            color: "#10b981",
+          },
+          ".MuiDataGrid-filler": {
+            backgroundColor: "#1a1a1a !important",
+          },
+          ".MuiDataGrid-scrollbar": {
+            backgroundColor: "#2d2d2d !important",
+          },
+          ".MuiDataGrid-scrollbarFiller": {
+            backgroundColor: "#1a1a1a !important",
+          },
+          ".MuiDataGrid-virtualScroller": {
+            backgroundColor: "#2d2d2d !important",
+          },
+          ".MuiDataGrid-virtualScrollerContent": {
+            backgroundColor: "#2d2d2d !important",
+          },
+          ".MuiDataGrid-virtualScrollerRenderZone": {
+            backgroundColor: "#2d2d2d !important",
           },
         }}
         pagination

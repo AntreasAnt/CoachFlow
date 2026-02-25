@@ -22,17 +22,25 @@ export const EditUserModal = ({
         aria-hidden={!show}
       >
         <div className="modal-dialog" role="document">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Edit User</h5>
+          <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div className="modal-header dark-modal-header" style={{ backgroundColor: '#1a1a1a', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <h5 className="modal-title" style={{ color: '#fff' }}>Edit User</h5>
               <button
                 type="button"
-                className="btn-close"
+                className="btn-close btn-close-white"
                 onClick={handleCloseModal}
                 aria-label="Close"
               ></button>
             </div>
-            <div className="modal-body">
+            <div className="modal-body" style={{ backgroundColor: '#2d2d2d' }}>
+              <style>{`
+                .modal-body input::placeholder,
+                .modal-body input::-webkit-input-placeholder,
+                .modal-body input::-moz-placeholder {
+                  color: #6b7280 !important;
+                  opacity: 1;
+                }
+              `}</style>
               <form
                 onSubmit={handleUpdateUser}
                 style={{
@@ -43,7 +51,7 @@ export const EditUserModal = ({
               >
                 {/* Username Field */}
                 <div className="mb-3">
-                  <label htmlFor="username" className="form-label">
+                  <label htmlFor="username" className="form-label" style={{ color: '#fff' }}>
                     Username
                   </label>
                   <input
@@ -61,6 +69,7 @@ export const EditUserModal = ({
                         ? "is-valid"
                         : ""
                     }`}
+                    style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                   />
                   {errors.username && (
                     <div className="invalid-feedback">{errors.username}</div>
@@ -69,7 +78,7 @@ export const EditUserModal = ({
 
                 {/* Email Field */}
                 <div className="mb-3">
-                  <label htmlFor="email" className="form-label">
+                  <label htmlFor="email" className="form-label" style={{ color: '#fff' }}>
                     Email
                   </label>
                   <input
@@ -87,6 +96,7 @@ export const EditUserModal = ({
                         ? "is-valid"
                         : ""
                     }`}
+                    style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                   />
                   {errors.email && (
                     <div className="invalid-feedback">{errors.email}</div>
@@ -95,7 +105,7 @@ export const EditUserModal = ({
 
                 {/* Role Field */}
                 <div className="mb-3">
-                  <label htmlFor="role" className="form-label">
+                  <label htmlFor="role" className="form-label" style={{ color: '#fff' }}>
                     Role
                   </label>
                   <select
@@ -111,32 +121,40 @@ export const EditUserModal = ({
                         ? "is-valid"
                         : ""
                     }`}
+                    style={{ 
+                      backgroundColor: '#1a1a1a', 
+                      border: '1px solid rgba(16, 185, 129, 0.2)', 
+                      color: '#fff',
+                      backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 16 16\'%3e%3cpath fill=\'none\' stroke=\'%2310b981\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'m2 5 6 6 6-6\'/%3e%3c/svg%3e")'
+                    }}
                   >
-                    <option value="admin">Admin</option>
-                    <option value="manager" className="text-warning">
+                    <option value="admin" style={{ backgroundColor: '#1a1a1a', color: '#fff' }}>Admin</option>
+                    <option value="manager" className="text-warning" style={{ backgroundColor: '#1a1a1a', color: '#fff' }}>
                     Manager
                     </option>
-                    <option value="trainer" className="text-success">
+                    <option value="trainer" className="text-success" style={{ backgroundColor: '#1a1a1a', color: '#fff' }}>
                       Trainer
                     </option>
-                    <option value="trainee" className="text-info">
+                    <option value="trainee" className="text-info" style={{ backgroundColor: '#1a1a1a', color: '#fff' }}>
                       Trainee
                     </option>
                   </select>
                 </div>
               </form>
             </div>
-            <div className="modal-footer">
+            <div className="modal-footer" style={{ backgroundColor: '#1a1a1a', borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
               <button
                 type="button"
-                className="btn btn-danger"
+                className="btn"
+                style={{ backgroundColor: '#6b7280', color: '#fff', border: 'none' }}
                 onClick={handleCloseModal}
               >
                 Close
               </button>
               <button
                 type="button"
-                className="btn btn-success"
+                className="btn"
+                style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                 onClick={handleUpdateUser}
               >
                 {isSubmitting ? (

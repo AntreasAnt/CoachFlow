@@ -15,7 +15,7 @@ import { BACKEND_ROUTES_API } from '../../../../config/config';
 import React, { useState, useEffect } from "react";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import Paper from "@mui/material/Paper";
-import AdminSidebar from "../../../../components/AdminSideBar";
+import AdminDashboardLayout from "../../../../components/AdminDashboardLayout";
 import defaultAvatar from "../../../../assets/images/default-avatar.png";
 import { GeneratePDF } from "./GeneratePdf";
 import { AddUserModal } from "./AddUserModal";
@@ -468,174 +468,173 @@ const handleRoleSearch = (role) => {
 
   
   return (
-<div className="container-fluid" style={{ height: "100vh", overflow: "hidden" }}>
-    <div className="row h-100">
-      {/* Side Bar */}
-      <AdminSidebar />
-      <div className="col-xl-10 p-4" style={{ height: "100%", overflowY: "auto" }}>
+    <AdminDashboardLayout>
+      <div style={{ color: '#fff' }}>
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2>User Management</h2>
-          <button className="btn btn-primary ms-3" onClick={handleGeneratePDF}>
-            Export <i className="bi bi-file-earmark-pdf"></i>
+          <div>
+            <h2 className="mb-1" style={{ color: '#fff' }}>User Management</h2>
+            <p style={{ color: '#9ca3af', marginBottom: 0 }}>Manage all users in the system</p>
+          </div>
+          <button 
+            className="btn"
+            style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
+            onClick={handleGeneratePDF}
+          >
+            Export <i className="bi bi-file-earmark-pdf ms-2"></i>
           </button>
         </div>
-          {/* Error and Success Messages */}
-          {error && <div className="alert alert-danger">{error}</div>}
-          {saveSuccess && (
-            <div className="alert alert-success mt-3">
-              User saved successfully!
-            </div>
-          )}
-          {resetSuccess && (
-            <div className="alert alert-success mt-3">
-              Password reset request sent successfully!
-            </div>
-          )}
+        
+        {/* Error and Success Messages */}
+        {error && (
+          <div className="alert mb-3" style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#ef4444' }}>
+            {error}
+          </div>
+        )}
+        {saveSuccess && (
+          <div className="alert mb-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', border: '1px solid rgba(16, 185, 129, 0.4)', color: '#10b981' }}>
+            User saved successfully!
+          </div>
+        )}
+        {resetSuccess && (
+          <div className="alert mb-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', border: '1px solid rgba(16, 185, 129, 0.4)', color: '#10b981' }}>
+            Password reset request sent successfully!
+          </div>
+        )}
+        {disableSuccess && (
+          <div className="alert mb-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', border: '1px solid rgba(16, 185, 129, 0.4)', color: '#10b981' }}>
+            Disable successful!
+          </div>
+        )}
+        {enableSuccess && (
+          <div className="alert mb-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', border: '1px solid rgba(16, 185, 129, 0.4)', color: '#10b981' }}>
+            Enable successful!
+          </div>
+        )}
 
-          {disableSuccess && (
-            <div className="alert alert-success mt-3">
-              Disable successful!
-            </div>
-          )}
-          {enableSuccess && (
-            <div className="alert alert-success mt-3">
-              Enable successful!
-            </div>
-          )}
-
-{/* Searching */}
-          {/* Search Bar */}
-          <div className="row">
-            <div className="col-8">
-          <Search onSearch={handleSearch} />
+        {/* Search Bar */}
+        <div className="row mb-3">
+          <div className="col-8">
+            <Search onSearch={handleSearch} />
           </div>
           <div className="col-4">
-          <RoleSearch handleRoleSearch={handleRoleSearch}
-                       />
+            <RoleSearch handleRoleSearch={handleRoleSearch} />
           </div>
-          </div>
+        </div>
 
-
-          {/* Add User Button */}
+        {/* Action Buttons */}
+        <div className="mb-3">
           <button
-            className="btn btn-sm btn-primary me-2 mb-2"
+            className="btn btn-sm me-2"
+            style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
             onClick={() => setShowAddModal(true)}
           >
             <i className="bi bi-plus-circle me-2"></i>
             Add User
           </button>
 
-          {/* Edit User Button */}
           <button
-            className={`btn btn-sm me-2 mb-2 ${
-              selectedUsers.length != 1
-                ? "btn-secondary opacity-75"
-                : "btn-primary"
-            }`}
+            className={`btn btn-sm me-2`}
+            style={{
+              backgroundColor: selectedUsers.length !== 1 ? '#6b7280' : '#10b981',
+              color: '#fff',
+              border: 'none',
+              opacity: selectedUsers.length !== 1 ? 0.5 : 1
+            }}
             onClick={handleEdit}
+            disabled={selectedUsers.length !== 1}
           >
             <i className="bi bi-pencil-square me-2"></i>
             Edit
           </button>
 
-          {/* Actions Button */}
           <button
-            className={`btn btn-sm me-2 mb-2 ${
-              selectedUsers.length === 0
-                ? "btn-secondary opacity-75"
-                : "btn-primary"
-            }`}
+            className={`btn btn-sm me-2`}
+            style={{
+              backgroundColor: selectedUsers.length === 0 ? '#6b7280' : '#10b981',
+              color: '#fff',
+              border: 'none',
+              opacity: selectedUsers.length === 0 ? 0.5 : 1
+            }}
             onClick={handleOpenActionsModal}
+            disabled={selectedUsers.length === 0}
           >
             <i className="bi bi-list me-2"></i>
             Actions
           </button>
-
-    
- 
-
-          {/* Table With Users */}
-       
-          <UsersTable
- users={users}
- isLoading={isLoading}
- selectedUsers={selectedUsers}
- setSelectedUsers={setSelectedUsers}
- error={error}
- successMessage={saveSuccess}
- totalUsers={totalUsers}
- page={page}
- pageSize={pageSize}
- onPageChange={handlePageChange}
- onPageSizeChange={handlePageSizeChange}
- setShowTrackedUsersModal={setShowTrackedUsersModal}
-/>
-
-
-          {/* Add Modal */}
-          <AddUserModal
-            show={showAddModal}
-            handleCloseModal={handleCloseModal}
-            formData={formData}
-            handleSaveUser={handleSaveUser}
-            handleChange={handleChange}
-            errors={errors}
-            isSubmitting={isSubmitting}
-          />
-          {/* Backdrop Color to show gray behind the modal */}
-          {showAddModal && <div className="modal-backdrop fade show"></div>}
         </div>
-      </div>
 
-      {/* Delete Confirmation Modal */}
-      <DeleteModal
-        show={showDeleteModal}
-        selectedCount={selectedUsers.length}
-        onCancel={() => setShowDeleteModal(false)}
-        onConfirm={handleConfirmDelete}
-      />
+        {/* Table With Users */}
+        <UsersTable
+          users={users}
+          isLoading={isLoading}
+          selectedUsers={selectedUsers}
+          setSelectedUsers={setSelectedUsers}
+          error={error}
+          successMessage={saveSuccess}
+          totalUsers={totalUsers}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          setShowTrackedUsersModal={setShowTrackedUsersModal}
+        />
 
-      {/* Delete Modal Backdrop */}
-      {showDeleteModal && <div className="modal-backdrop fade show"></div>}
+        {/* Add Modal */}
+        <AddUserModal
+          show={showAddModal}
+          handleCloseModal={handleCloseModal}
+          formData={formData}
+          handleSaveUser={handleSaveUser}
+          handleChange={handleChange}
+          errors={errors}
+          isSubmitting={isSubmitting}
+        />
+        {showAddModal && <div className="modal-backdrop fade show"></div>}
 
-      
+        {/* Delete Confirmation Modal */}
+        <DeleteModal
+          show={showDeleteModal}
+          selectedCount={selectedUsers.length}
+          onCancel={() => setShowDeleteModal(false)}
+          onConfirm={handleConfirmDelete}
+        />
+        {showDeleteModal && <div className="modal-backdrop fade show"></div>}
 
-{/* Actions Modal */}
-<ActionsModal
-        show={showActionsModal}
-        handleClose={handleCloseActionsModal}
-        handleDelete={() => {
-          handleDelete();
-          setShowActionsModal(false);
-        }}
-        handleDisable={handleDisable}
-        handleForceReset={handleForceReset}
-         handleEnable={handleEnable}
-      />
+        {/* Actions Modal */}
+        <ActionsModal
+          show={showActionsModal}
+          handleClose={handleCloseActionsModal}
+          handleDelete={() => {
+            handleDelete();
+            setShowActionsModal(false);
+          }}
+          handleDisable={handleDisable}
+          handleForceReset={handleForceReset}
+          handleEnable={handleEnable}
+        />
 
-
-      {/* Edit Modal */}
-      <EditUserModal
-  show={showEditModal}
-  formData={formData}
-  errors={errors}
-  handleCloseModal={handleCloseModal}
-  isSubmitting={isSubmitting}
-  isFieldModified={isFieldModified}
-  handleChange={handleChange}
-  handleUpdateUser={handleUpdateUser}
-  originalFormData={originalFormData}
-/>
-      {showEditModal && <div className="modal-backdrop fade show"></div>}
-      
-      <TrackUsersModal 
+        {/* Edit Modal */}
+        <EditUserModal
+          show={showEditModal}
+          formData={formData}
+          errors={errors}
+          handleCloseModal={handleCloseModal}
+          isSubmitting={isSubmitting}
+          isFieldModified={isFieldModified}
+          handleChange={handleChange}
+          handleUpdateUser={handleUpdateUser}
+          originalFormData={originalFormData}
+        />
+        {showEditModal && <div className="modal-backdrop fade show"></div>}
+        
+        <TrackUsersModal 
           show={showTrackedUsersModal}
           setshowTrackedUsersModal={setShowTrackedUsersModal}
           user={selectedUsers}
           setSelectedUsers={setSelectedUsers}
         />
-   
-    </div>
+      </div>
+    </AdminDashboardLayout>
   );
 }
 

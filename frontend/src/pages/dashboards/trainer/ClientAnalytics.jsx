@@ -99,7 +99,7 @@ const ClientAnalytics = () => {
             <i className="bi bi-exclamation-triangle me-2"></i>
             {error}
           </div>
-          <Link to="/trainer-dashboard/clients" className="btn btn-primary">
+          <Link to="/clients" className="btn btn-primary">
             <i className="bi bi-arrow-left me-2"></i>
             Back to Clients
           </Link>
@@ -115,7 +115,7 @@ const ClientAnalytics = () => {
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
             <Link
-              to="/trainer-dashboard/clients"
+              to="/clients"
               className="text-decoration-none text-muted mb-2 d-inline-block"
             >
               <i className="bi bi-arrow-left me-2"></i>

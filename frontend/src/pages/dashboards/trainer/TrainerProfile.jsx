@@ -18,7 +18,6 @@ const TrainerProfile = () => {
     certifications: '',
     yearsOfExperience: '',
     profileImage: '',
-    // Social Media
     instagram: '',
     facebook: '',
     twitter: '',
@@ -114,11 +113,9 @@ const TrainerProfile = () => {
   if (loading) {
     return (
       <TrainerDashboardLayout>
-        <div className="container-fluid p-4">
-          <div className="text-center py-5">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
           </div>
         </div>
       </TrainerDashboardLayout>
@@ -127,20 +124,20 @@ const TrainerProfile = () => {
 
   return (
     <TrainerDashboardLayout>
-      <div className="container p-4" style={{ minHeight: 'calc(100vh - 0px)' }}>
+      <div style={{ backgroundColor: '#1a1a1a', minHeight: '100vh', color: '#fff' }}>
         {/* Header */}
         <div className="mb-4">
-          <h2 className="mb-1">My Profile</h2>
-          <p className="text-muted">Manage your professional profile and social media presence</p>
+          <h2 className="mb-1 fw-bold" style={{ color: '#fff' }}>My Profile</h2>
+          <p style={{ color: '#9ca3af' }}>Manage your professional profile and social media presence</p>
         </div>
 
         <div className="row">
           {/* Main Profile Form */}
           <div className="col-lg-10">
-            <div className="card border-0 shadow-sm mb-4">
-              <div className="card-header bg-white border-bottom">
-                <h5 className="mb-0">
-                  <i className="bi bi-person-circle me-2 text-primary"></i>
+            <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <div className="card-header border-bottom" style={{ borderTopLeftRadius: '12px', borderTopRightRadius: '12px', backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <h5 className="mb-0 fw-semibold" style={{ color: '#fff' }}>
+                  <i className="bi bi-person-circle me-2" style={{ color: '#10b981' }}></i>
                   Personal Information
                 </h5>
               </div>
@@ -184,12 +181,19 @@ const TrainerProfile = () => {
                     <label className="form-label fw-bold">Years of Experience</label>
                     <input
                       type="number"
-                      className="form-control"
+                      className="form-control number-input-light-arrows"
                       value={profile.yearsOfExperience}
                       onChange={(e) => setProfile({ ...profile, yearsOfExperience: e.target.value })}
                       placeholder="5"
                       min="0"
                     />
+                    <style dangerouslySetInnerHTML={{__html: `
+                      .number-input-light-arrows::-webkit-inner-spin-button,
+                      .number-input-light-arrows::-webkit-outer-spin-button {
+                        opacity: 1;
+                        filter: invert(1);
+                      }
+                    `}} />
                   </div>
 
                   <div className="col-12 mb-3">
@@ -217,7 +221,7 @@ const TrainerProfile = () => {
 
                   <div className="col-12 mb-3">
                     <label className="form-label fw-bold">Specializations</label>
-                    <div className="input-group mb-2">
+                    <div className="d-flex gap-2 mb-2">
                       <input
                         type="text"
                         className="form-control"
@@ -229,6 +233,7 @@ const TrainerProfile = () => {
                       <button
                         className="btn btn-primary"
                         onClick={addSpecialization}
+                        style={{ minWidth: '48px', height: '48px' }}
                       >
                         <i className="bi bi-plus-lg"></i>
                       </button>
@@ -251,13 +256,13 @@ const TrainerProfile = () => {
             </div>
 
             {/* Social Media Section */}
-            <div className="card border-0 shadow-sm mb-4">
-              <div className="card-header bg-white border-bottom">
-                <h5 className="mb-0">
-                  <i className="bi bi-share me-2 text-primary"></i>
+            <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <div className="card-header border-bottom" style={{ borderTopLeftRadius: '12px', borderTopRightRadius: '12px', backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <h5 className="mb-0 fw-semibold" style={{ color: '#fff' }}>
+                  <i className="bi bi-share me-2" style={{ color: '#10b981' }}></i>
                   Social Media Links
                 </h5>
-                <small className="text-muted">Help clients find and connect with you on social media</small>
+                <small style={{ color: '#9ca3af' }}>Help clients find and connect with you on social media</small>
               </div>
               <div className="card-body">
                 <div className="row">
@@ -351,7 +356,8 @@ const TrainerProfile = () => {
             {/* Save Button */}
             <div className="d-flex justify-content-end gap-2 mb-4">
               <button
-                className="btn btn-outline-secondary"
+                className="btn"
+                style={{ backgroundColor: 'transparent', color: '#9ca3af', border: '1px solid rgba(156, 163, 175, 0.3)' }}
                 onClick={fetchProfile}
                 disabled={saving}
               >
@@ -359,7 +365,8 @@ const TrainerProfile = () => {
                 Reset
               </button>
               <button
-                className="btn btn-primary px-4"
+                className="btn px-4"
+                style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                 onClick={handleSaveProfile}
                 disabled={saving}
               >
@@ -380,26 +387,26 @@ const TrainerProfile = () => {
 
           {/* Sidebar - Profile Preview */}
           <div className="col-lg-2">
-            <div className="card border-0 shadow-sm position-sticky" style={{ top: '20px' }}>
-              <div className="card-header bg-white border-bottom">
-                <h6 className="mb-0">Profile Preview</h6>
+            <div className="card border-0 shadow-sm position-sticky" style={{ top: '20px', borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <div className="card-header border-bottom" style={{ borderTopLeftRadius: '12px', borderTopRightRadius: '12px', backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <h6 className="mb-0 fw-semibold" style={{ color: '#fff' }}>Profile Preview</h6>
               </div>
               <div className="card-body text-center">
                 <div className="mb-3">
                   <div
-                    className="rounded-circle mx-auto bg-primary d-flex align-items-center justify-content-center text-white"
-                    style={{ width: '100px', height: '100px', fontSize: '2.5rem' }}
+                    className="rounded-circle mx-auto d-flex align-items-center justify-content-center text-white"
+                    style={{ width: '100px', height: '100px', fontSize: '2.5rem', backgroundColor: '#10b981' }}
                   >
                     {profile.fullName.charAt(0) || 'T'}
                   </div>
                 </div>
 
-                <h5 className="mb-1">{profile.fullName || 'Your Name'}</h5>
-                <p className="text-muted small mb-3">{profile.email}</p>
+                <h5 className="mb-1" style={{ color: '#fff' }}>{profile.fullName || 'Your Name'}</h5>
+                <p className="small mb-3" style={{ color: '#9ca3af' }}>{profile.email}</p>
 
                 {profile.yearsOfExperience && (
                   <p className="mb-2">
-                    <span className="badge bg-success">
+                    <span className="badge" style={{ backgroundColor: '#10b981', color: '#fff' }}>
                       {profile.yearsOfExperience} years experience
                     </span>
                   </p>
@@ -408,7 +415,7 @@ const TrainerProfile = () => {
                 {profile.specializations.length > 0 && (
                   <div className="mb-3">
                     {profile.specializations.map((spec, index) => (
-                      <span key={index} className="badge bg-light text-dark me-1 mb-1">
+                      <span key={index} className="badge bg-light me-1 mb-1" style={{ color: '#000' }}>
                         {spec}
                       </span>
                     ))}
@@ -416,7 +423,7 @@ const TrainerProfile = () => {
                 )}
 
                 {profile.bio && (
-                  <p className="small text-muted mb-3">{profile.bio.substring(0, 100)}...</p>
+                  <p className="small mb-3" style={{ color: '#9ca3af' }}>{profile.bio.substring(0, 100)}...</p>
                 )}
 
                 {/* Social Media Icons */}
@@ -458,20 +465,20 @@ const TrainerProfile = () => {
             </div>
           </div>
         </div>
-      </div>
 
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
+            <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
               <div className="modal-body text-center py-4">
                 <div className="mb-3">
-                  <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '4rem' }}></i>
+                  <i className="bi bi-check-circle-fill" style={{ fontSize: '4rem', color: '#10b981' }}></i>
                 </div>
-                <h5>{successMessage}</h5>
+                <h5 style={{ color: '#fff' }}>{successMessage}</h5>
                 <button
-                  className="btn btn-primary mt-3"
+                  className="btn mt-3"
+                  style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                   onClick={() => setShowSuccessModal(false)}
                 >
                   Close
@@ -481,7 +488,7 @@ const TrainerProfile = () => {
           </div>
         </div>
       )}
-    </TrainerDashboardLayout>
+      </div>    </TrainerDashboardLayout>
   );
 };
 

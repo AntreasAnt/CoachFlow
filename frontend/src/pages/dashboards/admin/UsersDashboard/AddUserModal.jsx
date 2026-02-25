@@ -13,23 +13,31 @@ export const AddUserModal = ({
     <>
       <div
         className="modal fade show"
-        style={{ display: "block" }}
+        style={{ display: "block", backgroundColor: 'rgba(0, 0, 0, 0.7)' }}
         tabIndex="-1"
         role="dialog"
         aria-hidden="false"
       >
         <div className="modal-dialog" role="document">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Add New User</h5>
+          <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div className="modal-header dark-modal-header" style={{ backgroundColor: '#1a1a1a', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <h5 className="modal-title" style={{ color: '#fff' }}>Add New User</h5>
               <button
                 type="button"
-                className="btn-close"
+                className="btn-close btn-close-white"
                 onClick={handleCloseModal}
                 aria-label="Close"
               ></button>
             </div>
-            <div className="modal-body">
+            <div className="modal-body" style={{ backgroundColor: '#2d2d2d' }}>
+              <style>{`
+                .modal-body input::placeholder,
+                .modal-body input::-webkit-input-placeholder,
+                .modal-body input::-moz-placeholder {
+                  color: #6b7280 !important;
+                  opacity: 1;
+                }
+              `}</style>
               <form
                 onSubmit={handleSaveUser}
                 style={{
@@ -40,7 +48,7 @@ export const AddUserModal = ({
               >
                 {/* Username Field */}
                 <div className="mb-3">
-                  <label htmlFor="username" className="form-label">
+                  <label htmlFor="username" className="form-label" style={{ color: '#fff' }}>
                     Username
                   </label>
                   <input
@@ -56,6 +64,7 @@ export const AddUserModal = ({
                         ? "is-valid"
                         : ""
                     }`}
+                    style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                   />
                   {errors.username && (
                     <div className="invalid-feedback">{errors.username}</div>
@@ -63,7 +72,7 @@ export const AddUserModal = ({
                 </div>
                 {/* Email Field */}
                 <div className="mb-3">
-                  <label htmlFor="email" className="form-label">
+                  <label htmlFor="email" className="form-label" style={{ color: '#fff' }}>
                     Email
                   </label>
                   <input
@@ -79,6 +88,7 @@ export const AddUserModal = ({
                         ? "is-valid"
                         : ""
                     }`}
+                    style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                   />
                   {errors.email && (
                     <div className="invalid-feedback">{errors.email}</div>
@@ -86,7 +96,7 @@ export const AddUserModal = ({
                 </div>
                 {/* Password Fields */}
                 <div className="mb-3">
-                  <label htmlFor="password" className="form-label">
+                  <label htmlFor="password" className="form-label" style={{ color: '#fff' }}>
                     Password
                   </label>
                   <input
@@ -102,13 +112,14 @@ export const AddUserModal = ({
                         ? "is-valid"
                         : ""
                     }`}
+                    style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                   />
                   {errors.password && (
                     <div className="invalid-feedback">{errors.password}</div>
                   )}
                 </div>
                 <div className="mb-3">
-                  <label htmlFor="confpassword" className="form-label">
+                  <label htmlFor="confpassword" className="form-label" style={{ color: '#fff' }}>
                     Confirm Password
                   </label>
                   <input
@@ -124,6 +135,7 @@ export const AddUserModal = ({
                         ? "is-valid"
                         : ""
                     }`}
+                    style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                   />
                   {errors.confpassword && (
                     <div className="invalid-feedback">{errors.confpassword}</div>
@@ -131,7 +143,7 @@ export const AddUserModal = ({
                 </div>
                 {/* Role Field */}
                 <div className="mb-3">
-                  <label htmlFor="role" className="form-label">
+                  <label htmlFor="role" className="form-label" style={{ color: '#fff' }}>
                     Role
                   </label>
                   <select
@@ -145,11 +157,17 @@ export const AddUserModal = ({
                         ? "is-valid"
                         : ""
                     }`}
+                    style={{ 
+                      backgroundColor: '#1a1a1a', 
+                      border: '1px solid rgba(16, 185, 129, 0.2)', 
+                      color: '#fff',
+                      backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 16 16\'%3e%3cpath fill=\'none\' stroke=\'%2310b981\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'m2 5 6 6 6-6\'/%3e%3c/svg%3e")'
+                    }}
                   >
-                    <option value="admin">Admin</option>
-                    <option value="manager">Manager</option>
-                    <option value="trainer">Trainer</option>
-                    <option value="trainee">Trainee</option>
+                    <option value="admin" style={{ backgroundColor: '#1a1a1a', color: '#fff' }}>Admin</option>
+                    <option value="manager" style={{ backgroundColor: '#1a1a1a', color: '#fff' }}>Manager</option>
+                    <option value="trainer" style={{ backgroundColor: '#1a1a1a', color: '#fff' }}>Trainer</option>
+                    <option value="trainee" style={{ backgroundColor: '#1a1a1a', color: '#fff' }}>Trainee</option>
                   </select>
                   {errors.role && (
                     <div className="invalid-feedback">{errors.role}</div>
@@ -157,10 +175,11 @@ export const AddUserModal = ({
                 </div>
               </form>
             </div>
-            <div className="modal-footer">
+            <div className="modal-footer" style={{ backgroundColor: '#1a1a1a', borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
               <button
                 type="button"
-                className="btn btn-danger"
+                className="btn"
+                style={{ backgroundColor: '#6b7280', color: '#fff', border: 'none' }}
                 onClick={handleCloseModal}
                 disabled={isSubmitting}
               >
@@ -168,7 +187,8 @@ export const AddUserModal = ({
               </button>
               <button
                 type="button"
-                className="btn btn-success"
+                className="btn"
+                style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                 onClick={handleSaveUser}
                 disabled={isSubmitting}
               >

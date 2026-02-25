@@ -187,6 +187,11 @@ a:hover {
   font-weight: 600;
 }
 
+.badge.bg-light {
+  background-color: #e9ecef !important;
+  color: #000000 !important;
+}
+
 .badge.bg-success {
   background-color: var(--brand-primary) !important;
   color: var(--brand-dark);

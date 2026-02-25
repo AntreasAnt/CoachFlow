@@ -3,20 +3,66 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import APIClient from '../../../utils/APIClient';
 import TrainerDashboardLayout from '../../../components/TrainerDashboardLayout';
+import {
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
+  Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 
-// Reuse the same styles from CreatePrograms
+// Dark theme styles
 const styles = `
   .card-hover {
-    transition: all 0.3s ease;
-    border: 1px solid #dee2e6;
+    border: 1px solid #3d3d3d;
+    background: #2d2d2d !important;
   }
-  .card-hover:hover {
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
-    border-color: #0d6efd;
+  .card-hover .card-body {
+    background: #2d2d2d !important;
   }
   .cursor-pointer {
     cursor: pointer;
+  }
+  
+  /* Main tab styling */
+  .manage-client-tab {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 3px solid transparent !important;
+    color: #9ca3af !important;
+    padding: 0.75rem 1.5rem !important;
+    border-radius: 0 !important;
+    transition: all 0.3s ease !important;
+  }
+  
+  .manage-client-tab:hover {
+    color: #10b981 !important;
+    background: rgba(16, 185, 129, 0.05) !important;
+  }
+  
+  .manage-client-tab.active {
+    background: rgba(16, 185, 129, 0.1) !important;
+    border-bottom: 3px solid #10b981 !important;
+    color: #10b981 !important;
+  }
+  
+  /* Pill button styling */
+  .program-pill {
+    background: #2d2d2d !important;
+    border: 1px solid #3d3d3d !important;
+    color: #9ca3af !important;
+    padding: 0.5rem 1.25rem !important;
+    border-radius: 50px !important;
+    transition: all 0.3s ease !important;
+  }
+  
+  .program-pill:hover {
+    background: rgba(16, 185, 129, 0.1) !important;
+    border-color: #10b981 !important;
+    color: #10b981 !important;
+  }
+  
+  .program-pill.active {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
   }
 `;
 
@@ -246,6 +292,11 @@ const ManageClientPrograms = () => {
   
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   
+  // Analytics state
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [dateRange, setDateRange] = useState('90');
+  
   const categories = ['Strength', 'Cardio', 'Hybrid', 'Weight Loss', 'Muscle Building', 'Endurance', 'Flexibility', 'General Fitness'];
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   // mealTypes is now customMealTypes state
@@ -256,6 +307,12 @@ const ManageClientPrograms = () => {
     fetchAllTrainerPrograms();
     fetchTrainerCustomFoods();
   }, [clientId]);
+  
+  useEffect(() => {
+    if (activeView === 'analytics' && clientId) {
+      fetchAnalytics();
+    }
+  }, [activeView, clientId, dateRange]);
   
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -446,6 +503,50 @@ const ManageClientPrograms = () => {
     } catch (err) {
       showToast('Failed to load exercises', 'error');
     }
+  };
+  
+  const fetchAnalytics = async () => {
+    try {
+      setAnalyticsLoading(true);
+
+      // Calculate date range
+      const endDate = new Date().toISOString().split('T')[0];
+      const startDate = new Date(Date.now() - parseInt(dateRange) * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split('T')[0];
+
+      const params = new URLSearchParams({
+        trainee_id: clientId,
+        start_date: startDate,
+        end_date: endDate,
+      });
+
+      const response = await APIClient.get(
+        `${BACKEND_ROUTES_API}GetTraineeAnalytics.php?${params.toString()}`
+      );
+
+      if (response.success) {
+        console.log('Analytics data received:', response.analytics);
+        setAnalytics(response.analytics);
+      } else {
+        showToast('Failed to load analytics', 'error');
+      }
+    } catch (err) {
+      console.error('Error fetching analytics:', err);
+      showToast('Error loading analytics', 'error');
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+  
+  const formatNumber = (num) => {
+    if (!num) return '0';
+    return num.toLocaleString();
+  };
+
+  const formatDecimal = (num, decimals = 1) => {
+    if (!num) return '0';
+    return parseFloat(num).toFixed(decimals);
   };
   
   const handleAssignProgram = async () => {
@@ -1028,14 +1129,44 @@ const ManageClientPrograms = () => {
             </p>
             <div className="d-flex gap-3 justify-content-center">
               <button 
-                className="btn btn-outline-secondary"
-                onClick={() => navigate('/trainer-dashboard/clients')}
+                className="btn"
+                style={{
+                  background: 'transparent',
+                  border: '2px solid #6b7280',
+                  color: '#9ca3af',
+                  padding: '0.5rem 1.5rem',
+                  borderRadius: '8px',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.borderColor = '#10b981';
+                  e.target.style.color = '#10b981';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.borderColor = '#6b7280';
+                  e.target.style.color = '#9ca3af';
+                }}
+                onClick={() => navigate('/clients')}
               >
                 <i className="bi bi-arrow-left me-1"></i>
                 Back to Clients
               </button>
               <button 
-                className="btn btn-primary"
+                className="btn"
+                style={{
+                  background: '#10b981',
+                  border: 'none',
+                  color: '#ffffff',
+                  padding: '0.5rem 1.5rem',
+                  borderRadius: '8px',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = '#059669';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = '#10b981';
+                }}
                 onClick={createCoachingRelationship}
               >
                 <i className="bi bi-plus-circle me-1"></i>
@@ -1062,22 +1193,29 @@ const ManageClientPrograms = () => {
           <div>
             <button 
               className="btn btn-link p-0 mb-2"
-              onClick={() => navigate('/trainer-dashboard/clients')}
+              style={{ color: '#10b981', textDecoration: 'none', transition: 'color 0.3s ease' }}
+              onMouseEnter={(e) => {
+                e.target.style.color = '#059669';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = '#10b981';
+              }}
+              onClick={() => navigate('/clients')}
             >
               <i className="bi bi-arrow-left me-2"></i>
               Back to Clients
             </button>
-            <h4 className="mb-0">
+            <h4 className="mb-0" style={{ color: '#ffffff' }}>
               Manage Programs & Nutrition for {clientInfo?.full_name || clientInfo?.username}
             </h4>
           </div>
         </div>
         
         {/* Navigation Tabs */}
-        <ul className="nav nav-tabs mb-4">
+        <ul className="nav nav-tabs mb-4" style={{ borderBottom: '2px solid #3d3d3d' }}>
           <li className="nav-item">
             <button 
-              className={`nav-link ${activeView === 'overview' ? 'active' : ''}`}
+              className={`manage-client-tab ${activeView === 'overview' ? 'active' : ''}`}
               onClick={() => setActiveView('overview')}
             >
               <i className="bi bi-grid me-2"></i>
@@ -1086,8 +1224,8 @@ const ManageClientPrograms = () => {
           </li>
           <li className="nav-item">
             <button 
-              className={`nav-link ${activeView === 'analytics' ? 'active' : ''}`}
-              onClick={() => navigate(`/trainer/clients/${clientId}/analytics`)}
+              className={`manage-client-tab ${activeView === 'analytics' ? 'active' : ''}`}
+              onClick={() => setActiveView('analytics')}
             >
               <i className="bi bi-graph-up me-2"></i>
               Analytics
@@ -1095,7 +1233,7 @@ const ManageClientPrograms = () => {
           </li>
           <li className="nav-item">
             <button 
-              className={`nav-link ${activeView === 'assign-program' ? 'active' : ''}`}
+              className={`manage-client-tab ${activeView === 'assign-program' ? 'active' : ''}`}
               onClick={() => setActiveView('assign-program')}
             >
               <i className="bi bi-plus-circle me-2"></i>
@@ -1104,7 +1242,7 @@ const ManageClientPrograms = () => {
           </li>
           <li className="nav-item">
             <button 
-              className={`nav-link ${activeView === 'create-program' ? 'active' : ''}`}
+              className={`manage-client-tab ${activeView === 'create-program' ? 'active' : ''}`}
               onClick={() => setActiveView('create-program')}
             >
               <i className="bi bi-plus-square me-2"></i>
@@ -1113,7 +1251,7 @@ const ManageClientPrograms = () => {
           </li>
           <li className="nav-item">
             <button 
-              className={`nav-link ${activeView === 'nutrition' ? 'active' : ''}`}
+              className={`manage-client-tab ${activeView === 'nutrition' ? 'active' : ''}`}
               onClick={() => setActiveView('nutrition')}
             >
               <i className="bi bi-cup-hot me-2"></i>
@@ -1126,19 +1264,19 @@ const ManageClientPrograms = () => {
         {activeView === 'overview' && (
           <div>
             {/* Assigned Programs */}
-            <div className="card mb-4">
-              <div className="card-header bg-white d-flex justify-content-between align-items-center">
+            <div className="card mb-4" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d' }}>
+              <div className="card-header d-flex justify-content-between align-items-center" style={{ background: '#1a1a1a', borderBottom: '1px solid #3d3d3d' }}>
                 <div>
-                  <h5 className="mb-0">Client Programs</h5>
+                  <h5 className="mb-0" style={{ color: '#ffffff' }}>Client Programs</h5>
                   <small className="text-muted">Manage training programs for this client</small>
                 </div>
               </div>
-              <div className="card-body">
+              <div className="card-body" style={{ background: '#1a1a1a' }}>
                 {/* Program Tabs */}
                 <ul className="nav nav-pills mb-4">
                   <li className="nav-item me-2">
                     <button 
-                      className={`nav-link ${programTab === 'trainer' ? 'active' : ''}`}
+                      className={`program-pill ${programTab === 'trainer' ? 'active' : ''}`}
                       onClick={() => setProgramTab('trainer')}
                     >
                       <i className="bi bi-person-check me-2"></i>
@@ -1147,7 +1285,7 @@ const ManageClientPrograms = () => {
                   </li>
                   <li className="nav-item">
                     <button 
-                      className={`nav-link ${programTab === 'self' ? 'active' : ''}`}
+                      className={`program-pill ${programTab === 'self' ? 'active' : ''}`}
                       onClick={() => setProgramTab('self')}
                     >
                       <i className="bi bi-person me-2"></i>
@@ -1161,11 +1299,25 @@ const ManageClientPrograms = () => {
                   <div>
                     {assignedPrograms.length === 0 ? (
                       <div className="text-center py-4">
-                        <i className="bi bi-clipboard-check display-4 text-primary mb-3"></i>
-                        <h6>No programs assigned yet</h6>
+                        <i className="bi bi-clipboard-check display-4 mb-3" style={{ color: '#10b981' }}></i>
+                        <h6 style={{ color: '#ffffff' }}>No programs assigned yet</h6>
                         <p className="text-muted mb-3">Assign training programs to guide this client's workouts</p>
                         <button 
-                          className="btn btn-primary"
+                          className="btn"
+                          style={{
+                            background: '#10b981',
+                            border: 'none',
+                            color: '#ffffff',
+                            padding: '0.5rem 1.5rem',
+                            borderRadius: '8px',
+                            transition: 'all 0.3s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.background = '#059669';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.background = '#10b981';
+                          }}
                           onClick={() => setActiveView('assign-program')}
                         >
                           <i className="bi bi-plus-lg me-1"></i>
@@ -1177,7 +1329,21 @@ const ManageClientPrograms = () => {
                         <div className="d-flex justify-content-between align-items-center mb-3">
                           <span className="text-muted">Programs assigned by you as trainer</span>
                           <button 
-                            className="btn btn-sm btn-primary"
+                            className="btn btn-sm"
+                            style={{
+                              background: '#10b981',
+                              border: 'none',
+                              color: '#ffffff',
+                              padding: '0.375rem 1rem',
+                              borderRadius: '8px',
+                              transition: 'all 0.3s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.background = '#059669';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.background = '#10b981';
+                            }}
                             onClick={() => setActiveView('assign-program')}
                           >
                             <i className="bi bi-plus-lg me-1"></i>
@@ -1187,31 +1353,57 @@ const ManageClientPrograms = () => {
                         <div className="row">
                           {assignedPrograms.map(program => (
                             <div key={program.assignment_id} className="col-md-6 col-lg-4 mb-3">
-                              <div className="card card-hover h-100 border-primary border-opacity-25">
-                                <div className="card-body">
+                              <div className="card card-hover h-100" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                                <div className="card-body d-flex flex-column" style={{ background: '#2d2d2d' }}>
                                   <div className="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 className="card-title mb-0">{program.title}</h6>
-                                    <span className="badge bg-primary">Assigned</span>
+                                    <h6 className="card-title mb-0" style={{ color: '#ffffff' }}>{program.title}</h6>
+                                    <span className="badge" style={{ background: '#4f46e5', color: '#ffffff' }}>ASSIGNED</span>
                                   </div>
                                   <p className="text-muted small mb-2">{program.description}</p>
                                   <div className="d-flex flex-wrap gap-1 mb-2">
-                                    <span className="badge bg-light text-dark">{program.category}</span>
-                                    <span className="badge bg-light text-dark">{program.duration_weeks} weeks</span>
+                                    <span className="badge" style={{ background: '#ffffff', color: '#000000' }}>{program.category}</span>
+                                    <span className="badge" style={{ background: '#ffffff', color: '#000000' }}>{program.duration_weeks} WEEKS</span>
                                   </div>
                                   <small className="text-muted">
                                     <i className="bi bi-calendar3 me-1"></i>
                                     Assigned {new Date(program.assigned_at).toLocaleDateString()}
                                   </small>
-                                  <div className="mt-3 d-flex gap-2">
+                                  <div className="mt-auto pt-3 d-flex gap-2">
                                     <button 
-                                      className="btn btn-sm btn-outline-primary flex-fill"
+                                      className="btn btn-sm flex-fill"
+                                      style={{ 
+                                        background: 'transparent',
+                                        border: '2px solid #10b981',
+                                        color: '#10b981',
+                                        borderRadius: '8px',
+                                        transition: 'all 0.3s ease'
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        e.target.style.background = 'rgba(16, 185, 129, 0.1)';
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.target.style.background = 'transparent';
+                                      }}
                                       onClick={() => handleViewProgram(program)}
                                     >
                                       <i className="bi bi-eye me-1"></i>
                                       View
                                     </button>
                                     <button 
-                                      className="btn btn-sm btn-outline-danger"
+                                      className="btn btn-sm"
+                                      style={{ 
+                                        background: 'transparent',
+                                        border: '2px solid #ef4444',
+                                        color: '#ef4444',
+                                        borderRadius: '8px',
+                                        transition: 'all 0.3s ease'
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        e.target.style.background = 'rgba(239, 68, 68, 0.1)';
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.target.style.background = 'transparent';
+                                      }}
                                       onClick={() => handleUnassignProgram(program.assignment_id)}
                                     >
                                       <i className="bi bi-trash"></i>
@@ -1232,8 +1424,8 @@ const ManageClientPrograms = () => {
                   <div>
                     {clientPrograms.length === 0 ? (
                       <div className="text-center py-4">
-                        <i className="bi bi-person-workspace display-4 text-secondary mb-3"></i>
-                        <h6>No self-created programs</h6>
+                        <i className="bi bi-person-workspace display-4 mb-3" style={{ color: '#6b7280' }}></i>
+                        <h6 style={{ color: '#ffffff' }}>No self-created programs</h6>
                         <p className="text-muted">Programs created by the client will appear here</p>
                       </div>
                     ) : (
@@ -1244,24 +1436,37 @@ const ManageClientPrograms = () => {
                         <div className="row">
                           {clientPrograms.map(program => (
                             <div key={program.id} className="col-md-6 col-lg-4 mb-3">
-                              <div className="card card-hover h-100 border-secondary border-opacity-25">
-                                <div className="card-body">
+                              <div className="card card-hover h-100" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                                <div className="card-body d-flex flex-column" style={{ background: '#2d2d2d' }}>
                                   <div className="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 className="card-title mb-0">{program.title}</h6>
-                                    <span className="badge bg-secondary">Self-Created</span>
+                                    <h6 className="card-title mb-0" style={{ color: '#ffffff' }}>{program.title}</h6>
+                                    <span className="badge" style={{ background: '#6b7280', color: '#ffffff' }}>SELF-CREATED</span>
                                   </div>
                                   <p className="text-muted small mb-2">{program.description}</p>
                                   <div className="d-flex flex-wrap gap-1 mb-2">
-                                    <span className="badge bg-light text-dark">{program.category || 'Custom'}</span>
-                                    <span className="badge bg-light text-dark">{program.duration_weeks || 'Flexible'} weeks</span>
+                                    <span className="badge" style={{ background: '#ffffff', color: '#000000' }}>{program.category || 'Custom'}</span>
+                                    <span className="badge" style={{ background: '#ffffff', color: '#000000' }}>{program.duration_weeks || 'Flexible'} weeks</span>
                                   </div>
                                   <small className="text-muted">
                                     <i className="bi bi-calendar3 me-1"></i>
                                     Created {new Date(program.created_at).toLocaleDateString()}
                                   </small>
-                                  <div className="mt-3">
+                                  <div className="mt-auto pt-3">
                                     <button 
-                                      className="btn btn-sm btn-outline-secondary w-100"
+                                      className="btn btn-sm w-100"
+                                      style={{ 
+                                        background: 'transparent',
+                                        border: '2px solid #10b981',
+                                        color: '#10b981',
+                                        borderRadius: '8px',
+                                        transition: 'all 0.3s ease'
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        e.target.style.background = 'rgba(16, 185, 129, 0.1)';
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.target.style.background = 'transparent';
+                                      }}
                                       onClick={() => handleViewProgram(program)}
                                     >
                                       <i className="bi bi-eye me-1"></i>
@@ -1281,11 +1486,24 @@ const ManageClientPrograms = () => {
             </div>
             
             {/* Nutrition Overview */}
-            <div className="card">
-              <div className="card-header bg-white d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">Nutrition Goals</h5>
+            <div className="card" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d' }}>
+              <div className="card-header d-flex justify-content-between align-items-center" style={{ background: '#1a1a1a', borderBottom: '1px solid #3d3d3d' }}>
+                <h5 className="mb-0" style={{ color: '#ffffff' }}>Nutrition Goals</h5>
                 <button 
-                  className="btn btn-sm btn-primary"
+                  className="btn btn-sm"
+                  style={{
+                    background: '#10b981',
+                    border: 'none',
+                    color: '#ffffff',
+                    borderRadius: '8px',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = '#059669';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = '#10b981';
+                  }}
                   onClick={() => {
                     if (nutritionGoal) {
                       setGoalForm({
@@ -1302,24 +1520,24 @@ const ManageClientPrograms = () => {
                   {nutritionGoal ? 'Edit Goals' : 'Set Goals'}
                 </button>
               </div>
-              <div className="card-body">
+              <div className="card-body" style={{ background: '#1a1a1a' }}>
                 {nutritionGoal ? (
                   <div className="row">
                     <div className="col-md-3">
                       <h6 className="text-muted small">CALORIES</h6>
-                      <h4 className="mb-0">{nutritionGoal.target_calories}</h4>
+                      <h4 className="mb-0" style={{ color: '#ffffff' }}>{nutritionGoal.target_calories}</h4>
                     </div>
                     <div className="col-md-3">
                       <h6 className="text-muted small">PROTEIN</h6>
-                      <h4 className="mb-0">{nutritionGoal.target_protein}g</h4>
+                      <h4 className="mb-0" style={{ color: '#ffffff' }}>{nutritionGoal.target_protein}g</h4>
                     </div>
                     <div className="col-md-3">
                       <h6 className="text-muted small">CARBS</h6>
-                      <h4 className="mb-0">{nutritionGoal.target_carbs}g</h4>
+                      <h4 className="mb-0" style={{ color: '#ffffff' }}>{nutritionGoal.target_carbs}g</h4>
                     </div>
                     <div className="col-md-3">
                       <h6 className="text-muted small">FAT</h6>
-                      <h4 className="mb-0">{nutritionGoal.target_fat}g</h4>
+                      <h4 className="mb-0" style={{ color: '#ffffff' }}>{nutritionGoal.target_fat}g</h4>
                     </div>
                   </div>
                 ) : (
@@ -1332,19 +1550,548 @@ const ManageClientPrograms = () => {
           </div>
         )}
         
+        {/* Analytics Tab */}
+        {activeView === 'analytics' && (
+          <div>
+            {/* Debug Info - shows what data is available */}
+            {analytics && analytics.overview && (
+              <div className="alert alert-info mb-3" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d', color: '#ffffff' }}>
+                <strong>Analytics Data Status:</strong>
+                <ul className="mb-0 mt-2" style={{ fontSize: '0.9rem' }}>
+                  <li>Overview Stats: ✓ ({analytics.overview.total_workouts} workouts)</li>
+                  <li>Volume Trends: {analytics.volume_trends?.length > 0 ? `✓ (${analytics.volume_trends.length} weeks)` : '✗ No data'}</li>
+                  <li>Strength Progress: {analytics.strength_progress?.length > 0 ? `✓ (${analytics.strength_progress.length} records)` : '✗ No data'}</li>
+                  <li>Program Performance: {analytics.program_performance?.length > 0 ? `✓ (${analytics.program_performance.length} programs)` : '✗ No data'}</li>
+                  <li>Personal Records: {analytics.personal_records?.length > 0 ? `✓ (${analytics.personal_records.length} PRs)` : '✗ No data'}</li>
+                  <li>Body Composition: {analytics.body_composition?.length > 0 ? `✓ (${analytics.body_composition.length} measurements)` : '✗ No data'}</li>
+                  <li>Consistency: {analytics.consistency ? '✓ Available' : '✗ No data'}</li>
+                </ul>
+              </div>
+            )}
+            
+            {/* Date Range Filter */}
+            <div className="d-flex justify-content-end mb-3">
+              <select
+                className="form-select"
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value)}
+                style={{ 
+                  width: 'auto',
+                  background: '#2d2d2d',
+                  border: '1px solid #3d3d3d',
+                  color: '#ffffff'
+                }}
+              >
+                <option value="30">Last 30 Days</option>
+                <option value="60">Last 60 Days</option>
+                <option value="90">Last 90 Days</option>
+                <option value="180">Last 6 Months</option>
+                <option value="365">Last Year</option>
+              </select>
+            </div>
+
+            {analyticsLoading ? (
+              <div className="card" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d' }}>
+                <div className="card-body text-center py-5">
+                  <div className="spinner-border" style={{ color: '#10b981' }} role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="mt-3 text-muted">Loading analytics...</p>
+                </div>
+              </div>
+            ) : analytics && analytics.overview ? (
+              <>
+                {/* Overview Stats */}
+                <div className="row mb-4">
+                  <div className="col-lg-3 col-md-6 mb-3">
+                    <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                      <div className="card-body">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div>
+                            <p className="text-muted mb-1 small">Total Workouts</p>
+                            <h3 className="mb-0" style={{ color: '#ffffff' }}>{formatNumber(analytics.overview.total_workouts)}</h3>
+                          </div>
+                          <div className="rounded-circle p-3" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+                            <i className="bi bi-activity fs-4" style={{ color: '#10b981' }}></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-lg-3 col-md-6 mb-3">
+                    <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                      <div className="card-body">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div>
+                            <p className="text-muted mb-1 small">Total Volume</p>
+                            <h3 className="mb-0" style={{ color: '#ffffff' }}>{formatNumber(analytics.overview.total_volume_kg)} kg</h3>
+                          </div>
+                          <div className="rounded-circle p-3" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+                            <i className="bi bi-graph-up fs-4" style={{ color: '#10b981' }}></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-lg-3 col-md-6 mb-3">
+                    <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                      <div className="card-body">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div>
+                            <p className="text-muted mb-1 small">Unique Exercises</p>
+                            <h3 className="mb-0" style={{ color: '#ffffff' }}>{formatNumber(analytics.overview.unique_exercises)}</h3>
+                          </div>
+                          <div className="rounded-circle p-3" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+                            <i className="bi bi-list-task fs-4" style={{ color: '#10b981' }}></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-lg-3 col-md-6 mb-3">
+                    <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                      <div className="card-body">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div>
+                            <p className="text-muted mb-1 small">Average RPE</p>
+                            <h3 className="mb-0" style={{ color: '#ffffff' }}>{formatDecimal(analytics.overview.avg_rpe)}</h3>
+                          </div>
+                          <div className="rounded-circle p-3" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+                            <i className="bi bi-lightning fs-4" style={{ color: '#10b981' }}></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Stats Row */}
+                <div className="row mb-4">
+                  <div className="col-lg-4 col-md-6 mb-3">
+                    <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                      <div className="card-body">
+                        <h6 className="text-muted mb-3">Training Volume</h6>
+                        <div className="d-flex justify-content-between mb-2">
+                          <span className="text-muted">Total Reps:</span>
+                          <strong style={{ color: '#ffffff' }}>{formatNumber(analytics.overview.total_reps)}</strong>
+                        </div>
+                        <div className="d-flex justify-content-between mb-2">
+                          <span className="text-muted">Total Sets:</span>
+                          <strong style={{ color: '#ffffff' }}>{formatNumber(analytics.overview.total_sets)}</strong>
+                        </div>
+                        <div className="d-flex justify-content-between">
+                          <span className="text-muted">Training Time:</span>
+                          <strong style={{ color: '#ffffff' }}>{formatNumber(analytics.overview.total_minutes)} min</strong>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Consistency Stats */}
+                  {analytics.consistency && (
+                    <div className="col-lg-4 col-md-6 mb-3">
+                      <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                        <div className="card-body">
+                          <h6 className="text-muted mb-3">Consistency</h6>
+                          <div className="d-flex justify-content-between mb-2">
+                            <span className="text-muted">Workouts/Week:</span>
+                            <strong style={{ color: '#ffffff' }}>{formatDecimal(analytics.consistency.workouts_per_week)}</strong>
+                          </div>
+                          <div className="d-flex justify-content-between mb-2">
+                            <span className="text-muted">Active Days:</span>
+                            <strong style={{ color: '#ffffff' }}>{formatNumber(analytics.consistency.active_days)}</strong>
+                          </div>
+                          <div className="d-flex justify-content-between">
+                            <span className="text-muted">Adherence:</span>
+                            <strong style={{ color: '#ffffff' }}>{formatNumber(analytics.consistency.adherence_percentage)}%</strong>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Current Streak */}
+                  {analytics.consistency?.streaks && (
+                    <div className="col-lg-4 col-md-6 mb-3">
+                      <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                        <div className="card-body">
+                          <h6 className="text-muted mb-3">Workout Streak 🔥</h6>
+                          <div className="d-flex justify-content-between mb-2">
+                            <span className="text-muted">Current Streak:</span>
+                            <strong style={{ color: '#ef4444' }}>
+                              {formatNumber(analytics.consistency.streaks.workout_streak?.current_streak || 0)} days
+                            </strong>
+                          </div>
+                          <div className="d-flex justify-content-between mb-2">
+                            <span className="text-muted">Longest Streak:</span>
+                            <strong style={{ color: '#ffffff' }}>{formatNumber(analytics.consistency.streaks.workout_streak?.longest_streak || 0)} days</strong>
+                          </div>
+                          <div className="d-flex justify-content-between">
+                            <span className="text-muted">Total Training Time:</span>
+                            <strong style={{ color: '#ffffff' }}>{Math.floor(analytics.overview.total_minutes / 60)}h {analytics.overview.total_minutes % 60}m</strong>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Weekly Breakdown Table */}
+                {analytics.volume_trends && analytics.volume_trends.length > 0 && (
+                  <div className="card mb-4" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                    <div className="card-header" style={{ background: '#2d2d2d', borderBottom: '1px solid #3d3d3d' }}>
+                      <h5 className="mb-0" style={{ color: '#ffffff' }}>
+                        <i className="bi bi-table me-2"></i>
+                        Weekly Training Breakdown
+                      </h5>
+                    </div>
+                    <div className="card-body" style={{ background: '#2d2d2d' }}>
+                      <div className="table-responsive">
+                        <table className="table table-hover" style={{ color: '#ffffff' }}>
+                          <thead style={{ background: '#1a1a1a' }}>
+                            <tr>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Week Starting</th>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Workouts</th>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Volume (kg)</th>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Sets</th>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Reps</th>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Avg RPE</th>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Duration</th>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Exercises</th>
+                            </tr>
+                          </thead>
+                          <tbody style={{ background: '#2d2d2d' }}>
+                            {analytics.volume_trends.slice(0, 12).map((week, index) => (
+                              <tr key={index} style={{ borderColor: '#3d3d3d' }}>
+                                <td style={{ borderColor: '#3d3d3d' }}>
+                                  <small className="text-muted">
+                                    {new Date(week.week_start_date).toLocaleDateString()}
+                                  </small>
+                                </td>
+                                <td style={{ borderColor: '#3d3d3d' }}><strong>{week.total_workouts}</strong></td>
+                                <td style={{ borderColor: '#3d3d3d' }}><strong>{formatNumber(week.total_volume_kg)} kg</strong></td>
+                                <td style={{ borderColor: '#3d3d3d' }}>{formatNumber(week.total_sets)}</td>
+                                <td style={{ borderColor: '#3d3d3d' }}>{formatNumber(week.total_reps)}</td>
+                                <td style={{ borderColor: '#3d3d3d' }}>
+                                  <span className="badge" style={{ 
+                                    background: week.avg_rpe >= 8 ? '#ef4444' : week.avg_rpe >= 6 ? '#f59e0b' : '#10b981',
+                                    color: '#ffffff'
+                                  }}>
+                                    {formatDecimal(week.avg_rpe)}
+                                  </span>
+                                </td>
+                                <td style={{ borderColor: '#3d3d3d' }}>{week.total_duration_minutes || 0} min</td>
+                                <td style={{ borderColor: '#3d3d3d' }}>{week.unique_exercises || 0}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot style={{ background: '#1a1a1a' }}>
+                            <tr>
+                              <td style={{ color: '#ffffff', fontWeight: 'bold', borderColor: '#3d3d3d' }}>TOTAL</td>
+                              <td style={{ color: '#ffffff', fontWeight: 'bold', borderColor: '#3d3d3d' }}>{formatNumber(analytics.overview.total_workouts)}</td>
+                              <td style={{ color: '#ffffff', fontWeight: 'bold', borderColor: '#3d3d3d' }}>{formatNumber(analytics.overview.total_volume_kg)} kg</td>
+                              <td style={{ color: '#ffffff', fontWeight: 'bold', borderColor: '#3d3d3d' }}>{formatNumber(analytics.overview.total_sets)}</td>
+                              <td style={{ color: '#ffffff', fontWeight: 'bold', borderColor: '#3d3d3d' }}>{formatNumber(analytics.overview.total_reps)}</td>
+                              <td style={{ borderColor: '#3d3d3d' }}>
+                                <span className="badge" style={{ background: '#10b981', color: '#ffffff' }}>
+                                  {formatDecimal(analytics.overview.avg_rpe)}
+                                </span>
+                              </td>
+                              <td style={{ color: '#ffffff', fontWeight: 'bold', borderColor: '#3d3d3d' }}>{formatNumber(analytics.overview.total_minutes)} min</td>
+                              <td style={{ color: '#ffffff', fontWeight: 'bold', borderColor: '#3d3d3d' }}>{formatNumber(analytics.overview.unique_exercises)}</td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Volume Trends Chart */}
+                {analytics.volume_trends && analytics.volume_trends.length > 0 && (
+                  <div className="card mb-4" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                    <div className="card-header" style={{ background: '#2d2d2d', borderBottom: '1px solid #3d3d3d' }}>
+                      <h5 className="mb-0" style={{ color: '#ffffff' }}>
+                        <i className="bi bi-bar-chart-line me-2"></i>
+                        Weekly Volume Trends
+                      </h5>
+                    </div>
+                    <div className="card-body" style={{ background: '#2d2d2d' }}>
+                      <ResponsiveContainer width="100%" height={350}>
+                        <BarChart data={analytics.volume_trends.slice(0, 12)}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#3d3d3d" />
+                          <XAxis 
+                            dataKey="week_start_date" 
+                            tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            stroke="#9ca3af"
+                          />
+                          <YAxis yAxisId="left" stroke="#9ca3af" />
+                          <YAxis yAxisId="right" orientation="right" stroke="#9ca3af" />
+                          <Tooltip 
+                            labelFormatter={(date) => `Week of ${new Date(date).toLocaleDateString()}`}
+                            contentStyle={{ background: '#1a1a1a', border: '1px solid #3d3d3d', borderRadius: '8px', color: '#ffffff' }}
+                          />
+                          <Legend wrapperStyle={{ color: '#ffffff' }} />
+                          <Bar yAxisId="left" dataKey="total_volume_kg" fill="#10b981" name="Volume (kg)" />
+                          <Line yAxisId="right" type="monotone" dataKey="avg_rpe" stroke="#f59e0b" name="Avg RPE" strokeWidth={2} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+
+                {/* Strength Progress Chart */}
+                {analytics.strength_progress && analytics.strength_progress.length > 0 && (
+                  <div className="card mb-4" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                    <div className="card-header" style={{ background: '#2d2d2d', borderBottom: '1px solid #3d3d3d' }}>
+                      <h5 className="mb-0" style={{ color: '#ffffff' }}>
+                        <i className="bi bi-graph-up-arrow me-2"></i>
+                        Strength Progress (Est. 1RM)
+                      </h5>
+                    </div>
+                    <div className="card-body" style={{ background: '#2d2d2d' }}>
+                      <ResponsiveContainer width="100%" height={350}>
+                        <LineChart data={analytics.strength_progress.slice(0, 20)}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#3d3d3d" />
+                          <XAxis 
+                            dataKey="recorded_date" 
+                            tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            stroke="#9ca3af"
+                          />
+                          <YAxis stroke="#9ca3af" />
+                          <Tooltip 
+                            labelFormatter={(date) => new Date(date).toLocaleDateString()}
+                            contentStyle={{ background: '#1a1a1a', border: '1px solid #3d3d3d', borderRadius: '8px', color: '#ffffff' }}
+                          />
+                          <Legend wrapperStyle={{ color: '#ffffff' }} />
+                          <Line type="monotone" dataKey="estimated_1rm" stroke="#10b981" name="Est. 1RM (kg)" strokeWidth={2} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                      <div className="mt-3">
+                        <p className="text-muted small mb-0">
+                          <i className="bi bi-info-circle me-1"></i>
+                          Showing the most recent 1RM estimates calculated from workout performance
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Program Performance Breakdown */}
+                {analytics.program_performance && analytics.program_performance.length > 0 && (
+                  <div className="card mb-4" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                    <div className="card-header" style={{ background: '#2d2d2d', borderBottom: '1px solid #3d3d3d' }}>
+                      <h5 className="mb-0" style={{ color: '#ffffff' }}>
+                        <i className="bi bi-grid-3x3 me-2"></i>
+                        Performance by Program
+                      </h5>
+                      <p className="text-muted small mb-0 mt-1">
+                        Breakdown of training volume, reps, and intensity by program
+                      </p>
+                    </div>
+                    <div className="card-body" style={{ background: '#2d2d2d' }}>
+                      <div className="table-responsive">
+                        <table className="table table-hover" style={{ color: '#ffffff' }}>
+                          <thead style={{ background: '#1a1a1a' }}>
+                            <tr>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Program Name</th>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Workouts</th>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Volume (kg)</th>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Sets</th>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Reps</th>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Avg RPE</th>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Exercises</th>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Duration</th>
+                            </tr>
+                          </thead>
+                          <tbody style={{ background: '#2d2d2d' }}>
+                            {analytics.program_performance.map((program, index) => (
+                              <tr key={index} style={{ borderColor: '#3d3d3d' }}>
+                                <td style={{ borderColor: '#3d3d3d' }}>
+                                  <strong>{program.program_name}</strong>
+                                </td>
+                                <td style={{ borderColor: '#3d3d3d' }}><strong>{program.total_workouts}</strong></td>
+                                <td style={{ borderColor: '#3d3d3d' }}>
+                                  <strong style={{ color: '#10b981' }}>{formatNumber(program.total_volume_kg)} kg</strong>
+                                </td>
+                                <td style={{ borderColor: '#3d3d3d' }}>{formatNumber(program.total_sets)}</td>
+                                <td style={{ borderColor: '#3d3d3d' }}>{formatNumber(program.total_reps)}</td>
+                                <td style={{ borderColor: '#3d3d3d' }}>
+                                  <span className="badge" style={{ 
+                                    background: program.avg_rpe >= 8 ? '#ef4444' : program.avg_rpe >= 6 ? '#f59e0b' : '#10b981',
+                                    color: '#ffffff'
+                                  }}>
+                                    {formatDecimal(program.avg_rpe)}
+                                  </span>
+                                </td>
+                                <td style={{ borderColor: '#3d3d3d' }}>{program.unique_exercises}</td>
+                                <td style={{ borderColor: '#3d3d3d' }}>{formatNumber(program.total_minutes)} min</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Program Performance Cards */}
+                      <div className="row mt-4">
+                        {analytics.program_performance.slice(0, 3).map((program, index) => (
+                          <div key={index} className="col-md-4 mb-3">
+                            <div className="card" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d' }}>
+                              <div className="card-body">
+                                <h6 className="text-truncate mb-3" title={program.program_name} style={{ color: '#ffffff' }}>
+                                  {program.program_name}
+                                </h6>
+                                <div className="d-flex justify-content-between mb-2">
+                                  <span className="text-muted small">Total Volume:</span>
+                                  <strong style={{ color: '#ffffff' }}>{formatNumber(program.total_volume_kg)} kg</strong>
+                                </div>
+                                <div className="d-flex justify-content-between mb-2">
+                                  <span className="text-muted small">Workouts:</span>
+                                  <strong style={{ color: '#ffffff' }}>{program.total_workouts}</strong>
+                                </div>
+                                <div className="d-flex justify-content-between mb-2">
+                                  <span className="text-muted small">Avg RPE:</span>
+                                  <span className="badge" style={{ 
+                                    background: program.avg_rpe >= 8 ? '#ef4444' : program.avg_rpe >= 6 ? '#f59e0b' : '#10b981',
+                                    color: '#ffffff'
+                                  }}>
+                                    {formatDecimal(program.avg_rpe)}
+                                  </span>
+                                </div>
+                                <div className="d-flex justify-content-between">
+                                  <span className="text-muted small">Sets × Reps:</span>
+                                  <strong style={{ color: '#ffffff' }}>{formatNumber(program.total_sets)} × {formatNumber(program.total_reps)}</strong>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Personal Records */}
+                {analytics.personal_records && analytics.personal_records.length > 0 && (
+                  <div className="card mb-4" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                    <div className="card-header" style={{ background: '#2d2d2d', borderBottom: '1px solid #3d3d3d' }}>
+                      <h5 className="mb-0" style={{ color: '#ffffff' }}>
+                        <i className="bi bi-trophy me-2" style={{ color: '#f59e0b' }}></i>
+                        Personal Records
+                      </h5>
+                    </div>
+                    <div className="card-body" style={{ background: '#2d2d2d' }}>
+                      <div className="row">
+                        {analytics.personal_records.slice(0, 6).map((record, index) => (
+                          <div key={index} className="col-lg-4 col-md-6 mb-3">
+                            <div className="p-3 rounded" style={{ border: '1px solid #3d3d3d', background: '#1a1a1a' }}>
+                              <div className="d-flex justify-content-between align-items-center mb-2">
+                                <strong className="text-truncate" style={{ maxWidth: '70%', color: '#ffffff' }}>
+                                  {record.exercise_name}
+                                </strong>
+                                <span className="badge" style={{ background: '#10b981', color: '#ffffff' }}>
+                                  {formatDecimal(record.estimated_1rm)} kg
+                                </span>
+                              </div>
+                              <small className="text-muted">
+                                {record.based_on_weight} kg × {record.based_on_reps} reps
+                              </small>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Body Composition */}
+                {analytics.body_composition && analytics.body_composition.length > 0 && (
+                  <div className="card mb-4" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                    <div className="card-header" style={{ background: '#2d2d2d', borderBottom: '1px solid #3d3d3d' }}>
+                      <h5 className="mb-0" style={{ color: '#ffffff' }}>
+                        <i className="bi bi-person me-2"></i>
+                        Body Composition
+                      </h5>
+                    </div>
+                    <div className="card-body" style={{ background: '#2d2d2d' }}>
+                      <div className="table-responsive">
+                        <table className="table table-hover" style={{ color: '#ffffff' }}>
+                          <thead style={{ background: '#1a1a1a' }}>
+                            <tr>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Date</th>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Weight</th>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Body Fat %</th>
+                              <th style={{ color: '#9ca3af', borderColor: '#3d3d3d' }}>Muscle Mass</th>
+                            </tr>
+                          </thead>
+                          <tbody style={{ background: '#2d2d2d' }}>
+                            {analytics.body_composition.map((entry, index) => (
+                              <tr key={index} style={{ borderColor: '#3d3d3d' }}>
+                                <td style={{ borderColor: '#3d3d3d' }}>
+                                  <small className="text-muted">
+                                    {new Date(entry.recorded_date).toLocaleDateString()}
+                                  </small>
+                                </td>
+                                <td style={{ borderColor: '#3d3d3d' }}>
+                                  <strong>{formatDecimal(entry.weight_kg)} kg</strong>
+                                </td>
+                                <td style={{ borderColor: '#3d3d3d' }}>
+                                  {entry.body_fat_percentage ? `${formatDecimal(entry.body_fat_percentage)}%` : 'N/A'}
+                                </td>
+                                <td style={{ borderColor: '#3d3d3d' }}>
+                                  {entry.muscle_mass_kg ? `${formatDecimal(entry.muscle_mass_kg)} kg` : 'N/A'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="card" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d' }}>
+                <div className="card-body text-center py-5">
+                  <i className="bi bi-graph-up display-1 mb-3" style={{ color: '#6b7280' }}></i>
+                  <h5 className="mb-3" style={{ color: '#ffffff' }}>No Analytics Data Available</h5>
+                  <p className="text-muted">This client hasn't logged any workouts yet.</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        
         {/* Assign Existing Program Tab */}
         {activeView === 'assign-program' && (
-          <div className="card">
-            <div className="card-header bg-white">
-              <h5 className="mb-0">Select a Program to Assign</h5>
+          <div className="card" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d' }}>
+            <div className="card-header" style={{ background: '#1a1a1a', borderBottom: '1px solid #3d3d3d' }}>
+              <h5 className="mb-0" style={{ color: '#ffffff' }}>Select a Program to Assign</h5>
             </div>
-            <div className="card-body">
+            <div className="card-body" style={{ background: '#1a1a1a' }}>
               {availablePrograms.length === 0 ? (
                 <div className="text-center py-4">
                   <p className="text-muted">You don't have any programs yet. Create one first!</p>
                   <button 
-                    className="btn btn-primary"
-                    onClick={() => navigate('/trainer/programs')}
+                    className="btn"
+                    style={{
+                      background: '#10b981',
+                      border: 'none',
+                      color: '#ffffff',
+                      padding: '0.5rem 1.5rem',
+                      borderRadius: '8px',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = '#059669';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = '#10b981';
+                    }}
+                    onClick={() => navigate('/programs')}
                   >
                     Create a Program
                   </button>
@@ -1355,21 +2102,25 @@ const ManageClientPrograms = () => {
                     {availablePrograms.map(program => (
                       <div key={program.id} className="col-md-6 col-lg-4 mb-3">
                         <div 
-                          className={`card card-hover cursor-pointer h-100 ${selectedProgramToAssign === program.id ? 'border-primary' : ''}`}
+                          className="card card-hover cursor-pointer h-100"
+                          style={{
+                            border: selectedProgramToAssign === program.id ? '2px solid #10b981' : '1px solid #3d3d3d',
+                            background: selectedProgramToAssign === program.id ? 'rgba(16, 185, 129, 0.1)' : '#2d2d2d'
+                          }}
                           onClick={() => setSelectedProgramToAssign(program.id)}
                         >
                           <div className="card-body">
                             <div className="d-flex justify-content-between align-items-start mb-2">
-                              <h6 className="card-title mb-0">{program.title}</h6>
+                              <h6 className="card-title mb-0" style={{ color: '#ffffff' }}>{program.title}</h6>
                               {selectedProgramToAssign === program.id && (
-                                <i className="bi bi-check-circle-fill text-primary"></i>
+                                <i className="bi bi-check-circle-fill" style={{ color: '#10b981' }}></i>
                               )}
                             </div>
                             <p className="text-muted small mb-2">{program.description}</p>
                             <div className="d-flex flex-wrap gap-1">
-                              <span className="badge bg-light text-dark">{program.category}</span>
-                              <span className="badge bg-light text-dark">{program.difficulty_level}</span>
-                              <span className="badge bg-light text-dark">{program.duration_weeks} weeks</span>
+                              <span className="badge" style={{ background: '#ffffff', color: '#000000' }}>{program.category}</span>
+                              <span className="badge" style={{ background: '#ffffff', color: '#000000' }}>{program.difficulty_level}</span>
+                              <span className="badge" style={{ background: '#ffffff', color: '#000000' }}>{program.duration_weeks} weeks</span>
                             </div>
                           </div>
                         </div>
@@ -1379,7 +2130,22 @@ const ManageClientPrograms = () => {
                   
                   <div className="mt-4">
                     <button 
-                      className="btn btn-primary"
+                      className="btn"
+                      style={{
+                        background: selectedProgramToAssign ? '#10b981' : '#3d3d3d',
+                        border: 'none',
+                        color: '#ffffff',
+                        padding: '0.5rem 1.5rem',
+                        borderRadius: '8px',
+                        transition: 'all 0.3s ease',
+                        cursor: selectedProgramToAssign ? 'pointer' : 'not-allowed'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (selectedProgramToAssign) e.target.style.background = '#059669';
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedProgramToAssign) e.target.style.background = '#10b981';
+                      }}
                       onClick={handleAssignProgram}
                       disabled={!selectedProgramToAssign}
                     >
@@ -1387,7 +2153,23 @@ const ManageClientPrograms = () => {
                       Assign Selected Program
                     </button>
                     <button 
-                      className="btn btn-secondary ms-2"
+                      className="btn ms-2"
+                      style={{
+                        background: 'transparent',
+                        border: '2px solid #6b7280',
+                        color: '#9ca3af',
+                        padding: '0.5rem 1.5rem',
+                        borderRadius: '8px',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.borderColor = '#10b981';
+                        e.target.style.color = '#10b981';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.borderColor = '#6b7280';
+                        e.target.style.color = '#9ca3af';
+                      }}
                       onClick={() => setActiveView('overview')}
                     >
                       Cancel
@@ -1749,12 +2531,25 @@ const ManageClientPrograms = () => {
         {activeView === 'nutrition' && (
           <div>
             {/* Nutrition Goals Section */}
-            <div className="card mb-4">
-              <div className="card-header bg-white">
+            <div className="card mb-4" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d' }}>
+              <div className="card-header" style={{ background: '#1a1a1a', borderBottom: '1px solid #3d3d3d' }}>
                 <div className="d-flex justify-content-between align-items-center mb-3">
-                  <h5 className="mb-0">Nutrition Goals</h5>
+                  <h5 className="mb-0" style={{ color: '#ffffff' }}>Nutrition Goals</h5>
                   <button 
-                    className="btn btn-sm btn-primary"
+                    className="btn btn-sm"
+                    style={{
+                      background: '#10b981',
+                      border: 'none',
+                      color: '#ffffff',
+                      borderRadius: '8px',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = '#059669';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = '#10b981';
+                    }}
                     onClick={() => {
                       if (nutritionGoal) {
                         setGoalForm({
@@ -1773,11 +2568,12 @@ const ManageClientPrograms = () => {
                 </div>
                 
                 {/* Tabs for Trainer vs Client Goals */}
-                <ul className="nav nav-tabs card-header-tabs">
+                <ul className="nav nav-tabs card-header-tabs" style={{ borderBottom: '2px solid #3d3d3d' }}>
                   <li className="nav-item">
                     <button 
-                      className={`nav-link ${nutritionTab === 'trainer' ? 'active' : ''}`}
+                      className={`program-pill ${nutritionTab === 'trainer' ? 'active' : ''}`}
                       onClick={() => setNutritionTab('trainer')}
+                      style={{ borderRadius: '8px 8px 0 0' }}
                     >
                       <i className="bi bi-person-badge me-2"></i>
                       Trainer Assigned
@@ -1785,8 +2581,9 @@ const ManageClientPrograms = () => {
                   </li>
                   <li className="nav-item">
                     <button 
-                      className={`nav-link ${nutritionTab === 'self' ? 'active' : ''}`}
+                      className={`program-pill ${nutritionTab === 'self' ? 'active' : ''}`}
                       onClick={() => setNutritionTab('self')}
+                      style={{ borderRadius: '8px 8px 0 0' }}
                     >
                       <i className="bi bi-person me-2"></i>
                       Client's Own Goals
@@ -1794,45 +2591,45 @@ const ManageClientPrograms = () => {
                   </li>
                 </ul>
               </div>
-              <div className="card-body">
+              <div className="card-body" style={{ background: '#1a1a1a' }}>
                 {nutritionTab === 'trainer' ? (
                   // Trainer-assigned goals
                   nutritionGoal ? (
                     <div>
-                      <div className="alert alert-info mb-3">
+                      <div className="alert mb-3" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', color: '#10b981' }}>
                         <i className="bi bi-info-circle me-2"></i>
                         These are the nutrition goals you've assigned to this client.
                       </div>
                       <div className="row">
                         <div className="col-md-3">
-                          <div className="card">
+                          <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
                             <div className="card-body text-center">
                               <h6 className="text-muted small">CALORIES</h6>
-                              <h3 className="mb-0">{nutritionGoal.target_calories}</h3>
+                              <h3 className="mb-0" style={{ color: '#ffffff' }}>{nutritionGoal.target_calories}</h3>
                             </div>
                           </div>
                         </div>
                         <div className="col-md-3">
-                          <div className="card">
+                          <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
                             <div className="card-body text-center">
                               <h6 className="text-muted small">PROTEIN</h6>
-                              <h3 className="mb-0">{nutritionGoal.target_protein}g</h3>
+                              <h3 className="mb-0" style={{ color: '#ffffff' }}>{nutritionGoal.target_protein}g</h3>
                             </div>
                           </div>
                         </div>
                         <div className="col-md-3">
-                          <div className="card">
+                          <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
                             <div className="card-body text-center">
                               <h6 className="text-muted small">CARBS</h6>
-                              <h3 className="mb-0">{nutritionGoal.target_carbs}g</h3>
+                              <h3 className="mb-0" style={{ color: '#ffffff' }}>{nutritionGoal.target_carbs}g</h3>
                             </div>
                           </div>
                         </div>
                         <div className="col-md-3">
-                          <div className="card">
+                          <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
                             <div className="card-body text-center">
                               <h6 className="text-muted small">FAT</h6>
-                              <h3 className="mb-0">{nutritionGoal.target_fat}g</h3>
+                              <h3 className="mb-0" style={{ color: '#ffffff' }}>{nutritionGoal.target_fat}g</h3>
                             </div>
                           </div>
                         </div>
@@ -1840,10 +2637,24 @@ const ManageClientPrograms = () => {
                     </div>
                   ) : (
                     <div className="text-center py-5">
-                      <i className="bi bi-clipboard-data text-muted" style={{ fontSize: '3rem' }}></i>
+                      <i className="bi bi-clipboard-data" style={{ fontSize: '3rem', color: '#6b7280' }}></i>
                       <p className="text-muted mt-3 mb-0">You haven't set nutrition goals for this client yet</p>
                       <button 
-                        className="btn btn-primary mt-3"
+                        className="btn mt-3"
+                        style={{
+                          background: '#10b981',
+                          border: 'none',
+                          color: '#ffffff',
+                          padding: '0.5rem 1.5rem',
+                          borderRadius: '8px',
+                          transition: 'all 0.3s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = '#059669';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = '#10b981';
+                        }}
                         onClick={() => setShowGoalModal(true)}
                       >
                         Set Nutrition Goals
@@ -1854,40 +2665,40 @@ const ManageClientPrograms = () => {
                   // Client's self-created goals (read-only)
                   selfNutritionGoal ? (
                     <div>
-                      <div className="alert alert-secondary mb-3">
+                      <div className="alert mb-3" style={{ background: 'rgba(107, 114, 128, 0.1)', border: '1px solid #6b7280', color: '#9ca3af' }}>
                         <i className="bi bi-eye me-2"></i>
                         These are the nutrition goals your client set for themselves. You can view but not edit them.
                       </div>
                       <div className="row">
                         <div className="col-md-3">
-                          <div className="card border-secondary">
+                          <div className="card" style={{ background: '#2d2d2d', border: '1px solid #6b7280' }}>
                             <div className="card-body text-center">
                               <h6 className="text-muted small">CALORIES</h6>
-                              <h3 className="mb-0">{selfNutritionGoal.target_calories}</h3>
+                              <h3 className="mb-0" style={{ color: '#ffffff' }}>{selfNutritionGoal.target_calories}</h3>
                             </div>
                           </div>
                         </div>
                         <div className="col-md-3">
-                          <div className="card border-secondary">
+                          <div className="card" style={{ background: '#2d2d2d', border: '1px solid #6b7280' }}>
                             <div className="card-body text-center">
                               <h6 className="text-muted small">PROTEIN</h6>
-                              <h3 className="mb-0">{selfNutritionGoal.target_protein}g</h3>
+                              <h3 className="mb-0" style={{ color: '#ffffff' }}>{selfNutritionGoal.target_protein}g</h3>
                             </div>
                           </div>
                         </div>
                         <div className="col-md-3">
-                          <div className="card border-secondary">
+                          <div className="card" style={{ background: '#2d2d2d', border: '1px solid #6b7280' }}>
                             <div className="card-body text-center">
                               <h6 className="text-muted small">CARBS</h6>
-                              <h3 className="mb-0">{selfNutritionGoal.target_carbs}g</h3>
+                              <h3 className="mb-0" style={{ color: '#ffffff' }}>{selfNutritionGoal.target_carbs}g</h3>
                             </div>
                           </div>
                         </div>
                         <div className="col-md-3">
-                          <div className="card border-secondary">
+                          <div className="card" style={{ background: '#2d2d2d', border: '1px solid #6b7280' }}>
                             <div className="card-body text-center">
                               <h6 className="text-muted small">FAT</h6>
-                              <h3 className="mb-0">{selfNutritionGoal.target_fat}g</h3>
+                              <h3 className="mb-0" style={{ color: '#ffffff' }}>{selfNutritionGoal.target_fat}g</h3>
                             </div>
                           </div>
                         </div>
@@ -1895,7 +2706,7 @@ const ManageClientPrograms = () => {
                     </div>
                   ) : (
                     <div className="text-center py-5">
-                      <i className="bi bi-clipboard-x text-muted" style={{ fontSize: '3rem' }}></i>
+                      <i className="bi bi-clipboard-x" style={{ fontSize: '3rem', color: '#6b7280' }}></i>
                       <p className="text-muted mt-3 mb-0">Your client hasn't set their own nutrition goals yet</p>
                     </div>
                   )
@@ -1904,22 +2715,53 @@ const ManageClientPrograms = () => {
             </div>
             
             {/* Weekly Meal Plan Section */}
-            <div className="card">
-              <div className="card-header bg-white d-flex justify-content-between align-items-center">
+            <div className="card" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d' }}>
+              <div className="card-header d-flex justify-content-between align-items-center" style={{ background: '#1a1a1a', borderBottom: '1px solid #3d3d3d' }}>
                 <div>
-                  <h5 className="mb-0">Weekly Meal Plan</h5>
+                  <h5 className="mb-0" style={{ color: '#ffffff' }}>Weekly Meal Plan</h5>
                   <small className="text-muted">Plan meals for each day of the week</small>
                 </div>
                 <div className="btn-group btn-group-sm">
                   <button 
-                    className="btn btn-outline-primary"
+                    className="btn btn-sm"
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid #10b981',
+                      color: '#10b981',
+                      borderRadius: '8px 0 0 8px',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = 'rgba(16, 185, 129, 0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'transparent';
+                    }}
                     onClick={() => setShowCustomFoodModal(true)}
                     title="Create custom food"
                   >
                     <i className="bi bi-plus-circle me-1"></i> Custom Food
                   </button>
                   <button 
-                    className="btn btn-outline-secondary"
+                    className="btn btn-sm"
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid #6b7280',
+                      borderLeft: 'none',
+                      color: '#9ca3af',
+                      borderRadius: '0 8px 8px 0',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = 'rgba(107, 114, 128, 0.1)';
+                      e.target.style.borderColor = '#9ca3af';
+                      e.target.style.color = '#ffffff';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'transparent';
+                      e.target.style.borderColor = '#6b7280';
+                      e.target.style.color = '#9ca3af';
+                    }}
                     onClick={() => setShowCustomMealTypeModal(true)}
                     title="Manage meal types"
                   >
@@ -1927,29 +2769,29 @@ const ManageClientPrograms = () => {
                   </button>
                 </div>
               </div>
-              <div className="card-body">
+              <div className="card-body" style={{ background: '#1a1a1a' }}>
                 <div className="table-responsive">
-                  <table className="table table-bordered">
-                    <thead className="table-light">
+                  <table className="table table-bordered" style={{ borderColor: '#3d3d3d' }}>
+                    <thead style={{ background: '#2d2d2d' }}>
                       <tr>
-                        <th style={{ width: '15%' }}>Day</th>
+                        <th style={{ width: '15%', color: '#ffffff', borderColor: '#3d3d3d' }}>Day</th>
                         {customMealTypes.map(mealType => (
-                          <th key={mealType} className="text-capitalize">{mealType}</th>
+                          <th key={mealType} className="text-capitalize" style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>{mealType}</th>
                         ))}
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody style={{ background: '#1a1a1a' }}>
                       {daysOfWeek.map((day, dayIndex) => (
                         <tr key={dayIndex}>
-                          <td className="fw-bold">{day}</td>
+                          <td className="fw-bold" style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>{day}</td>
                           {customMealTypes.map(mealType => {
                             const meal = getMealForDayAndType(dayIndex + 1, mealType);
                             return (
-                              <td key={mealType}>
+                              <td key={mealType} style={{ borderColor: '#3d3d3d' }}>
                                 {meal ? (
                                   <div className="d-flex justify-content-between align-items-start">
                                     <div className="flex-grow-1">
-                                      <small>
+                                      <small style={{ color: '#9ca3af' }}>
                                         {meal.food_items && meal.food_items.length > 0 ? (
                                           <ul className="list-unstyled mb-0">
                                             {meal.food_items.map((food, idx) => (
@@ -2002,15 +2844,16 @@ const ManageClientPrograms = () => {
         
         {/* Meal Modal */}
         {showMealModal && (
-          <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
             <div className="modal-dialog modal-lg modal-dialog-centered">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">
+              <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <div className="modal-header dark-modal-header" style={{ backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <h5 className="modal-title" style={{ color: '#fff' }}>
                     {daysOfWeek[currentMeal.day_of_week - 1]} - {currentMeal.meal_type.charAt(0).toUpperCase() + currentMeal.meal_type.slice(1)}
                   </h5>
                   <button 
-                    className="btn-close" 
+                    type="button"
+                    className="btn-close btn-close-white" 
                     onClick={() => setShowMealModal(false)}
                   ></button>
                 </div>
@@ -2018,7 +2861,7 @@ const ManageClientPrograms = () => {
                   <div className="modal-body">
                     {/* Search Foods */}
                     <div className="mb-3">
-                      <label className="form-label">Search & Add Foods</label>
+                      <label className="form-label" style={{ color: '#fff' }}>Search & Add Foods</label>
                       <div className="input-group">
                         <input 
                           type="text"
@@ -2027,11 +2870,13 @@ const ManageClientPrograms = () => {
                           value={mealSearchQuery}
                           onChange={(e) => setMealSearchQuery(e.target.value)}
                           onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), searchFoods())}
+                          style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                         />
                         <button 
                           type="button"
-                          className="btn btn-primary"
+                          className="btn"
                           onClick={searchFoods}
+                          style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                         >
                           Search
                         </button>
@@ -2041,27 +2886,33 @@ const ManageClientPrograms = () => {
                     {/* Search Results */}
                     {foodSearchResults.length > 0 && (
                       <div className="mb-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                        <h6 className="small text-muted">
+                        <h6 className="small" style={{ color: '#9ca3af' }}>
                           {searching ? 'Searching...' : `Results for "${resultsFor}":`}
                         </h6>
-                        <div className="list-group">
+                        <div>
                           {foodSearchResults.slice(0, 15).map((food, idx) => (
                             <button
                               key={idx}
                               type="button"
-                              className="list-group-item list-group-item-action text-start"
+                              className="w-100 text-start p-3 mb-2 rounded"
                               onClick={() => selectFood(food)}
+                              style={{ 
+                                backgroundColor: '#1a1a1a', 
+                                border: '1px solid rgba(16, 185, 129, 0.2)', 
+                                color: '#fff',
+                                cursor: 'pointer'
+                              }}
                             >
                               <div className="d-flex justify-content-between align-items-start">
                                 <div className="flex-grow-1">
                                   <div className="fw-bold small">{food.description || food.name}</div>
                                   {food.brand_name && (
-                                    <div className="text-muted small">{food.brand_name}</div>
+                                    <div className="small" style={{ color: '#9ca3af' }}>{food.brand_name}</div>
                                   )}
                                   {food.trainer_name && (
-                                    <div className="text-primary small">By: {food.trainer_name}</div>
+                                    <div className="small" style={{ color: '#10b981' }}>By: {food.trainer_name}</div>
                                   )}
-                                  <div className="text-muted small">
+                                  <div className="small" style={{ color: '#9ca3af' }}>
                                     {food.source === 'usda' && (
                                       <>
                                         {food.foodNutrients && (
@@ -2097,18 +2948,23 @@ const ManageClientPrograms = () => {
                     
                     {/* Selected Foods */}
                     <div className="mb-3">
-                      <label className="form-label">Selected Foods:</label>
+                      <label className="form-label" style={{ color: '#fff' }}>Selected Foods:</label>
                       {currentMeal.food_items.length === 0 ? (
-                        <p className="text-muted small">No foods added yet</p>
+                        <p className="small" style={{ color: '#9ca3af' }}>No foods added yet</p>
                       ) : (
-                        <div className="list-group">
+                        <div>
                           {currentMeal.food_items.map((food, idx) => (
-                            <div key={idx} className="list-group-item d-flex justify-content-between align-items-center">
-                              <span>{food.name || food.food_name}</span>
+                            <div 
+                              key={idx} 
+                              className="d-flex justify-content-between align-items-center mb-2 p-3 rounded"
+                              style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)' }}
+                            >
+                              <span style={{ color: '#fff' }}>{food.name || food.food_name}</span>
                               <button 
                                 type="button"
-                                className="btn btn-sm btn-outline-danger"
+                                className="btn btn-sm"
                                 onClick={() => removeFoodFromMeal(idx)}
+                                style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#ef4444' }}
                               >
                                 <i className="bi bi-trash"></i>
                               </button>
@@ -2120,27 +2976,30 @@ const ManageClientPrograms = () => {
                     
                     {/* Notes */}
                     <div className="mb-3">
-                      <label className="form-label">Notes (Optional)</label>
+                      <label className="form-label" style={{ color: '#fff' }}>Notes (Optional)</label>
                       <textarea 
                         className="form-control"
                         rows="3"
                         value={currentMeal.notes}
                         onChange={(e) => setCurrentMeal(prev => ({ ...prev, notes: e.target.value }))}
                         placeholder="Add any notes or instructions..."
+                        style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                       />
                     </div>
                   </div>
-                  <div className="modal-footer">
+                  <div className="modal-footer" style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
                     <button 
                       type="button"
-                      className="btn btn-secondary" 
+                      className="btn" 
                       onClick={() => setShowMealModal(false)}
+                      style={{ backgroundColor: '#6b7280', color: '#fff', border: 'none' }}
                     >
                       Cancel
                     </button>
                     <button 
                       type="submit"
-                      className="btn btn-primary"
+                      className="btn"
+                      style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                     >
                       Save Meal
                     </button>
@@ -2303,37 +3162,43 @@ const ManageClientPrograms = () => {
         
         {/* Custom Food Modal */}
         {showCustomFoodModal && (
-          <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
             <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">Create Custom Food</h5>
-                  <button className="btn-close" onClick={() => setShowCustomFoodModal(false)}></button>
+              <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <div className="modal-header dark-modal-header" style={{ backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <h5 className="modal-title" style={{ color: '#fff' }}>Create Custom Food</h5>
+                  <button 
+                    type="button" 
+                    className="btn-close btn-close-white" 
+                    onClick={() => setShowCustomFoodModal(false)}
+                  ></button>
                 </div>
                 <form onSubmit={handleCreateCustomFood}>
                   <div className="modal-body">
                     <div className="mb-3">
-                      <label className="form-label">Food Name *</label>
+                      <label className="form-label" style={{ color: '#fff' }}>Food Name *</label>
                       <input 
                         type="text"
                         className="form-control"
                         value={customFoodForm.name}
                         onChange={(e) => setCustomFoodForm({...customFoodForm, name: e.target.value})}
                         required
+                        style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                       />
                     </div>
                     <div className="mb-3">
-                      <label className="form-label">Brand</label>
+                      <label className="form-label" style={{ color: '#fff' }}>Brand</label>
                       <input 
                         type="text"
                         className="form-control"
                         value={customFoodForm.brand}
                         onChange={(e) => setCustomFoodForm({...customFoodForm, brand: e.target.value})}
+                        style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                       />
                     </div>
                     <div className="row">
                       <div className="col-md-6 mb-3">
-                        <label className="form-label">Serving Size *</label>
+                        <label className="form-label" style={{ color: '#fff' }}>Serving Size *</label>
                         <input 
                           type="number"
                           step="0.1"
@@ -2341,14 +3206,16 @@ const ManageClientPrograms = () => {
                           value={customFoodForm.serving_size}
                           onChange={(e) => setCustomFoodForm({...customFoodForm, serving_size: parseFloat(e.target.value)})}
                           required
+                          style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                         />
                       </div>
                       <div className="col-md-6 mb-3">
-                        <label className="form-label">Unit *</label>
+                        <label className="form-label" style={{ color: '#fff' }}>Unit *</label>
                         <select 
                           className="form-select"
                           value={customFoodForm.serving_unit}
                           onChange={(e) => setCustomFoodForm({...customFoodForm, serving_unit: e.target.value})}
+                          style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                         >
                           <option value="g">Grams (g)</option>
                           <option value="ml">Milliliters (ml)</option>
@@ -2361,7 +3228,7 @@ const ManageClientPrograms = () => {
                     </div>
                     <div className="row">
                       <div className="col-md-6 mb-3">
-                        <label className="form-label">Calories *</label>
+                        <label className="form-label" style={{ color: '#fff' }}>Calories *</label>
                         <input 
                           type="number"
                           step="0.1"
@@ -2369,10 +3236,11 @@ const ManageClientPrograms = () => {
                           value={customFoodForm.calories}
                           onChange={(e) => setCustomFoodForm({...customFoodForm, calories: parseFloat(e.target.value)})}
                           required
+                          style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                         />
                       </div>
                       <div className="col-md-6 mb-3">
-                        <label className="form-label">Protein (g) *</label>
+                        <label className="form-label" style={{ color: '#fff' }}>Protein (g) *</label>
                         <input 
                           type="number"
                           step="0.1"
@@ -2380,12 +3248,13 @@ const ManageClientPrograms = () => {
                           value={customFoodForm.protein}
                           onChange={(e) => setCustomFoodForm({...customFoodForm, protein: parseFloat(e.target.value)})}
                           required
+                          style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                         />
                       </div>
                     </div>
                     <div className="row">
                       <div className="col-md-6 mb-3">
-                        <label className="form-label">Carbs (g) *</label>
+                        <label className="form-label" style={{ color: '#fff' }}>Carbs (g) *</label>
                         <input 
                           type="number"
                           step="0.1"
@@ -2393,10 +3262,11 @@ const ManageClientPrograms = () => {
                           value={customFoodForm.carbs}
                           onChange={(e) => setCustomFoodForm({...customFoodForm, carbs: parseFloat(e.target.value)})}
                           required
+                          style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                         />
                       </div>
                       <div className="col-md-6 mb-3">
-                        <label className="form-label">Fat (g) *</label>
+                        <label className="form-label" style={{ color: '#fff' }}>Fat (g) *</label>
                         <input 
                           type="number"
                           step="0.1"
@@ -2404,13 +3274,27 @@ const ManageClientPrograms = () => {
                           value={customFoodForm.fat}
                           onChange={(e) => setCustomFoodForm({...customFoodForm, fat: parseFloat(e.target.value)})}
                           required
+                          style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                         />
                       </div>
                     </div>
                   </div>
-                  <div className="modal-footer">
-                    <button type="button" className="btn btn-secondary" onClick={() => setShowCustomFoodModal(false)}>Cancel</button>
-                    <button type="submit" className="btn btn-primary">Create Food</button>
+                  <div className="modal-footer" style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                    <button 
+                      type="button" 
+                      className="btn" 
+                      onClick={() => setShowCustomFoodModal(false)}
+                      style={{ backgroundColor: '#6b7280', color: '#fff', border: 'none' }}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="btn"
+                      style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
+                    >
+                      Create Food
+                    </button>
                   </div>
                 </form>
               </div>
@@ -2420,16 +3304,20 @@ const ManageClientPrograms = () => {
 
         {/* Custom Meal Type Modal */}
         {showCustomMealTypeModal && (
-          <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
             <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">Manage Meal Types</h5>
-                  <button className="btn-close" onClick={() => setShowCustomMealTypeModal(false)}></button>
+              <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <div className="modal-header dark-modal-header" style={{ backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <h5 className="modal-title" style={{ color: '#fff' }}>Manage Meal Types</h5>
+                  <button 
+                    type="button" 
+                    className="btn-close btn-close-white" 
+                    onClick={() => setShowCustomMealTypeModal(false)}
+                  ></button>
                 </div>
                 <div className="modal-body">
                   <div className="mb-3">
-                    <label className="form-label">Add New Meal Type</label>
+                    <label className="form-label" style={{ color: '#fff' }}>Add New Meal Type</label>
                     <div className="input-group">
                       <input 
                         type="text"
@@ -2438,11 +3326,13 @@ const ManageClientPrograms = () => {
                         value={newMealType}
                         onChange={(e) => setNewMealType(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddMealType())}
+                        style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                       />
                       <button 
                         type="button"
-                        className="btn btn-primary"
+                        className="btn"
                         onClick={handleAddMealType}
+                        style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                       >
                         Add
                       </button>
@@ -2450,15 +3340,20 @@ const ManageClientPrograms = () => {
                   </div>
                   
                   <div>
-                    <label className="form-label">Current Meal Types:</label>
-                    <div className="list-group">
+                    <label className="form-label" style={{ color: '#fff' }}>Current Meal Types:</label>
+                    <div>
                       {customMealTypes.map((mealType, idx) => (
-                        <div key={idx} className="list-group-item d-flex justify-content-between align-items-center">
-                          <span className="text-capitalize">{mealType}</span>
+                        <div 
+                          key={idx} 
+                          className="d-flex justify-content-between align-items-center mb-2 p-3 rounded"
+                          style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)' }}
+                        >
+                          <span className="text-capitalize" style={{ color: '#fff' }}>{mealType}</span>
                           <button 
                             type="button"
-                            className="btn btn-sm btn-outline-danger"
+                            className="btn btn-sm"
                             onClick={() => handleRemoveMealType(mealType)}
+                            style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#ef4444' }}
                           >
                             <i className="bi bi-trash"></i>
                           </button>
@@ -2467,8 +3362,15 @@ const ManageClientPrograms = () => {
                     </div>
                   </div>
                 </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowCustomMealTypeModal(false)}>Close</button>
+                <div className="modal-footer" style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <button 
+                    type="button" 
+                    className="btn" 
+                    onClick={() => setShowCustomMealTypeModal(false)}
+                    style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
             </div>
@@ -2479,14 +3381,14 @@ const ManageClientPrograms = () => {
         {(showProgramModal && (viewingProgram || editingProgram)) && (
           <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-lg modal-dialog-scrollable">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">
+              <div className="modal-content" style={{ background: '#1a1a1a', color: '#ffffff' }}>
+                <div className="modal-header" style={{ background: '#1a1a1a', borderBottom: '1px solid #3d3d3d' }}>
+                  <h5 className="modal-title" style={{ color: '#ffffff' }}>
                     {editingProgram ? 'Edit Program' : 'Program Details'}
                   </h5>
                   <button 
                     type="button" 
-                    className="btn-close" 
+                    className="btn-close btn-close-white" 
                     onClick={() => {
                       setShowProgramModal(false);
                       setViewingProgram(null);
@@ -2494,23 +3396,25 @@ const ManageClientPrograms = () => {
                     }}
                   ></button>
                 </div>
-                <div className="modal-body">
+                <div className="modal-body" style={{ background: '#1a1a1a' }}>
                   {editingProgram ? (
                     // Edit Mode
                     <form>
                       <div className="mb-3">
-                        <label className="form-label">Program Title</label>
+                        <label className="form-label" style={{ color: '#ffffff' }}>Program Title</label>
                         <input 
                           type="text"
                           className="form-control"
+                          style={{ background: '#2d2d2d', border: '1px solid #3d3d3d', color: '#ffffff' }}
                           value={editingProgram.title || ''}
                           onChange={(e) => setEditingProgram({...editingProgram, title: e.target.value})}
                         />
                       </div>
                       <div className="mb-3">
-                        <label className="form-label">Description</label>
+                        <label className="form-label" style={{ color: '#ffffff' }}>Description</label>
                         <textarea 
                           className="form-control"
+                          style={{ background: '#2d2d2d', border: '1px solid #3d3d3d', color: '#ffffff' }}
                           rows="3"
                           value={editingProgram.description || ''}
                           onChange={(e) => setEditingProgram({...editingProgram, description: e.target.value})}
@@ -2518,9 +3422,10 @@ const ManageClientPrograms = () => {
                       </div>
                       <div className="row">
                         <div className="col-md-6 mb-3">
-                          <label className="form-label">Category</label>
+                          <label className="form-label" style={{ color: '#ffffff' }}>Category</label>
                           <select 
                             className="form-control"
+                            style={{ background: '#2d2d2d', border: '1px solid #3d3d3d', color: '#ffffff' }}
                             value={editingProgram.category || ''}
                             onChange={(e) => setEditingProgram({...editingProgram, category: e.target.value})}
                           >
@@ -2531,9 +3436,10 @@ const ManageClientPrograms = () => {
                           </select>
                         </div>
                         <div className="col-md-6 mb-3">
-                          <label className="form-label">Difficulty</label>
+                          <label className="form-label" style={{ color: '#ffffff' }}>Difficulty</label>
                           <select 
                             className="form-control"
+                            style={{ background: '#2d2d2d', border: '1px solid #3d3d3d', color: '#ffffff' }}
                             value={editingProgram.difficulty_level || ''}
                             onChange={(e) => setEditingProgram({...editingProgram, difficulty_level: e.target.value})}
                           >
@@ -2544,10 +3450,11 @@ const ManageClientPrograms = () => {
                         </div>
                       </div>
                       <div className="mb-3">
-                        <label className="form-label">Duration (weeks)</label>
+                        <label className="form-label" style={{ color: '#ffffff' }}>Duration (weeks)</label>
                         <input 
                           type="number"
                           className="form-control"
+                          style={{ background: '#2d2d2d', border: '1px solid #3d3d3d', color: '#ffffff' }}
                           min="1"
                           max="52"
                           value={editingProgram.duration_weeks || ''}
@@ -2559,24 +3466,24 @@ const ManageClientPrograms = () => {
                     // View Mode
                     <div>
                       <div className="mb-4">
-                        <h6>Program Information</h6>
+                        <h6 style={{ color: '#ffffff' }}>Program Information</h6>
                         <div className="row">
                           <div className="col-md-6">
-                            <p><strong>Title:</strong> {viewingProgram.title}</p>
-                            <p><strong>Category:</strong> {viewingProgram.category}</p>
-                            <p><strong>Difficulty:</strong> <span className="text-capitalize">{viewingProgram.difficulty_level}</span></p>
+                            <p style={{ color: '#ffffff' }}><strong>Title:</strong> {viewingProgram.title}</p>
+                            <p style={{ color: '#ffffff' }}><strong>Category:</strong> {viewingProgram.category}</p>
+                            <p style={{ color: '#ffffff' }}><strong>Difficulty:</strong> <span className="text-capitalize">{viewingProgram.difficulty_level}</span></p>
                           </div>
                           <div className="col-md-6">
-                            <p><strong>Duration:</strong> {viewingProgram.duration_weeks} weeks</p>
-                            <p><strong>Created:</strong> {viewingProgram.created_at ? new Date(viewingProgram.created_at).toLocaleDateString() : 'N/A'}</p>
+                            <p style={{ color: '#ffffff' }}><strong>Duration:</strong> {viewingProgram.duration_weeks} weeks</p>
+                            <p style={{ color: '#ffffff' }}><strong>Created:</strong> {viewingProgram.created_at ? new Date(viewingProgram.created_at).toLocaleDateString() : 'N/A'}</p>
                             {viewingProgram.trainer_name && (
-                              <p><strong>Created by:</strong> {viewingProgram.trainer_name}</p>
+                              <p style={{ color: '#ffffff' }}><strong>Created by:</strong> {viewingProgram.trainer_name}</p>
                             )}
                           </div>
                         </div>
                         {viewingProgram.description && (
                           <div>
-                            <p><strong>Description:</strong></p>
+                            <p style={{ color: '#ffffff' }}><strong>Description:</strong></p>
                             <p className="text-muted">{viewingProgram.description}</p>
                           </div>
                         )}
@@ -2584,41 +3491,41 @@ const ManageClientPrograms = () => {
                       
                       {viewingProgram.sessions && viewingProgram.sessions.length > 0 && (
                         <div className="mb-4">
-                          <h6>Workout Sessions</h6>
+                          <h6 style={{ color: '#ffffff' }}>Workout Sessions</h6>
                           <div className="row">
                             {viewingProgram.sessions.map((session, index) => (
                               <div key={index} className="col-12 mb-3">
-                                <div className="card">
-                                  <div className="card-body">
-                                    <h6 className="card-title">{session.name || session.session_name}</h6>
+                                <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                                  <div className="card-body" style={{ background: '#2d2d2d' }}>
+                                    <h6 className="card-title" style={{ color: '#ffffff' }}>{session.name || session.session_name}</h6>
                                     {session.session_description && (
                                       <p className="card-text small text-muted">{session.session_description}</p>
                                     )}
                                     <div className="d-flex gap-2 mb-3">
-                                      <span className="badge bg-light text-dark">Week {session.week_number}</span>
-                                      <span className="badge bg-light text-dark">Day {session.day_number}</span>
+                                      <span className="badge" style={{ background: '#ffffff', color: '#000000' }}>Week {session.week_number}</span>
+                                      <span className="badge" style={{ background: '#ffffff', color: '#000000' }}>Day {session.day_number}</span>
                                     </div>
                                     
                                     {/* Exercise Details */}
                                     {session.exercises && session.exercises.length > 0 && (
                                       <div>
-                                        <h6 className="mb-2">Exercises ({session.exercises.length})</h6>
+                                        <h6 className="mb-2" style={{ color: '#ffffff' }}>Exercises ({session.exercises.length})</h6>
                                         <div className="row">
                                           {session.exercises.map((exercise, exIndex) => (
                                             <div key={exIndex} className="col-md-6 mb-2">
-                                              <div className="border rounded p-2">
+                                              <div className="border rounded p-2" style={{ background: '#1a1a1a', borderColor: '#3d3d3d' }}>
                                                 <div className="d-flex justify-content-between align-items-start">
                                                   <div>
-                                                    <strong>{exercise.exercise_name}</strong>
+                                                    <strong style={{ color: '#ffffff' }}>{exercise.exercise_name}</strong>
                                                     <div className="text-muted small">
                                                       {exercise.muscle_group && `${exercise.muscle_group} • `}
                                                       {exercise.equipment && exercise.equipment}
                                                     </div>
                                                   </div>
-                                                  <span className="badge bg-primary">{exercise.exercise_order}</span>
+                                                  <span className="badge" style={{ background: '#4f46e5', color: '#ffffff' }}>{exercise.exercise_order}</span>
                                                 </div>
                                                 <div className="mt-1">
-                                                  <span className="text-dark">
+                                                  <span style={{ color: '#ffffff' }}>
                                                     <strong>{exercise.sets}</strong> sets × <strong>{exercise.reps}</strong> reps
                                                     {exercise.rpe && ` @ RPE ${exercise.rpe}`}
                                                   </span>
@@ -2653,19 +3560,21 @@ const ManageClientPrograms = () => {
                     </div>
                   )}
                 </div>
-                <div className="modal-footer">
+                <div className="modal-footer" style={{ background: '#1a1a1a', borderTop: '1px solid #3d3d3d' }}>
                   {editingProgram ? (
                     <>
                       <button 
                         type="button" 
-                        className="btn btn-secondary"
+                        className="btn"
+                        style={{ background: '#6b7280', color: '#ffffff', border: 'none' }}
                         onClick={handleCancelEdit}
                       >
                         Cancel
                       </button>
                       <button 
                         type="button" 
-                        className="btn btn-primary"
+                        className="btn"
+                        style={{ background: '#10b981', color: '#ffffff', border: 'none' }}
                         onClick={handleSaveProgram}
                         disabled={loading}
                       >
@@ -2676,7 +3585,8 @@ const ManageClientPrograms = () => {
                     <>
                       <button 
                         type="button" 
-                        className="btn btn-secondary"
+                        className="btn"
+                        style={{ background: '#6b7280', color: '#ffffff', border: 'none' }}
                         onClick={() => {
                           setShowProgramModal(false);
                           setViewingProgram(null);
@@ -2687,7 +3597,8 @@ const ManageClientPrograms = () => {
                       {viewingProgram && viewingProgram.created_by_trainer_id && (
                         <button 
                           type="button" 
-                          className="btn btn-danger"
+                          className="btn"
+                          style={{ background: '#ef4444', color: '#ffffff', border: 'none' }}
                           onClick={() => handleDeleteProgram(viewingProgram)}
                         >
                           <i className="bi bi-trash me-1"></i>

@@ -1,22 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import APIClient from '../../../utils/APIClient';
-import BackButton from '../../../components/BackButton';
 import TrainerDashboardLayout from '../../../components/TrainerDashboardLayout';
 
 // Add inline styles for card hover effect
 const styles = `
   .card-hover {
     transition: all 0.3s ease;
-    border: 1px solid #dee2e6;
+    border: 1px solid rgba(16, 185, 129, 0.2);
   }
   .card-hover:hover {
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0.5rem 1rem rgba(16, 185, 129, 0.3);
     transform: translateY(-2px);
-    border-color: #0d6efd;
+    border-color: #10b981;
+    background-color: #2d2d2d !important;
   }
   .cursor-pointer {
     cursor: pointer;
+  }
+  .exercise-list::-webkit-scrollbar,
+  .session-preview-list::-webkit-scrollbar {
+    width: 8px;
+  }
+  .exercise-list::-webkit-scrollbar-track,
+  .session-preview-list::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 4px;
+  }
+  .exercise-list::-webkit-scrollbar-thumb,
+  .session-preview-list::-webkit-scrollbar-thumb {
+    background: #10b981;
+    border-radius: 4px;
+  }
+  .exercise-list::-webkit-scrollbar-thumb:hover,
+  .session-preview-list::-webkit-scrollbar-thumb:hover {
+    background: #059669;
   }
 `;
 
@@ -464,12 +482,11 @@ const CreatePrograms = () => {
     <div>
       <style>{styles}</style>
       
-      <BackButton className="mb-3" />
-      
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="mb-0">My Training Programs</h4>
+        <h4 className="mb-0" style={{ color: '#fff' }}>My Training Programs</h4>
         <button 
-          className="btn btn-primary"
+          className="btn"
+          style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
           onClick={() => {
             resetProgramForm();
             setActiveView('create');
@@ -482,48 +499,50 @@ const CreatePrograms = () => {
 
       {loading ? (
         <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status">
+          <div className="spinner-border" style={{ color: '#10b981' }} role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
         </div>
       ) : programs.length === 0 ? (
         <div className="text-center py-5">
-          <i className="bi bi-inbox" style={{ fontSize: '3rem', color: '#ccc' }}></i>
-          <p className="text-muted mt-3">No programs yet. Create your first training program!</p>
+          <i className="bi bi-inbox" style={{ fontSize: '3rem', color: '#6b7280' }}></i>
+          <p className="mt-3" style={{ color: '#9ca3af' }}>No programs yet. Create your first training program!</p>
         </div>
       ) : (
         <div className="row">
           {programs.map(program => (
             <div key={program.id} className="col-md-6 col-lg-4 mb-4">
-              <div className="card card-hover h-100 border-0 shadow-sm">
+              <div className="card h-100 border-0 shadow-sm" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
                 <div className="card-body">
                   <div className="d-flex justify-content-between align-items-start mb-2">
-                    <h5 className="card-title mb-0">{program.title}</h5>
+                    <h5 className="card-title mb-0" style={{ color: '#fff' }}>{program.title}</h5>
                     <span className={`badge bg-${program.status === 'published' ? 'success' : 'warning'}`}>
                       {program.status}
                     </span>
                   </div>
                   
-                  <p className="text-muted small">{program.description}</p>
+                  <p className="text-muted small" style={{ color: '#9ca3af' }}>{program.description}</p>
                   
                   <div className="d-flex flex-wrap gap-1 mb-3">
-                    <span className="badge bg-light text-dark">{program.category}</span>
-                    <span className="badge bg-light text-dark">{program.difficulty_level}</span>
-                    <span className="badge bg-light text-dark">{program.duration_weeks} weeks</span>
+                    <span className="badge" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px' }}>{program.category}</span>
+                    <span className="badge" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px' }}>{program.difficulty_level}</span>
+                    <span className="badge" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px' }}>{program.duration_weeks} weeks</span>
                   </div>
                   
                   <div className="d-flex justify-content-between align-items-center">
-                    <span className="h5 mb-0 text-success">${program.price}</span>
+                    <span className="h5 mb-0" style={{ color: '#10b981' }}>${program.price}</span>
                     <div className="btn-group btn-group-sm">
                       <button 
-                        className="btn btn-outline-primary"
+                        className="btn btn-sm"
                         onClick={() => editProgram(program)}
+                        style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)' }}
                       >
                         <i className="bi bi-pencil"></i>
                       </button>
                       <button 
-                        className="btn btn-outline-danger"
+                        className="btn btn-sm"
                         onClick={() => confirmDelete(program)}
+                        style={{ backgroundColor: 'rgba(220, 53, 69, 0.2)', color: '#dc3545', border: '1px solid rgba(220, 53, 69, 0.3)' }}
                       >
                         <i className="bi bi-trash"></i>
                       </button>
@@ -539,31 +558,32 @@ const CreatePrograms = () => {
   );
 
   const renderCreateView = () => (
-    <div>
+    <div style={{ color: '#fff' }}>
       <style>{styles}</style>
       
       <button 
-        className="btn btn-secondary mb-3"
+        className="btn mb-3"
         onClick={() => {
           resetProgramForm();
           setActiveView('list');
         }}
+        style={{ backgroundColor: '#6b7280', color: '#fff', border: 'none' }}
       >
         <i className="bi bi-arrow-left me-2"></i>
         Back to Programs
       </button>
       
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="mb-0">{editingProgramId ? 'Edit Program' : 'Create Training Program'}</h4>
+        <h4 className="mb-0" style={{ color: '#fff' }}>{editingProgramId ? 'Edit Program' : 'Create Training Program'}</h4>
       </div>
 
       <div className="row">
         {/* Left Column - Program Package Details */}
         <div className="col-lg-8">
           {/* Program Package Information */}
-          <div className="card border-0 shadow-sm mb-4">
-            <div className="card-header bg-white">
-              <h6 className="mb-0">Program Package Details</h6>
+          <div className="card border-0 shadow-sm mb-4" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div className="card-header border-bottom" style={{ backgroundColor: 'transparent', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+              <h6 className="mb-0" style={{ color: '#fff' }}>Program Package Details</h6>
             </div>
             <div className="card-body">
               <div className="row mb-3">
@@ -581,12 +601,19 @@ const CreatePrograms = () => {
                   <label className="form-label">Price (USD) *</label>
                   <input 
                     type="number" 
-                    className="form-control"
+                    className="form-control number-input-light-arrows"
                     value={programPackage.price}
                     onChange={(e) => setProgramPackage(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
                     min="0"
                     step="0.01"
                   />
+                  <style dangerouslySetInnerHTML={{__html: `
+                    .number-input-light-arrows::-webkit-inner-spin-button,
+                    .number-input-light-arrows::-webkit-outer-spin-button {
+                      opacity: 1;
+                      filter: invert(1);
+                    }
+                  `}} />
                 </div>
               </div>
 
@@ -641,7 +668,7 @@ const CreatePrograms = () => {
                   <label className="form-label">Duration (weeks)</label>
                   <input 
                     type="number" 
-                    className="form-control"
+                    className="form-control number-input-light-arrows"
                     value={programPackage.duration_weeks}
                     onChange={(e) => setProgramPackage(prev => ({ ...prev, duration_weeks: parseInt(e.target.value) || 1 }))}
                     min="1"
@@ -698,49 +725,52 @@ const CreatePrograms = () => {
           </div>
 
           {/* Workout Sessions List */}
-          <div className="card border-0 shadow-sm mb-4">
-            <div className="card-header bg-white d-flex justify-content-between align-items-center">
-              <h6 className="mb-0">Workout Sessions ({workoutSessions.length})</h6>
-              <small className="text-muted">Individual workouts in this program</small>
+          <div className="card border-0 shadow-sm mb-4" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div className="card-header border-bottom d-flex justify-content-between align-items-center" style={{ backgroundColor: 'transparent', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+              <h6 className="mb-0" style={{ color: '#fff' }}>Workout Sessions ({workoutSessions.length})</h6>
+              <small style={{ color: '#9ca3af' }}>Individual workouts in this program</small>
             </div>
             <div className="card-body">
               {workoutSessions.length === 0 ? (
-                <p className="text-muted text-center py-3">
+                <p className="text-center py-3" style={{ color: '#9ca3af' }}>
                   No workout sessions added yet. Create one below!
                 </p>
               ) : (
                 <div className="list-group">
                   {workoutSessions.map((session, index) => (
-                    <div key={index} className="list-group-item">
+                    <div key={index} style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', marginBottom: '12px', borderRadius: '12px', padding: '16px' }}>
                       <div className="d-flex justify-content-between align-items-start">
                         <div className="flex-grow-1">
-                          <h6 className="mb-1">{session.name}</h6>
-                          <p className="mb-1 text-muted small">{session.description}</p>
+                          <h6 className="mb-2" style={{ color: '#10b981', fontWeight: 'bold' }}>{session.name}</h6>
+                          <p className="mb-2 small" style={{ color: '#9ca3af' }}>{session.description}</p>
                           <div className="d-flex gap-2">
-                            <span className="badge bg-info">Week {session.week_number}</span>
-                            <span className="badge bg-info">Day {session.day_number}</span>
-                            <span className="badge bg-secondary">{session.exercises.length} exercises</span>
+                            <span className="badge" style={{ backgroundColor: '#000', color: '#fff', padding: '6px 12px', fontWeight: '600' }}>WEEK {session.week_number}</span>
+                            <span className="badge" style={{ backgroundColor: '#000', color: '#fff', padding: '6px 12px', fontWeight: '600' }}>DAY {session.day_number}</span>
+                            <span className="badge" style={{ backgroundColor: '#000', color: '#fff', padding: '6px 12px', fontWeight: '600' }}>{session.exercises.length} EXERCISES</span>
                           </div>
                         </div>
                         <div className="d-flex gap-2">
                           <button 
-                            className="btn btn-secondary btn-sm"
+                            className="btn btn-sm"
                             onClick={() => duplicateSession(index)}
                             title="Duplicate"
+                            style={{ backgroundColor: '#6b7280', color: '#fff', border: 'none' }}
                           >
                             <i className="bi bi-files"></i>
                           </button>
                           <button 
-                            className="btn btn-primary btn-sm"
+                            className="btn btn-sm"
                             onClick={() => editSession(index)}
                             title="Edit"
+                            style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                           >
                             <i className="bi bi-pencil"></i>
                           </button>
                           <button 
-                            className="btn btn-danger btn-sm"
+                            className="btn btn-sm"
                             onClick={() => deleteSession(index)}
                             title="Delete"
+                            style={{ backgroundColor: '#ef4444', color: '#fff', border: 'none' }}
                           >
                             <i className="bi bi-trash"></i>
                           </button>
@@ -754,8 +784,8 @@ const CreatePrograms = () => {
           </div>
 
           {/* Current Workout Session Builder (same as trainee workout creation) */}
-          <div className="card border-0 shadow-sm">
-            <div className="card-header bg-primary text-white">
+          <div className="card border-0 shadow-sm" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div className="card-header text-white" style={{ backgroundColor: '#10b981' }}>
               <h6 className="mb-0">
                 {isEditingSession ? 'Edit Workout Session' : 'Create New Workout Session'}
               </h6>
@@ -812,7 +842,7 @@ const CreatePrograms = () => {
               <hr />
 
               {/* Exercise Search */}
-              <h6 className="mb-3">Add Exercises to This Session</h6>
+              <h6 className="mb-3" style={{ color: '#fff' }}>Add Exercises to This Session</h6>
               <div className="mb-3">
                 <input 
                   type="text" 
@@ -823,7 +853,7 @@ const CreatePrograms = () => {
                 />
               </div>
               
-              <p className="text-muted small">
+              <p className="small" style={{ color: '#9ca3af' }}>
                 Showing {filteredExercises.length} global exercises (custom exercises shown below)
               </p>
               
@@ -833,19 +863,20 @@ const CreatePrograms = () => {
                     
                       <div key={`global-${exercise.id}`} className="col-md-6 mb-2">
                         <div 
-                          className="card card-hover border-1 cursor-pointer"
+                          className="card card-hover cursor-pointer"
                           onClick={() => addExerciseToSession(exercise)}
+                          style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)' }}
                         >
                           <div className="card-body py-2">
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
-                                <small className="fw-bold">{exercise.name}</small>
+                                <small className="fw-bold" style={{ color: '#fff' }}>{exercise.name}</small>
                                 <br />
-                                <small className="text-muted">
+                                <small style={{ color: '#9ca3af' }}>
                                   {exercise.category} • {exercise.muscle_group}
                                 </small>
                               </div>
-                              <i className="bi bi-plus-circle text-primary"></i>
+                              <i className="bi bi-plus-circle" style={{ color: '#10b981' }}></i>
                             </div>
                           </div>
                         </div>
@@ -855,38 +886,39 @@ const CreatePrograms = () => {
                 </div>
               </div>
 
-              <hr />
+              <hr style={{ borderColor: 'rgba(16, 185, 129, 0.2)' }} />
 
               {/* My Custom Exercises */}
-              <h6 className="mb-3">My Exercises ({customExercises.length})</h6>
+              <h6 className="mb-3" style={{ color: '#fff' }}>My Exercises ({customExercises.length})</h6>
               {customExercises.length === 0 ? (
-                <p className="text-muted small">No custom exercises yet. Create one above!</p>
+                <p className="small" style={{ color: '#9ca3af' }}>No custom exercises yet. Create one above!</p>
               ) : (
                 <div className="exercise-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                   <div className="row">
                     {customExercises.map((exercise) => (
                       <div key={`custom-${exercise.id}`} className="col-md-6 mb-2">
-                        <div className="card border-1">
+                        <div className="card" style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
                           <div className="card-body py-2">
                             <div className="d-flex justify-content-between align-items-center">
                               <div 
                                 className="flex-grow-1 cursor-pointer"
                                 onClick={() => addExerciseToSession(exercise)}
                               >
-                                <small className="fw-bold">{exercise.name}</small>
+                                <small className="fw-bold" style={{ color: '#fff' }}>{exercise.name}</small>
                                 <br />
-                                <small className="text-muted">
+                                <small style={{ color: '#9ca3af' }}>
                                   {exercise.category} • {exercise.muscle_group}
                                 </small>
                               </div>
                               <div className="d-flex gap-1">
                                 <button
-                                  className="btn btn-sm btn-outline-primary"
+                                  className="btn btn-sm"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     addExerciseToSession(exercise);
                                   }}
                                   title="Add to session"
+                                  style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)' }}
                                 >
                                   <i className="bi bi-plus-circle"></i>
                                 </button>
@@ -913,7 +945,7 @@ const CreatePrograms = () => {
               <hr />
 
               {/* Add Custom Exercise */}
-              <h6 className="mb-3">Create Your Own Exercise</h6>
+              <h6 className="mb-3" style={{ color: '#fff' }}>Create Your Own Exercise</h6>
               <div className="row">
                 <div className="col-md-4 mb-3">
                   <input 
@@ -947,45 +979,43 @@ const CreatePrograms = () => {
                 </div>
                 <div className="col-md-2 mb-3">
                   <button 
-                    className="btn btn-success w-100"
+                    className="btn w-100"
                     onClick={addCustomExercise}
                     disabled={!newExercise.name}
+                    style={{ backgroundColor: '#10b981', color: '#fff', border: 'none', fontWeight: '600' }}
                   >
-                    <i className="bi bi-plus"></i> Add
+                    Add
                   </button>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Right Column - Preview */}
-        <div className="col-lg-4">
-          {/* Session Preview */}
-          <div className="card border-0 shadow-sm sticky-top mb-3">
-            <div className="card-header bg-white">
-              <h6 className="mb-0">Current Session Preview</h6>
+          {/* Current Session Preview and Add Session */}
+          <div className="card border-0 shadow-sm mt-4" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div className="card-header border-bottom" style={{ backgroundColor: 'transparent', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+              <h6 className="mb-0" style={{ color: '#fff' }}>Current Session Preview</h6>
             </div>
             <div className="card-body">
-              <h6>{currentSession.name || 'Untitled Session'}</h6>
-              <p className="text-muted small">{currentSession.description || 'No description'}</p>
+              <h6 style={{ color: '#fff' }}>{currentSession.name || 'Untitled Session'}</h6>
+              <p className="small" style={{ color: '#9ca3af' }}>{currentSession.description || 'No description'}</p>
               <div className="mb-3">
-                <span className="badge bg-info me-1">Week {currentSession.week_number}</span>
-                <span className="badge bg-info">Day {currentSession.day_number}</span>
+                <span className="badge me-1" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981' }}>Week {currentSession.week_number}</span>
+                <span className="badge" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981' }}>Day {currentSession.day_number}</span>
               </div>
               
               {currentSession.exercises.length === 0 ? (
-                <p className="text-muted small">No exercises added yet</p>
+                <p className="small" style={{ color: '#9ca3af' }}>No exercises added yet</p>
               ) : (
-                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                <div className="session-preview-list" style={{ maxHeight: '300px', overflowY: 'auto' }}>
                   {currentSession.exercises.map((exercise, index) => (
-                    <div key={index} className="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                    <div key={index} className="d-flex justify-content-between align-items-center mb-2 p-2 rounded" style={{ backgroundColor: '#1a1a1a' }}>
                       <div>
-                        <small className="fw-bold d-block">{exercise.name}</small>
-                        <small className="text-muted">{exercise.sets} sets x {exercise.reps}</small>
-                        {exercise.rpe && <small className="text-muted"> • RPE {exercise.rpe}</small>}
+                        <small className="fw-bold d-block" style={{ color: '#fff' }}>{exercise.name}</small>
+                        <small style={{ color: '#9ca3af' }}>{exercise.sets} sets x {exercise.reps}</small>
+                        {exercise.rpe && <small style={{ color: '#9ca3af' }}> • RPE {exercise.rpe}</small>}
                         <br />
-                        <small className="text-muted">{exercise.muscle_group}</small>
+                        <small style={{ color: '#9ca3af' }}>{exercise.muscle_group}</small>
                       </div>
                       <button 
                         className="btn btn-sm btn-outline-danger"
@@ -1003,21 +1033,23 @@ const CreatePrograms = () => {
               
               <div className="d-flex gap-2 mt-3">
                 <button 
-                  className="btn btn-success flex-grow-1"
+                  className="btn flex-grow-1"
                   onClick={saveCurrentSession}
                   disabled={!currentSession.name || currentSession.exercises.length === 0}
+                  style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                 >
                   <i className="bi bi-check-circle me-2"></i>
                   {isEditingSession ? 'Update Session' : 'Add Session'}
                 </button>
                 {isEditingSession && (
                   <button 
-                    className="btn btn-outline-secondary"
+                    className="btn"
                     onClick={() => {
                       resetSessionForm();
                       setIsEditingSession(false);
                       setEditingSessionIndex(null);
                     }}
+                    style={{ backgroundColor: '#6b7280', color: '#fff', border: 'none' }}
                   >
                     Cancel
                   </button>
@@ -1027,22 +1059,24 @@ const CreatePrograms = () => {
           </div>
 
           {/* Save Program Button */}
-          <div className="card border-0 shadow-sm">
+          <div className="card border-0 shadow-sm mt-4" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
             <div className="card-body">
               <button 
-                className="btn btn-primary w-100 btn-lg mb-2"
+                className="btn w-100 btn-lg mb-2"
                 onClick={saveProgram}
                 disabled={!programPackage.title || (!editingProgramId && workoutSessions.length === 0)}
+                style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
               >
                 <i className="bi bi-save me-2"></i>
                 {editingProgramId ? 'Update Program Package' : 'Create Program Package'}
               </button>
               <button 
-                className="btn btn-secondary w-100"
+                className="btn w-100"
                 onClick={() => {
                   resetProgramForm();
                   setActiveView('list');
                 }}
+                style={{ backgroundColor: '#6b7280', color: '#fff', border: 'none' }}
               >
                 <i className="bi bi-x-circle me-2"></i>
                 Cancel
@@ -1052,6 +1086,10 @@ const CreatePrograms = () => {
               </small>
             </div>
           </div>
+        </div>
+
+        {/* Right Column - Empty for now */}
+        <div className="col-lg-4">
         </div>
       </div>
 
@@ -1125,18 +1163,18 @@ const CreatePrograms = () => {
 
   return (
     <TrainerDashboardLayout>
-      <div className="container py-4" style={{ minHeight: 'calc(100vh - 0px)' }}>
+      <div className="container py-4" style={{ minHeight: 'calc(100vh - 0px)', backgroundColor: '#1a1a1a', color: '#fff' }}>
         {activeView === 'list' && renderListView()}
         {activeView === 'create' && renderCreateView()}
       
         {/* Delete Confirmation Modal */}
         {deleteModal.show && (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header bg-danger text-white">
-                <h5 className="modal-title">
-                  <i className="bi bi-exclamation-triangle me-2"></i>
+            <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+              <div className="modal-header" style={{ background: 'rgba(15, 20, 15, 0.95)', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                  <i className="bi bi-exclamation-triangle me-2" style={{ color: '#dc3545' }}></i>
                   Confirm Delete
                 </h5>
                 <button 
@@ -1146,10 +1184,10 @@ const CreatePrograms = () => {
                 ></button>
               </div>
               <div className="modal-body">
-                <p className="mb-0">Are you sure you want to delete <strong>"{deleteModal.programTitle}"</strong>?</p>
-                <p className="text-muted small mt-2 mb-0">This action cannot be undone.</p>
+                <p className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Are you sure you want to delete <strong>"{deleteModal.programTitle}"</strong>?</p>
+                <p className="small mt-2 mb-0" style={{ color: 'rgba(255,255,255,0.7)' }}>This action cannot be undone.</p>
               </div>
-              <div className="modal-footer">
+              <div className="modal-footer" style={{ background: 'rgba(15, 20, 15, 0.95)', borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
                 <button 
                   type="button" 
                   className="btn btn-secondary" 
@@ -1174,8 +1212,8 @@ const CreatePrograms = () => {
       {/* Bootstrap Toast Notification */}
       {toast.show && (
         <div className="position-fixed top-0 end-0 p-3" style={{ zIndex: 11 }}>
-          <div className={`toast show`} role="alert">
-            <div className={`toast-header bg-${toast.type === 'success' ? 'success' : toast.type === 'error' ? 'danger' : 'warning'} text-white`}>
+          <div className="toast show" role="alert" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div className="toast-header text-white" style={{ backgroundColor: toast.type === 'success' ? '#10b981' : toast.type === 'error' ? '#dc3545' : '#fbbf24', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
               <strong className="me-auto">
                 {toast.type === 'success' ? '✓ Success' : toast.type === 'error' ? '✕ Error' : '⚠ Warning'}
               </strong>
@@ -1185,7 +1223,7 @@ const CreatePrograms = () => {
                 onClick={() => setToast({ show: false, message: '', type: 'success' })}
               ></button>
             </div>
-            <div className="toast-body">{toast.message}</div>
+            <div className="toast-body" style={{ color: '#fff' }}>{toast.message}</div>
           </div>
         </div>
       )}

@@ -5,7 +5,7 @@ import { BACKEND_ROUTES_API } from "../config/config";
 // Import dashboard components
 import AdminDashboard from "./dashboards/AdminDashboard";
 import ManagerDashboard from "./dashboards/ManagerDashboard";
-import TrainerDashboard from "./dashboards/TrainerDashboard";
+import TrainerDashboardHome from "./dashboards/trainer/TrainerDashboardHome";
 import TraineeDashboard from "./dashboards/trainee/Dashboard";
 
 function MainPage() {
@@ -65,7 +65,7 @@ function MainPage() {
       case 'manager':
         return <ManagerDashboard />;
       case 'trainer':
-        return <TrainerDashboard />;
+        return <TrainerDashboardHome />;
       case 'trainee':
         return <TraineeDashboard />;
       default:
