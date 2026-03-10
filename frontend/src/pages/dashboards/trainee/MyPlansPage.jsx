@@ -8,40 +8,22 @@ const MyPlansPage = () => {
 
   return (
     <TraineeDashboard>
-      <div className="container-fluid px-3 px-md-4 py-3" style={{ paddingBottom: '100px', backgroundColor: 'var(--brand-dark)', minHeight: '100vh' }}>
+      <div className="container-fluid p-4" style={{ paddingBottom: '100px' }}>
         {/* Tabs */}
-        <ul className="nav nav-tabs mb-4" style={{ borderBottom: '2px solid rgba(32, 214, 87, 0.2)' }}>
+        <ul className="nav nav-tabs mb-4 border-secondary">
           <li className="nav-item">
-            <button
-              className={`nav-link ${activeTab === 'workouts' ? 'active' : ''}`}
+            <button 
+              className={`nav-link ${activeTab === 'workouts' ? 'active' : ''}`} 
               onClick={() => setActiveTab('workouts')}
-              style={{
-                backgroundColor: activeTab === 'workouts' ? 'rgba(32, 214, 87, 0.15)' : 'transparent',
-                color: activeTab === 'workouts' ? 'var(--brand-primary)' : 'var(--text-secondary)',
-                border: 'none',
-                borderBottom: activeTab === 'workouts' ? '2px solid var(--brand-primary)' : 'none',
-                fontWeight: activeTab === 'workouts' ? '600' : '400',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '8px 8px 0 0'
-              }}
             >
               <i className="bi bi-dumbbell me-2"></i>
               Workouts
             </button>
           </li>
           <li className="nav-item">
-            <button
-              className={`nav-link ${activeTab === 'meals' ? 'active' : ''}`}
+            <button 
+              className={`nav-link ${activeTab === 'meals' ? 'active' : ''}`} 
               onClick={() => setActiveTab('meals')}
-              style={{
-                backgroundColor: activeTab === 'meals' ? 'rgba(32, 214, 87, 0.15)' : 'transparent',
-                color: activeTab === 'meals' ? 'var(--brand-primary)' : 'var(--text-secondary)',
-                border: 'none',
-                borderBottom: activeTab === 'meals' ? '2px solid var(--brand-primary)' : 'none',
-                fontWeight: activeTab === 'meals' ? '600' : '400',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '8px 8px 0 0'
-              }}
             >
               <i className="bi bi-calendar3 me-2"></i>
               Meals

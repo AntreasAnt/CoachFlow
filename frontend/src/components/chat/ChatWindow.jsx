@@ -143,7 +143,7 @@ export function ChatWindow() {
       </div>
 
       {/* Messages Area */}
-      <div className="flex-fill p-3" style={{ overflowY: 'auto', minHeight: 0 }}>
+      <div className="chat-messages-area p-3">
         {messages.map(m => {
           const isOwn = isOwnMessage(m.senderId);
           const isUnread = isMessageUnread(m);

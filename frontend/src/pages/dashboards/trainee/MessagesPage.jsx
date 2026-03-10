@@ -5,7 +5,7 @@ import { ChatProvider, useChat } from '../../../context/ChatProvider';
 import { ConversationList } from '../../../components/chat/ConversationList';
 import { ChatWindow } from '../../../components/chat/ChatWindow';
 import { MessageInput } from '../../../components/chat/MessageInput';
-import TraineeDashboard from '../../../components/TraineeDashboard';
+import TraineeHeader from '../../../components/TraineeHeader';
 import '../../../styles/trainee-dashboard.css';
 import '../../../styles/messages.css';
 
@@ -109,7 +109,22 @@ const MessagesContent = ({ currentUser }) => {
       <div className={`conversations-sidebar ${chat.activeConversationId ? 'mobile-hidden' : ''}`}>
         <div className="sidebar-header">
           <div className="d-flex align-items-center">
-            <h5 className="mb-0 fw-bold text-white">Messages</h5>
+            <button
+              className="btn btn-sm d-flex align-items-center gap-2"
+              onClick={() => navigate('/dashboard')}
+              style={{
+                backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                color: 'var(--brand-primary)',
+                border: '1px solid rgba(32, 214, 87, 0.3)',
+                borderRadius: '10px',
+                padding: '0.5rem 0.75rem',
+                transition: 'all 0.2s ease'
+              }}
+              title="Back to Dashboard"
+            >
+              <i className="bi bi-arrow-left"></i>
+              <span className="fw-semibold">Back</span>
+            </button>
           </div>
         </div>
 
@@ -218,27 +233,40 @@ const MessagesPage = () => {
 
   if (loading) {
     return (
-      <TraineeDashboard>
-        <div className="d-flex justify-content-center align-items-center" style={{ height: 'calc(100vh - 140px)' }}>
+      <div className="min-vh-100" style={{ backgroundColor: 'var(--brand-dark)', height: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <TraineeHeader />
+        <div className="d-flex justify-content-center align-items-center" style={{ flex: 1 }}>
           <div className="spinner-border text-success" role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
         </div>
-      </TraineeDashboard>
+      </div>
     );
   }
 
   return (
-    <TraineeDashboard>
-      <div className="messages-page-wrapper" style={{ height: 'calc(100vh - 140px)' }}>
-        {/* Main Content */}
-        {currentUser && (
-          <ChatProvider currentUserBackend={currentUser}>
-            <MessagesContent currentUser={currentUser} />
-          </ChatProvider>
-        )}
+    <div className="min-vh-100" style={{ backgroundColor: 'var(--brand-dark)', height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <TraineeHeader />
+      <div style={{ 
+        padding: 0, 
+        margin: 0,
+        width: '100%',
+        flex: 1,
+        maxWidth: '100vw', 
+        overflow: 'hidden'
+      }}>
+        <div className="messages-page-wrapper" style={{ height: '100%' }}>
+          {/* Main Content */}
+          {currentUser && (
+            <ChatProvider currentUserBackend={currentUser}>
+              <MessagesContent 
+                currentUser={currentUser}
+              />
+            </ChatProvider>
+          )}
+        </div>
       </div>
-    </TraineeDashboard>
+    </div>
   );
 };
 

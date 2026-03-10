@@ -6,7 +6,6 @@ import { BACKEND_ROUTES_API } from '../../../config/config';
 import APIClient from '../../../utils/APIClient';
 import TraineeDashboard from '../../../components/TraineeDashboard';
 import ProgramFilters from '../../../components/ProgramFilters';
-import BackButton from '../../../components/BackButton';
 
 
 let stripePromise = null;
@@ -453,33 +452,28 @@ const ProgramMarketplace = () => {
 
   return (
     <TraineeDashboard>
-      <div className="container-fluid px-4 py-3">
-        <BackButton className="mb-3" />
-        
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h4 className="mb-0 text-white">Program Marketplace</h4>
-          
-          <ul className="nav nav-pills">
-            <li className="nav-item">
-              <button 
-                className={`nav-link ${activeTab === 'marketplace' ? 'active' : ''}`}
-                onClick={() => setActiveTab('marketplace')}
-              >
-                <i className="bi bi-shop me-2"></i>
-                Browse All
-              </button>
-            </li>
-            <li className="nav-item">
-              <button 
-                className={`nav-link ${activeTab === 'purchased' ? 'active' : ''}`}
-                onClick={() => setActiveTab('purchased')}
-              >
-                <i className="bi bi-bag-check me-2"></i>
-                My Programs ({purchasedPrograms.length})
-              </button>
-            </li>
-          </ul>
-        </div>
+      <div className="container-fluid p-4" style={{ paddingBottom: '100px' }}>
+        {/* Tabs */}
+        <ul className="nav nav-tabs mb-4 border-secondary">
+          <li className="nav-item">
+            <button 
+              className={`nav-link ${activeTab === 'marketplace' ? 'active' : ''}`}
+              onClick={() => setActiveTab('marketplace')}
+            >
+              <i className="bi bi-shop me-2"></i>
+              Browse All
+            </button>
+          </li>
+          <li className="nav-item">
+            <button 
+              className={`nav-link ${activeTab === 'purchased' ? 'active' : ''}`}
+              onClick={() => setActiveTab('purchased')}
+            >
+              <i className="bi bi-bag-check me-2"></i>
+              My Programs ({purchasedPrograms.length})
+            </button>
+          </li>
+        </ul>
 
         {activeTab === 'marketplace' && (
           <div className="row">

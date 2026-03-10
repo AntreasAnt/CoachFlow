@@ -830,7 +830,10 @@ const MyWorkouts = ({ embedded = false }) => {
   const renderPlansView = () => (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="mb-0" style={{ color: 'var(--brand-white)', fontWeight: '700' }}>My Workout Plans</h4>
+        <div>
+          <h2 className="h5 mb-0 fw-bold" style={{ color: '#ffffff' }}>My Workout Plans</h2>
+          <p className="small mb-0" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Your training programs and workouts</p>
+        </div>
         <button 
           className="btn rounded-pill px-4"
           onClick={() => {

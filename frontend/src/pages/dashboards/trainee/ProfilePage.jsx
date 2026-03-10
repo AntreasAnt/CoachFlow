@@ -752,7 +752,7 @@ const ProfilePage = () => {
             {/* Quick Stats */}
             <div className="profile-card border-0 rounded-4">
               <div className="card-body p-4">
-                <h6 className="fw-semibold mb-3">
+                <h6 className="fw-semibold mb-3" style={{ color: 'rgba(255,255,255,0.9)' }}>
                   <i className="bi bi-graph-up me-2 text-success"></i>Quick Stats
                 </h6>
                 {currentUser?.role === 'trainee' ? (

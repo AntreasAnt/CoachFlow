@@ -327,6 +327,22 @@ function App() {
             </AuthRoot>
           }
         />
+        <Route 
+          path="/trainee-dashboard/profile" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <ProfilePage />
+            </AuthRoot>
+          }
+        />
+        <Route 
+          path="/trainee-dashboard/messages" 
+          element={
+            <AuthRoot allowedPrivileges={['trainee']}>
+              <MessagesPage />
+            </AuthRoot>
+          }
+        />
 
  <Route 
           path="/admin/users" 

@@ -13,8 +13,10 @@ const TraineeDashboard = ({ children }) => {
         {children}
       </main>
 
-      <nav className="fixed-bottom footer-menu" style={{ paddingBottom: 'env(safe-area-inset-bottom)',backgroundColor: 'transparent' }}>
-        <div 
+      <nav className="fixed-bottom footer-menu" style={{ 
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        backgroundColor: 'transparent'
+      }}>        <div 
           className="container-fluid" 
           style={{ 
             backgroundColor: 'rgba(15, 20, 15, 1)',

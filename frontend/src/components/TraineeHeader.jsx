@@ -3,12 +3,38 @@ import { useNavigate } from 'react-router-dom';
 import { db } from '../services/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { signInWithBackendSession } from '../services/firebase';
+import { BACKEND_ROUTES_API } from '../config/config';
 
 const TraineeHeader = () => {
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
   const [firebaseUser, setFirebaseUser] = useState(null);
   const [hoveredBtn, setHoveredBtn] = useState(null);
+  // Initialize from localStorage if available
+  const [userName, setUserName] = useState(() => {
+    return localStorage.getItem('traineeUserName') || 'Trainee';
+  });
+
+  // Fetch current user name
+  useEffect(() => {
+    const fetchUserName = async () => {
+      try {
+        const response = await fetch(BACKEND_ROUTES_API + 'VerifyPrivilage.php', {
+          credentials: 'include',
+          headers: { 'Accept': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.success && data.username) {
+          setUserName(data.username);
+          // Cache in localStorage
+          localStorage.setItem('traineeUserName', data.username);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user name:', error);
+      }
+    };
+    fetchUserName();
+  }, []);
 
   // Sign in to Firebase to track unread messages
   useEffect(() => {
@@ -56,7 +82,7 @@ const TraineeHeader = () => {
         <div className="d-flex justify-content-between align-items-center">
           <div>
             <h1 className="h4 mb-0 fw-bold" style={{ color: 'var(--brand-white)' }}>CoachFlow</h1>
-            <p className="small mb-0" style={{ color: 'var(--text-secondary)' }}>Welcome back, Trainee!</p>
+            <p className="small mb-0" style={{ color: 'var(--text-secondary)' }}>Welcome back, {userName}!</p>
           </div>
           <div className="d-flex align-items-center gap-2 gap-md-3">
             <button 
@@ -96,8 +122,26 @@ const TraineeHeader = () => {
               <i className="bi bi-graph-up"></i>
             </button>
             <button 
+              className="btn btn-sm"
+              onClick={() => navigate('/trainee-dashboard/profile')}
+              onMouseEnter={() => setHoveredBtn('profile')}
+              onMouseLeave={() => setHoveredBtn(null)}
+              title="Profile"
+              style={{
+                backgroundColor: hoveredBtn === 'profile' ? 'rgba(32, 214, 87, 0.1)' : 'transparent',
+                color: 'var(--brand-primary)',
+                border: hoveredBtn === 'profile' ? '1px solid rgba(32, 214, 87, 0.6)' : '1px solid rgba(32, 214, 87, 0.3)',
+                borderRadius: '10px',
+                padding: '0.5rem 0.75rem',
+                transform: hoveredBtn === 'profile' ? 'translateY(-2px)' : 'translateY(0)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <i className="bi bi-person-circle"></i>
+            </button>
+            <button 
               className="btn btn-sm position-relative"
-              onClick={() => navigate('/messages')}
+              onClick={() => navigate('/trainee-dashboard/messages')}
               onMouseEnter={() => setHoveredBtn('messages')}
               onMouseLeave={() => setHoveredBtn(null)}
               title="Messages"
@@ -118,24 +162,6 @@ const TraineeHeader = () => {
                   <span className="visually-hidden">unread messages</span>
                 </span>
               )}
-            </button>
-            <button 
-              className="btn btn-sm"
-              onClick={() => navigate('/profile')}
-              onMouseEnter={() => setHoveredBtn('profile')}
-              onMouseLeave={() => setHoveredBtn(null)}
-              title="Profile"
-              style={{
-                backgroundColor: hoveredBtn === 'profile' ? 'rgba(32, 214, 87, 0.1)' : 'transparent',
-                color: 'var(--brand-primary)',
-                border: hoveredBtn === 'profile' ? '1px solid rgba(32, 214, 87, 0.6)' : '1px solid rgba(32, 214, 87, 0.3)',
-                borderRadius: '10px',
-                padding: '0.5rem 0.75rem',
-                transform: hoveredBtn === 'profile' ? 'translateY(-2px)' : 'translateY(0)',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <i className="bi bi-person-circle"></i>
             </button>
           </div>
         </div>

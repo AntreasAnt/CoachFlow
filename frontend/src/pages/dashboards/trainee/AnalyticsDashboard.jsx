@@ -118,71 +118,7 @@ const AnalyticsDashboard = () => {
 
   return (
     <TraineeDashboard>
-      <div className="container-fluid p-4">
-        {/* Header */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <div>
-            <h2 className="text-white mb-0"><i className="bi bi-graph-up me-2"></i>My Analytics</h2>
-            <p className="text-white-50 mb-0">Track your training progress</p>
-          </div>
-          <div className="d-flex gap-2 align-items-center">
-            <button 
-              className="btn btn-outline-light btn-sm"
-              onClick={() => navigate('/trainee-dashboard/training-periods')}
-            >
-              <i className="bi bi-arrow-left-right me-2"></i>Compare Periods
-            </button>
-            <select
-              className="form-select form-select-sm dark-input"
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-              style={{ width: 'auto' }}
-            >
-              <option value="30">Last 30 Days</option>
-              <option value="60">Last 60 Days</option>
-              <option value="90">Last 90 Days</option>
-              <option value="180">Last 6 Months</option>
-              <option value="365">Last Year</option>
-            </select>
-            <div className="d-none align-items-center gap-2">
-              <label className="text-white-50 small mb-0">From:</label>
-              <input 
-                type="date" 
-                className="form-control form-control-sm"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                max={endDate}
-                style={{ width: '150px' }}
-              />
-            </div>
-            <div className="d-flex align-items-center gap-2">
-              <label className="text-white-50 small mb-0">To:</label>
-              <input 
-                type="date" 
-                className="form-control form-control-sm dark-input"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                min={startDate}
-                max={getDefaultEndDate()}
-                style={{ width: '150px' }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Performance Alerts */}
-        {alerts.length > 0 && (
-          <div className="mb-4">
-            {alerts.slice(0, 3).map((alert) => (
-              <div key={alert.id} className={`alert alert-${alert.severity === 'warning' ? 'warning' : 'info'} alert-dismissible fade show`}>
-                <i className={`bi bi-${alert.severity === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2`}></i>
-                <strong>{alert.title}</strong>: {alert.message}
-                <button type="button" className="btn-close" onClick={() => dismissAlert(alert.id)}></button>
-              </div>
-            ))}
-          </div>
-        )}
-
+      <div className="container-fluid p-4" style={{ paddingBottom: '100px' }}>
         {/* Tabs */}
         <ul className="nav nav-tabs mb-4 border-secondary">
           <li className="nav-item">
@@ -206,6 +142,53 @@ const AnalyticsDashboard = () => {
             </button>
           </li>
         </ul>
+
+        {/* Date Range Filters */}
+        <div className="d-flex justify-content-end gap-2 align-items-center mb-3">
+          <button 
+            className="btn btn-outline-light btn-sm"
+            onClick={() => navigate('/trainee-dashboard/training-periods')}
+          >
+            <i className="bi bi-arrow-left-right me-2"></i>Compare Periods
+          </button>
+          <select
+            className="form-select dark-input"
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+            style={{ width: 'auto' }}
+          >
+            <option value="30">Last 30 Days</option>
+            <option value="60">Last 60 Days</option>
+            <option value="90">Last 90 Days</option>
+            <option value="180">Last 6 Months</option>
+            <option value="365">Last Year</option>
+          </select>
+          <div className="d-flex align-items-center gap-2">
+            <label className="text-white-50 small mb-0">To:</label>
+            <input 
+              type="date" 
+              className="form-control dark-input"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              min={startDate}
+              max={getDefaultEndDate()}
+              style={{ width: '150px' }}
+            />
+          </div>
+        </div>
+
+        {/* Performance Alerts */}
+        {alerts.length > 0 && (
+          <div className="mb-4">
+            {alerts.slice(0, 3).map((alert) => (
+              <div key={alert.id} className={`alert alert-${alert.severity === 'warning' ? 'warning' : 'info'} alert-dismissible fade show`}>
+                <i className={`bi bi-${alert.severity === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2`}></i>
+                <strong>{alert.title}</strong>: {alert.message}
+                <button type="button" className="btn-close" onClick={() => dismissAlert(alert.id)}></button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Overview Tab */}
         {activeTab === 'overview' && (
