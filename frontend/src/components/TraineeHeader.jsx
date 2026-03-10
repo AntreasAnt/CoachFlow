@@ -19,21 +19,43 @@ const TraineeHeader = () => {
   useEffect(() => {
     const fetchUserName = async () => {
       try {
-        const response = await fetch(BACKEND_ROUTES_API + 'VerifyPrivilage.php', {
+        // Check if we have a cached name in localStorage (from profile updates)
+        const cachedName = localStorage.getItem('traineeUserName');
+        if (cachedName && cachedName !== 'Trainee') {
+          setUserName(cachedName);
+          return; // Use cached name, don't fetch from API
+        }
+
+        // Fetch from profile API to get full_name
+        const response = await fetch(BACKEND_ROUTES_API + 'GetUserProfile.php', {
           credentials: 'include',
           headers: { 'Accept': 'application/json' }
         });
         const data = await response.json();
-        if (data.success && data.username) {
-          setUserName(data.username);
+        if (data.success && data.user) {
+          // Prefer full_name over username
+          const displayName = data.user.full_name || data.user.username || 'Trainee';
+          setUserName(displayName);
           // Cache in localStorage
-          localStorage.setItem('traineeUserName', data.username);
+          localStorage.setItem('traineeUserName', displayName);
         }
       } catch (error) {
         console.error('Failed to fetch user name:', error);
       }
     };
     fetchUserName();
+
+    // Listen for profile updates
+    const handleProfileUpdate = (event) => {
+      if (event.detail?.name) {
+        setUserName(event.detail.name);
+      }
+    };
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    
+    return () => {
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
   }, []);
 
   // Sign in to Firebase to track unread messages

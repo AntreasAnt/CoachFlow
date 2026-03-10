@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminDashboardLayout from '../../../components/AdminDashboardLayout';
+import { BACKEND_ROUTES_API } from '../../../config/config';
 
 const AdminDashboardHome = () => {
   const navigate = useNavigate();
@@ -10,16 +11,36 @@ const AdminDashboardHome = () => {
     totalTrainees: 0,
     activeUsers: 0
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // You can fetch real stats here later
-    // For now using placeholder data
-    setStats({
-      totalUsers: 247,
-      totalTrainers: 56,
-      totalTrainees: 178,
-      activeUsers: 189
-    });
+    const fetchStats = async () => {
+      try {
+        const response = await fetch(BACKEND_ROUTES_API + 'GetAdminStats.php', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          setStats(data.stats);
+        } else {
+          setError(data.message || 'Failed to fetch statistics');
+        }
+      } catch (err) {
+        console.error('Error fetching admin stats:', err);
+        setError('Failed to load statistics');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
   }, []);
 
   return (
@@ -31,6 +52,27 @@ const AdminDashboardHome = () => {
           <p style={{ color: '#9ca3af' }}>Overview of your platform</p>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="alert alert-danger mb-4" style={{
+            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+            border: '1px solid rgba(220, 38, 38, 0.3)',
+            color: '#ef4444'
+          }}>
+            <i className="bi bi-exclamation-triangle me-2"></i>
+            {error}
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading ? (
+          <div className="d-flex justify-content-center align-items-center py-5">
+            <div className="spinner-border" style={{ color: '#10b981' }} role="status">
+              <span className="visually-hidden">Loading statistics...</span>
+            </div>
+          </div>
+        ) : (
+          <>
         {/* Stats Cards */}
         <div className="row mb-4">
           <div className="col-lg-3 col-md-6 mb-3">
@@ -146,8 +188,16 @@ const AdminDashboardHome = () => {
                   <div className="col-md-4 mb-3">
                     <button
                       className="btn w-100 text-start p-3"
-                      style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#fff', borderRadius: '8px', opacity: 0.5 }}
-                      disabled
+                      style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#fff', borderRadius: '8px' }}
+                      onClick={() => navigate('/admin/email-marketing')}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                        e.currentTarget.style.borderColor = '#10b981';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#1a1a1a';
+                        e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                      }}
                     >
                       <div className="d-flex align-items-center">
                         <div className="rounded-circle p-2 me-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
@@ -155,7 +205,7 @@ const AdminDashboardHome = () => {
                         </div>
                         <div>
                           <div className="fw-bold">Email Marketing</div>
-                          <small style={{ color: '#9ca3af' }}>Coming soon</small>
+                          <small style={{ color: '#9ca3af' }}>Manage campaigns and audiences</small>
                         </div>
                       </div>
                     </button>
@@ -164,16 +214,24 @@ const AdminDashboardHome = () => {
                   <div className="col-md-4 mb-3">
                     <button
                       className="btn w-100 text-start p-3"
-                      style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#fff', borderRadius: '8px', opacity: 0.5 }}
-                      disabled
+                      style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#fff', borderRadius: '8px' }}
+                      onClick={() => navigate('/admin/messages')}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                        e.currentTarget.style.borderColor = '#10b981';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#1a1a1a';
+                        e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                      }}
                     >
                       <div className="d-flex align-items-center">
                         <div className="rounded-circle p-2 me-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
-                          <i className="bi bi-gear fs-5" style={{ color: '#10b981' }}></i>
+                          <i className="bi bi-chat-dots fs-5" style={{ color: '#10b981' }}></i>
                         </div>
                         <div>
-                          <div className="fw-bold">System Settings</div>
-                          <small style={{ color: '#9ca3af' }}>Coming soon</small>
+                          <div className="fw-bold">Messages</div>
+                          <small style={{ color: '#9ca3af' }}>View and manage conversations</small>
                         </div>
                       </div>
                     </button>
@@ -200,6 +258,8 @@ const AdminDashboardHome = () => {
             </div>
           </div>
         </div>
+        </>
+        )}
       </div>
     </AdminDashboardLayout>
   );

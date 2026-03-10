@@ -19,6 +19,11 @@ const FindTrainersPage = () => {
   });
   const [sendingRequest, setSendingRequest] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+  const [hiddenTrainers, setHiddenTrainers] = useState(() => {
+    const stored = localStorage.getItem('hiddenTrainers');
+    return stored ? JSON.parse(stored) : [];
+  });
+  const [cancellingRequest, setCancellingRequest] = useState(null);
   
   // Filter states
   const [filters, setFilters] = useState({
@@ -143,6 +148,48 @@ const FindTrainersPage = () => {
     } finally {
       setSendingRequest(false);
     }
+  };
+
+  const handleCancelRequest = async (trainer) => {
+    if (!trainer.request_id) return;
+    
+    if (!window.confirm('Are you sure you want to cancel this coaching request?')) {
+      return;
+    }
+    
+    try {
+      setCancellingRequest(trainer.id);
+      
+      const response = await APIClient.post(
+        `${BACKEND_ROUTES_API}CancelCoachingRequest.php`,
+        { requestId: trainer.request_id }
+      );
+      
+      if (response.success) {
+        setNotification({ show: true, message: 'Request cancelled successfully!', type: 'success' });
+        fetchTrainers(); // Refresh to update connection status
+      } else {
+        setNotification({ show: true, message: response.message || 'Failed to cancel request', type: 'danger' });
+      }
+    } catch (err) {
+      console.error('Error cancelling request:', err);
+      setNotification({ show: true, message: 'Failed to cancel request. Please try again.', type: 'danger' });
+    } finally {
+      setCancellingRequest(null);
+    }
+  };
+
+  const handleHideTrainer = (trainerId) => {
+    const updated = [...hiddenTrainers, trainerId];
+    setHiddenTrainers(updated);
+    localStorage.setItem('hiddenTrainers', JSON.stringify(updated));
+    setNotification({ show: true, message: 'Trainer hidden successfully', type: 'success' });
+  };
+
+  const handleUnhideAll = () => {
+    setHiddenTrainers([]);
+    localStorage.removeItem('hiddenTrainers');
+    setNotification({ show: true, message: 'All trainers shown', type: 'success' });
   };
 
   const getConnectionStatusBadge = (status) => {
@@ -382,8 +429,31 @@ const FindTrainersPage = () => {
             </button>
           </div>
         ) : (
-          <div className="row">
-            {trainers.map((trainer) => (
+          <div>
+            {/* Hidden trainers notice */}
+            {hiddenTrainers.length > 0 && (
+              <div className="alert rounded-4 d-flex justify-content-between align-items-center mb-4" style={{ border: '1px solid rgba(32, 214, 87, 0.3)', backgroundColor: 'rgba(32, 214, 87, 0.1)', color: 'var(--brand-light)' }}>
+                <div>
+                  <i className="bi bi-eye-slash me-2"></i>
+                  {hiddenTrainers.length} trainer(s) hidden
+                </div>
+                <button 
+                  className="btn btn-sm rounded-pill"
+                  onClick={handleUnhideAll}
+                  style={{
+                    backgroundColor: 'var(--brand-primary)',
+                    color: 'var(--brand-dark)',
+                    border: 'none',
+                    fontWeight: '600'
+                  }}
+                >
+                  Show All
+                </button>
+              </div>
+            )}
+            
+            <div className="row">
+            {trainers.filter(trainer => !hiddenTrainers.includes(trainer.id)).map((trainer) => (
               <div key={trainer.id} className="col-lg-4 col-md-6 mb-4">
                 <div 
                   className="card border-0 rounded-4 h-100"
@@ -492,9 +562,28 @@ const FindTrainersPage = () => {
                           Connected
                         </button>
                       ) : trainer.connection_status === 'pending' ? (
-                        <button className="btn rounded-pill flex-fill" disabled style={{ backgroundColor: 'rgba(255, 193, 7, 0.3)', color: 'var(--brand-white)', border: 'none' }}>
-                          <i className="bi bi-clock me-2"></i>
-                          Pending
+                        <button 
+                          className="btn rounded-pill flex-fill"
+                          onClick={() => handleCancelRequest(trainer)}
+                          disabled={cancellingRequest === trainer.id}
+                          style={{ 
+                            backgroundColor: 'rgba(220, 53, 69, 0.2)', 
+                            color: '#dc3545', 
+                            border: '1px solid rgba(220, 53, 69, 0.5)',
+                            fontWeight: '600'
+                          }}
+                        >
+                          {cancellingRequest === trainer.id ? (
+                            <>
+                              <span className="spinner-border spinner-border-sm me-2"></span>
+                              Cancelling...
+                            </>
+                          ) : (
+                            <>
+                              <i className="bi bi-x-circle me-2"></i>
+                              Cancel Request
+                            </>
+                          )}
                         </button>
                       ) : (
                         <button 
@@ -514,21 +603,23 @@ const FindTrainersPage = () => {
                       )}
                       <button 
                         className="btn rounded-pill"
-                        onClick={() => {/* TODO: View trainer profile */}}
+                        onClick={() => handleHideTrainer(trainer.id)}
+                        title="Hide trainer"
                         style={{
                           backgroundColor: 'transparent',
-                          color: 'var(--brand-primary)',
-                          border: '1px solid var(--brand-primary)',
+                          color: 'var(--text-secondary)',
+                          border: '1px solid rgba(74, 74, 90, 0.3)',
                           fontWeight: '600'
                         }}
                       >
-                        <i className="bi bi-eye"></i>
+                        <i className="bi bi-eye-slash"></i>
                       </button>
                     </div>
                   </div>
                 </div>
               </div>
             ))}
+          </div>
           </div>
         )}
 

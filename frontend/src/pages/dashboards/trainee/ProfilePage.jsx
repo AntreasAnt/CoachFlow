@@ -226,10 +226,23 @@ const ProfilePage = () => {
             ...prevData,
             ...result.user
           }));
+          // Update localStorage with new name for header display
+          if (result.user.full_name) {
+            localStorage.setItem('traineeUserName', result.user.full_name);
+          } else if (result.user.username) {
+            localStorage.setItem('traineeUserName', result.user.username);
+          }
         } else {
           // Fallback to using editData if server doesn't return user data
           setProfileData(editData);
+          if (editData.full_name) {
+            localStorage.setItem('traineeUserName', editData.full_name);
+          }
         }
+        // Dispatch custom event to update header
+        window.dispatchEvent(new CustomEvent('profileUpdated', { 
+          detail: { name: result.user?.full_name || editData.full_name } 
+        }));
         setIsEditing(false);
         
         // Show success message
@@ -296,13 +309,19 @@ const ProfilePage = () => {
                       {isEditing ? (
                         <>
                           <button 
-                            className="btn btn-success btn-sm rounded-pill"
+                            className="btn rounded-pill px-4"
                             onClick={handleSaveProfile}
+                            style={{
+                              backgroundColor: 'var(--brand-primary)',
+                              color: 'var(--brand-dark)',
+                              border: 'none',
+                              fontWeight: '600'
+                            }}
                           >
                             <i className="bi bi-check-lg me-1"></i>Save
                           </button>
                           <button 
-                            className="btn btn-outline-light btn-sm rounded-pill"
+                            className="btn btn-outline-light rounded-pill px-4"
                             onClick={() => {
                               setIsEditing(false);
                               setEditData(profileData);

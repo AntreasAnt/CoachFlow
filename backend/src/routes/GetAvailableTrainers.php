@@ -57,6 +57,7 @@ try {
                 tp.profile_image,
                 tp.verified,
                 tp.created_at as member_since,
+                creq.id as request_id,
                 CASE 
                     WHEN cr.id IS NOT NULL THEN 'active'
                     WHEN creq.id IS NOT NULL THEN 'pending'
