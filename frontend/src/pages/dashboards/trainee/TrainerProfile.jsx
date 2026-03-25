@@ -11,13 +11,34 @@ const TrainerProfile = () => {
   const [loading, setLoading] = useState(true);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [requestMessage, setRequestMessage] = useState('');
+  const [connectionLock, setConnectionLock] = useState({ status: 'none', trainerId: null, trainerName: '' });
 
   useEffect(() => {
     if (trainerId) {
       fetchTrainerProfile();
       fetchTrainerReviews();
+      fetchConnectionLock();
     }
   }, [trainerId]);
+
+  const fetchConnectionLock = async () => {
+    try {
+      const response = await fetch(`${BACKEND_ROUTES_API}GetAvailableTrainers.php?limit=1&offset=0`, {
+        credentials: 'include'
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        setConnectionLock({
+          status: data.user_connection_status || 'none',
+          trainerId: data.user_connected_trainer_id || data.user_pending_trainer_id || null,
+          trainerName: data.user_connected_trainer_name || data.user_pending_trainer_name || ''
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching connection lock:', error);
+    }
+  };
 
   const fetchTrainerProfile = async () => {
     try {
@@ -52,6 +73,27 @@ const TrainerProfile = () => {
   };
 
   const handleSendRequest = async () => {
+    const currentTrainerId = Number(trainerId);
+    const lockedTrainerId = Number(connectionLock.trainerId);
+
+    if (connectionLock.status === 'active') {
+      alert(
+        lockedTrainerId === currentTrainerId
+          ? 'You are already connected to this trainer.'
+          : `You are already connected to ${connectionLock.trainerName || 'another trainer'}.`
+      );
+      return;
+    }
+
+    if (connectionLock.status === 'pending') {
+      alert(
+        lockedTrainerId === currentTrainerId
+          ? 'You already have a pending request with this trainer.'
+          : `You already have a pending request with ${connectionLock.trainerName || 'another trainer'}.`
+      );
+      return;
+    }
+
     if (!requestMessage.trim()) {
       alert('Please enter a message');
       return;
@@ -72,7 +114,12 @@ const TrainerProfile = () => {
       if (result.success) {
         setShowRequestModal(false);
         alert('Request sent successfully!');
-        navigate('/trainee-dashboard/my-requests');
+        navigate('/trainee-dashboard/my-coach', {
+          state: {
+            showCoachBrowser: true,
+            initialConnectionView: 'requests'
+          }
+        });
       } else {
         alert(result.message || 'Failed to send request');
       }
@@ -106,6 +153,24 @@ const TrainerProfile = () => {
       </TraineeDashboard>
     );
   }
+
+  const currentTrainerId = Number(trainerId);
+  const lockedTrainerId = Number(connectionLock.trainerId);
+  const isConnectedToCurrentTrainer = connectionLock.status === 'active' && lockedTrainerId === currentTrainerId;
+  const isConnectedToAnotherTrainer = connectionLock.status === 'active' && lockedTrainerId !== currentTrainerId;
+  const hasPendingWithCurrentTrainer = connectionLock.status === 'pending' && lockedTrainerId === currentTrainerId;
+  const hasPendingWithAnotherTrainer = connectionLock.status === 'pending' && lockedTrainerId !== currentTrainerId;
+  const requestDisabled = isConnectedToCurrentTrainer || isConnectedToAnotherTrainer || hasPendingWithCurrentTrainer || hasPendingWithAnotherTrainer;
+
+  const requestButtonLabel = isConnectedToCurrentTrainer
+    ? 'Connected'
+    : isConnectedToAnotherTrainer
+      ? 'Already Connected'
+      : hasPendingWithCurrentTrainer
+        ? 'Request Pending'
+        : hasPendingWithAnotherTrainer
+          ? 'Pending Elsewhere'
+          : 'Send Connection Request';
 
   return (
     <TraineeDashboard>
@@ -172,9 +237,10 @@ const TrainerProfile = () => {
                     <button 
                       className="btn btn-primary"
                       onClick={() => setShowRequestModal(true)}
+                      disabled={requestDisabled}
                     >
-                      <i className="bi bi-send me-2"></i>
-                      Send Connection Request
+                      <i className={`bi ${requestDisabled ? 'bi-lock' : 'bi-send'} me-2`}></i>
+                      {requestButtonLabel}
                     </button>
                   </div>
                 </div>

@@ -483,7 +483,7 @@ const CreatePrograms = () => {
       <style>{styles}</style>
       
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="mb-0" style={{ color: '#fff' }}>My Training Programs</h4>
+        <h2 className="mb-0 fw-bold" style={{ color: '#fff' }}>My Training Programs</h2>
         <button 
           className="btn"
           style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
@@ -579,7 +579,7 @@ const CreatePrograms = () => {
 
       <div className="row">
         {/* Left Column - Program Package Details */}
-        <div className="col-lg-8">
+        <div className="col-12">
           {/* Program Package Information */}
           <div className="card border-0 shadow-sm mb-4" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
             <div className="card-header border-bottom" style={{ backgroundColor: 'transparent', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
@@ -1086,10 +1086,6 @@ const CreatePrograms = () => {
               </small>
             </div>
           </div>
-        </div>
-
-        {/* Right Column - Empty for now */}
-        <div className="col-lg-4">
         </div>
       </div>
 

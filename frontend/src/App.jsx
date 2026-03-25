@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Navigate, Route, Routes } from "react-router-dom";
 import HomePage from "./pages/homepage";
 
 import SignUp from "./pages/signup";
@@ -26,11 +26,9 @@ import TraineeDashboardHome from "./pages/dashboards/trainee/Dashboard";
 import ProfilePage from "./pages/dashboards/trainee/ProfilePage";
 import ProgramMarketplace from "./pages/dashboards/trainee/ProgramMarketplace";
 
-import MyWorkouts from "./pages/dashboards/trainee/MyWorkouts";
 import ProgramView from "./pages/dashboards/trainee/ProgramView";
 import UserProgramView from "./pages/dashboards/trainee/UserProgramView";
 import EditUserProgram from "./pages/dashboards/trainee/EditUserProgram";
-import MealsPage from "./pages/dashboards/trainee/MealsPage";
 import Progress from "./pages/dashboards/trainee/Progress";
 import MessagesPage from "./pages/dashboards/trainee/MessagesPage";
 import AnalyticsDashboard from "./pages/dashboards/trainee/AnalyticsDashboard";
@@ -46,7 +44,6 @@ import AdminMessages from "./pages/dashboards/admin/AdminMessages";
 
 // Trainee Connection System Pages
 import FindTrainersPage from "./pages/dashboards/trainee/FindTrainersPage";
-import MyConnectionRequestsPage from "./pages/dashboards/trainee/MyConnectionRequestsPage";
 import MyPlansPage from "./pages/dashboards/trainee/MyPlansPage";   
 
 function App() {
@@ -197,7 +194,7 @@ function App() {
           path="/workouts" 
           element={
             <AuthRoot allowedPrivileges={['trainee']}>
-              <MyWorkouts />
+              <Navigate to="/trainee-dashboard/my-plans" replace />
             </AuthRoot>
           }
         />
@@ -237,7 +234,7 @@ function App() {
           path="/trainee-dashboard/workouts" 
           element={
             <AuthRoot allowedPrivileges={['trainee']}>
-              <MyWorkouts />
+              <Navigate to="/trainee-dashboard/my-plans" replace />
             </AuthRoot>
           }
         />
@@ -245,7 +242,7 @@ function App() {
           path="/meals" 
           element={
             <AuthRoot allowedPrivileges={['trainee']}>
-              <MealsPage />
+              <Navigate to="/trainee-dashboard/my-plans" replace state={{ activeTab: 'meals' }} />
             </AuthRoot>
           }
         />
@@ -323,7 +320,11 @@ function App() {
           path="/trainee-dashboard/my-requests" 
           element={
             <AuthRoot allowedPrivileges={['trainee']}>
-              <MyConnectionRequestsPage />
+              <Navigate
+                to="/trainee-dashboard/my-coach"
+                replace
+                state={{ showCoachBrowser: true, initialConnectionView: 'requests' }}
+              />
             </AuthRoot>
           }
         />

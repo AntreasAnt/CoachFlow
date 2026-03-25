@@ -196,7 +196,7 @@ const TrainerClientsManagement = () => {
 
   return (
     <TrainerDashboardLayout>
-      <div style={{ minHeight: '100vh', backgroundColor: '#1a1a1a', color: '#fff', padding: '2rem' }}>
+      <div style={{ minHeight: '100vh', backgroundColor: '#1a1a1a', color: '#fff' }}>
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
             <h2 className="mb-1 fw-bold" style={{ color: '#fff' }}>Client Management</h2>
@@ -315,10 +315,19 @@ const TrainerClientsManagement = () => {
                           )}
                         </div>
                         <div className="d-flex align-items-center mb-3">
-                          <div className="rounded-circle text-white d-flex align-items-center justify-content-center me-3" 
-                               style={{ width: '50px', height: '50px', fontSize: '20px', backgroundColor: '#10b981' }}>
-                            {client.name ? client.name.charAt(0).toUpperCase() : 'C'}
-                          </div>
+                          {client.profile_image ? (
+                            <img
+                              src={client.profile_image}
+                              alt={client.name || 'Client'}
+                              className="rounded-circle me-3"
+                              style={{ width: '50px', height: '50px', objectFit: 'cover', border: '2px solid rgba(16, 185, 129, 0.4)' }}
+                            />
+                          ) : (
+                            <div className="rounded-circle text-white d-flex align-items-center justify-content-center me-3"
+                                 style={{ width: '50px', height: '50px', fontSize: '20px', backgroundColor: '#10b981' }}>
+                              {client.name ? client.name.charAt(0).toUpperCase() : 'C'}
+                            </div>
+                          )}
                           <div className="flex-grow-1">
                             <h5 className="mb-0" style={{ color: '#fff' }}>{client.name || 'Client'}</h5>
                             <small style={{ color: '#9ca3af' }}>{client.email}</small>
@@ -374,10 +383,19 @@ const TrainerClientsManagement = () => {
                     <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
                       <div className="card-body">
                         <div className="d-flex align-items-center mb-3">
-                          <div className="rounded-circle text-white d-flex align-items-center justify-content-center me-3" 
-                               style={{ width: '50px', height: '50px', fontSize: '20px', backgroundColor: '#6b7280' }}>
-                            {request.trainee_name ? request.trainee_name.charAt(0).toUpperCase() : 'T'}
-                          </div>
+                          {request.profile_image ? (
+                            <img
+                              src={request.profile_image}
+                              alt={request.trainee_name || 'Trainee'}
+                              className="rounded-circle me-3"
+                              style={{ width: '50px', height: '50px', objectFit: 'cover', border: '2px solid rgba(107, 114, 128, 0.4)' }}
+                            />
+                          ) : (
+                            <div className="rounded-circle text-white d-flex align-items-center justify-content-center me-3"
+                                 style={{ width: '50px', height: '50px', fontSize: '20px', backgroundColor: '#6b7280' }}>
+                              {request.trainee_name ? request.trainee_name.charAt(0).toUpperCase() : 'T'}
+                            </div>
+                          )}
                           <div className="flex-grow-1">
                             <h5 className="mb-0" style={{ color: '#fff' }}>{request.trainee_name || 'Trainee'}</h5>
                             <small style={{ color: '#9ca3af' }}>{request.trainee_email}</small>

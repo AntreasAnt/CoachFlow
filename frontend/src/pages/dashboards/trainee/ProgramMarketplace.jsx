@@ -350,7 +350,10 @@ const ProgramMarketplace = () => {
               <small className="text-white-50 d-block mb-2">
                 Purchased: {new Date(program.purchased_at).toLocaleDateString()}
               </small>
-              <button className="btn btn-primary btn-sm w-100">
+              <button
+                className="btn btn-primary btn-sm w-100"
+                onClick={() => navigate(`/trainee-dashboard/program/${program.program_id}`)}
+              >
                 <i className="bi bi-play-circle me-2"></i>
                 Start Program
               </button>

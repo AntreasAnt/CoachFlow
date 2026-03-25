@@ -260,9 +260,9 @@ const EditUserProgram = () => {
             <button 
               className="btn btn-sm ms-3"
               style={{ background: 'rgba(220, 53, 69, 0.2)', border: '1px solid rgba(220, 53, 69, 0.4)', color: 'rgba(220, 53, 69, 0.95)' }}
-              onClick={() => navigate('/trainee-dashboard/workouts')}
+              onClick={() => navigate('/trainee-dashboard/my-plans')}
             >
-              Back to My Workouts
+              Back to My Plans
             </button>
           </div>
         </div>

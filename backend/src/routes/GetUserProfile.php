@@ -38,6 +38,23 @@ if ($requestedUsername) {
 $user = $userModel->getprofileById($targetUserId);
 
 if ($user) {
+    // Prefer latest logged body measurement weight so profile matches dashboard quick log
+    $latestLoggedWeight = null;
+    try {
+        $weightStmt = $userModel->conn->prepare("SELECT weight_kg FROM body_measurements WHERE user_id = ? ORDER BY measurement_date DESC LIMIT 1");
+        if ($weightStmt) {
+            $weightStmt->bind_param("i", $targetUserId);
+            $weightStmt->execute();
+            $weightResult = $weightStmt->get_result()->fetch_assoc();
+            if ($weightResult && isset($weightResult['weight_kg'])) {
+                $latestLoggedWeight = (float)$weightResult['weight_kg'];
+            }
+            $weightStmt->close();
+        }
+    } catch (Exception $e) {
+        error_log("GetUserProfile latest weight lookup failed: " . $e->getMessage());
+    }
+
     // Calculate member since date
     $memberSince = $user['registrationdate'] ? 
         date('Y-m-d', $user['registrationdate']) : 
@@ -56,7 +73,7 @@ if ($user) {
         
         // Physical info
         'height' => $user['height'],
-        'weight' => $user['weight'],
+        'weight' => $latestLoggedWeight !== null ? $latestLoggedWeight : $user['weight'],
         'age' => $user['age'],
         'sex' => $user['sex'],
         

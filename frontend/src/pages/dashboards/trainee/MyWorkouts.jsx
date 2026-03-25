@@ -11,6 +11,7 @@ const MyWorkouts = ({ embedded = false }) => {
   const [activeView, setActiveView] = useState('plans'); // plans, create, log
   const [workoutPlans, setWorkoutPlans] = useState([]);
   const [purchasedPrograms, setPurchasedPrograms] = useState([]);
+  const [hiddenPurchasedPrograms, setHiddenPurchasedPrograms] = useState([]);
   const [trainerAssignedPrograms, setTrainerAssignedPrograms] = useState([]);
   const [assignedProgramsLoading, setAssignedProgramsLoading] = useState(false);
   const [workoutHistory, setWorkoutHistory] = useState([]);
@@ -154,15 +155,18 @@ const MyWorkouts = ({ embedded = false }) => {
       // Fetch purchased programs
       const purchasedData = await APIClient.get(`${BACKEND_ROUTES_API}GetPurchasedPrograms.php`);
       let purchasedList = [];
+      let hiddenPurchasedList = [];
       if (purchasedData.success) {
         purchasedList = purchasedData.purchases || [];
+        hiddenPurchasedList = purchasedData.hiddenPurchases || [];
         setPurchasedPrograms(purchasedList);
+        setHiddenPurchasedPrograms(hiddenPurchasedList);
       }
 
       // Fetch marketplace programs and filter out purchased ones
       const marketplaceData = await APIClient.get(`${BACKEND_ROUTES_API}GetPrograms.php?type=marketplace&limit=6&sort_by=popular`);
       if (marketplaceData.success) {
-        const purchasedProgramIds = purchasedList.map(p => p.program_id);
+        const purchasedProgramIds = [...purchasedList, ...hiddenPurchasedList].map(p => p.program_id);
         const availablePrograms = (marketplaceData.programs || []).filter(
           program => !purchasedProgramIds.includes(program.id)
         );
@@ -342,6 +346,24 @@ const MyWorkouts = ({ embedded = false }) => {
       }
     } catch (err) {
       console.error('Error updating plan:', err);
+    }
+  };
+
+  const restorePurchasedProgram = async (program) => {
+    try {
+      const data = await APIClient.post(`${BACKEND_ROUTES_API}RestorePurchase.php`, {
+        programId: program.program_id
+      });
+
+      if (data.success) {
+        setHiddenPurchasedPrograms(prev => prev.filter(p => p.program_id !== program.program_id));
+        setPurchasedPrograms(prev => [program, ...prev]);
+        setSuccessMessage('Program restored to My Plans');
+        setShowSuccessModal(true);
+        fetchWorkoutData();
+      }
+    } catch (error) {
+      console.error('Error restoring purchased program:', error);
     }
   };
 
@@ -859,7 +881,16 @@ const MyWorkouts = ({ embedded = false }) => {
           style={{
             backgroundColor: 'rgba(15, 20, 15, 0.6)',
             border: '1px solid rgba(32, 214, 87, 0.3)',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
+            boxShadow: 'none',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-4px)';
+            e.currentTarget.style.boxShadow = '0 8px 24px rgba(32, 214, 87, 0.25)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = 'none';
           }}
         >
           <div className="card-header border-0" style={{ backgroundColor: '#000000 !important', background: '#000000 !important', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', padding: '1.25rem', borderRadius: '1rem 1rem 0 0', backdropFilter: 'none' }}>
@@ -889,9 +920,18 @@ const MyWorkouts = ({ embedded = false }) => {
                     <div 
                       className="card rounded-4 h-100" 
                       style={{ 
-                        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                        backgroundColor: 'rgba(15, 20, 15, 0.6)',
                         border: '2px solid var(--brand-primary)',
-                        boxShadow: '0 4px 16px rgba(32, 214, 87, 0.2)'
+                        boxShadow: 'none',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(32, 214, 87, 0.25)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
                       }}
                     >
                       <div className="card-body p-4">
@@ -953,7 +993,7 @@ const MyWorkouts = ({ embedded = false }) => {
       {/* Workout Plans Grid */}
       <div className="row">
         {/* Section Header for Other Programs */}
-        {(purchasedPrograms.length > 0 || workoutPlans.length > 0 || premadeWorkoutPlans.length > 0) && 
+        {(purchasedPrograms.length > 0 || hiddenPurchasedPrograms.length > 0 || workoutPlans.length > 0 || premadeWorkoutPlans.length > 0) && 
          trainerAssignedPrograms.length > 0 && (
           <div className="col-12 mb-4">
             <div className="d-flex align-items-center">
@@ -974,7 +1014,7 @@ const MyWorkouts = ({ embedded = false }) => {
               style={{ 
                 backgroundColor: 'rgba(15, 20, 15, 0.6)',
                 border: '1px solid rgba(32, 214, 87, 0.3)',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+                boxShadow: 'none',
                 transition: 'all 0.3s ease'
               }}
               onMouseEnter={(e) => {
@@ -985,7 +1025,7 @@ const MyWorkouts = ({ embedded = false }) => {
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = 'rgba(32, 214, 87, 0.3)';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.3)';
+                e.currentTarget.style.boxShadow = 'none';
               }}
             >
               <div className="card-body p-4">
@@ -1024,7 +1064,7 @@ const MyWorkouts = ({ embedded = false }) => {
                     }}
                   >
                     <i className="bi bi-play-circle me-2"></i>
-                    View Program
+                    Start Program
                   </button>
                   <button 
                     className="btn rounded-pill"
@@ -1046,6 +1086,57 @@ const MyWorkouts = ({ embedded = false }) => {
           </div>
         ))}
 
+        {/* Hidden Purchased Programs */}
+        {hiddenPurchasedPrograms.map(program => (
+          <div key={`hidden-purchased-${program.program_id}`} className="col-lg-6 mb-3">
+            <div
+              className="card border-0 rounded-4 h-100"
+              style={{
+                backgroundColor: 'rgba(15, 20, 15, 0.45)',
+                border: '1px dashed rgba(255, 255, 255, 0.25)',
+                boxShadow: 'none'
+              }}
+            >
+              <div className="card-body p-4">
+                <div className="d-flex justify-content-between align-items-start mb-3">
+                  <h5 className="card-title" style={{ color: 'var(--brand-white)', fontWeight: '600' }}>{program.title}</h5>
+                  <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.8)', padding: '0.5rem 1rem' }}>
+                    <i className="bi bi-eye-slash me-1"></i>
+                    Hidden
+                  </span>
+                </div>
+
+                <div className="mb-2">
+                  <span className="badge rounded-pill me-1" style={{ backgroundColor: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.8)' }}>{program.difficulty_level}</span>
+                  <span className="badge rounded-pill me-1" style={{ backgroundColor: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.8)' }}>{program.duration_weeks}w</span>
+                  <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.8)' }}>{program.category}</span>
+                </div>
+
+                <div className="mb-3">
+                  <small style={{ color: 'var(--text-secondary)' }}>Description:</small>
+                  <p className="small mb-0 mt-1" style={{ color: 'var(--text-primary)' }}>{program.description || 'No description available'}</p>
+                </div>
+
+                <div className="d-flex gap-2">
+                  <button
+                    className="btn rounded-pill flex-fill"
+                    onClick={() => restorePurchasedProgram(program)}
+                    style={{
+                      backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                      color: 'var(--brand-primary)',
+                      border: '1px solid rgba(32, 214, 87, 0.35)',
+                      fontWeight: '600'
+                    }}
+                  >
+                    <i className="bi bi-eye me-2"></i>
+                    Unhide Program
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+
         {/* User's Own Workout Plans */}
         {workoutPlans.map(plan => (
           <div key={plan.id} className="col-lg-6 mb-3">
@@ -1054,7 +1145,7 @@ const MyWorkouts = ({ embedded = false }) => {
               style={{ 
                 backgroundColor: 'rgba(15, 20, 15, 0.6)',
                 border: '1px solid rgba(32, 214, 87, 0.3)',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+                boxShadow: 'none',
                 transition: 'all 0.3s ease'
               }}
               onMouseEnter={(e) => {
@@ -1065,7 +1156,7 @@ const MyWorkouts = ({ embedded = false }) => {
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = 'rgba(32, 214, 87, 0.3)';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.3)';
+                e.currentTarget.style.boxShadow = 'none';
               }}
             >
               <div className="card-body p-4">
@@ -1212,7 +1303,7 @@ const MyWorkouts = ({ embedded = false }) => {
                   style={{ 
                     backgroundColor: 'rgba(15, 20, 15, 0.6)',
                     border: '1px solid rgba(32, 214, 87, 0.3)',
-                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+                    boxShadow: 'none',
                     transition: 'all 0.3s ease'
                   }}
                   onMouseEnter={(e) => {
@@ -1223,7 +1314,7 @@ const MyWorkouts = ({ embedded = false }) => {
                   onMouseLeave={(e) => {
                     e.currentTarget.style.borderColor = 'rgba(32, 214, 87, 0.3)';
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.3)';
+                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
                   <div className="card-body p-4">
@@ -1328,7 +1419,16 @@ const MyWorkouts = ({ embedded = false }) => {
           style={{ 
             backgroundColor: 'rgba(15, 20, 15, 0.6)',
             border: '1px solid rgba(32, 214, 87, 0.3)',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
+            boxShadow: 'none',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-4px)';
+            e.currentTarget.style.boxShadow = '0 8px 24px rgba(32, 214, 87, 0.25)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = 'none';
           }}
         >
           <div className="card-body p-4">
@@ -1974,7 +2074,7 @@ const MyWorkouts = ({ embedded = false }) => {
           <div className="modal-body">
             <p style={{ color: 'rgba(255,255,255,0.9)' }}>Are you sure you want to {planToDelete?.isPurchased ? 'hide' : 'delete'} the workout plan "<strong>{planToDelete?.name}</strong>"?</p>
             {planToDelete?.isPurchased ? (
-              <p className="small" style={{ color: 'rgba(255,255,255,0.7)' }}>This will hide the program from your library. You can restore it later from the marketplace.</p>
+              <p className="small" style={{ color: 'rgba(255,255,255,0.7)' }}>This will hide the program from your library. You can unhide it anytime from the Hidden section in My Plans.</p>
             ) : (
               <p className="small" style={{ color: 'rgba(255,255,255,0.7)' }}>This action cannot be undone.</p>
             )}

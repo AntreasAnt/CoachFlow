@@ -1,6 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { BACKEND_ROUTES_API } from '../../../config/config';
-import APIClient from '../../../utils/APIClient';
+import React, { useState } from 'react';
 
 const CreateWorkoutProgram = ({ onSave, onCancel, allExercises, onAddCustomExercise }) => {
   const [programPackage, setProgramPackage] = useState({
@@ -37,11 +35,19 @@ const CreateWorkoutProgram = ({ onSave, onCancel, allExercises, onAddCustomExerc
 
   const categories = ['Strength', 'Cardio', 'Hybrid', 'Weight Loss', 'Muscle Building', 'Endurance', 'Flexibility', 'General Fitness'];
 
-  const filteredExercises = allExercises.filter(ex => 
-    ex.name?.toLowerCase().includes(exerciseSearch.toLowerCase()) ||
-    ex.category?.toLowerCase().includes(exerciseSearch.toLowerCase()) ||
-    ex.muscle_group?.toLowerCase().includes(exerciseSearch.toLowerCase())
-  );
+  const filteredExercises = React.useMemo(() => {
+    return (allExercises || [])
+      .filter(exercise => exercise.is_custom == 0)
+      .filter(ex =>
+        ex.name?.toLowerCase().includes(exerciseSearch.toLowerCase()) ||
+        ex.category?.toLowerCase().includes(exerciseSearch.toLowerCase()) ||
+        ex.muscle_group?.toLowerCase().includes(exerciseSearch.toLowerCase())
+      );
+  }, [allExercises, exerciseSearch]);
+
+  const customExercises = React.useMemo(() => {
+    return (allExercises || []).filter(exercise => exercise.is_custom == 1);
+  }, [allExercises]);
 
   const saveCurrentSession = () => {
     if (!currentSession.name || currentSession.exercises.length === 0) {
@@ -90,16 +96,13 @@ const CreateWorkoutProgram = ({ onSave, onCancel, allExercises, onAddCustomExerc
     setWorkoutSessions(prev => [...prev, sessionToDuplicate]);
   };
 
-  const openExerciseModal = () => {
-    setShowExerciseModal(true);
-    setExerciseToAdd({ sets: 3, reps: '', rpe: '', type: 'reps' });
-  };
-
-  const selectExercise = (exercise) => {
+  const openExerciseModal = (exercise) => {
     setSelectedExercise(exercise);
+    setShowExerciseModal(true);
+    setExerciseToAdd({ sets: 3, reps: '10-12', rpe: '7-8', type: 'reps' });
   };
 
-  const addExerciseToSession = () => {
+  const addExerciseFromModal = () => {
     if (!selectedExercise || !exerciseToAdd.sets || !exerciseToAdd.reps) {
       alert('Please select an exercise and provide sets/reps');
       return;
@@ -124,7 +127,33 @@ const CreateWorkoutProgram = ({ onSave, onCancel, allExercises, onAddCustomExerc
 
     setShowExerciseModal(false);
     setSelectedExercise(null);
-    setExerciseToAdd({ sets: 3, reps: '', rpe: '', type: 'reps' });
+    setExerciseToAdd({ sets: 3, reps: '10-12', rpe: '7-8', type: 'reps' });
+  };
+
+  const addExerciseToSession = (exercise) => {
+    openExerciseModal(exercise);
+  };
+
+  const addCustomExercise = async () => {
+    if (!newExercise.name || !onAddCustomExercise) return;
+
+    const success = await onAddCustomExercise({
+      name: newExercise.name,
+      category: newExercise.category,
+      muscle_group: newExercise.muscle_group,
+      equipment: newExercise.equipment,
+      instructions: newExercise.instructions
+    });
+
+    if (success) {
+      setNewExercise({
+        name: '',
+        muscle_group: '',
+        category: 'strength',
+        equipment: '',
+        instructions: ''
+      });
+    }
   };
 
   const removeExerciseFromSession = (index) => {
@@ -365,48 +394,154 @@ const CreateWorkoutProgram = ({ onSave, onCancel, allExercises, onAddCustomExerc
             </div>
           </div>
 
-          {/* Exercises in Current Session */}
+          <hr />
+
+          <h6 className="mb-3" style={{ color: 'rgba(255,255,255,0.9)' }}>Add Exercises to This Session</h6>
           <div className="mb-3">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <label className="form-label mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Exercises</label>
-              <button 
-                className="btn btn-primary btn-sm"
-                onClick={openExerciseModal}
-              >
-                <i className="bi bi-plus-circle me-2"></i>
-                Add Exercise
-              </button>
-            </div>
-            
-            {currentSession.exercises.length === 0 ? (
-              <p className="small" style={{ color: 'rgba(255,255,255,0.6)' }}>No exercises added yet</p>
-            ) : (
-              <div className="list-group">
-                {currentSession.exercises.map((exercise, index) => (
-                  <div key={index} className="list-group-item" style={{ background: 'rgba(30, 35, 30, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}>
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
-                        <strong style={{ color: 'rgba(255,255,255,0.9)' }}>{exercise.name}</strong>
-                        <br />
-                        <small style={{ color: 'rgba(255,255,255,0.7)' }}>
-                          {exercise.sets} sets × {exercise.type === 'reps' ? `${exercise.reps} reps` : `${exercise.duration}`}
-                          {exercise.rpe && ` • RPE ${exercise.rpe}`}
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search exercises by name, category, or muscle group..."
+              value={exerciseSearch}
+              onChange={(e) => setExerciseSearch(e.target.value)}
+            />
+          </div>
+
+          <p className="small" style={{ color: 'rgba(255,255,255,0.65)' }}>
+            Showing {filteredExercises.length} global exercises (custom exercises shown below)
+          </p>
+
+          <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+            <div className="row">
+              {filteredExercises.map((exercise) => (
+                <div key={`global-${exercise.id}`} className="col-md-6 mb-2">
+                  <div
+                    className="card"
+                    onClick={() => addExerciseToSession(exercise)}
+                    style={{ background: 'rgba(30, 35, 30, 0.6)', border: '1px solid rgba(32, 214, 87, 0.25)', cursor: 'pointer' }}
+                  >
+                    <div className="card-body py-2">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div>
+                          <small className="fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>{exercise.name}</small>
                           <br />
-                          {exercise.muscle_group}
-                        </small>
+                          <small style={{ color: 'rgba(255,255,255,0.7)' }}>{exercise.category} • {exercise.muscle_group}</small>
+                        </div>
+                        <i className="bi bi-plus-circle" style={{ color: 'rgba(32, 214, 87, 0.95)' }}></i>
                       </div>
-                      <button 
-                        className="btn btn-outline-danger btn-sm"
-                        onClick={() => removeExerciseFromSession(index)}
-                      >
-                        <i className="bi bi-trash"></i>
-                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <hr style={{ borderColor: 'rgba(32, 214, 87, 0.2)' }} />
+
+          <h6 className="mb-3" style={{ color: 'rgba(255,255,255,0.9)' }}>My Exercises ({customExercises.length})</h6>
+          {customExercises.length === 0 ? (
+            <p className="small" style={{ color: 'rgba(255,255,255,0.6)' }}>No custom exercises yet. Create one below.</p>
+          ) : (
+            <div style={{ maxHeight: '220px', overflowY: 'auto' }}>
+              <div className="row">
+                {customExercises.map((exercise) => (
+                  <div key={`custom-${exercise.id}`} className="col-md-6 mb-2">
+                    <div className="card" style={{ background: 'rgba(30, 35, 30, 0.6)', border: '1px solid rgba(32, 214, 87, 0.25)' }}>
+                      <div className="card-body py-2">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div className="flex-grow-1" style={{ cursor: 'pointer' }} onClick={() => addExerciseToSession(exercise)}>
+                            <small className="fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>{exercise.name}</small>
+                            <br />
+                            <small style={{ color: 'rgba(255,255,255,0.7)' }}>{exercise.category} • {exercise.muscle_group}</small>
+                          </div>
+                          <button
+                            className="btn btn-sm"
+                            onClick={() => addExerciseToSession(exercise)}
+                            style={{ background: 'rgba(32, 214, 87, 0.2)', border: '1px solid rgba(32, 214, 87, 0.4)', color: 'rgba(32, 214, 87, 0.95)' }}
+                          >
+                            <i className="bi bi-plus-circle"></i>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
-            )}
+            </div>
+          )}
+
+          <hr />
+
+          <h6 className="mb-3" style={{ color: 'rgba(255,255,255,0.9)' }}>Create Your Own Exercise</h6>
+          <div className="row">
+            <div className="col-md-4 mb-3">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Exercise name"
+                value={newExercise.name}
+                onChange={(e) => setNewExercise(prev => ({ ...prev, name: e.target.value }))}
+              />
+            </div>
+            <div className="col-md-3 mb-3">
+              <select
+                className="form-select"
+                value={newExercise.category}
+                onChange={(e) => setNewExercise(prev => ({ ...prev, category: e.target.value }))}
+              >
+                <option value="strength">Strength</option>
+                <option value="cardio">Cardio</option>
+                <option value="flexibility">Flexibility</option>
+                <option value="core">Core</option>
+              </select>
+            </div>
+            <div className="col-md-3 mb-3">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Muscle group"
+                value={newExercise.muscle_group}
+                onChange={(e) => setNewExercise(prev => ({ ...prev, muscle_group: e.target.value }))}
+              />
+            </div>
+            <div className="col-md-2 mb-3">
+              <button
+                className="btn w-100"
+                onClick={addCustomExercise}
+                disabled={!newExercise.name}
+                style={{ background: 'rgba(32, 214, 87, 0.2)', border: '1px solid rgba(32, 214, 87, 0.4)', color: 'rgba(32, 214, 87, 0.95)', fontWeight: '600' }}
+              >
+                Add
+              </button>
+            </div>
           </div>
+
+          <hr />
+
+          <h6 className="mb-3" style={{ color: 'rgba(255,255,255,0.9)' }}>Session Exercises ({currentSession.exercises.length})</h6>
+          {currentSession.exercises.length === 0 ? (
+            <p className="small" style={{ color: 'rgba(255,255,255,0.6)' }}>No exercises added yet</p>
+          ) : (
+            <div className="mb-3">
+              {currentSession.exercises.map((exercise, index) => (
+                <div key={index} className="d-flex justify-content-between align-items-center mb-2 p-2 rounded" style={{ background: 'rgba(30, 35, 30, 0.6)', border: '1px solid rgba(32, 214, 87, 0.25)' }}>
+                  <div>
+                    <small className="fw-bold d-block" style={{ color: 'rgba(255,255,255,0.9)' }}>{exercise.name}</small>
+                    <small style={{ color: 'rgba(255,255,255,0.7)' }}>{exercise.sets} sets x {exercise.type === 'reps' ? exercise.reps : exercise.duration}</small>
+                    {exercise.rpe && <small style={{ color: 'rgba(255,255,255,0.7)' }}> • RPE {exercise.rpe}</small>}
+                    <br />
+                    <small style={{ color: 'rgba(255,255,255,0.7)' }}>{exercise.muscle_group}</small>
+                  </div>
+                  <button
+                    className="btn btn-sm btn-outline-danger"
+                    onClick={() => removeExerciseFromSession(index)}
+                  >
+                    <i className="bi bi-trash"></i>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="d-flex gap-2">
             <button 
@@ -445,99 +580,54 @@ const CreateWorkoutProgram = ({ onSave, onCancel, allExercises, onAddCustomExerc
         </button>
       </div>
 
-      {/* Exercise Selection Modal */}
+      {/* Exercise Modal */}
       {showExerciseModal && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-lg modal-dialog-scrollable">
-            <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
-              <div className="modal-header dark-modal-header">
-                <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>Add Exercise</h5>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem', overflow: 'hidden' }}>
+              <div className="modal-header" style={{ background: 'rgba(15, 20, 15, 0.95)', borderBottom: '1px solid rgba(32, 214, 87, 0.2)' }}>
+                <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>Add {selectedExercise?.name}</h5>
                 <button 
                   type="button" 
-                  className="btn-close"
+                  className="btn-close btn-close-white"
+                  style={{ opacity: 0.9 }}
                   onClick={() => setShowExerciseModal(false)}
                 ></button>
               </div>
               <div className="modal-body">
                 <div className="mb-3">
-                  <input 
-                    type="text" 
+                  <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Sets *</label>
+                  <input
+                    type="number"
                     className="form-control"
                     style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
-                    placeholder="Search exercises..."
-                    value={exerciseSearch}
-                    onChange={(e) => setExerciseSearch(e.target.value)}
+                    value={exerciseToAdd.sets}
+                    onChange={(e) => setExerciseToAdd(prev => ({ ...prev, sets: parseInt(e.target.value) || 0 }))}
+                    min="1"
                   />
                 </div>
-
-                <div className="list-group mb-4" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                  {filteredExercises.map(exercise => (
-                    <button
-                      key={exercise.id}
-                      type="button"
-                      className={`list-group-item list-group-item-action ${selectedExercise?.id === exercise.id ? 'active' : ''}`}
-                      style={selectedExercise?.id === exercise.id ? {} : { background: 'rgba(30, 35, 30, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
-                      onClick={() => selectExercise(exercise)}
-                    >
-                      <strong>{exercise.name}</strong>
-                      <br />
-                      <small style={selectedExercise?.id === exercise.id ? {} : { color: 'rgba(255,255,255,0.7)' }}>{exercise.category} • {exercise.muscle_group}</small>
-                    </button>
-                  ))}
+                <div className="mb-3">
+                  <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Reps *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
+                    value={exerciseToAdd.reps}
+                    onChange={(e) => setExerciseToAdd(prev => ({ ...prev, reps: e.target.value }))}
+                    placeholder="e.g., 8-12"
+                  />
                 </div>
-
-                {selectedExercise && (
-                  <div className="border rounded p-3" style={{ background: 'rgba(30, 35, 30, 0.5)', borderColor: 'rgba(32, 214, 87, 0.3) !important' }}>
-                    <h6 style={{ color: 'rgba(255,255,255,0.9)' }}>Configure Exercise: {selectedExercise.name}</h6>
-                    <div className="row">
-                      <div className="col-md-3 mb-2">
-                        <label className="form-label small" style={{ color: 'rgba(255,255,255,0.9)' }}>Sets</label>
-                        <input 
-                          type="number" 
-                          className="form-control"
-                          style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
-                          value={exerciseToAdd.sets}
-                          onChange={(e) => setExerciseToAdd(prev => ({ ...prev, sets: e.target.value }))}
-                          min="1"
-                        />
-                      </div>
-                      <div className="col-md-3 mb-2">
-                        <label className="form-label small" style={{ color: 'rgba(255,255,255,0.9)' }}>Type</label>
-                        <select 
-                          className="form-select"
-                          style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
-                          value={exerciseToAdd.type}
-                          onChange={(e) => setExerciseToAdd(prev => ({ ...prev, type: e.target.value }))}
-                        >
-                          <option value="reps">Reps</option>
-                          <option value="duration">Duration</option>
-                        </select>
-                      </div>
-                      <div className="col-md-3 mb-2">
-                        <label className="form-label small" style={{ color: 'rgba(255,255,255,0.9)' }}>{exerciseToAdd.type === 'reps' ? 'Reps' : 'Duration'}</label>
-                        <input 
-                          type="text" 
-                          className="form-control"
-                          style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
-                          value={exerciseToAdd.reps}
-                          onChange={(e) => setExerciseToAdd(prev => ({ ...prev, reps: e.target.value }))}
-                          placeholder={exerciseToAdd.type === 'reps' ? '10-12' : '30s'}
-                        />
-                      </div>
-                      <div className="col-md-3 mb-2">
-                        <label className="form-label small" style={{ color: 'rgba(255,255,255,0.9)' }}>RPE (optional)</label>
-                        <input 
-                          type="text" 
-                          className="form-control"
-                          style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
-                          value={exerciseToAdd.rpe}
-                          onChange={(e) => setExerciseToAdd(prev => ({ ...prev, rpe: e.target.value }))}
-                          placeholder="7-8"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <div className="mb-3">
+                  <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>RPE</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    style={{ background: 'rgba(30, 35, 30, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)' }}
+                    value={exerciseToAdd.rpe}
+                    onChange={(e) => setExerciseToAdd(prev => ({ ...prev, rpe: e.target.value }))}
+                    placeholder="e.g., 7-8"
+                  />
+                </div>
               </div>
               <div className="modal-footer" style={{ background: 'rgba(20, 25, 20, 0.95)', borderTop: '1px solid rgba(32, 214, 87, 0.3)' }}>
                 <button 
@@ -550,7 +640,7 @@ const CreateWorkoutProgram = ({ onSave, onCancel, allExercises, onAddCustomExerc
                 <button 
                   type="button" 
                   className="btn btn-primary"
-                  onClick={addExerciseToSession}
+                  onClick={addExerciseFromModal}
                   disabled={!selectedExercise || !exerciseToAdd.sets || !exerciseToAdd.reps}
                 >
                   Add to Session

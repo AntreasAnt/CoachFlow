@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json');
-require_once __DIR__ . '/../src/bootstrap.php';
-require_once __DIR__ . '/../src/config/cors.php';
+require_once __DIR__ . '/../config/cors.php';
+require_once __DIR__ . '/../config/Database.php';
 
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
@@ -13,72 +13,69 @@ $userId = $_SESSION['user_id'];
 
 try {
     $db = new Database();
-    $conn = $db->getConnection();
+    $conn = $db->connect();
 
     // Get latest weight
     $weightQuery = "SELECT weight_kg, measurement_date 
                     FROM body_measurements 
-                    WHERE user_id = :user_id 
-                    ORDER BY measurement_date DESC, created_at DESC 
+                    WHERE user_id = ? 
+                    ORDER BY measurement_date DESC 
                     LIMIT 1";
-    
+
     $stmt = $conn->prepare($weightQuery);
-    $stmt->bindParam(':user_id', $userId);
+    $stmt->bind_param('i', $userId);
     $stmt->execute();
-    $latestWeight = $stmt->fetch(PDO::FETCH_ASSOC);
+    $latestWeight = $stmt->get_result()->fetch_assoc();
 
     // Get weight from 30 days ago for comparison
     $thirtyDaysAgo = date('Y-m-d', strtotime('-30 days'));
     $previousQuery = "SELECT weight_kg 
                       FROM body_measurements 
-                      WHERE user_id = :user_id 
-                      AND measurement_date <= :thirty_days_ago
+                      WHERE user_id = ? 
+                      AND measurement_date <= ?
                       ORDER BY measurement_date DESC 
                       LIMIT 1";
-    
+
     $stmt = $conn->prepare($previousQuery);
-    $stmt->bindParam(':user_id', $userId);
-    $stmt->bindParam(':thirty_days_ago', $thirtyDaysAgo);
+    $stmt->bind_param('is', $userId, $thirtyDaysAgo);
     $stmt->execute();
-    $previousWeight = $stmt->fetch(PDO::FETCH_ASSOC);
+    $previousWeight = $stmt->get_result()->fetch_assoc();
 
     // Get workouts this week
     $weekStart = date('Y-m-d', strtotime('monday this week'));
     $workoutsQuery = "SELECT COUNT(*) as count 
                       FROM workout_sessions 
-                      WHERE user_id = :user_id 
-                      AND session_date >= :week_start";
-    
+                      WHERE user_id = ? 
+                      AND session_date >= ?";
+
     $stmt = $conn->prepare($workoutsQuery);
-    $stmt->bindParam(':user_id', $userId);
-    $stmt->bindParam(':week_start', $weekStart);
+    $stmt->bind_param('is', $userId, $weekStart);
     $stmt->execute();
-    $workouts = $stmt->fetch(PDO::FETCH_ASSOC);
+    $workouts = $stmt->get_result()->fetch_assoc();
 
     // Get current workout streak
     $streakQuery = "SELECT current_streak, longest_streak 
                     FROM user_streaks 
-                    WHERE user_id = :user_id 
+                    WHERE user_id = ? 
                     AND streak_type = 'workout_days'
                     LIMIT 1";
-    
+
     $stmt = $conn->prepare($streakQuery);
-    $stmt->bindParam(':user_id', $userId);
+    $stmt->bind_param('i', $userId);
     $stmt->execute();
-    $streak = $stmt->fetch(PDO::FETCH_ASSOC);
+    $streak = $stmt->get_result()->fetch_assoc();
 
     // Get total workout time this month
     $monthStart = date('Y-m-01');
     $timeQuery = "SELECT SUM(duration_minutes) as total_minutes 
                   FROM workout_sessions 
-                  WHERE user_id = :user_id 
-                  AND session_date >= :month_start";
-    
+                  WHERE user_id = ? 
+                  AND session_date >= ?";
+
     $stmt = $conn->prepare($timeQuery);
-    $stmt->bindParam(':user_id', $userId);
-    $stmt->bindParam(':month_start', $monthStart);
+    $stmt->bind_param('is', $userId, $monthStart);
     $stmt->execute();
-    $time = $stmt->fetch(PDO::FETCH_ASSOC);
+    $time = $stmt->get_result()->fetch_assoc();
 
     // Calculate weight change
     $weightChange = null;

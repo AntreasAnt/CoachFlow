@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import TraineeDashboard from '../../../components/TraineeDashboard';
+import FindTrainersPage from './FindTrainersPage';
 import '../../../styles/CoachPage.css';
 
 const MyCoach = () => {
@@ -18,13 +19,23 @@ const MyCoach = () => {
   const [assignedPrograms, setAssignedPrograms] = useState([]);
   const [workoutHistory, setWorkoutHistory] = useState([]);
   const [nextSession, setNextSession] = useState(null);
+  const [showCoachBrowser, setShowCoachBrowser] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const initialBrowserView = location.state?.initialConnectionView === 'requests' ? 'requests' : 'all';
 
   useEffect(() => {
     fetchCoachData();
     fetchAssignedPrograms();
     fetchWorkoutHistory();
   }, []);
+
+  useEffect(() => {
+    if (location.state?.showCoachBrowser || location.state?.initialConnectionView === 'requests') {
+      setShowCoachBrowser(true);
+    }
+  }, [location.state]);
 
   const fetchWorkoutHistory = async () => {
     try {
@@ -220,13 +231,13 @@ const MyCoach = () => {
 
   const handleStartWorkout = () => {
     if (!nextSession) {
-      // No assigned programs, go to general workout page
-      navigate('/trainee-dashboard/workouts');
+      // No assigned programs, go to plans page
+      navigate('/trainee-dashboard/my-plans');
       return;
     }
 
     // Start the specific session
-    navigate('/trainee-dashboard/workouts', {
+    navigate('/trainee-dashboard/my-plans', {
       state: {
         startWorkout: true,
         workoutData: {
@@ -315,7 +326,16 @@ const MyCoach = () => {
           setMyReview(reviewData.review);
           setRating(reviewData.review.rating);
           setReviewText(reviewData.review.review_text || '');
+        } else {
+          setMyReview(null);
+          setRating(0);
+          setReviewText('');
         }
+      } else {
+        setCoach(null);
+        setMyReview(null);
+        setRating(0);
+        setReviewText('');
       }
     } catch (err) {
       console.error('Error fetching coach:', err);
@@ -349,6 +369,8 @@ const MyCoach = () => {
       if (result.success) {
         setShowDisconnectModal(false);
         setCoach(null);
+        setMyReview(null);
+        setShowCoachBrowser(true);
         setToast({ show: true, message: 'Successfully disconnected from trainer', type: 'success' });
       } else {
         setToast({ show: true, message: result.message || 'Failed to disconnect', type: 'danger' });
@@ -396,6 +418,44 @@ const MyCoach = () => {
     }
   };
 
+  const renderCoachTabs = (activeTab = 'coach', hasCoach = Boolean(coach)) => {
+    const getTabStyle = (isActive, disabled = false) => ({
+      background: isActive ? 'rgba(32, 214, 87, 0.18)' : 'rgba(30, 35, 30, 0.55)',
+      border: isActive ? '1px solid rgba(32, 214, 87, 0.35)' : '1px solid rgba(32, 214, 87, 0.2)',
+      color: isActive ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.72)',
+      borderRadius: '999px',
+      padding: '0.55rem 1rem',
+      fontSize: '0.9rem',
+      fontWeight: 600,
+      opacity: disabled ? 0.55 : 1,
+      cursor: disabled ? 'not-allowed' : 'pointer'
+    });
+
+    return (
+      <div className="d-flex flex-wrap gap-2 mb-4">
+        <button
+          type="button"
+          className="btn btn-sm"
+          onClick={() => hasCoach && setShowCoachBrowser(false)}
+          disabled={!hasCoach}
+          style={getTabStyle(activeTab === 'coach', !hasCoach)}
+        >
+          <i className="bi bi-person-badge me-2"></i>
+          My Coach
+        </button>
+        <button
+          type="button"
+          className="btn btn-sm"
+          onClick={() => setShowCoachBrowser(true)}
+          style={getTabStyle(activeTab === 'browse')}
+        >
+          <i className="bi bi-search me-2"></i>
+          {hasCoach ? 'All Coaches' : 'Find Coaches'}
+        </button>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <TraineeDashboard>
@@ -409,24 +469,38 @@ const MyCoach = () => {
     );
   }
 
-  if (!coach) {
+  if (!coach || showCoachBrowser) {
     return (
       <TraineeDashboard>
-        <div className="container-fluid px-4 py-5" style={{ backgroundColor: 'var(--brand-dark)', minHeight: '100vh' }}>
-          <div className="text-center py-5" style={{ background: 'rgba(15, 20, 15, 0.7)', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem', padding: '3rem' }}>
-            <i className="bi bi-person-x fs-1 mb-3 d-block" style={{ color: 'rgba(32, 214, 87, 0.6)' }}></i>
-            <h4 className="mb-3" style={{ color: 'rgba(255,255,255,0.95)' }}>No Active Trainer</h4>
-            <p className="mb-4" style={{ color: 'rgba(255,255,255,0.7)' }}>You don't have a trainer yet. Find one to start your fitness journey!</p>
-            <button 
-              className="btn btn-lg"
-              style={{ background: 'rgba(32, 214, 87, 0.2)', border: '1px solid rgba(32, 214, 87, 0.4)', color: 'rgba(255,255,255,0.9)', padding: '0.75rem 2rem', borderRadius: '0.5rem' }}
-              onClick={() => navigate('/trainee-dashboard/find-trainer')}
-            >
-              <i className="bi bi-search me-2"></i>
-              Find a Trainer
-            </button>
-          </div>
-        </div>
+        <FindTrainersPage
+          embedded
+          forceViewOnly={Boolean(coach)}
+          lockBannerMessage={coach ? `You're connected to ${coach.name}. You can browse all coaches here, but you need to end your current coaching relationship before sending another request.` : ''}
+          showMyCoachShortcut={false}
+          initialConnectionView={initialBrowserView}
+          headerContent={(
+            <>
+              {renderCoachTabs('browse', Boolean(coach))}
+              <div
+                className="rounded-4 p-4"
+                style={{
+                  background: 'rgba(15, 20, 15, 0.7)',
+                  border: '1px solid rgba(32, 214, 87, 0.24)',
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)'
+                }}
+              >
+                <h4 className="mb-2" style={{ color: 'rgba(255,255,255,0.95)' }}>
+                  {coach ? 'Browse Coaches' : 'Find Your Coach'}
+                </h4>
+                <p className="mb-0" style={{ color: 'rgba(255,255,255,0.72)' }}>
+                  {coach
+                    ? 'You can still explore all coaches and use the filters, but connection requests are locked while you are already connected.'
+                    : 'Browse all available coaches and use the filters to find the right fit for your goals.'}
+                </p>
+              </div>
+            </>
+          )}
+        />
       </TraineeDashboard>
     );
   }
@@ -434,6 +508,8 @@ const MyCoach = () => {
   return (
     <TraineeDashboard>
       <div className="coach-page container-fluid px-3 px-md-4 py-4" style={{ backgroundColor: 'var(--brand-dark)', minHeight: '100vh', paddingBottom: '100px' }}>
+        {renderCoachTabs('coach', true)}
+
         <div className="row g-4">
           {/* Left Column - Coach Info */}
           <div className="col-lg-8">
@@ -533,21 +609,21 @@ const MyCoach = () => {
             )}
 
             {/* Latest Program */}
-            <div className="card mb-4" style={{ background: 'rgba(15, 20, 15, 0.7)', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem' }}>
-              <div className="card-header d-flex justify-content-between align-items-center" style={{ background: 'rgba(32, 214, 87, 0.1)', borderBottom: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem 1rem 0 0', padding: '1rem 1.25rem' }}>
+            <div className="card mb-4" style={{ background: 'rgba(15, 20, 15, 0.7)', border: '1px solid rgba(32, 214, 87, 0.18)', borderRadius: '1rem' }}>
+              <div className="card-header d-flex justify-content-between align-items-center" style={{ background: 'rgba(255, 255, 255, 0.04)', borderBottom: '1px solid rgba(32, 214, 87, 0.18)', borderRadius: '1rem 1rem 0 0', padding: '1rem 1.25rem' }}>
                 <h6 className="mb-0 fw-semibold" style={{ color: 'rgba(255,255,255,0.95)' }}>
                   <i className="bi bi-play-circle me-2"></i>
                   {nextSession ? 'Next Workout' : 'Training Programs'}
                 </h6>
                 {nextSession?.progress && (
                   <span className="badge" style={{ 
-                    background: nextSession.allCompleted ? 'rgba(255, 193, 7, 0.2)' : 'rgba(32, 214, 87, 0.2)', 
+                    background: nextSession.allCompleted ? 'rgba(255, 193, 7, 0.16)' : 'rgba(32, 214, 87, 0.12)', 
                     color: nextSession.allCompleted ? 'rgba(255, 193, 7, 0.95)' : 'rgba(255,255,255,0.9)', 
                     fontSize: '0.75rem', 
                     padding: '0.35rem 0.6rem' 
                   }}>
                     {nextSession.allCompleted ? (
-                      <><i className="bi bi-trophy-fill me-1"></i>100%</>
+                      <>100%</>
                     ) : (
                       <>{nextSession.progress.completed}/{nextSession.progress.total} done</>
                     )}
@@ -558,39 +634,31 @@ const MyCoach = () => {
                 {nextSession ? (
                   <>
                     {/* Progress Bar */}
-                    {nextSession.progress && nextSession.progress.total > 0 && (
+                    {nextSession.progress && nextSession.progress.total > 0 && !nextSession.allCompleted && (
                       <div className="mb-3">
-                        {nextSession.allCompleted ? (
-                          <div className="text-center p-3" style={{ background: 'linear-gradient(135deg, rgba(32, 214, 87, 0.2), rgba(32, 214, 87, 0.1))', borderRadius: '0.75rem', border: '1px solid rgba(32, 214, 87, 0.4)' }}>
-                            <i className="bi bi-trophy-fill mb-2" style={{ fontSize: '2rem', color: 'rgba(255, 193, 7, 0.9)' }}></i>
-                            <h5 className="mb-1" style={{ color: 'rgba(32, 214, 87, 0.95)', fontWeight: '600' }}>100% Completed!</h5>
-                            <small style={{ color: 'rgba(255,255,255,0.7)' }}>All {nextSession.progress.total} sessions done</small>
+                        <>
+                          <div className="d-flex justify-content-between align-items-center mb-1">
+                            <small style={{ color: 'rgba(255,255,255,0.6)' }}>Program Progress</small>
+                            <small style={{ color: 'rgba(255,255,255,0.8)' }}>
+                              {Math.round((nextSession.progress.completed / nextSession.progress.total) * 100)}%
+                            </small>
                           </div>
-                        ) : (
-                          <>
-                            <div className="d-flex justify-content-between align-items-center mb-1">
-                              <small style={{ color: 'rgba(255,255,255,0.6)' }}>Program Progress</small>
-                              <small style={{ color: 'rgba(32, 214, 87, 0.9)' }}>
-                                {Math.round((nextSession.progress.completed / nextSession.progress.total) * 100)}%
-                              </small>
-                            </div>
-                            <div style={{ background: 'rgba(30, 35, 30, 0.8)', borderRadius: '0.25rem', height: '6px', overflow: 'hidden' }}>
-                              <div 
-                                style={{ 
-                                  background: 'linear-gradient(90deg, rgba(32, 214, 87, 0.6), rgba(32, 214, 87, 0.9))', 
-                                  width: `${(nextSession.progress.completed / nextSession.progress.total) * 100}%`, 
-                                  height: '100%', 
-                                  borderRadius: '0.25rem',
-                                  transition: 'width 0.3s ease'
-                                }}
-                              ></div>
-                            </div>
-                          </>
-                        )}
+                          <div style={{ background: 'rgba(30, 35, 30, 0.8)', borderRadius: '0.25rem', height: '6px', overflow: 'hidden' }}>
+                            <div 
+                              style={{ 
+                                background: 'linear-gradient(90deg, rgba(32, 214, 87, 0.35), rgba(32, 214, 87, 0.7))', 
+                                width: `${(nextSession.progress.completed / nextSession.progress.total) * 100}%`, 
+                                height: '100%', 
+                                borderRadius: '0.25rem',
+                                transition: 'width 0.3s ease'
+                              }}
+                            ></div>
+                          </div>
+                        </>
                       </div>
                     )}
 
-                    <div className="mb-3 p-3" style={{ background: 'rgba(32, 214, 87, 0.1)', borderRadius: '0.75rem', border: '1px solid rgba(32, 214, 87, 0.2)' }}>
+                    <div className="mb-3 p-3" style={{ background: 'rgba(255, 255, 255, 0.03)', borderRadius: '0.75rem', border: '1px solid rgba(32, 214, 87, 0.14)' }}>
                       <div className="d-flex align-items-start justify-content-between">
                         <div>
                           <div className="d-flex align-items-center gap-2 mb-1">
@@ -621,7 +689,7 @@ const MyCoach = () => {
                     <div className="d-flex gap-2">
                       <button 
                         className="btn flex-grow-1"
-                        style={{ background: 'rgba(32, 214, 87, 0.2)', border: '1px solid rgba(32, 214, 87, 0.4)', color: 'rgba(255,255,255,0.9)', padding: '0.75rem 1rem', borderRadius: '0.5rem', fontSize: '0.9rem' }}
+                        style={{ background: 'rgba(32, 214, 87, 0.14)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)', padding: '0.75rem 1rem', borderRadius: '0.5rem', fontSize: '0.9rem' }}
                         onClick={handleStartWorkout}
                       >
                         <i className={`bi ${nextSession.allCompleted ? 'bi-arrow-repeat' : 'bi-play-fill'} me-2`}></i>
@@ -760,8 +828,8 @@ const MyCoach = () => {
         {showDisconnectModal && (
           <div className="modal d-block" style={{backgroundColor: 'rgba(0,0,0,0.7)'}}>
             <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem' }}>
-                <div className="modal-header" style={{ borderBottom: '1px solid rgba(32, 214, 87, 0.2)' }}>
+              <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem', overflow: 'hidden' }}>
+                <div className="modal-header dark-modal-header" style={{ borderBottom: '1px solid rgba(32, 214, 87, 0.2)', background: 'rgba(15, 20, 15, 0.95)', backgroundColor: 'rgba(15, 20, 15, 0.95)', borderRadius: '1rem 1rem 0 0' }}>
                   <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.95)' }}>End Coaching Relationship?</h5>
                   <button className="btn-close btn-close-white" onClick={() => setShowDisconnectModal(false)}></button>
                 </div>
@@ -803,8 +871,8 @@ const MyCoach = () => {
         {showReviewModal && (
           <div className="modal d-block" style={{backgroundColor: 'rgba(0,0,0,0.7)'}}>
             <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem' }}>
-                <div className="modal-header" style={{ borderBottom: '1px solid rgba(32, 214, 87, 0.2)' }}>
+              <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem', overflow: 'hidden' }}>
+                <div className="modal-header dark-modal-header" style={{ borderBottom: '1px solid rgba(32, 214, 87, 0.2)', background: 'rgba(15, 20, 15, 0.95)', backgroundColor: 'rgba(15, 20, 15, 0.95)', borderRadius: '1rem 1rem 0 0' }}>
                   <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.95)' }}>{myReview ? 'Edit' : 'Rate'} Your Trainer</h5>
                   <button className="btn-close btn-close-white" onClick={() => setShowReviewModal(false)}></button>
                 </div>

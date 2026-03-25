@@ -35,11 +35,12 @@ try {
                 u.specializations,
                 u.certifications,
                 u.years_of_experience,
-                u.imageid as image,
+                                COALESCE(tp.profile_image, (SELECT g.image FROM gallery g WHERE g.imageid = u.imageid LIMIT 1)) as image,
                 COALESCE(urs.review_count, 0) as review_count,
                 COALESCE(ROUND(urs.average_rating, 2), 0) as average_rating
               FROM coaching_relationships cr
               JOIN user u ON cr.trainer_id = u.userid
+                            LEFT JOIN trainer_profiles tp ON tp.user_id = u.userid
               LEFT JOIN user_rating_stats urs ON u.userid = urs.user_id
               WHERE cr.trainee_id = ? AND cr.status = 'active'
               LIMIT 1";

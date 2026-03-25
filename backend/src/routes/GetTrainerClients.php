@@ -36,6 +36,7 @@ try {
                 u.username,
                 u.email,
                 u.phone,
+                                (SELECT g.image FROM gallery g WHERE g.imageid = u.imageid LIMIT 1) as profile_image,
                 (SELECT COUNT(*) FROM program_assignments WHERE trainer_id = ? AND trainee_id = cr.trainee_id) as assigned_programs
               FROM coaching_relationships cr
               JOIN user u ON cr.trainee_id = u.userid

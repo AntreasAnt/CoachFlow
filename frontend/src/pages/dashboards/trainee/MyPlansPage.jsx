@@ -1,10 +1,28 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import TraineeDashboard from '../../../components/TraineeDashboard';
 import MyWorkouts from './MyWorkouts';
 import MealsPage from './MealsPage';
 
 const MyPlansPage = () => {
-  const [activeTab, setActiveTab] = useState('workouts');
+  const location = useLocation();
+  const requestedTab = location.state?.startWorkout
+    ? 'workouts'
+    : location.state?.activeTab === 'meals'
+      ? 'meals'
+      : 'workouts';
+  const [activeTab, setActiveTab] = useState(requestedTab);
+
+  useEffect(() => {
+    if (location.state?.startWorkout) {
+      setActiveTab('workouts');
+      return;
+    }
+
+    if (location.state?.activeTab === 'meals' || location.state?.activeTab === 'workouts') {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
 
   return (
     <TraineeDashboard>

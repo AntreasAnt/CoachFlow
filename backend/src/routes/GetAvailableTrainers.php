@@ -25,6 +25,54 @@ try {
 
     $database = new Database();
     $conn = $database->connect();
+
+    $userConnectionStatus = 'none';
+    $userConnectedTrainerId = null;
+    $userConnectedTrainerName = null;
+    $userPendingRequestId = null;
+    $userPendingTrainerId = null;
+    $userPendingTrainerName = null;
+
+    $activeRelationshipQuery = "SELECT 
+                                    cr.trainer_id,
+                                    COALESCE(u.full_name, u.username, 'Trainer') as trainer_name
+                                FROM coaching_relationships cr
+                                JOIN user u ON cr.trainer_id = u.userid
+                                WHERE cr.trainee_id = ? AND cr.status = 'active'
+                                LIMIT 1";
+    $activeRelationshipStmt = $conn->prepare($activeRelationshipQuery);
+    $activeRelationshipStmt->bind_param("i", $userId);
+    $activeRelationshipStmt->execute();
+    $activeRelationshipResult = $activeRelationshipStmt->get_result();
+
+    if ($activeRelationshipResult && $activeRelationshipResult->num_rows > 0) {
+        $activeRelationship = $activeRelationshipResult->fetch_assoc();
+        $userConnectionStatus = 'active';
+        $userConnectedTrainerId = (int) $activeRelationship['trainer_id'];
+        $userConnectedTrainerName = $activeRelationship['trainer_name'];
+    } else {
+        $pendingRelationshipQuery = "SELECT 
+                                        cr.id as request_id,
+                                        cr.trainer_id,
+                                        COALESCE(u.full_name, u.username, 'Trainer') as trainer_name
+                                     FROM coaching_requests cr
+                                     JOIN user u ON cr.trainer_id = u.userid
+                                     WHERE cr.trainee_id = ? AND cr.status = 'pending'
+                                     ORDER BY cr.created_at DESC
+                                     LIMIT 1";
+        $pendingRelationshipStmt = $conn->prepare($pendingRelationshipQuery);
+        $pendingRelationshipStmt->bind_param("i", $userId);
+        $pendingRelationshipStmt->execute();
+        $pendingRelationshipResult = $pendingRelationshipStmt->get_result();
+
+        if ($pendingRelationshipResult && $pendingRelationshipResult->num_rows > 0) {
+            $pendingRelationship = $pendingRelationshipResult->fetch_assoc();
+            $userConnectionStatus = 'pending';
+            $userPendingRequestId = (int) $pendingRelationship['request_id'];
+            $userPendingTrainerId = (int) $pendingRelationship['trainer_id'];
+            $userPendingTrainerName = $pendingRelationship['trainer_name'];
+        }
+    }
     
     // Get query parameters for search and filtering
     $search = $_GET['search'] ?? '';
@@ -54,7 +102,7 @@ try {
                 tp.current_clients,
                 COALESCE(urs.average_rating, tp.average_rating, 0) as average_rating,
                 COALESCE(urs.review_count, tp.total_reviews, 0) as total_reviews,
-                tp.profile_image,
+                COALESCE(tp.profile_image, (SELECT g.image FROM gallery g WHERE g.imageid = u.imageid LIMIT 1)) as profile_image,
                 tp.verified,
                 tp.created_at as member_since,
                 creq.id as request_id,
@@ -227,7 +275,13 @@ try {
         'trainers' => $trainers,
         'total' => $totalCount,
         'limit' => (int)$limit,
-        'offset' => (int)$offset
+        'offset' => (int)$offset,
+        'user_connection_status' => $userConnectionStatus,
+        'user_connected_trainer_id' => $userConnectedTrainerId,
+        'user_connected_trainer_name' => $userConnectedTrainerName,
+        'user_pending_request_id' => $userPendingRequestId,
+        'user_pending_trainer_id' => $userPendingTrainerId,
+        'user_pending_trainer_name' => $userPendingTrainerName
     ]);
 
 } catch (Exception $e) {

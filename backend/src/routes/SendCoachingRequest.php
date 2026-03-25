@@ -24,7 +24,7 @@ try {
     }
 
     $input = json_decode(file_get_contents('php://input'), true);
-    $trainerId = $input['trainerId'] ?? null;
+    $trainerId = $input['trainerId'] ?? ($input['trainer_id'] ?? null);
     $message = $input['message'] ?? '';
     $experienceLevel = $input['experienceLevel'] ?? '';
     $goals = $input['goals'] ?? '';
@@ -38,28 +38,30 @@ try {
     $database = new Database();
     $conn = $database->connect();
     
-    // Check if user already has an active relationship with this trainer
-    $checkQuery = "SELECT id FROM coaching_relationships 
-                   WHERE trainee_id = ? AND trainer_id = ? AND status = 'active'";
-    $checkStmt = $conn->prepare($checkQuery);
-    $checkStmt->bind_param("ii", $userId, $trainerId);
-    $checkStmt->execute();
-    $checkResult = $checkStmt->get_result();
+    // A trainee can only be connected to one trainer at a time
+    $activeQuery = "SELECT trainer_id FROM coaching_relationships 
+                    WHERE trainee_id = ? AND status = 'active'
+                    LIMIT 1";
+    $activeStmt = $conn->prepare($activeQuery);
+    $activeStmt->bind_param("i", $userId);
+    $activeStmt->execute();
+    $activeResult = $activeStmt->get_result();
     
-    if ($checkResult->num_rows > 0) {
+    if ($activeResult->num_rows > 0) {
         http_response_code(400);
         echo json_encode([
             'success' => false,
-            'message' => 'You already have an active relationship with this trainer'
+            'message' => 'You are already connected to a trainer. Disconnect first before sending another request.'
         ]);
         exit();
     }
     
-    // Check if there's already a pending request
-    $pendingQuery = "SELECT id FROM coaching_requests 
-                     WHERE trainee_id = ? AND trainer_id = ? AND status = 'pending'";
+    // A trainee can only have one pending request at a time
+    $pendingQuery = "SELECT id, trainer_id FROM coaching_requests 
+                     WHERE trainee_id = ? AND status = 'pending'
+                     LIMIT 1";
     $pendingStmt = $conn->prepare($pendingQuery);
-    $pendingStmt->bind_param("ii", $userId, $trainerId);
+    $pendingStmt->bind_param("i", $userId);
     $pendingStmt->execute();
     $pendingResult = $pendingStmt->get_result();
     
@@ -67,7 +69,7 @@ try {
         http_response_code(400);
         echo json_encode([
             'success' => false,
-            'message' => 'You already have a pending request with this trainer'
+            'message' => 'You already have a pending coaching request. Wait for a response or cancel it before sending another one.'
         ]);
         exit();
     }

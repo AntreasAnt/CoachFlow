@@ -75,6 +75,7 @@ try {
     $youtube = $input['youtube'] ?? '';
     $linkedin = $input['linkedin'] ?? '';
     $website = $input['website'] ?? '';
+    $profileImage = $input['profileImage'] ?? '';
     
     $stmt->bind_param(
         "ssssssssssssi",
@@ -95,6 +96,19 @@ try {
     
     if (!$stmt->execute()) {
         throw new Exception("Failed to update profile: " . $stmt->error);
+    }
+
+    // Upsert trainer profile image in trainer_profiles
+    $imageQuery = "INSERT INTO trainer_profiles (user_id, profile_image)
+                   VALUES (?, ?)
+                   ON DUPLICATE KEY UPDATE profile_image = VALUES(profile_image)";
+    $imageStmt = $conn->prepare($imageQuery);
+    if (!$imageStmt) {
+        throw new Exception("Failed to prepare profile image update: " . $conn->error);
+    }
+    $imageStmt->bind_param("is", $userId, $profileImage);
+    if (!$imageStmt->execute()) {
+        throw new Exception("Failed to update profile image: " . $imageStmt->error);
     }
     
     error_log("UpdateTrainerProfile - Profile updated successfully");

@@ -43,7 +43,7 @@ try {
                 tp.specializations,
                 tp.hourly_rate,
                 tp.average_rating,
-                tp.profile_image
+                                COALESCE(tp.profile_image, (SELECT g.image FROM gallery g WHERE g.imageid = u.imageid LIMIT 1)) as profile_image
               FROM coaching_requests cr
               JOIN user u ON cr.trainer_id = u.userid
               LEFT JOIN trainer_profiles tp ON cr.trainer_id = tp.user_id

@@ -4,6 +4,13 @@ import TraineeHeader from './TraineeHeader';
 
 const TraineeDashboard = ({ children }) => {
   const navigate = useNavigate();
+  const currentPath = window.location.pathname;
+  const isHomeRoute = currentPath === '/dashboard';
+  const isAnalyticsRoute = currentPath === '/trainee-dashboard/analytics';
+  const isPlansRoute = currentPath === '/trainee-dashboard/my-plans';
+  const isCoachRoute = currentPath === '/trainee-dashboard/my-coach'
+    || currentPath === '/trainee-dashboard/find-trainer'
+    || currentPath.startsWith('/trainee-dashboard/trainer/');
 
   return (
     <div className="min-vh-100" style={{ backgroundColor: 'var(--brand-dark)' }}>
@@ -38,27 +45,12 @@ const TraineeDashboard = ({ children }) => {
                 onClick={() => navigate('/dashboard')}
                 style={{
                   backgroundColor: 'transparent',
-                  color: window.location.pathname === '/dashboard' ? 'var(--brand-primary)' : 'var(--text-secondary)'
+                  color: isHomeRoute ? 'var(--brand-primary)' : 'var(--text-secondary)'
                 }}
               >
                 <div className="d-flex flex-column align-items-center">
-                  <i className={`bi bi-house${window.location.pathname === '/dashboard' ? '-fill' : ''} fs-5`}></i>
+                  <i className={`bi bi-house${isHomeRoute ? '-fill' : ''} fs-5`}></i>
                   <small className="mt-1">Home</small>
-                </div>
-              </button>
-            </div>
-            <div className="col">
-              <button
-                className="btn w-100 py-2 border-0"
-                onClick={() => navigate('/trainee-dashboard/find-trainer')}
-                style={{
-                  backgroundColor: 'transparent',
-                  color: window.location.pathname === '/trainee-dashboard/find-trainer' ? 'var(--brand-primary)' : 'var(--text-secondary)'
-                }}
-              >
-                <div className="d-flex flex-column align-items-center">
-                  <i className={`bi bi-search${window.location.pathname === '/trainee-dashboard/find-trainer' ? '-heart' : ''} fs-5`}></i>
-                  <small className="mt-1">Trainers</small>
                 </div>
               </button>
             </div>
@@ -68,11 +60,11 @@ const TraineeDashboard = ({ children }) => {
                 onClick={() => navigate('/trainee-dashboard/my-plans')}
                 style={{
                   backgroundColor: 'transparent',
-                  color: window.location.pathname === '/trainee-dashboard/my-plans' ? 'var(--brand-primary)' : 'var(--text-secondary)'
+                  color: isPlansRoute ? 'var(--brand-primary)' : 'var(--text-secondary)'
                 }}
               >
                 <div className="d-flex flex-column align-items-center">
-                  <i className={`bi bi-clipboard${window.location.pathname === '/trainee-dashboard/my-plans' ? '-check' : ''} fs-5`}></i>
+                  <i className={`bi bi-clipboard${isPlansRoute ? '-check' : ''} fs-5`}></i>
                   <small className="mt-1">My Plans</small>
                 </div>
               </button>
@@ -83,12 +75,27 @@ const TraineeDashboard = ({ children }) => {
                 onClick={() => navigate('/trainee-dashboard/my-coach')}
                 style={{
                   backgroundColor: 'transparent',
-                  color: window.location.pathname === '/trainee-dashboard/my-coach' ? 'var(--brand-primary)' : 'var(--text-secondary)'
+                  color: isCoachRoute ? 'var(--brand-primary)' : 'var(--text-secondary)'
                 }}
               >
                 <div className="d-flex flex-column align-items-center">
-                  <i className={`bi bi-person-badge${window.location.pathname === '/trainee-dashboard/my-coach' ? '-fill' : ''} fs-5`}></i>
+                  <i className={`bi bi-person-badge${isCoachRoute ? '-fill' : ''} fs-5`}></i>
                   <small className="mt-1">My Coach</small>
+                </div>
+              </button>
+            </div>
+            <div className="col">
+              <button
+                className="btn w-100 py-2 border-0"
+                onClick={() => navigate('/trainee-dashboard/analytics')}
+                style={{
+                  backgroundColor: 'transparent',
+                  color: isAnalyticsRoute ? 'var(--brand-primary)' : 'var(--text-secondary)'
+                }}
+              >
+                <div className="d-flex flex-column align-items-center">
+                  <i className={`bi bi-bar-chart-line${isAnalyticsRoute ? '-fill' : ''} fs-5`}></i>
+                  <small className="mt-1">Analytics</small>
                 </div>
               </button>
             </div>

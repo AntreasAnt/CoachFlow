@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json');
-require_once __DIR__ . '/../src/bootstrap.php';
-require_once __DIR__ . '/../src/config/cors.php';
+require_once __DIR__ . '/../config/cors.php';
+require_once __DIR__ . '/../config/Database.php';
 
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
@@ -30,36 +30,41 @@ $muscleMass = isset($data['muscle_mass']) ? floatval($data['muscle_mass']) : nul
 
 try {
     $db = new Database();
-    $conn = $db->getConnection();
+    $conn = $db->connect();
 
     // Insert new measurement
     $query = "INSERT INTO body_measurements 
-              (user_id, measurement_date, weight_kg, body_fat_percentage, muscle_mass_kg, created_at) 
-              VALUES (?, CURDATE(), ?, ?, ?, NOW())
+              (user_id, measurement_date, weight_kg, body_fat_percentage, muscle_mass_kg) 
+              VALUES (?, CURDATE(), ?, ?, ?)
               ON DUPLICATE KEY UPDATE 
               weight_kg = VALUES(weight_kg),
               body_fat_percentage = VALUES(body_fat_percentage),
               muscle_mass_kg = VALUES(muscle_mass_kg)";
 
     $stmt = $conn->prepare($query);
-    $stmt->bindParam(':user_id', $userId);
-    $stmt->bindParam(':weight', $weight);
-    $stmt->bindParam(':body_fat', $bodyFat);
-    $stmt->bindParam(':muscle_mass', $muscleMass);
+    $stmt->bind_param('iddd', $userId, $weight, $bodyFat, $muscleMass);
     
     $stmt->execute();
 
+    // Keep profile table weight in sync with quick logs
+    $userWeightStmt = $conn->prepare("UPDATE user SET weight = ? WHERE userid = ?");
+    if ($userWeightStmt) {
+        $userWeightStmt->bind_param('di', $weight, $userId);
+        $userWeightStmt->execute();
+        $userWeightStmt->close();
+    }
+
     // Get weight change (compare to previous measurement)
     $changeQuery = "SELECT weight_kg FROM body_measurements 
-                    WHERE user_id = :user_id 
+                    WHERE user_id = ? 
                     AND measurement_date < CURDATE()
                     ORDER BY measurement_date DESC 
                     LIMIT 1";
     
     $stmt = $conn->prepare($changeQuery);
-    $stmt->bindParam(':user_id', $userId);
+    $stmt->bind_param('i', $userId);
     $stmt->execute();
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    $result = $stmt->get_result()->fetch_assoc();
     
     $weightChange = null;
     $changeType = 'neutral';

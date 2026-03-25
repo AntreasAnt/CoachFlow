@@ -759,7 +759,7 @@ const MealsPage = () => {
                       ? 'text-primary nav-btn-active' 
                       : 'text-muted'
                   }`}
-                  onClick={() => navigate('/meals')}
+                  onClick={() => navigate('/trainee-dashboard/my-plans', { state: { activeTab: 'meals' } })}
                 >
                   <div className="d-flex flex-column align-items-center">
                     <i className={`bi bi-${window.location.pathname === '/meals' ? 'cup-hot-fill' : 'cup-hot'} fs-5`}></i>

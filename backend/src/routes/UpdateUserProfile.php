@@ -119,8 +119,45 @@ try {
 
     // Update the user profile
     if ($userModel->updateUserProfile($userId, $updateData)) {
+        // Keep body measurements in sync when profile weight is edited
+        if (array_key_exists('weight', $updateData) && $updateData['weight'] !== null) {
+            try {
+                $weightValue = (float)$updateData['weight'];
+                $syncStmt = $userModel->conn->prepare(
+                    "INSERT INTO body_measurements (user_id, measurement_date, weight_kg)
+                     VALUES (?, CURDATE(), ?)
+                     ON DUPLICATE KEY UPDATE weight_kg = VALUES(weight_kg)"
+                );
+
+                if ($syncStmt) {
+                    $syncStmt->bind_param("id", $userId, $weightValue);
+                    $syncStmt->execute();
+                    $syncStmt->close();
+                }
+            } catch (Exception $e) {
+                error_log("UpdateUserProfile weight sync failed: " . $e->getMessage());
+            }
+        }
+
         // Fetch updated user data
         $updatedUser = $userModel->getprofileById($userId);
+
+        // Prefer latest logged body measurement for response consistency
+        $latestLoggedWeight = null;
+        try {
+            $weightStmt = $userModel->conn->prepare("SELECT weight_kg FROM body_measurements WHERE user_id = ? ORDER BY measurement_date DESC LIMIT 1");
+            if ($weightStmt) {
+                $weightStmt->bind_param("i", $userId);
+                $weightStmt->execute();
+                $weightResult = $weightStmt->get_result()->fetch_assoc();
+                if ($weightResult && isset($weightResult['weight_kg'])) {
+                    $latestLoggedWeight = (float)$weightResult['weight_kg'];
+                }
+                $weightStmt->close();
+            }
+        } catch (Exception $e) {
+            error_log("UpdateUserProfile latest weight lookup failed: " . $e->getMessage());
+        }
         
         // Format the response to match GetUserProfile.php format
         $responseData = [
@@ -135,7 +172,7 @@ try {
             
             // Physical info
             'height' => $updatedUser['height'],
-            'weight' => $updatedUser['weight'],
+            'weight' => $latestLoggedWeight !== null ? $latestLoggedWeight : $updatedUser['weight'],
             'age' => $updatedUser['age'],
             'sex' => $updatedUser['sex'],
             

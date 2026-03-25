@@ -67,7 +67,7 @@ const TrainerDashboardHome = () => {
       <div style={{ backgroundColor: '#1a1a1a', minHeight: '100vh', color: '#fff' }}>
         {/* Header */}
         <div className="mb-4">
-          <h2 className="mb-1 fw-bold" style={{ color: '#fff' }}>Welcome Back! 👋</h2>
+          <h2 className="mb-1 fw-bold" style={{ color: '#fff' }}>Welcome Back!</h2>
           <p style={{ color: '#9ca3af' }}>Here's what's happening with your coaching business</p>
         </div>
 

@@ -127,24 +127,6 @@ const TraineeHeader = () => {
             </button>
             <button 
               className="btn btn-sm"
-              onClick={() => navigate('/trainee-dashboard/analytics')}
-              onMouseEnter={() => setHoveredBtn('analytics')}
-              onMouseLeave={() => setHoveredBtn(null)}
-              title="Analytics"
-              style={{
-                backgroundColor: hoveredBtn === 'analytics' ? 'rgba(32, 214, 87, 0.1)' : 'transparent',
-                color: 'var(--brand-primary)',
-                border: hoveredBtn === 'analytics' ? '1px solid rgba(32, 214, 87, 0.6)' : '1px solid rgba(32, 214, 87, 0.3)',
-                borderRadius: '10px',
-                padding: '0.5rem 0.75rem',
-                transform: hoveredBtn === 'analytics' ? 'translateY(-2px)' : 'translateY(0)',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <i className="bi bi-graph-up"></i>
-            </button>
-            <button 
-              className="btn btn-sm"
               onClick={() => navigate('/trainee-dashboard/profile')}
               onMouseEnter={() => setHoveredBtn('profile')}
               onMouseLeave={() => setHoveredBtn(null)}

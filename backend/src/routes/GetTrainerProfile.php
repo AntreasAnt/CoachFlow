@@ -48,8 +48,10 @@ try {
                 u.twitter,
                 u.youtube,
                 u.linkedin,
-                u.website
+                                u.website,
+                                COALESCE(tp.profile_image, (SELECT g.image FROM gallery g WHERE g.imageid = u.imageid LIMIT 1)) as profile_image
               FROM user u
+                            LEFT JOIN trainer_profiles tp ON tp.user_id = u.userid
               WHERE u.userid = ?";
     
     $stmt = $conn->prepare($query);

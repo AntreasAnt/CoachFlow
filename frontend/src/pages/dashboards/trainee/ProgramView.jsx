@@ -120,7 +120,7 @@ const ProgramView = () => {
     console.log('Starting session:', session);
     
     // Navigate to workout session with the session data
-    navigate('/trainee-dashboard/workouts', {
+    navigate('/trainee-dashboard/my-plans', {
       state: {
         startWorkout: true,
         workoutData: {
@@ -172,9 +172,9 @@ const ProgramView = () => {
           <button 
             className="btn btn-sm ms-3"
             style={{ background: 'rgba(220, 53, 69, 0.2)', border: '1px solid rgba(220, 53, 69, 0.4)', color: 'rgba(220, 53, 69, 0.95)' }}
-            onClick={() => navigate('/trainee-dashboard/workouts')}
+            onClick={() => navigate('/trainee-dashboard/my-plans')}
           >
-            Back to My Workouts
+            Back to My Plans
           </button>
         </div>
       );
@@ -188,9 +188,9 @@ const ProgramView = () => {
           <button 
             className="btn btn-sm ms-3"
             style={{ background: 'rgba(255, 193, 7, 0.2)', border: '1px solid rgba(255, 193, 7, 0.4)', color: 'rgba(255, 193, 7, 0.95)' }}
-            onClick={() => navigate('/trainee-dashboard/workouts')}
+            onClick={() => navigate('/trainee-dashboard/my-plans')}
           >
-            Back to My Workouts
+            Back to My Plans
           </button>
         </div>
       );
@@ -203,7 +203,7 @@ const ProgramView = () => {
           <button 
             className="btn me-3"
             style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}
-            onClick={() => navigate('/trainee-dashboard/workouts')}
+            onClick={() => navigate('/trainee-dashboard/my-plans')}
           >
             <i className="bi bi-arrow-left"></i>
           </button>

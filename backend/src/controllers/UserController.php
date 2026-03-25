@@ -666,44 +666,71 @@ class UserController extends UserModel
     public function handleProfilePictureUpload($userId, $file)
     {
         try {
-            // Create directory if it doesn't exist
-            if (!file_exists($this->uploadDir)) {
-                mkdir($this->uploadDir, 0777, true);
+            if (empty($file['tmp_name']) || !file_exists($file['tmp_name'])) {
+                return [
+                    'success' => false,
+                    'message' => 'Uploaded file is missing'
+                ];
             }
 
-            // Validate file type
+            // Validate file type using detected mime
+            $detectedMime = mime_content_type($file['tmp_name']) ?: ($file['type'] ?? '');
             $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-            if (!in_array($file['type'], $allowedTypes)) {
+            if (!in_array($detectedMime, $allowedTypes, true)) {
                 return [
                     'success' => false,
                     'message' => 'Please upload JPG or PNG files only'
                 ];
             }
 
-            $fileName = time() . '_' . basename($file['name']);
-            $targetPath = $this->uploadDir . $fileName;
+            $originalName = pathinfo($file['name'] ?? 'profile_image', PATHINFO_FILENAME);
+            $safeBaseName = preg_replace('/[^A-Za-z0-9._-]/', '_', $originalName);
+            $extension = $detectedMime === 'image/png' ? 'png' : 'jpg';
+            $fileName = time() . '_' . ($safeBaseName ?: 'profile_image') . '.' . $extension;
 
-            if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-                // Create web-accessible URL path
+            // Absolute upload directory under project root
+            $uploadDir = realpath(__DIR__ . '/../../../');
+            $uploadDir = $uploadDir ? $uploadDir . '/uploads/profile_pictures/' : __DIR__ . '/../../../uploads/profile_pictures/';
+            $targetPath = $uploadDir . $fileName;
+
+            $canStoreOnDisk = true;
+            if (!is_dir($uploadDir)) {
+                $canStoreOnDisk = @mkdir($uploadDir, 0777, true);
+            }
+
+            if ($canStoreOnDisk && @move_uploaded_file($file['tmp_name'], $targetPath)) {
                 $imageUrl = '/uploads/profile_pictures/' . $fileName;
-                $fullImageUrl = $GLOBALS['BACKEND_ROUTES_API'] . $imageUrl;
-
-                // Insert into Gallery table
                 $imageId = $this->insertImage($fileName, $imageUrl);
 
-                if ($imageId) {
-                    if ($this->updateUserProfileImage($userId, $imageId)) {
-                        return [
-                            'success' => true,
-                            'message' => 'Profile picture updated successfully',
-                            'imageUrl' => $fullImageUrl // Return the full URL
-                        ];
-                    }
+                if ($imageId && $this->updateUserProfileImage($userId, $imageId)) {
+                    return [
+                        'success' => true,
+                        'message' => 'Profile picture updated successfully',
+                        'imageUrl' => $imageUrl
+                    ];
                 }
 
                 return ['success' => false, 'message' => 'Failed to update database'];
             }
-            return ['success' => false, 'message' => 'Failed to upload file'];
+
+            // Fallback: store image directly in gallery as data URI when filesystem is not writable
+            $rawImage = file_get_contents($file['tmp_name']);
+            if (!$rawImage) {
+                return ['success' => false, 'message' => 'Failed to process uploaded image'];
+            }
+
+            $dataUri = 'data:' . $detectedMime . ';base64,' . base64_encode($rawImage);
+            $imageId = $this->insertImage($fileName, $dataUri);
+
+            if ($imageId && $this->updateUserProfileImage($userId, $imageId)) {
+                return [
+                    'success' => true,
+                    'message' => 'Profile picture updated successfully',
+                    'imageUrl' => $dataUri
+                ];
+            }
+
+            return ['success' => false, 'message' => 'Failed to save uploaded image'];
         } catch (Exception $e) {
             error_log("Profile picture upload error: " . $e->getMessage());
             return [

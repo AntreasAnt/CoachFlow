@@ -152,6 +152,16 @@ const MealsPage = ({ embedded = false }) => {
     }, 3000);
   };
 
+  const handlePlanCardHoverIn = (event) => {
+    event.currentTarget.style.transform = 'translateY(-4px)';
+    event.currentTarget.style.boxShadow = '0 8px 24px rgba(32, 214, 87, 0.25)';
+  };
+
+  const handlePlanCardHoverOut = (event) => {
+    event.currentTarget.style.transform = 'translateY(0)';
+    event.currentTarget.style.boxShadow = 'none';
+  };
+
   const loadData = async () => {
     await Promise.all([
       loadNutritionGoal(),
@@ -791,7 +801,12 @@ const MealsPage = ({ embedded = false }) => {
         {dailySummary && (
           <div className="row g-3 mb-4">
             <div className="col-md-3">
-              <div className="card border-0 rounded-4" style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' }}>
+              <div
+                className="card border-0 rounded-4"
+                style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
+                onMouseEnter={handlePlanCardHoverIn}
+                onMouseLeave={handlePlanCardHoverOut}
+              >
                 <div className="card-body">
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <h6 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Calories</h6>
@@ -813,7 +828,12 @@ const MealsPage = ({ embedded = false }) => {
               </div>
             </div>
             <div className="col-md-3">
-              <div className="card border-0 rounded-4" style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' }}>
+              <div
+                className="card border-0 rounded-4"
+                style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
+                onMouseEnter={handlePlanCardHoverIn}
+                onMouseLeave={handlePlanCardHoverOut}
+              >
                 <div className="card-body">
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <h6 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Protein</h6>
@@ -835,7 +855,12 @@ const MealsPage = ({ embedded = false }) => {
               </div>
             </div>
             <div className="col-md-3">
-              <div className="card border-0 rounded-4" style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' }}>
+              <div
+                className="card border-0 rounded-4"
+                style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
+                onMouseEnter={handlePlanCardHoverIn}
+                onMouseLeave={handlePlanCardHoverOut}
+              >
                 <div className="card-body">
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <h6 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Carbs</h6>
@@ -857,7 +882,12 @@ const MealsPage = ({ embedded = false }) => {
               </div>
             </div>
             <div className="col-md-3">
-              <div className="card border-0 rounded-4" style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' }}>
+              <div
+                className="card border-0 rounded-4"
+                style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
+                onMouseEnter={handlePlanCardHoverIn}
+                onMouseLeave={handlePlanCardHoverOut}
+              >
                 <div className="card-body">
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <h6 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Fat</h6>
@@ -883,7 +913,12 @@ const MealsPage = ({ embedded = false }) => {
 
         {/* Trainer Assigned Meal Plan */}
         {trainerMealPlan && Array.isArray(trainerMealPlan) && trainerMealPlan.length > 0 && (
-          <div className="card border-0 rounded-4 mb-4" style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' }}>
+          <div
+            className="card border-0 rounded-4 mb-4"
+            style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
+            onMouseEnter={handlePlanCardHoverIn}
+            onMouseLeave={handlePlanCardHoverOut}
+          >
             <div className="card-header border-0" style={{ backgroundColor: '#000000 !important', background: '#000000 !important', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', padding: '1.25rem', borderRadius: '1rem 1rem 0 0', backdropFilter: 'none' }}>
               <div className="d-flex justify-content-between align-items-center">
                 <div>
@@ -963,7 +998,12 @@ const MealsPage = ({ embedded = false }) => {
         )}
 
         {/* Today's Meals */}
-        <div className="card border-0 rounded-4 mb-4" style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' }}>
+        <div
+          className="card border-0 rounded-4 mb-4"
+          style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
+          onMouseEnter={handlePlanCardHoverIn}
+          onMouseLeave={handlePlanCardHoverOut}
+        >
           <div className="card-header border-0" style={{ backgroundColor: '#000000', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', padding: '1.25rem', borderRadius: '1rem 1rem 0 0' }}>
             <div className="d-flex justify-content-between align-items-center">
               <div>
@@ -1048,7 +1088,12 @@ const MealsPage = ({ embedded = false }) => {
         </div>
 
     {/* Meal History (7-day windows) */}
-    <div className="card border-0 rounded-4 mb-5" style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' }}>
+    <div
+      className="card border-0 rounded-4 mb-5"
+      style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
+      onMouseEnter={handlePlanCardHoverIn}
+      onMouseLeave={handlePlanCardHoverOut}
+    >
           <div className="card-header border-0 d-flex justify-content-between align-items-center" style={{ backgroundColor: '#000000', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', padding: '1.25rem', borderRadius: '1rem 1rem 0 0' }}>
             <h5 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: '700' }}>Meal History</h5>
             <div className="d-flex align-items-center gap-2">

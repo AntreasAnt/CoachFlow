@@ -1,11 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import TraineeDashboard from '../../../components/TraineeDashboard';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import APIClient from '../../../utils/APIClient';
 
-const FindTrainersPage = () => {
+const EMPTY_CONNECTION_LOCK = {
+  status: 'none',
+  trainerId: null,
+  trainerName: '',
+  requestId: null,
+};
+
+const FindTrainersPage = ({
+  embedded = false,
+  forceViewOnly = false,
+  lockBannerMessage = '',
+  headerContent = null,
+  showMyCoachShortcut = true,
+  initialConnectionView = 'all',
+}) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const resolveInitialConnectionView = () => {
+    if (initialConnectionView === 'requests') {
+      return 'requests';
+    }
+
+    if (location.state?.initialConnectionView === 'requests' || location.state?.connectionView === 'requests') {
+      return 'requests';
+    }
+
+    return 'all';
+  };
+
   const [trainers, setTrainers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,7 +51,11 @@ const FindTrainersPage = () => {
     const stored = localStorage.getItem('hiddenTrainers');
     return stored ? JSON.parse(stored) : [];
   });
+  const [connectionView, setConnectionView] = useState(resolveInitialConnectionView);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [trainerToCancel, setTrainerToCancel] = useState(null);
   const [cancellingRequest, setCancellingRequest] = useState(null);
+  const [connectionLock, setConnectionLock] = useState(EMPTY_CONNECTION_LOCK);
   
   // Filter states
   const [filters, setFilters] = useState({
@@ -42,6 +74,10 @@ const FindTrainersPage = () => {
   useEffect(() => {
     fetchTrainers();
   }, [appliedFilters]);
+
+  useEffect(() => {
+    setConnectionView(resolveInitialConnectionView());
+  }, [initialConnectionView, location.state]);
 
   // Auto-dismiss notification after 3 seconds
   useEffect(() => {
@@ -75,6 +111,12 @@ const FindTrainersPage = () => {
       
       if (response.success) {
         setTrainers(response.trainers || []);
+        setConnectionLock({
+          status: response.user_connection_status || 'none',
+          trainerId: response.user_connected_trainer_id || response.user_pending_trainer_id || null,
+          trainerName: response.user_connected_trainer_name || response.user_pending_trainer_name || '',
+          requestId: response.user_pending_request_id || null,
+        });
       } else {
         setError(response.message || 'Failed to load trainers');
       }
@@ -108,6 +150,17 @@ const FindTrainersPage = () => {
   };
 
   const handleRequestConnection = (trainer) => {
+    if (forceViewOnly || connectionLock.status === 'active' || connectionLock.status === 'pending') {
+      setNotification({
+        show: true,
+        message: lockBannerMessage || (connectionLock.status === 'pending'
+          ? `You already have a pending request${connectionLock.trainerName ? ` with ${connectionLock.trainerName}` : ''}.`
+          : `You are already connected${connectionLock.trainerName ? ` to ${connectionLock.trainerName}` : ' to a trainer'}.`),
+        type: 'warning'
+      });
+      return;
+    }
+
     setSelectedTrainer(trainer);
     setRequestForm({
       message: '',
@@ -150,23 +203,34 @@ const FindTrainersPage = () => {
     }
   };
 
-  const handleCancelRequest = async (trainer) => {
-    if (!trainer.request_id) return;
-    
-    if (!window.confirm('Are you sure you want to cancel this coaching request?')) {
-      return;
-    }
-    
+  const handleCancelRequest = (trainer) => {
+    if (!trainer?.request_id) return;
+
+    setTrainerToCancel(trainer);
+    setShowCancelModal(true);
+  };
+
+  const closeCancelModal = () => {
+    if (cancellingRequest) return;
+    setShowCancelModal(false);
+    setTrainerToCancel(null);
+  };
+
+  const handleConfirmCancelRequest = async () => {
+    if (!trainerToCancel?.request_id) return;
+
     try {
-      setCancellingRequest(trainer.id);
+      setCancellingRequest(trainerToCancel.id);
       
       const response = await APIClient.post(
         `${BACKEND_ROUTES_API}CancelCoachingRequest.php`,
-        { requestId: trainer.request_id }
+        { requestId: trainerToCancel.request_id }
       );
       
       if (response.success) {
         setNotification({ show: true, message: 'Request cancelled successfully!', type: 'success' });
+        setShowCancelModal(false);
+        setTrainerToCancel(null);
         fetchTrainers(); // Refresh to update connection status
       } else {
         setNotification({ show: true, message: response.message || 'Failed to cancel request', type: 'danger' });
@@ -203,6 +267,67 @@ const FindTrainersPage = () => {
     }
   };
 
+  const lockStatus = forceViewOnly ? 'active' : connectionLock.status;
+  const activeLockMessage = lockBannerMessage || (
+    lockStatus === 'active'
+      ? `You're already connected${connectionLock.trainerName ? ` to ${connectionLock.trainerName}` : ' to a trainer'}. You can browse coaches, but you can't send another request right now.`
+      : lockStatus === 'pending'
+        ? `You already have a pending request${connectionLock.trainerName ? ` with ${connectionLock.trainerName}` : ''}. Wait for a response or cancel it before contacting another coach.`
+        : ''
+  );
+
+  const isRequestLocked = (trainer) => {
+    if (trainer.connection_status === 'active' || trainer.connection_status === 'pending') {
+      return false;
+    }
+
+    if (!trainer.accepting_clients) {
+      return true;
+    }
+
+    return forceViewOnly || connectionLock.status === 'active' || connectionLock.status === 'pending';
+  };
+
+  const getLockedActionMeta = (trainer) => {
+    if (!trainer.accepting_clients) {
+      return {
+        label: 'Fully Booked',
+        icon: 'bi-slash-circle',
+        backgroundColor: 'rgba(74, 74, 90, 0.22)',
+        border: '1px solid rgba(74, 74, 90, 0.35)',
+        color: 'var(--text-secondary)'
+      };
+    }
+
+    if (forceViewOnly || connectionLock.status === 'active') {
+      return {
+        label: 'Already Connected',
+        icon: 'bi-lock',
+        backgroundColor: 'rgba(32, 214, 87, 0.1)',
+        border: '1px solid rgba(32, 214, 87, 0.25)',
+        color: 'rgba(255,255,255,0.78)'
+      };
+    }
+
+    if (connectionLock.status === 'pending') {
+      return {
+        label: 'Pending Elsewhere',
+        icon: 'bi-hourglass-split',
+        backgroundColor: 'rgba(255, 193, 7, 0.12)',
+        border: '1px solid rgba(255, 193, 7, 0.35)',
+        color: 'rgba(255,255,255,0.85)'
+      };
+    }
+
+    return {
+      label: 'Request Connection',
+      icon: 'bi-person-plus',
+      backgroundColor: 'var(--brand-primary)',
+      border: 'none',
+      color: 'var(--brand-dark)'
+    };
+  };
+
   const getRatingStars = (rating) => {
     const stars = [];
     const fullStars = Math.floor(rating);
@@ -220,26 +345,69 @@ const FindTrainersPage = () => {
     return stars;
   };
 
+  const visibleTrainers = trainers
+    .filter(trainer => !hiddenTrainers.includes(trainer.id))
+    .filter(trainer => {
+      if (connectionView === 'requests') {
+        return trainer.connection_status === 'pending' || trainer.connection_status === 'active';
+      }
+      return true;
+    });
+
+  const requestRelatedCount = trainers.filter(
+    trainer => trainer.connection_status === 'pending' || trainer.connection_status === 'active'
+  ).length;
+
   if (loading && trainers.length === 0) {
-    return (
-      <TraineeDashboard>
-        <div className="container-fluid p-4" style={{ backgroundColor: 'var(--brand-dark)', minHeight: '80vh' }}>
-          <div className="text-center py-5">
-            <div className="spinner-border" role="status" style={{ color: 'var(--brand-primary)', width: '3rem', height: '3rem' }}>
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="mt-3" style={{ color: 'var(--text-secondary)' }}>Loading trainers...</p>
+    const loadingContent = (
+      <div className="container-fluid p-4" style={{ backgroundColor: 'var(--brand-dark)', minHeight: '80vh' }}>
+        <div className="text-center py-5">
+          <div className="spinner-border" role="status" style={{ color: 'var(--brand-primary)', width: '3rem', height: '3rem' }}>
+            <span className="visually-hidden">Loading...</span>
           </div>
+          <p className="mt-3" style={{ color: 'var(--text-secondary)' }}>Loading trainers...</p>
         </div>
-      </TraineeDashboard>
+      </div>
     );
+
+    return embedded ? loadingContent : <TraineeDashboard>{loadingContent}</TraineeDashboard>;
   }
 
-  return (
-    <TraineeDashboard>
+  const pageContent = (
+    <>
       <div className="container-fluid px-3 px-md-4 py-3" style={{ paddingBottom: '100px', backgroundColor: 'var(--brand-dark)', minHeight: '100vh' }}>
-        {/* Header */}
-        
+        {headerContent && <div className="mb-4">{headerContent}</div>}
+
+        <div className="d-flex flex-wrap gap-2 mb-3">
+          <button
+            className="btn btn-sm rounded-pill"
+            onClick={() => setConnectionView('all')}
+            style={{
+              backgroundColor: connectionView === 'all' ? 'rgba(32, 214, 87, 0.18)' : 'rgba(30, 35, 30, 0.5)',
+              border: connectionView === 'all' ? '1px solid rgba(32, 214, 87, 0.35)' : '1px solid rgba(32, 214, 87, 0.2)',
+              color: connectionView === 'all' ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.75)',
+              fontWeight: 600,
+              padding: '0.5rem 1rem'
+            }}
+          >
+            <i className="bi bi-people me-2"></i>
+            All Coaches
+          </button>
+          <button
+            className="btn btn-sm rounded-pill"
+            onClick={() => setConnectionView('requests')}
+            style={{
+              backgroundColor: connectionView === 'requests' ? 'rgba(255, 193, 7, 0.16)' : 'rgba(30, 35, 30, 0.5)',
+              border: connectionView === 'requests' ? '1px solid rgba(255, 193, 7, 0.35)' : '1px solid rgba(32, 214, 87, 0.2)',
+              color: connectionView === 'requests' ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.75)',
+              fontWeight: 600,
+              padding: '0.5rem 1rem'
+            }}
+          >
+            <i className="bi bi-hourglass-split me-2"></i>
+            My Requests ({requestRelatedCount})
+          </button>
+        </div>
 
         {/* Search and Filter Bar */}
         <div 
@@ -409,15 +577,77 @@ const FindTrainersPage = () => {
           </div>
         )}
 
+        {activeLockMessage && (
+          <div
+            className="alert rounded-4 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3"
+            role="alert"
+            style={{
+              border: lockStatus === 'pending' ? '1px solid rgba(255, 193, 7, 0.35)' : '1px solid rgba(32, 214, 87, 0.28)',
+              backgroundColor: lockStatus === 'pending' ? 'rgba(255, 193, 7, 0.12)' : 'rgba(32, 214, 87, 0.08)',
+              color: 'var(--text-primary)'
+            }}
+          >
+            <div>
+              <div className="fw-semibold mb-1" style={{ color: 'var(--brand-white)' }}>
+                <i className={`bi ${lockStatus === 'pending' ? 'bi-hourglass-split' : 'bi-shield-lock'} me-2`}></i>
+                Coach requests are locked
+              </div>
+              <div style={{ color: 'var(--text-secondary)' }}>{activeLockMessage}</div>
+            </div>
+            <div className="d-flex gap-2">
+              {showMyCoachShortcut && (forceViewOnly || connectionLock.status === 'active') && (
+                <button
+                  className="btn btn-sm rounded-pill"
+                  onClick={() => navigate('/trainee-dashboard/my-coach')}
+                  style={{
+                    backgroundColor: 'rgba(32, 214, 87, 0.16)',
+                    color: 'var(--brand-white)',
+                    border: '1px solid rgba(32, 214, 87, 0.28)',
+                    fontWeight: '600'
+                  }}
+                >
+                  My Coach
+                </button>
+              )}
+              {connectionLock.status === 'pending' && (
+                <button
+                  className="btn btn-sm rounded-pill"
+                  onClick={() => setConnectionView(connectionView === 'requests' ? 'all' : 'requests')}
+                  style={{
+                    backgroundColor: connectionView === 'requests' ? 'rgba(32, 214, 87, 0.16)' : 'rgba(255, 193, 7, 0.16)',
+                    color: 'var(--brand-white)',
+                    border: connectionView === 'requests' ? '1px solid rgba(32, 214, 87, 0.28)' : '1px solid rgba(255, 193, 7, 0.28)',
+                    fontWeight: '600'
+                  }}
+                >
+                  {connectionView === 'requests' ? 'All Trainers' : 'My Requests'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Trainers List */}
-        {trainers.length === 0 && !loading ? (
+        {visibleTrainers.length === 0 && !loading ? (
           <div className="text-center py-5">
-            <i className="bi bi-search fs-1 mb-3 d-block" style={{ color: 'var(--text-secondary)' }}></i>
-            <h5 style={{ color: 'var(--brand-white)' }}>No trainers found</h5>
-            <p style={{ color: 'var(--text-secondary)' }}>Try adjusting your filters or search criteria</p>
+            <i className={`bi ${connectionView === 'requests' ? 'bi-hourglass-split' : 'bi-search'} fs-1 mb-3 d-block`} style={{ color: 'var(--text-secondary)' }}></i>
+            <h5 style={{ color: 'var(--brand-white)' }}>
+              {connectionView === 'requests' ? 'No requests to show' : 'No trainers found'}
+            </h5>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              {connectionView === 'requests'
+                ? 'You currently have no pending or active coach requests in this list.'
+                : 'Try adjusting your filters or search criteria'}
+            </p>
             <button 
               className="btn rounded-pill px-4 mt-3" 
-              onClick={handleResetFilters}
+              onClick={() => {
+                if (connectionView === 'requests') {
+                  setConnectionView('all');
+                  return;
+                }
+                handleResetFilters();
+              }}
               style={{
                 backgroundColor: 'var(--brand-primary)',
                 color: 'var(--brand-dark)',
@@ -425,7 +655,7 @@ const FindTrainersPage = () => {
                 fontWeight: '600'
               }}
             >
-              Reset Filters
+              {connectionView === 'requests' ? 'Show All Coaches' : 'Reset Filters'}
             </button>
           </div>
         ) : (
@@ -453,7 +683,7 @@ const FindTrainersPage = () => {
             )}
             
             <div className="row">
-            {trainers.filter(trainer => !hiddenTrainers.includes(trainer.id)).map((trainer) => (
+            {visibleTrainers.map((trainer) => (
               <div key={trainer.id} className="col-lg-4 col-md-6 mb-4">
                 <div 
                   className="card border-0 rounded-4 h-100"
@@ -565,7 +795,7 @@ const FindTrainersPage = () => {
                         <button 
                           className="btn rounded-pill flex-fill"
                           onClick={() => handleCancelRequest(trainer)}
-                          disabled={cancellingRequest === trainer.id}
+                          disabled={Boolean(cancellingRequest)}
                           style={{ 
                             backgroundColor: 'rgba(220, 53, 69, 0.2)', 
                             color: '#dc3545', 
@@ -584,6 +814,20 @@ const FindTrainersPage = () => {
                               Cancel Request
                             </>
                           )}
+                        </button>
+                      ) : isRequestLocked(trainer) ? (
+                        <button
+                          className="btn rounded-pill flex-fill"
+                          disabled
+                          style={{
+                            backgroundColor: getLockedActionMeta(trainer).backgroundColor,
+                            color: getLockedActionMeta(trainer).color,
+                            border: getLockedActionMeta(trainer).border,
+                            fontWeight: '600'
+                          }}
+                        >
+                          <i className={`bi ${getLockedActionMeta(trainer).icon} me-2`}></i>
+                          {getLockedActionMeta(trainer).label}
                         </button>
                       ) : (
                         <button 
@@ -632,6 +876,89 @@ const FindTrainersPage = () => {
           </div>
         )}
       </div>
+
+      {/* Cancel Request Modal */}
+      {showCancelModal && trainerToCancel && (
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div
+              className="modal-content rounded-4 border-0"
+              style={{
+                backgroundColor: 'rgba(15, 20, 15, 0.95)',
+                border: '1px solid rgba(220, 53, 69, 0.4)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+                overflow: 'hidden'
+              }}
+            >
+              <div className="modal-header dark-modal-header" style={{ borderBottom: '1px solid rgba(220, 53, 69, 0.3)', backgroundColor: 'rgba(15, 20, 15, 0.95)' }}>
+                <h5 className="modal-title" style={{ color: 'var(--brand-white)', fontWeight: '700' }}>Cancel Coaching Request?</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={closeCancelModal}
+                  disabled={Boolean(cancellingRequest)}
+                  style={{ filter: 'invert(1)' }}
+                ></button>
+              </div>
+
+              <div className="modal-body">
+                <p style={{ color: 'var(--text-primary)', marginBottom: '1rem' }}>
+                  Are you sure you want to cancel your coaching request with{' '}
+                  <strong style={{ color: 'var(--brand-white)' }}>{trainerToCancel.name}</strong>?
+                </p>
+                <div className="alert rounded-3 mb-0" style={{ backgroundColor: 'rgba(255, 193, 7, 0.12)', border: '1px solid rgba(255, 193, 7, 0.3)', color: 'var(--text-primary)' }}>
+                  <i className="bi bi-info-circle me-2"></i>
+                  You can send a new request again after cancelling.
+                </div>
+              </div>
+
+              <div
+                className="modal-footer border-0"
+                style={{ justifyContent: 'space-between', gap: '0.75rem' }}
+              >
+                <button
+                  type="button"
+                  className="btn rounded-pill px-4"
+                  onClick={closeCancelModal}
+                  disabled={Boolean(cancellingRequest)}
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-secondary)',
+                    border: '1px solid rgba(74, 74, 90, 0.3)',
+                    fontWeight: '600'
+                  }}
+                >
+                  Keep Request
+                </button>
+                <button
+                  type="button"
+                  className="btn rounded-pill px-4"
+                  onClick={handleConfirmCancelRequest}
+                  disabled={Boolean(cancellingRequest)}
+                  style={{
+                    backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                    color: '#dc3545',
+                    border: '1px solid rgba(220, 53, 69, 0.5)',
+                    fontWeight: '700'
+                  }}
+                >
+                  {Boolean(cancellingRequest) ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2"></span>
+                      Cancelling...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-x-circle me-2"></i>
+                      Cancel Request
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filter Modal */}
       {showFilterModal && (
@@ -965,8 +1292,10 @@ const FindTrainersPage = () => {
           </div>
         </div>
       )}
-    </TraineeDashboard>
+    </>
   );
+
+  return embedded ? pageContent : <TraineeDashboard>{pageContent}</TraineeDashboard>;
 };
 
 export default FindTrainersPage;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import TrainerDashboardLayout from '../../../components/TrainerDashboardLayout';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import APIClient from '../../../utils/APIClient';
@@ -8,6 +8,8 @@ const TrainerProfile = () => {
   const [saving, setSaving] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef(null);
   
   const [profile, setProfile] = useState({
     fullName: '',
@@ -73,6 +75,7 @@ const TrainerProfile = () => {
         specializations: JSON.stringify(profile.specializations),
         certifications: profile.certifications,
         yearsOfExperience: profile.yearsOfExperience,
+        profileImage: profile.profileImage,
         instagram: profile.instagram,
         facebook: profile.facebook,
         twitter: profile.twitter,
@@ -90,6 +93,45 @@ const TrainerProfile = () => {
       alert('Failed to save profile. Please try again.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleProfileImageClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleProfileImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingImage(true);
+      const formData = new FormData();
+      formData.append('profile_picture', file);
+
+      const response = await APIClient.fetch(`${BACKEND_ROUTES_API}UploadProfilePicture.php`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setProfile(prev => ({ ...prev, profileImage: result.imageUrl || prev.profileImage }));
+        setSuccessMessage('Profile picture uploaded successfully!');
+        setShowSuccessModal(true);
+      } else {
+        alert(result.message || 'Failed to upload profile picture');
+      }
+    } catch (error) {
+      console.error('Error uploading profile image:', error);
+      alert('Failed to upload profile picture. Please try again.');
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -133,7 +175,7 @@ const TrainerProfile = () => {
 
         <div className="row">
           {/* Main Profile Form */}
-          <div className="col-lg-10">
+          <div className="col-lg-9">
             <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
               <div className="card-header border-bottom" style={{ borderTopLeftRadius: '12px', borderTopRightRadius: '12px', backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
                 <h5 className="mb-0 fw-semibold" style={{ color: '#fff' }}>
@@ -194,6 +236,18 @@ const TrainerProfile = () => {
                         filter: invert(1);
                       }
                     `}} />
+                  </div>
+
+                  <div className="col-12 mb-3">
+                    <label className="form-label fw-bold">Profile Image URL</label>
+                    <input
+                      type="url"
+                      className="form-control"
+                      value={profile.profileImage}
+                      onChange={(e) => setProfile({ ...profile, profileImage: e.target.value })}
+                      placeholder="https://example.com/your-profile-image.jpg"
+                    />
+                    <small className="text-muted">Paste a direct image URL to show your profile photo across trainee views.</small>
                   </div>
 
                   <div className="col-12 mb-3">
@@ -386,7 +440,7 @@ const TrainerProfile = () => {
           </div>
 
           {/* Sidebar - Profile Preview */}
-          <div className="col-lg-2">
+          <div className="col-lg-3">
             <div className="card border-0 shadow-sm position-sticky" style={{ top: '20px', borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
               <div className="card-header border-bottom" style={{ borderTopLeftRadius: '12px', borderTopRightRadius: '12px', backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
                 <h6 className="mb-0 fw-semibold" style={{ color: '#fff' }}>Profile Preview</h6>
@@ -394,11 +448,55 @@ const TrainerProfile = () => {
               <div className="card-body text-center">
                 <div className="mb-3">
                   <div
-                    className="rounded-circle mx-auto d-flex align-items-center justify-content-center text-white"
-                    style={{ width: '100px', height: '100px', fontSize: '2.5rem', backgroundColor: '#10b981' }}
+                    onClick={handleProfileImageClick}
+                    title="Click to upload profile image"
+                    style={{ cursor: uploadingImage ? 'not-allowed' : 'pointer', position: 'relative', width: '100px', margin: '0 auto' }}
                   >
-                    {profile.fullName.charAt(0) || 'T'}
+                    {profile.profileImage ? (
+                      <img
+                        src={profile.profileImage}
+                        alt={profile.fullName || 'Trainer'}
+                        className="rounded-circle mx-auto d-block"
+                        style={{ width: '100px', height: '100px', objectFit: 'cover', border: '2px solid rgba(16, 185, 129, 0.4)' }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div
+                        className="rounded-circle mx-auto d-flex align-items-center justify-content-center text-white"
+                        style={{ width: '100px', height: '100px', fontSize: '2.5rem', backgroundColor: '#10b981' }}
+                      >
+                        {profile.fullName.charAt(0) || 'T'}
+                      </div>
+                    )}
+                    <div
+                      className="rounded-circle d-flex align-items-center justify-content-center"
+                      style={{
+                        position: 'absolute',
+                        right: '2px',
+                        bottom: '2px',
+                        width: '28px',
+                        height: '28px',
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                        color: '#10b981',
+                        border: '1px solid rgba(16, 185, 129, 0.5)'
+                      }}
+                    >
+                      <i className="bi bi-camera-fill" style={{ fontSize: '12px' }}></i>
+                    </div>
                   </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg"
+                    style={{ display: 'none' }}
+                    onChange={handleProfileImageUpload}
+                    disabled={uploadingImage}
+                  />
+                  <small className="text-muted d-block mt-2">
+                    {uploadingImage ? 'Uploading image...' : 'Click image to upload'}
+                  </small>
                 </div>
 
                 <h5 className="mb-1" style={{ color: '#fff' }}>{profile.fullName || 'Your Name'}</h5>
