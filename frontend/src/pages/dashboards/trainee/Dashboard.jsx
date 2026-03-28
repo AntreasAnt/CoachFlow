@@ -956,7 +956,7 @@ const HomePage = () => {
                     </div>
 
                     <form onSubmit={handleQuickFoodSubmit}>
-                      <div className="row g-2 align-items-center">
+                      <div className="row g-2 align-items-center mb-2">
                         <div className="col-12 col-md-3">
                           <label className="form-label small" style={{ color: 'var(--brand-white)' }}>Meal</label>
                           <select
@@ -996,8 +996,8 @@ const HomePage = () => {
                             }}
                           />
                         </div>
-                        <div className="col-7 col-md-2">
-                          <label className="form-label small" style={{ color: 'var(--brand-white)' }}>Calories</label>
+                        <div className="col-12 col-md-4">
+                          <label className="form-label small" style={{ color: 'var(--brand-white)' }}>Calories <span style={{ color: 'var(--brand-primary)' }}>*</span></label>
                           <input
                             type="number"
                             min="1"
@@ -1006,6 +1006,7 @@ const HomePage = () => {
                             value={quickFood.calories}
                             onChange={(event) => updateQuickFoodField('calories', event.target.value)}
                             placeholder="450"
+                            required
                             style={{
                               backgroundColor: 'rgba(255, 255, 255, 0.04)',
                               border: '1px solid rgba(255, 255, 255, 0.08)',
@@ -1013,7 +1014,60 @@ const HomePage = () => {
                             }}
                           />
                         </div>
-                        <div className="col-5 col-md-2">
+                      </div>
+                      <div className="row g-2 align-items-center">
+                        <div className="col-12 col-md-3">
+                          <label className="form-label small" style={{ color: 'var(--brand-white)' }}>Protein (g)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            className="form-control"
+                            value={quickFood.protein}
+                            onChange={(event) => updateQuickFoodField('protein', event.target.value)}
+                            placeholder="30"
+                            style={{
+                              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              color: 'var(--brand-white)',
+                            }}
+                          />
+                        </div>
+                        <div className="col-12 col-md-3">
+                          <label className="form-label small" style={{ color: 'var(--brand-white)' }}>Carbs (g)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            className="form-control"
+                            value={quickFood.carbs}
+                            onChange={(event) => updateQuickFoodField('carbs', event.target.value)}
+                            placeholder="45"
+                            style={{
+                              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              color: 'var(--brand-white)',
+                            }}
+                          />
+                        </div>
+                        <div className="col-12 col-md-3">
+                          <label className="form-label small" style={{ color: 'var(--brand-white)' }}>Fat (g)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            className="form-control"
+                            value={quickFood.fat}
+                            onChange={(event) => updateQuickFoodField('fat', event.target.value)}
+                            placeholder="15"
+                            style={{
+                              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              color: 'var(--brand-white)',
+                            }}
+                          />
+                        </div>
+                        <div className="col-12 col-md-3">
                           <label
                             className="form-label small"
                             style={{ visibility: 'hidden' }}

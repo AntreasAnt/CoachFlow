@@ -3,7 +3,7 @@
 /**
  * MailService Class
  * 
- * This service handles email functionality for the application using SendGrid.
+ * This service handles email functionality for the application using Gmail SMTP.
  * It provides:
  * - Email verification functionality
  * - Password reset functionality
@@ -14,27 +14,38 @@ require_once(__DIR__ . '/../bootstrap.php'); // Load environment variables
 require_once(__DIR__ . '/../config/MailConfig.php');
 require_once(__DIR__ . '/../config/AppConfig.php');
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 class MailService
 {
-    private $sendgrid;
+    private $mailer;
 
     public function __construct()
     {
         error_log("DEBUG: MailService constructor called");
         
-        if (!class_exists('\SendGrid')) {
-            error_log("ERROR: SendGrid class not found!");
-            throw new Exception("SendGrid library not found. Run 'composer require sendgrid/sendgrid'");
+        if (!class_exists('PHPMailer\PHPMailer\PHPMailer')) {
+            error_log("ERROR: PHPMailer class not found!");
+            throw new Exception("PHPMailer library not found. Run 'composer require phpmailer/phpmailer'");
         }
         
-        $apiKey = MailConfig::getSendGridApiKey();
-        if (empty($apiKey)) {
-            throw new Exception("SendGrid API key not found in environment variables");
-        }
+        $this->mailer = new PHPMailer(true);
         
-        error_log("DEBUG: SendGrid class found, creating instance with API key: " . substr($apiKey, 0, 10) . "...");
-        $this->sendgrid = new \SendGrid($apiKey);
-        error_log("DEBUG: MailService constructor completed successfully");
+        // SMTP Configuration
+        $this->mailer->isSMTP();
+        $this->mailer->Host = MailConfig::getSmtpHost();
+        $this->mailer->SMTPAuth = true;
+        $this->mailer->Username = MailConfig::getSmtpUsername();
+        $this->mailer->Password = MailConfig::getSmtpPassword();
+        $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $this->mailer->Port = MailConfig::getSmtpPort();
+        
+        // Sender Information
+        $this->mailer->setFrom(MailConfig::FROM_EMAIL, MailConfig::FROM_NAME);
+        $this->mailer->isHTML(true);
+        
+        error_log("DEBUG: MailService constructor completed successfully with Gmail SMTP");
     }
 
     /**
@@ -43,14 +54,11 @@ class MailService
     public function sendConfirmationEmail($userEmail, $username, $confirmationToken)
     {
         try {
-            $email = new \SendGrid\Mail\Mail();
-            $email->setFrom(MailConfig::FROM_EMAIL, MailConfig::FROM_NAME);
-            $email->setSubject("Confirm Your Email Address");
-            $email->addTo($userEmail);
+            $this->mailer->clearAddresses();
+            $this->mailer->addAddress($userEmail);
+            $this->mailer->Subject = "Confirm Your Email Address";
 
-            $email->addContent(
-                "text/html",
-                "
+            $this->mailer->Body = "
                 <div style='
                     font-family: Arial, sans-serif;
                     max-width: 600px;
@@ -113,18 +121,12 @@ class MailService
                         This code will expire in 1 minute.<br>
                         If you did not create this account, please ignore this email.
                     </p>
-                </div>"
-            );
+                </div>";
 
-            $response = $this->sendgrid->send($email);
-
-            if ($response->statusCode() !== 202) {
-                throw new Exception("Failed to send email. Status code: " . $response->statusCode());
-            }
-
+            $this->mailer->send();
             return true;
         } catch (Exception $e) {
-            error_log("SendGrid Error: " . $e->getMessage());
+            error_log("PHPMailer Error: " . $e->getMessage());
             throw new Exception("Failed to send confirmation email: " . $e->getMessage());
         }
     }
@@ -137,14 +139,11 @@ class MailService
         try {
             $resetUrl = AppConfig::getFrontendUrl() . "/new-password?token={$resetToken}&email={$userEmail}";
 
-            $email = new \SendGrid\Mail\Mail();
-            $email->setFrom(MailConfig::FROM_EMAIL, MailConfig::FROM_NAME);
-            $email->setSubject("Reset Your Password");
-            $email->addTo($userEmail);
+            $this->mailer->clearAddresses();
+            $this->mailer->addAddress($userEmail);
+            $this->mailer->Subject = "Reset Your Password";
 
-            $email->addContent(
-                "text/html",
-                "
+            $this->mailer->Body = "
                 <div style='
                     font-family: Arial, sans-serif;
                     max-width: 600px;
@@ -227,11 +226,10 @@ class MailService
                         background-color: #f8f9fa;
                         border-radius: 4px;
                     '>If you did not request a password reset, please ignore this email.</p>
-                </div>"
-            );
+                </div>";
 
-            $response = $this->sendgrid->send($email);
-            return $response->statusCode() === 202;
+            $this->mailer->send();
+            return true;
         } catch (Exception $e) {
             throw new Exception("Failed to send password reset email: " . $e->getMessage());
         }
