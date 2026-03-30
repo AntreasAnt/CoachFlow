@@ -625,3 +625,19 @@ background-color: rgba(255, 255, 255, 0.612);
   border-color: #3d3d3d #3d3d3d #1a1a1a !important;
   font-weight: 500;
 }
+
+@media (max-width: 768px) {
+  .fixed-bottom.footer-menu small {
+    display: none;
+  }
+
+  .fixed-bottom .btn{
+    padding:0px!important;
+    padding-top:10px!important;
+    padding-bottom:10px!important;
+  }
+
+  .fixed-bottom{
+    margin-top:100px!important;
+  }
+}

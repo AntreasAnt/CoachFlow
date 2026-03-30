@@ -348,6 +348,11 @@
     left: 10px;
     top: 10px;
   }
+
+    .profile-stats{
+  display:none!important;
+}
+
 }
 
 @media (max-width: 576px) {
@@ -367,6 +372,10 @@
   .card-body {
     padding: 16px !important;
   }
+
+    .profile-stats{
+  display:none!important;
+}
 }
 
 /* Smooth Transitions */
@@ -468,3 +477,4 @@
     opacity: 1;
   }
 }
+

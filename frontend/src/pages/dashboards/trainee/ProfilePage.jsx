@@ -305,7 +305,7 @@ const ProfilePage = () => {
                 >
                   {/* Profile Actions - Top Right */}
                   {isOwnProfile && (
-                    <div className="position-absolute top-0 end-0 p-3 d-flex gap-2" style={{zIndex: 3}}>
+                    <div className="profile-actions-top position-absolute top-0 end-0 p-3 d-flex gap-2" style={{zIndex: 3}}>
                       {isEditing ? (
                         <>
                           <button 
