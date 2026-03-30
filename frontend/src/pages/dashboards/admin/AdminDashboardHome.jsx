@@ -45,11 +45,13 @@ const AdminDashboardHome = () => {
 
   return (
     <AdminDashboardLayout>
-      <div style={{ color: '#fff' }}>
+      <div className="admin-page">
         {/* Header */}
-        <div className="mb-4">
-          <h2 className="mb-1 fw-bold" style={{ color: '#fff' }}>Admin Dashboard</h2>
-          <p style={{ color: '#9ca3af' }}>Overview of your platform</p>
+        <div className="admin-page-header">
+          <div>
+            <h2 className="admin-page-title">Admin Dashboard</h2>
+            <p className="admin-page-subtitle">Overview of your platform</p>
+          </div>
         </div>
 
         {/* Error Message */}

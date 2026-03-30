@@ -75,7 +75,8 @@ try {
     $youtube = $input['youtube'] ?? '';
     $linkedin = $input['linkedin'] ?? '';
     $website = $input['website'] ?? '';
-    $profileImage = $input['profileImage'] ?? '';
+    $profileImageProvided = array_key_exists('profileImage', $input);
+    $profileImage = $profileImageProvided ? ($input['profileImage'] ?? '') : '';
     
     $stmt->bind_param(
         "ssssssssssssi",
@@ -98,17 +99,41 @@ try {
         throw new Exception("Failed to update profile: " . $stmt->error);
     }
 
-    // Upsert trainer profile image in trainer_profiles
-    $imageQuery = "INSERT INTO trainer_profiles (user_id, profile_image)
-                   VALUES (?, ?)
-                   ON DUPLICATE KEY UPDATE profile_image = VALUES(profile_image)";
-    $imageStmt = $conn->prepare($imageQuery);
-    if (!$imageStmt) {
-        throw new Exception("Failed to prepare profile image update: " . $conn->error);
-    }
-    $imageStmt->bind_param("is", $userId, $profileImage);
-    if (!$imageStmt->execute()) {
-        throw new Exception("Failed to update profile image: " . $imageStmt->error);
+    // Upsert trainer profile image in trainer_profiles.
+    // Only update if the client explicitly sent profileImage.
+    // Guard against oversized values (e.g., data URI/base64 gallery fallback).
+    if ($profileImageProvided) {
+        $shouldStore = is_string($profileImage)
+            && $profileImage !== ''
+            && strlen($profileImage) <= 240
+            && substr($profileImage, 0, 5) !== 'data:';
+
+        if ($shouldStore) {
+            $imageQuery = "INSERT INTO trainer_profiles (user_id, profile_image)
+                           VALUES (?, ?)
+                           ON DUPLICATE KEY UPDATE profile_image = VALUES(profile_image)";
+            $imageStmt = $conn->prepare($imageQuery);
+            if (!$imageStmt) {
+                throw new Exception("Failed to prepare profile image update: " . $conn->error);
+            }
+            $imageStmt->bind_param("is", $userId, $profileImage);
+            if (!$imageStmt->execute()) {
+                throw new Exception("Failed to update profile image: " . $imageStmt->error);
+            }
+        } else {
+            // Clear so reads can fall back to gallery image if present.
+            $clearQuery = "INSERT INTO trainer_profiles (user_id, profile_image)
+                           VALUES (?, NULL)
+                           ON DUPLICATE KEY UPDATE profile_image = NULL";
+            $clearStmt = $conn->prepare($clearQuery);
+            if (!$clearStmt) {
+                throw new Exception("Failed to prepare profile image clear: " . $conn->error);
+            }
+            $clearStmt->bind_param("i", $userId);
+            if (!$clearStmt->execute()) {
+                throw new Exception("Failed to clear profile image: " . $clearStmt->error);
+            }
+        }
     }
     
     error_log("UpdateTrainerProfile - Profile updated successfully");

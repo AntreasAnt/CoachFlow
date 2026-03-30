@@ -540,20 +540,23 @@ const EmailMarketing = () => {
 
   return (
     <AdminDashboardLayout>
-      <div style={{ color: '#fff' }}>
+      <div className="admin-page">
         {/* Header */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
+        <div className="admin-page-header">
           <div>
-            <h2 className="mb-1" style={{ color: '#fff' }}>Email Marketing</h2>
-            <p style={{ color: '#9ca3af', marginBottom: 0 }}>Manage campaigns and audiences</p>
+            <h2 className="admin-page-title">Email Marketing</h2>
+            <p className="admin-page-subtitle">Manage campaigns and audiences</p>
           </div>
-          <button 
-            className="btn"
-            style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
-            onClick={() => setShowCampaignModal(true)}
-          >
-            <i className="bi bi-plus-circle me-2"></i>New Campaign
-          </button>
+          <div className="admin-page-header-actions">
+            <button 
+              className="btn btn-sm d-inline-flex align-items-center"
+              style={{ backgroundColor: '#10b981', color: '#fff', border: 'none', padding: '0.5rem 0.75rem' }}
+              onClick={() => setShowCampaignModal(true)}
+            >
+              <i className="bi bi-plus-circle me-2"></i>
+              New Campaign
+            </button>
+          </div>
         </div>
 
         {/* Messages */}

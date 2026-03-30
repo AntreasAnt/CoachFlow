@@ -33,6 +33,15 @@ const MealsPage = ({ embedded = false }) => {
     d.setDate(d.getDate() + delta);
     return dateToStr(d);
   };
+  const formatYmdShort = (ymd) => {
+    if (!ymd) return '';
+    const [y, m, d] = ymd.split('-').map(Number);
+    const localDate = new Date(y, m - 1, d);
+    return localDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+  };
+  const [mealHistoryFilter, setMealHistoryFilter] = useState({
+    mealType: ''
+  });
   const [historyEndDate, setHistoryEndDate] = useState(todayStr);
   const [historyStartDate, setHistoryStartDate] = useState(addDays(todayStr, -6));
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -753,7 +762,12 @@ const MealsPage = ({ embedded = false }) => {
   // Group history logs by date then meal type
   const groupHistoryByDateAndMeal = () => {
     const byDate = {};
-    historyLogs.forEach(log => {
+    const historyLogsInRange = historyLogs.filter((log) => {
+      if (historyStartDate && log.log_date < historyStartDate) return false;
+      if (historyEndDate && log.log_date > historyEndDate) return false;
+      return true;
+    });
+    historyLogsInRange.forEach(log => {
       const date = log.log_date;
       if (!byDate[date]) {
         byDate[date] = { breakfast: [], lunch: [], dinner: [], snack: [], other: [] };
@@ -766,17 +780,29 @@ const MealsPage = ({ embedded = false }) => {
   };
   const { byDate: historyByDate, sortedDates: historyDates } = groupHistoryByDateAndMeal();
 
+  const historyDatesToRender = mealHistoryFilter.mealType
+    ? historyDates.filter((date) => (historyByDate?.[date]?.[mealHistoryFilter.mealType] || []).length > 0)
+    : historyDates;
+
   const canGoNewer = new Date(historyEndDate) < new Date(todayStr);
   const goOlder = () => {
+    const rangeDays = Math.max(
+      1,
+      Math.round((new Date(historyEndDate) - new Date(historyStartDate)) / (1000 * 60 * 60 * 24)) + 1
+    );
     const newEnd = addDays(historyStartDate, -1);
-    const newStart = addDays(newEnd, -6);
+    const newStart = addDays(newEnd, -(rangeDays - 1));
     setHistoryEndDate(newEnd);
     setHistoryStartDate(newStart);
   };
   const goNewer = () => {
     if (!canGoNewer) return;
+    const rangeDays = Math.max(
+      1,
+      Math.round((new Date(historyEndDate) - new Date(historyStartDate)) / (1000 * 60 * 60 * 24)) + 1
+    );
     const newStart = addDays(historyEndDate, 1);
-    let newEnd = addDays(newStart, 6);
+    let newEnd = addDays(newStart, rangeDays - 1);
     if (new Date(newEnd) > new Date(todayStr)) newEnd = todayStr;
     setHistoryStartDate(newStart);
     setHistoryEndDate(newEnd);
@@ -797,432 +823,553 @@ const MealsPage = ({ embedded = false }) => {
     {/* Page Header */}
     <div style={{ backgroundColor: 'transparent', borderBottom: '1px solid rgba(32, 214, 87, 0.2)' }}>
       <div className="container-fluid px-4 py-3">
-          <div className="d-flex justify-content-between align-items-center">
-            <div>
-              <h2 className="h5 mb-0 fw-bold" style={{ color: '#ffffff' }}>Meals & Nutrition</h2>
-              <p className="small mb-0" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Track your food and macros</p>
-            </div>
-            <div className="d-flex gap-2">
-              <button
-                className="btn btn-sm rounded-pill"
-                onClick={() => {
-                  if (nutritionGoal) {
-                    setGoalForm({
-                      goal_type: nutritionGoal.goal_type || 'daily',
-                      target_calories: nutritionGoal.target_calories ?? '',
-                      target_protein: nutritionGoal.target_protein ?? '',
-                      target_carbs: nutritionGoal.target_carbs ?? '',
-                      target_fat: nutritionGoal.target_fat ?? ''
-                    });
-                  }
-                  setShowGoalModal(true);
-                }}
-                style={{ backgroundColor: 'rgba(32, 214, 87, 0.1)', color: 'var(--brand-primary)', border: '1px solid rgba(32, 214, 87, 0.3)' }}
-              >
-                <i className="bi bi-target me-1"></i>
-                {nutritionGoal ? 'Edit Goal' : 'Set Goal'}
-              </button>
-              <button
-                className="btn btn-sm rounded-pill"
-                onClick={() => { resetSearchState(); setShowLogModal(true); }}
-                style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none', fontWeight: '600' }}
-              >
-                <i className="bi bi-plus-lg me-1"></i>
-                Log Food
-              </button>
-            </div>
+        <div className="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center gap-3">
+          <div>
+            <h2 className="h5 mb-0 fw-bold" style={{ color: '#ffffff' }}>Meals & Nutrition</h2>
+            <p className="small mb-0" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Track your food and macros</p>
+          </div>
+          <div className="d-flex gap-2 justify-content-start justify-content-sm-end">
+            <button
+              className="btn btn-sm rounded-pill text-nowrap"
+              onClick={() => {
+                if (nutritionGoal) {
+                  setGoalForm({
+                    goal_type: nutritionGoal.goal_type || 'daily',
+                    target_calories: nutritionGoal.target_calories ?? '',
+                    target_protein: nutritionGoal.target_protein ?? '',
+                    target_carbs: nutritionGoal.target_carbs ?? '',
+                    target_fat: nutritionGoal.target_fat ?? ''
+                  });
+                }
+                setShowGoalModal(true);
+              }}
+              style={{ backgroundColor: 'rgba(32, 214, 87, 0.1)', color: 'var(--brand-primary)', border: '1px solid rgba(32, 214, 87, 0.3)' }}
+            >
+              <i className="bi bi-target me-1"></i>
+              {nutritionGoal ? 'Edit Goal' : 'Set Goal'}
+            </button>
+            <button
+              className="btn btn-sm rounded-pill text-nowrap"
+              onClick={() => { resetSearchState(); setShowLogModal(true); }}
+              style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none', fontWeight: '600' }}
+            >
+              <i className="bi bi-plus-lg me-1"></i>
+              Log Food
+            </button>
           </div>
         </div>
       </div>
+    </div>
 
-      <main className="container-fluid px-4 py-4 pb-5">
-        {dailySummary && (
-          <div className="row g-3 mb-4">
-            <div className="col-md-3">
-              <div
-                className="card border-0 rounded-4"
-                style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
-                onMouseEnter={handlePlanCardHoverIn}
-                onMouseLeave={handlePlanCardHoverOut}
-              >
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <h6 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Calories</h6>
-                    <i className="bi bi-fire" style={{ color: '#dc3545' }}></i>
-                  </div>
-                  <h3 className="mb-1" style={{ color: 'rgba(255, 255, 255, 0.95)' }}>{Math.round(dailySummary.total_calories || 0)}</h3>
-                  {nutritionGoal && (
-                    <>
-                      <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>of {nutritionGoal.target_calories} kcal</small>
-                      <div className="progress mt-2" style={{height: '4px', backgroundColor: 'rgba(220, 53, 69, 0.2)'}}>
-                        <div 
-                          className="progress-bar" 
-                          style={{width: `${calculateProgress(dailySummary.total_calories, nutritionGoal.target_calories)}%`, backgroundColor: '#dc3545'}}
-                        ></div>
-                      </div>
-                    </>
-                  )}
+    <main className="container-fluid px-4 py-4 pb-5">
+      {dailySummary && (
+        <div className="row g-3 mb-4">
+          <div className="col-md-3">
+            <div
+              className="card border-0 rounded-4"
+              style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
+              onMouseEnter={handlePlanCardHoverIn}
+              onMouseLeave={handlePlanCardHoverOut}
+            >
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <h6 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Calories</h6>
+                  <i className="bi bi-fire" style={{ color: '#dc3545' }}></i>
                 </div>
-              </div>
-            </div>
-            <div className="col-md-3">
-              <div
-                className="card border-0 rounded-4"
-                style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
-                onMouseEnter={handlePlanCardHoverIn}
-                onMouseLeave={handlePlanCardHoverOut}
-              >
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <h6 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Protein</h6>
-                    <i className="bi bi-egg" style={{ color: 'var(--brand-primary)' }}></i>
-                  </div>
-                  <h3 className="mb-1" style={{ color: 'rgba(255, 255, 255, 0.95)' }}>{Math.round(dailySummary.total_protein || 0)}g</h3>
-                  {nutritionGoal && nutritionGoal.target_protein && (
-                    <>
-                      <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>of {nutritionGoal.target_protein}g</small>
-                      <div className="progress mt-2" style={{height: '4px', backgroundColor: 'rgba(32, 214, 87, 0.2)'}}>
-                        <div 
-                          className="progress-bar" 
-                          style={{width: `${calculateProgress(dailySummary.total_protein, nutritionGoal.target_protein)}%`, backgroundColor: 'var(--brand-primary)'}}
-                        ></div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="col-md-3">
-              <div
-                className="card border-0 rounded-4"
-                style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
-                onMouseEnter={handlePlanCardHoverIn}
-                onMouseLeave={handlePlanCardHoverOut}
-              >
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <h6 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Carbs</h6>
-                    <i className="bi bi-clipboard-data" style={{ color: '#ffc107' }}></i>
-                  </div>
-                  <h3 className="mb-1" style={{ color: 'rgba(255, 255, 255, 0.95)' }}>{Math.round(dailySummary.total_carbs || 0)}g</h3>
-                  {nutritionGoal && nutritionGoal.target_carbs && (
-                    <>
-                      <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>of {nutritionGoal.target_carbs}g</small>
-                      <div className="progress mt-2" style={{height: '4px', backgroundColor: 'rgba(255, 193, 7, 0.2)'}}>
-                        <div 
-                          className="progress-bar" 
-                          style={{width: `${calculateProgress(dailySummary.total_carbs, nutritionGoal.target_carbs)}%`, backgroundColor: '#ffc107'}}
-                        ></div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="col-md-3">
-              <div
-                className="card border-0 rounded-4"
-                style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
-                onMouseEnter={handlePlanCardHoverIn}
-                onMouseLeave={handlePlanCardHoverOut}
-              >
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <h6 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Fat</h6>
-                    <i className="bi bi-droplet" style={{ color: '#0dcaf0' }}></i>
-                  </div>
-                  <h3 className="mb-1" style={{ color: 'rgba(255, 255, 255, 0.95)' }}>{Math.round(dailySummary.total_fat || 0)}g</h3>
-                  {nutritionGoal && nutritionGoal.target_fat && (
-                    <>
-                      <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>of {nutritionGoal.target_fat}g</small>
-                      <div className="progress mt-2" style={{height: '4px', backgroundColor: 'rgba(13, 202, 240, 0.2)'}}>
-                        <div 
-                          className="progress-bar" 
-                          style={{width: `${calculateProgress(dailySummary.total_fat, nutritionGoal.target_fat)}%`, backgroundColor: '#0dcaf0'}}
-                        ></div>
-                      </div>
-                    </>
-                  )}
-                </div>
+                <h3 className="mb-1" style={{ color: 'rgba(255, 255, 255, 0.95)' }}>{Math.round(dailySummary.total_calories || 0)}</h3>
+                {nutritionGoal && (
+                  <>
+                    <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>of {nutritionGoal.target_calories} kcal</small>
+                    <div className="progress mt-2" style={{height: '4px', backgroundColor: 'rgba(220, 53, 69, 0.2)'}}>
+                      <div 
+                        className="progress-bar" 
+                        style={{width: `${calculateProgress(dailySummary.total_calories, nutritionGoal.target_calories)}%`, backgroundColor: '#dc3545'}}
+                      ></div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
-        )}
-
-        {/* Trainer Assigned Meal Plan */}
-        {trainerMealPlan && Array.isArray(trainerMealPlan) && trainerMealPlan.length > 0 && (
-          <div
-            className="card border-0 rounded-4 mb-4"
-            style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
-            onMouseEnter={handlePlanCardHoverIn}
-            onMouseLeave={handlePlanCardHoverOut}
-          >
-            <div className="card-header border-0" style={{ backgroundColor: '#000000 !important', background: '#000000 !important', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', padding: '1.25rem', borderRadius: '1rem 1rem 0 0', backdropFilter: 'none' }}>
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <h5 className="mb-1" style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: '700' }}>
-                    <i className="bi bi-person-check me-2" style={{ color: 'var(--brand-primary)' }}></i>
-                    Your Trainer's Meal Plan
-                  </h5>
-                  <small style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Follow this plan for best results • Continue logging your actual meals below</small>
+          <div className="col-md-3">
+            <div
+              className="card border-0 rounded-4"
+              style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
+              onMouseEnter={handlePlanCardHoverIn}
+              onMouseLeave={handlePlanCardHoverOut}
+            >
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <h6 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Protein</h6>
+                  <i className="bi bi-egg" style={{ color: 'var(--brand-primary)' }}></i>
                 </div>
-                <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)', padding: '0.5rem 1rem' }}>Priority Plan</span>
+                <h3 className="mb-1" style={{ color: 'rgba(255, 255, 255, 0.95)' }}>{Math.round(dailySummary.total_protein || 0)}g</h3>
+                {nutritionGoal && nutritionGoal.target_protein && (
+                  <>
+                    <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>of {nutritionGoal.target_protein}g</small>
+                    <div className="progress mt-2" style={{height: '4px', backgroundColor: 'rgba(32, 214, 87, 0.2)'}}>
+                      <div 
+                        className="progress-bar" 
+                        style={{width: `${calculateProgress(dailySummary.total_protein, nutritionGoal.target_protein)}%`, backgroundColor: 'var(--brand-primary)'}}
+                      ></div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
-            <div className="card-body">
-              {mealPlanLoading ? (
-                <div className="text-center py-4">
-                  <div className="spinner-border" role="status" style={{ color: 'var(--brand-primary)' }}>
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                  <p className="mt-2" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Loading meal plan...</p>
+          </div>
+          <div className="col-md-3">
+            <div
+              className="card border-0 rounded-4"
+              style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
+              onMouseEnter={handlePlanCardHoverIn}
+              onMouseLeave={handlePlanCardHoverOut}
+            >
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <h6 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Carbs</h6>
+                  <i className="bi bi-clipboard-data" style={{ color: '#ffc107' }}></i>
                 </div>
-              ) : (
-                <div className="table-responsive">
-                  <table className="table table-hover" style={{ color: '#ffffff' }}>
-                    <thead>
-                      <tr>
-                        <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Day</th>
-                        <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Meal</th>
-                        <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Foods</th>
-                        <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Notes</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {trainerMealPlan.map((meal, index) => (
-                        <tr key={index} style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
-                          <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
-                            <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{getDayName(meal.day_of_week)}</strong>
-                          </td>
-                          <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
-                            <span className="badge rounded-pill" style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)' }}>
-                              {getMealTypeDisplay(meal.meal_type)}
-                            </span>
-                          </td>
-                          <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
-                            {(() => {
-                              const foodItems = parseFoodItems(meal.food_items);
-                              return foodItems.length > 0 ? (
-                                <div>
-                                  {foodItems.map((food, foodIndex) => (
-                                    <div key={foodIndex} className="mb-1">
-                                      <small className="d-block">
-                                        <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{food.food_name}</strong>
-                                        {food.quantity && food.serving_unit && (
-                                          <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}> - {food.quantity} {food.serving_unit}</span>
-                                        )}
-                                      </small>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>No foods assigned</small>
-                              );
-                            })()}
-                          </td>
-                          <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
-                            {meal.notes && (
-                              <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{meal.notes}</small>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                <h3 className="mb-1" style={{ color: 'rgba(255, 255, 255, 0.95)' }}>{Math.round(dailySummary.total_carbs || 0)}g</h3>
+                {nutritionGoal && nutritionGoal.target_carbs && (
+                  <>
+                    <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>of {nutritionGoal.target_carbs}g</small>
+                    <div className="progress mt-2" style={{height: '4px', backgroundColor: 'rgba(255, 193, 7, 0.2)'}}>
+                      <div 
+                        className="progress-bar" 
+                        style={{width: `${calculateProgress(dailySummary.total_carbs, nutritionGoal.target_carbs)}%`, backgroundColor: '#ffc107'}}
+                      ></div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        )}
+          <div className="col-md-3">
+            <div
+              className="card border-0 rounded-4"
+              style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
+              onMouseEnter={handlePlanCardHoverIn}
+              onMouseLeave={handlePlanCardHoverOut}
+            >
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <h6 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Fat</h6>
+                  <i className="bi bi-droplet" style={{ color: '#0dcaf0' }}></i>
+                </div>
+                <h3 className="mb-1" style={{ color: 'rgba(255, 255, 255, 0.95)' }}>{Math.round(dailySummary.total_fat || 0)}g</h3>
+                {nutritionGoal && nutritionGoal.target_fat && (
+                  <>
+                    <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>of {nutritionGoal.target_fat}g</small>
+                    <div className="progress mt-2" style={{height: '4px', backgroundColor: 'rgba(13, 202, 240, 0.2)'}}>
+                      <div 
+                        className="progress-bar" 
+                        style={{width: `${calculateProgress(dailySummary.total_fat, nutritionGoal.target_fat)}%`, backgroundColor: '#0dcaf0'}}
+                      ></div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-        {/* Today's Meals */}
+      {/* Trainer Assigned Meal Plan */}
+      {trainerMealPlan && Array.isArray(trainerMealPlan) && trainerMealPlan.length > 0 && (
         <div
           className="card border-0 rounded-4 mb-4"
           style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
           onMouseEnter={handlePlanCardHoverIn}
           onMouseLeave={handlePlanCardHoverOut}
         >
-          <div className="card-header border-0" style={{ backgroundColor: '#000000', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', padding: '1.25rem', borderRadius: '1rem 1rem 0 0' }}>
-            <div className="d-flex justify-content-between align-items-center">
+          <div className="card-header border-0" style={{ backgroundColor: '#000000 !important', background: '#000000 !important', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', padding: '1.25rem', borderRadius: '1rem 1rem 0 0', backdropFilter: 'none' }}>
+            <div className="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center gap-3">
               <div>
-                <h5 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: '700' }}>Today's Meals</h5>
-                {trainerMealPlan && trainerMealPlan.length > 0 ? (
-                  <small style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Track what you actually eat vs. your trainer's plan</small>
-                ) : (
-                  <small style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Track your daily nutrition</small>
-                )}
+                <h5 className="mb-1" style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: '700' }}>
+                  <i className="bi bi-person-check me-2" style={{ color: 'var(--brand-primary)' }}></i>
+                  Your Trainer's Meal Plan
+                </h5>
+                <small style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Follow this plan for best results • Continue logging your actual meals below</small>
               </div>
+              <span className="badge rounded-pill text-uppercase" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)', padding: '0.5rem 1rem', width: 'fit-content' }}>Priority Plan</span>
             </div>
           </div>
           <div className="card-body">
-            {todayLogs.length === 0 ? (
-              <div className="text-center py-5">
-                <i className="bi bi-journal-plus display-4 mb-3" style={{ color: 'rgba(255, 255, 255, 0.4)' }}></i>
-                <p style={{ color: 'rgba(255, 255, 255, 0.6)' }}>No meals logged today. Start tracking your nutrition!</p>
-                <button 
-                  className="btn rounded-pill"
-                  onClick={() => setShowLogModal(true)}
-                  style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none', fontWeight: '600' }}
-                >
-                  <i className="bi bi-plus-lg me-2"></i>
-                  Log Your First Meal
-                </button>
+            {mealPlanLoading ? (
+              <div className="text-center py-4">
+                <div className="spinner-border" role="status" style={{ color: 'var(--brand-primary)' }}>
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="mt-2" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Loading meal plan...</p>
               </div>
             ) : (
-              <div>
-                {Object.entries(groupedLogs).map(([mealType, logs]) => (
-                  logs.length > 0 && (
-                    <div key={mealType} className="mb-4">
-                      <h6 className="text-capitalize mb-3" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-                        <i className="bi bi-circle-fill me-2" style={{fontSize: '8px', color: 'var(--brand-primary)'}}></i>
-                        {mealType}
-                      </h6>
-                      <div className="table-responsive">
-                        <table className="table table-hover" style={{ color: '#ffffff' }}>
-                          <thead>
-                            <tr>
-                              <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Food</th>
-                              <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Serving</th>
-                              <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Calories</th>
-                              <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Protein</th>
-                              <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Carbs</th>
-                              <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Fat</th>
-                              <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Delete</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {logs.map((log) => (
-                              <tr key={log.id} style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
-                                <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>
-                                  <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{toTitleCase(log.food_name)}</strong>
-                                  {log.notes && <><br/><small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{log.notes}</small></>}
-                                </td>
-                                <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{formatServing(log.quantity, log.serving_unit)}</td>
-                                <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(log.calories)} kcal</td>
-                                <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(log.protein)}g</td>
-                                <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(log.carbs)}g</td>
-                                <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(log.fat)}g</td>
-                                <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
-                                  <button
-                                    className="btn btn-sm rounded-pill"
-                                    onClick={() => handleDeleteLog(log.id)}
-                                    title="Delete"
-                                    style={{ backgroundColor: 'rgba(220, 53, 69, 0.1)', color: '#dc3545', border: '1px solid rgba(220, 53, 69, 0.3)' }}
-                                  >
-                                    <i className="bi bi-trash"></i>
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )
-                ))}
+              <div className="table-responsive">
+                <table className="table table-hover" style={{ color: '#ffffff' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Day</th>
+                      <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Meal</th>
+                      <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Foods</th>
+                      <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trainerMealPlan.map((meal, index) => (
+                      <tr key={index} style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
+                        <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
+                          <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{getDayName(meal.day_of_week)}</strong>
+                        </td>
+                        <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
+                          <span className="badge rounded-pill" style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)' }}>
+                            {getMealTypeDisplay(meal.meal_type)}
+                          </span>
+                        </td>
+                        <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
+                          {(() => {
+                            const foodItems = parseFoodItems(meal.food_items);
+                            return foodItems.length > 0 ? (
+                              <div>
+                                {foodItems.map((food, foodIndex) => (
+                                  <div key={foodIndex} className="mb-1">
+                                    <small className="d-block">
+                                      <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{food.food_name}</strong>
+                                      {food.quantity && food.serving_unit && (
+                                        <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}> - {food.quantity} {food.serving_unit}</span>
+                                      )}
+                                    </small>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>No foods assigned</small>
+                            );
+                          })()}
+                        </td>
+                        <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
+                          {meal.notes && (
+                            <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{meal.notes}</small>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
         </div>
+      )}
 
-    {/* Meal History (7-day windows) */}
-    <div
-      className="card border-0 rounded-4 mb-5"
-      style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
-      onMouseEnter={handlePlanCardHoverIn}
-      onMouseLeave={handlePlanCardHoverOut}
-    >
-          <div className="card-header border-0 d-flex justify-content-between align-items-center" style={{ backgroundColor: '#000000', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', padding: '1.25rem', borderRadius: '1rem 1rem 0 0' }}>
-            <h5 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: '700' }}>Meal History</h5>
-            <div className="d-flex align-items-center gap-2">
-              <button className="btn btn-sm rounded-pill" onClick={goOlder} disabled={historyLoading} style={{ backgroundColor: 'rgba(32, 214, 87, 0.1)', color: 'var(--brand-primary)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
-                <i className="bi bi-chevron-left"></i> Previous 7 days
-              </button>
-              <div className="small" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                {historyStartDate} – {historyEndDate}
-              </div>
-              <button className="btn btn-sm rounded-pill" onClick={goNewer} disabled={!canGoNewer || historyLoading} style={{ backgroundColor: 'rgba(32, 214, 87, 0.1)', color: 'var(--brand-primary)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
-                Next 7 days <i className="bi bi-chevron-right"></i>
-              </button>
+      {/* Today's Meals */}
+      <div
+        className="card border-0 rounded-4 mb-4"
+        style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
+        onMouseEnter={handlePlanCardHoverIn}
+        onMouseLeave={handlePlanCardHoverOut}
+      >
+        <div className="card-header border-0" style={{ backgroundColor: '#000000', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', padding: '1.25rem', borderRadius: '1rem 1rem 0 0' }}>
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: '700' }}>Today's Meals</h5>
+              {trainerMealPlan && trainerMealPlan.length > 0 ? (
+                <small style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Track what you actually eat vs. your trainer's plan</small>
+              ) : (
+                <small style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Track your daily nutrition</small>
+              )}
             </div>
           </div>
-          <div className="card-body">
-            {historyLoading ? (
-              <div className="text-center py-4"><div className="spinner-border" role="status"></div></div>
-            ) : historyDates.length === 0 ? (
-              <div className="text-center py-4" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>No meals in this range.</div>
-            ) : (
-              historyDates.map(date => {
-                const weekday = new Date(date).toLocaleDateString(undefined, { weekday: 'long' });
-                const allLogs = ['breakfast','lunch','dinner','snack','other'].flatMap(meal => historyByDate[date][meal]);
-                const totals = allLogs.reduce((acc, l) => {
-                  acc.calories += l.calories || 0;
-                  acc.protein += l.protein || 0;
-                  acc.carbs += l.carbs || 0;
-                  acc.fat += l.fat || 0;
-                  return acc;
-                }, { calories:0, protein:0, carbs:0, fat:0 });
-                return (
-                  <div key={date} className="mb-3 border rounded" style={{ borderColor: 'rgba(32, 214, 87, 0.3)' }}>
-                    <div className="d-flex justify-content-between align-items-center px-3 py-2" style={{ backgroundColor: 'rgba(32, 214, 87, 0.05)' }}>
-                      <div>
-                        <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{weekday}</strong> <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>{date}</span><br/>
-                        <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{allLogs.length} item(s) • {Math.round(totals.calories)} kcal • P {Math.round(totals.protein)}g • C {Math.round(totals.carbs)}g • F {Math.round(totals.fat)}g</small>
-                      </div>
-                      <button
-                        className="btn btn-sm rounded-pill"
-                        type="button"
-                        onClick={() => {
-                          const section = document.getElementById(`history-details-${date}`);
-                          if (section) section.classList.toggle('d-none');
-                        }}
-                        style={{ backgroundColor: 'rgba(32, 214, 87, 0.1)', color: 'var(--brand-primary)', border: '1px solid rgba(32, 214, 87, 0.3)' }}
-                      >
-                        View Details
-                      </button>
-                    </div>
-                    <div id={`history-details-${date}`} className="px-3 py-3 d-none" style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}>
-                      {['breakfast','lunch','dinner','snack','other'].map(meal => (
-                        historyByDate[date][meal].length > 0 && (
-                          <div key={`${date}-${meal}`} className="mb-3">
-                            <div className="fw-semibold text-capitalize mb-2" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{meal}</div>
-                            <div className="table-responsive">
-                              <table className="table table-sm" style={{ color: '#ffffff' }}>
-                                <thead>
-                                  <tr>
-                                    <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Food</th>
-                                    <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Serving</th>
-                                    <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Calories</th>
-                                    <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Protein</th>
-                                    <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Carbs</th>
-                                    <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Fat</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {historyByDate[date][meal].map(item => (
-                                    <tr key={item.id} style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
-                                      <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}><strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{toTitleCase(item.food_name)}</strong></td>
-                                      <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{formatServing(item.quantity, item.serving_unit)}</td>
-                                      <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(item.calories)} kcal</td>
-                                      <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(item.protein)}g</td>
-                                      <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(item.carbs)}g</td>
-                                      <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(item.fat)}g</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        )
-                      ))}
+        </div>
+        <div className="card-body">
+          {todayLogs.length === 0 ? (
+            <div className="text-center py-5">
+              <i className="bi bi-journal-plus display-4 mb-3" style={{ color: 'rgba(255, 255, 255, 0.4)' }}></i>
+              <p style={{ color: 'rgba(255, 255, 255, 0.6)' }}>No meals logged today. Start tracking your nutrition!</p>
+              <button 
+                className="btn rounded-pill"
+                onClick={() => setShowLogModal(true)}
+                style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none', fontWeight: '600' }}
+              >
+                <i className="bi bi-plus-lg me-2"></i>
+                Log Your First Meal
+              </button>
+            </div>
+          ) : (
+            <div>
+              {Object.entries(groupedLogs).map(([mealType, logs]) => (
+                logs.length > 0 && (
+                  <div key={mealType} className="mb-4">
+                    <h6 className="text-capitalize mb-3" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                      <i className="bi bi-circle-fill me-2" style={{fontSize: '8px', color: 'var(--brand-primary)'}}></i>
+                      {mealType}
+                    </h6>
+                    <div className="table-responsive">
+                      <table className="table table-hover" style={{ color: '#ffffff' }}>
+                        <thead>
+                          <tr>
+                            <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Food</th>
+                            <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Serving</th>
+                            <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Calories</th>
+                            <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Protein</th>
+                            <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Carbs</th>
+                            <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Fat</th>
+                            <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Delete</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {logs.map((log) => (
+                            <tr key={log.id} style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
+                              <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>
+                                <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{toTitleCase(log.food_name)}</strong>
+                                {log.notes && <><br/><small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{log.notes}</small></>}
+                              </td>
+                              <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{formatServing(log.quantity, log.serving_unit)}</td>
+                              <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(log.calories)} kcal</td>
+                              <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(log.protein)}g</td>
+                              <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(log.carbs)}g</td>
+                              <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(log.fat)}g</td>
+                              <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
+                                <button
+                                  className="btn btn-sm rounded-pill"
+                                  onClick={() => handleDeleteLog(log.id)}
+                                  title="Delete"
+                                  style={{ backgroundColor: 'rgba(220, 53, 69, 0.1)', color: '#dc3545', border: '1px solid rgba(220, 53, 69, 0.3)' }}
+                                >
+                                  <i className="bi bi-trash"></i>
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
-                );
-              })
-            )}
+                )
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Meal History (7-day windows) */}
+      <div
+        className="card border-0 rounded-4 mb-5"
+        style={{ backgroundColor: 'rgba(15, 20, 15, 0.6)', border: '1px solid rgba(32, 214, 87, 0.3)', boxShadow: 'none', transition: 'all 0.3s ease' }}
+        onMouseEnter={handlePlanCardHoverIn}
+        onMouseLeave={handlePlanCardHoverOut}
+      >
+        <div className="card-header border-0" style={{ backgroundColor: '#000000', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', padding: '1.25rem', borderRadius: '1rem 1rem 0 0' }}>
+          <div className="d-flex flex-column flex-lg-row justify-content-lg-between align-items-lg-center gap-3">
+            <h5 className="mb-0" style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: '700', minWidth: 'max-content' }}>Meal History</h5>
+            <div className="workout-history-filters w-100 w-lg-auto justify-content-start justify-content-lg-end">
+              <input
+                type="date"
+                className="form-control form-control-sm workout-history-filter workout-history-date"
+                value={historyStartDate}
+                onChange={(e) => {
+                  const nextStart = e.target.value;
+                  if (!nextStart) return;
+                  setHistoryStartDate(nextStart);
+                  if (historyEndDate && new Date(nextStart) > new Date(historyEndDate)) {
+                    setHistoryEndDate(nextStart);
+                  }
+                }}
+                placeholder="Filter by date"
+                style={{
+                  backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                  border: '1px solid rgba(32, 214, 87, 0.2)',
+                  color: 'var(--brand-white)',
+                  colorScheme: 'dark'
+                }}
+              />
+              <input
+                type="date"
+                className="form-control form-control-sm workout-history-filter workout-history-date"
+                value={historyEndDate}
+                onChange={(e) => {
+                  const nextEnd = e.target.value;
+                  if (!nextEnd) return;
+                  setHistoryEndDate(nextEnd);
+                  if (historyStartDate && new Date(nextEnd) < new Date(historyStartDate)) {
+                    setHistoryStartDate(nextEnd);
+                  }
+                }}
+                placeholder="Filter by date"
+                style={{
+                  backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                  border: '1px solid rgba(32, 214, 87, 0.2)',
+                  color: 'var(--brand-white)',
+                  colorScheme: 'dark'
+                }}
+              />
+
+              <select
+                className="form-select form-select-sm workout-history-filter workout-history-plan"
+                value={mealHistoryFilter.mealType}
+                onChange={(e) => setMealHistoryFilter((prev) => ({ ...prev, mealType: e.target.value }))}
+                style={{
+                  backgroundColor: 'rgba(247, 255, 247, 0.05)',
+                  border: '1px solid rgba(32, 214, 87, 0.2)',
+                  color: 'var(--brand-white)',
+                  minWidth: '130px'
+                }}
+              >
+                <option value="">All Meals</option>
+                <option value="breakfast">Breakfast</option>
+                <option value="lunch">Lunch</option>
+                <option value="dinner">Dinner</option>
+                <option value="snack">Snack</option>
+                <option value="other">Other</option>
+              </select>
+
+              <button
+                className="btn btn-sm rounded-pill workout-history-clear"
+                type="button"
+                onClick={() => {
+                  setMealHistoryFilter({ mealType: '' });
+                  setHistoryEndDate(todayStr);
+                  setHistoryStartDate(addDays(todayStr, -6));
+                }}
+                style={{
+                  backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                  color: 'var(--brand-primary)',
+                  border: '1px solid rgba(32, 214, 87, 0.3)',
+                  minWidth: '80px'
+                }}
+              >
+                Clear
+              </button>
+            </div>
           </div>
         </div>
-      </main>
+        <div className="card-body">
+          {historyLoading ? (
+            <div className="text-center py-4"><div className="spinner-border" role="status"></div></div>
+          ) : (
+            <>
+              {historyDatesToRender.length === 0 ? (
+                <div className="text-center py-4" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>No meals in this range.</div>
+              ) : (
+                historyDatesToRender.map(date => {
+                  const [y, m, d] = date.split('-').map(Number);
+                  const localDate = new Date(y, m - 1, d);
+                  const weekday = localDate.toLocaleDateString(undefined, { weekday: 'long' });
+                  const displayDate = localDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+                  const allLogs = mealHistoryFilter.mealType
+                    ? (historyByDate?.[date]?.[mealHistoryFilter.mealType] || [])
+                    : ['breakfast','lunch','dinner','snack','other'].flatMap(meal => historyByDate[date][meal]);
+                  const totals = allLogs.reduce((acc, l) => {
+                    acc.calories += l.calories || 0;
+                    acc.protein += l.protein || 0;
+                    acc.carbs += l.carbs || 0;
+                    acc.fat += l.fat || 0;
+                    return acc;
+                  }, { calories:0, protein:0, carbs:0, fat:0 });
+                  return (
+                    <div key={date} className="mb-3 border rounded-4 overflow-hidden" style={{ borderColor: 'rgba(32, 214, 87, 0.3)' }}>
+                      <div
+                        className="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-2 px-3 py-2"
+                        style={{ backgroundColor: 'rgba(32, 214, 87, 0.05)' }}
+                      >
+                        <div style={{ minWidth: 0 }}>
+                          <div className="d-flex flex-wrap align-items-baseline gap-2">
+                            <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{weekday}</strong>
+                            <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>{displayDate}</span>
+                          </div>
+                          <div className="small" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                            {allLogs.length} item(s) • {Math.round(totals.calories)} kcal • P {Math.round(totals.protein)}g • C {Math.round(totals.carbs)}g • F {Math.round(totals.fat)}g
+                          </div>
+                        </div>
+                        <button
+                          className="btn btn-sm rounded-pill align-self-start align-self-md-center text-nowrap"
+                          type="button"
+                          onClick={() => {
+                            const section = document.getElementById(`history-details-${date}`);
+                            if (section) section.classList.toggle('d-none');
+                          }}
+                          style={{ backgroundColor: 'rgba(32, 214, 87, 0.1)', color: 'var(--brand-primary)', border: '1px solid rgba(32, 214, 87, 0.3)', paddingInline: '1.25rem' }}
+                        >
+                          View
+                        </button>
+                      </div>
+                      <div id={`history-details-${date}`} className="px-3 py-3 d-none" style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}>
+                        {(mealHistoryFilter.mealType ? [mealHistoryFilter.mealType] : ['breakfast','lunch','dinner','snack','other']).map(meal => (
+                          historyByDate[date][meal].length > 0 && (
+                            <div key={`${date}-${meal}`} className="mb-3">
+                              <div className="fw-semibold text-capitalize mb-2" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{meal}</div>
+                              <div className="table-responsive">
+                                <table className="table table-sm" style={{ color: '#ffffff' }}>
+                                  <thead>
+                                    <tr>
+                                      <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Food</th>
+                                      <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Serving</th>
+                                      <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Calories</th>
+                                      <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Protein</th>
+                                      <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Carbs</th>
+                                      <th style={{ color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(32, 214, 87, 0.2)' }}>Fat</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {historyByDate[date][meal].map(item => (
+                                      <tr key={item.id} style={{ borderColor: 'rgba(32, 214, 87, 0.1)' }}>
+                                        <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}><strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{toTitleCase(item.food_name)}</strong></td>
+                                        <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{formatServing(item.quantity, item.serving_unit)}</td>
+                                        <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(item.calories)} kcal</td>
+                                        <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(item.protein)}g</td>
+                                        <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(item.carbs)}g</td>
+                                        <td style={{ borderColor: 'rgba(32, 214, 87, 0.1)', color: 'rgba(255, 255, 255, 0.9)' }}>{Math.round(item.fat)}g</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          )
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+
+              <div className="pt-3">
+                <div className="d-flex justify-content-between align-items-center">
+                  <button
+                    className="btn btn-sm rounded-pill"
+                    onClick={goOlder}
+                    disabled={historyLoading}
+                    style={{
+                      backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                      color: 'var(--brand-primary)',
+                      border: '1px solid rgba(32, 214, 87, 0.3)',
+                      opacity: historyLoading ? 0.5 : 1
+                    }}
+                  >
+                    <i className="bi bi-chevron-left"></i> Previous
+                  </button>
+                  <button
+                    className="btn btn-sm rounded-pill"
+                    onClick={goNewer}
+                    disabled={!canGoNewer || historyLoading}
+                    style={{
+                      backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                      color: 'var(--brand-primary)',
+                      border: '1px solid rgba(32, 214, 87, 0.3)',
+                      opacity: (!canGoNewer || historyLoading) ? 0.5 : 1
+                    }}
+                  >
+                    Next <i className="bi bi-chevron-right"></i>
+                  </button>
+                </div>
+                <div className="small text-center mt-2" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                  {formatYmdShort(historyStartDate)} – {formatYmdShort(historyEndDate)}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </main>
 
       {/* Goal Modal */}
       {showGoalModal && (

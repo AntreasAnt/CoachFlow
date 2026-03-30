@@ -191,14 +191,18 @@ const TrainerProfile = () => {
               <div className="card-body p-4">
                 <div className="d-flex align-items-start mb-4">
                   <div className="me-4">
-                    {trainer.imageid ? (
-                      <img 
-                        src={`/uploads/profile_pictures/${trainer.imageid}`} 
-                        alt={trainer.full_name} 
-                        className="rounded-circle" 
-                        width="120" 
+                    {trainer.profilePicture ? (
+                      <img
+                        src={(() => {
+                          const src = String(trainer.profilePicture);
+                          if (src.startsWith('data:') || src.startsWith('http') || src.startsWith('/')) return src;
+                          return `/uploads/profile_pictures/${src}`;
+                        })()}
+                        alt={trainer.full_name}
+                        className="rounded-circle"
+                        width="120"
                         height="120"
-                        style={{objectFit: 'cover'}}
+                        style={{ objectFit: 'cover' }}
                       />
                     ) : (
                       <div 

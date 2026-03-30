@@ -205,6 +205,47 @@ class WorkoutModel
     }
 
     /**
+     * Get workout sessions within a date range (inclusive)
+     */
+    public function getSessionsByDateRange($userId, $startDate, $endDate)
+    {
+        try {
+            $query = "SELECT 
+                        id,
+                        workout_plan_id,
+                        plan_name,
+                        session_date,
+                        duration_minutes,
+                        rating,
+                        created_at
+                      FROM workout_sessions
+                      WHERE user_id = ?
+                        AND DATE(session_date) BETWEEN ? AND ?
+                      ORDER BY session_date DESC, created_at DESC";
+
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Prepare failed: " . $this->conn->error);
+            }
+
+            $stmt->bind_param("iss", $userId, $startDate, $endDate);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            $sessions = [];
+            while ($row = $result->fetch_assoc()) {
+                $sessions[] = $row;
+            }
+
+            return $sessions;
+
+        } catch (Exception $e) {
+            error_log("Error in getSessionsByDateRange: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
      * Get premium workout plans
      */
     public function getPremiumPlans()

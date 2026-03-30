@@ -22,7 +22,8 @@ const AnalyticsDashboard = () => {
   
   const getDefaultStartDate = () => {
     const date = new Date();
-    date.setDate(date.getDate() - 90);
+    // Inclusive 90-day window
+    date.setDate(date.getDate() - 89);
     return date.toISOString().split('T')[0];
   };
   
@@ -32,14 +33,15 @@ const AnalyticsDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
-    // Update dates based on range selection
-    const end = new Date();
-    const start = new Date();
-    start.setDate(start.getDate() - parseInt(dateRange));
-    
+    // Keep a fixed period window ending at the selected endDate
+    const days = Math.max(1, parseInt(dateRange, 10) || 90);
+    const end = new Date(`${endDate}T00:00:00`);
+    if (Number.isNaN(end.getTime())) return;
+    const start = new Date(end);
+    start.setDate(start.getDate() - (days - 1));
+
     setStartDate(start.toISOString().split('T')[0]);
-    setEndDate(end.toISOString().split('T')[0]);
-  }, [dateRange]);
+  }, [dateRange, endDate]);
 
   useEffect(() => {
     fetchAnalytics();
@@ -144,18 +146,11 @@ const AnalyticsDashboard = () => {
         </ul>
 
         {/* Date Range Filters */}
-        <div className="d-flex justify-content-end gap-2 align-items-center mb-3">
-          <button 
-            className="btn btn-outline-light btn-sm"
-            onClick={() => navigate('/trainee-dashboard/training-periods')}
-          >
-            <i className="bi bi-arrow-left-right me-2"></i>Compare Periods
-          </button>
+        <div className="workout-history-filters w-100 justify-content-start justify-content-lg-end mb-3">
           <select
-            className="form-select dark-input"
+            className="form-select dark-input workout-history-filter"
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            style={{ width: 'auto' }}
           >
             <option value="30">Last 30 Days</option>
             <option value="60">Last 60 Days</option>
@@ -163,18 +158,15 @@ const AnalyticsDashboard = () => {
             <option value="180">Last 6 Months</option>
             <option value="365">Last Year</option>
           </select>
-          <div className="d-flex align-items-center gap-2">
-            <label className="text-white-50 small mb-0">To:</label>
-            <input 
-              type="date" 
-              className="form-control dark-input"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              min={startDate}
-              max={getDefaultEndDate()}
-              style={{ width: '150px' }}
-            />
-          </div>
+          <input 
+            type="date" 
+            className="form-control dark-input workout-history-filter workout-history-date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            min={startDate}
+            max={getDefaultEndDate()}
+            style={{ colorScheme: 'dark' }}
+          />
         </div>
 
         {/* Performance Alerts */}
@@ -195,62 +187,64 @@ const AnalyticsDashboard = () => {
           <div>
             {/* Stats Cards */}
             <div className="row mb-4">
-              <div className="col-md-3 mb-3">
-                <div className="card border-0 shadow-sm dark-card">
+              <div className="col-12 col-sm-6 col-lg-3 mb-3">
+                <div className="card border-0 shadow-sm dark-card h-100">
                   <div className="card-body">
-                    <div className="d-flex justify-content-between">
-                      <div>
-                        <p className="text-white-50 mb-1 small">Total Workouts</p>
+                    <div className="d-flex justify-content-between align-items-center gap-2">
+                      <div className="text-truncate">
+                        <p className="text-white-50 mb-1 small text-truncate">Total Workouts</p>
                         <h3 className="mb-0 text-white">{overview.total_workouts || 0}</h3>
                       </div>
-                      <div className="bg-primary bg-opacity-10 p-3 rounded">
+                      <div className="bg-primary bg-opacity-10 p-3 rounded flex-shrink-0">
                         <i className="bi bi-calendar-check text-primary fs-4"></i>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="col-md-3 mb-3">
-                <div className="card border-0 shadow-sm dark-card">
+              <div className="col-12 col-sm-6 col-lg-3 mb-3">
+                <div className="card border-0 shadow-sm dark-card h-100">
                   <div className="card-body">
-                    <div className="d-flex justify-content-between">
-                      <div>
-                        <p className="text-white-50 mb-1 small">Total Volume</p>
-                        <h3 className="mb-0 text-white">{(overview.total_volume_kg || 0).toLocaleString()}kg</h3>
+                    <div className="d-flex justify-content-between align-items-center gap-2">
+                      <div className="text-truncate">
+                        <p className="text-white-50 mb-1 small text-truncate">Total Volume</p>
+                        <h3 className="mb-0 text-white text-truncate" title={`${(overview.total_volume_kg || 0).toLocaleString()}kg`}>
+                          {(overview.total_volume_kg || 0).toLocaleString()}kg
+                        </h3>
                       </div>
-                      <div className="bg-success bg-opacity-10 p-3 rounded">
+                      <div className="bg-success bg-opacity-10 p-3 rounded flex-shrink-0">
                         <i className="bi bi-box-seam text-success fs-4"></i>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="col-md-3 mb-3">
-                <div className="card border-0 shadow-sm dark-card">
+              <div className="col-12 col-sm-6 col-lg-3 mb-3">
+                <div className="card border-0 shadow-sm dark-card h-100">
                   <div className="card-body">
-                    <div className="d-flex justify-content-between">
-                      <div>
-                        <p className="text-white-50 mb-1 small">Avg RPE</p>
+                    <div className="d-flex justify-content-between align-items-center gap-2">
+                      <div className="text-truncate">
+                        <p className="text-white-50 mb-1 small text-truncate">Avg RPE</p>
                         <h3 className="mb-0 text-white">{(overview.avg_rpe || 0).toFixed(1)}</h3>
                       </div>
-                      <div className="bg-warning bg-opacity-10 p-3 rounded">
+                      <div className="bg-warning bg-opacity-10 p-3 rounded flex-shrink-0">
                         <i className="bi bi-speedometer text-warning fs-4"></i>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="col-md-3 mb-3">
-                <div className="card border-0 shadow-sm dark-card">
+              <div className="col-12 col-sm-6 col-lg-3 mb-3">
+                <div className="card border-0 shadow-sm dark-card h-100">
                   <div className="card-body">
-                    <div className="d-flex justify-content-between">
-                      <div>
-                        <p className="text-white-50 mb-1 small">Current Streak</p>
+                    <div className="d-flex justify-content-between align-items-center gap-2">
+                      <div className="text-truncate">
+                        <p className="text-white-50 mb-1 small text-truncate">Current Streak</p>
                         <h3 className="mb-0 text-white">
                           {consistency.streaks?.workout_streak?.current_streak || 0} 🔥
                         </h3>
                       </div>
-                      <div className="bg-danger bg-opacity-10 p-3 rounded">
+                      <div className="bg-danger bg-opacity-10 p-3 rounded flex-shrink-0">
                         <i className="bi bi-fire text-danger fs-4"></i>
                       </div>
                     </div>

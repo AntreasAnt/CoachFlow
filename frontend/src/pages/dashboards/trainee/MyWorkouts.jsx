@@ -8,6 +8,22 @@ import CreateWorkoutProgram from './CreateWorkoutProgram';
 const MyWorkouts = ({ embedded = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Workout history date-window helpers (Meals-style)
+  const todayStr = new Date().toISOString().split('T')[0];
+  const dateToStr = (d) => d.toISOString().split('T')[0];
+  const addDays = (dateStr, delta) => {
+    const d = new Date(dateStr);
+    d.setDate(d.getDate() + delta);
+    return dateToStr(d);
+  };
+  const formatYmdShort = (ymd) => {
+    if (!ymd) return '';
+    const [y, m, d] = ymd.split('-').map(Number);
+    const localDate = new Date(y, m - 1, d);
+    return localDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+  };
+
   const [activeView, setActiveView] = useState('plans'); // plans, create, log
   const [workoutPlans, setWorkoutPlans] = useState([]);
   const [purchasedPrograms, setPurchasedPrograms] = useState([]);
@@ -15,8 +31,6 @@ const MyWorkouts = ({ embedded = false }) => {
   const [trainerAssignedPrograms, setTrainerAssignedPrograms] = useState([]);
   const [assignedProgramsLoading, setAssignedProgramsLoading] = useState(false);
   const [workoutHistory, setWorkoutHistory] = useState([]);
-  const [historyPage, setHistoryPage] = useState(1);
-  const [historyHasMore, setHistoryHasMore] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [allExercises, setAllExercises] = useState([]);
   const [premadeWorkoutPlans, setPremadeWorkoutPlans] = useState([]);
@@ -47,8 +61,8 @@ const MyWorkouts = ({ embedded = false }) => {
   // Search and filter states
   const [exerciseSearch, setExerciseSearch] = useState('');
   const [historyFilter, setHistoryFilter] = useState({
-    date: '',
-    year: '',
+    startDate: addDays(todayStr, -6),
+    endDate: todayStr,
     workoutPlan: '',
     sortBy: 'date'
   });
@@ -100,9 +114,9 @@ const MyWorkouts = ({ embedded = false }) => {
   }, [location.state]);
 
   useEffect(() => {
-    fetchRecentSessions(historyPage);
+    fetchRecentSessions(historyFilter.startDate, historyFilter.endDate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [historyPage]);
+  }, [historyFilter.startDate, historyFilter.endDate]);
 
   // Timer effects
   useEffect(() => {
@@ -200,13 +214,14 @@ const MyWorkouts = ({ embedded = false }) => {
     setAssignedProgramsLoading(false);
   };
 
-  const fetchRecentSessions = async (page = 1) => {
+  const fetchRecentSessions = async (startDate, endDate) => {
     try {
       setHistoryLoading(true);
-      const resp = await APIClient.get(`${BACKEND_ROUTES_API}GetRecentWorkouts.php?page=${page}&pageSize=7`);
+      const resp = await APIClient.get(
+        `${BACKEND_ROUTES_API}GetRecentWorkouts.php?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
+      );
       if (resp.success) {
         setWorkoutHistory(resp.sessions || []);
-        setHistoryHasMore(!!resp.hasMore);
       }
     } catch (e) {
       console.error('Error fetching paged sessions', e);
@@ -226,6 +241,7 @@ const MyWorkouts = ({ embedded = false }) => {
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+
   // Filter functions
   const filteredExercises = allExercises.filter(exercise =>
     exercise.name.toLowerCase().includes(exerciseSearch.toLowerCase()) ||
@@ -235,14 +251,8 @@ const MyWorkouts = ({ embedded = false }) => {
 
   const filteredWorkoutHistory = workoutHistory.filter(workout => {
     let matches = true;
-    
-    if (historyFilter.date && workout.session_date !== historyFilter.date) {
-      matches = false;
-    }
-    
-    if (historyFilter.year && !workout.session_date.includes(historyFilter.year)) {
-      matches = false;
-    }
+
+    // Backend already returns sessions in the selected date range
     
     if (historyFilter.workoutPlan && workout.plan_name !== historyFilter.workoutPlan) {
       matches = false;
@@ -255,6 +265,28 @@ const MyWorkouts = ({ embedded = false }) => {
     }
     return 0;
   });
+
+  const canGoNewer = new Date(historyFilter.endDate) < new Date(todayStr);
+  const goOlder = () => {
+    const rangeDays = Math.max(
+      1,
+      Math.round((new Date(historyFilter.endDate) - new Date(historyFilter.startDate)) / (1000 * 60 * 60 * 24)) + 1
+    );
+    const newEnd = addDays(historyFilter.startDate, -1);
+    const newStart = addDays(newEnd, -(rangeDays - 1));
+    setHistoryFilter((prev) => ({ ...prev, startDate: newStart, endDate: newEnd }));
+  };
+  const goNewer = () => {
+    if (!canGoNewer) return;
+    const rangeDays = Math.max(
+      1,
+      Math.round((new Date(historyFilter.endDate) - new Date(historyFilter.startDate)) / (1000 * 60 * 60 * 24)) + 1
+    );
+    const newStart = addDays(historyFilter.endDate, 1);
+    let newEnd = addDays(newStart, rangeDays - 1);
+    if (new Date(newEnd) > new Date(todayStr)) newEnd = todayStr;
+    setHistoryFilter((prev) => ({ ...prev, startDate: newStart, endDate: newEnd }));
+  };
 
   const [newPlan, setNewPlan] = useState({
     name: '',
@@ -851,13 +883,13 @@ const MyWorkouts = ({ embedded = false }) => {
 
   const renderPlansView = () => (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center gap-3 mb-4">
         <div>
           <h2 className="h5 mb-0 fw-bold" style={{ color: '#ffffff' }}>My Workout Plans</h2>
           <p className="small mb-0" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Your training programs and workouts</p>
         </div>
         <button 
-          className="btn rounded-pill px-4"
+          className="btn rounded-pill px-4 align-self-start align-self-sm-center text-nowrap"
           onClick={() => {
             resetPlanForm();
             setActiveView('create');
@@ -894,7 +926,7 @@ const MyWorkouts = ({ embedded = false }) => {
           }}
         >
           <div className="card-header border-0" style={{ backgroundColor: '#000000 !important', background: '#000000 !important', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', padding: '1.25rem', borderRadius: '1rem 1rem 0 0', backdropFilter: 'none' }}>
-            <div className="d-flex justify-content-between align-items-center">
+            <div className="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center gap-3">
               <div>
                 <h5 className="mb-1" style={{ color: '#ffffff', fontWeight: '700' }}>
                   <i className="bi bi-person-check me-2" style={{ color: 'var(--brand-primary)' }}></i>
@@ -902,7 +934,7 @@ const MyWorkouts = ({ embedded = false }) => {
                 </h5>
                 <small style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Follow these programs for best results • Continue using your own plans below</small>
               </div>
-              <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)', padding: '0.5rem 1rem' }}>Priority Programs</span>
+              <span className="badge rounded-pill text-uppercase" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)', padding: '0.5rem 1rem', width: 'fit-content' }}>Priority Programs</span>
             </div>
           </div>
           <div className="card-body">
@@ -1200,7 +1232,7 @@ const MyWorkouts = ({ embedded = false }) => {
                         }}
                       >
                         <i className="bi bi-eye me-2"></i>
-                        View Program
+                        View
                       </button>
                       <button 
                         className="btn rounded-pill"
@@ -1341,7 +1373,7 @@ const MyWorkouts = ({ embedded = false }) => {
                       }}
                     >
                       <i className="bi bi-eye me-2"></i>
-                      View Details
+                      View
                     </button>
                   </div>
                 </div>
@@ -1352,47 +1384,64 @@ const MyWorkouts = ({ embedded = false }) => {
       )}
 
       {/* Workout History with Filters */}
-      <div className="mt-5">
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h5 className="mb-0" style={{ color: 'var(--brand-white)', fontWeight: '700' }}>
+      <div className="mt-5 overflow-hidden">
+        <div className="d-flex flex-column flex-lg-row justify-content-lg-between align-items-lg-center gap-3 mb-4">
+          <h5 className="mb-0" style={{ color: 'var(--brand-white)', fontWeight: '700', minWidth: 'max-content' }}>
             <i className="bi bi-clock-history me-2" style={{ color: 'var(--brand-primary)' }}></i>
             Recent Workouts
           </h5>
-          <div className="d-flex gap-2">
+          <div className="workout-history-filters w-100 w-lg-auto justify-content-start justify-content-lg-end">
             <input 
               type="date" 
-              className="form-control form-control-sm"
-              value={historyFilter.date}
-              onChange={(e) => setHistoryFilter(prev => ({ ...prev, date: e.target.value }))}
+              className="form-control form-control-sm workout-history-filter workout-history-date"
+              value={historyFilter.startDate}
+              onChange={(e) => {
+                const nextStart = e.target.value;
+                if (!nextStart) return;
+                setHistoryFilter((prev) => {
+                  const next = { ...prev, startDate: nextStart };
+                  if (next.endDate && nextStart > next.endDate) next.endDate = nextStart;
+                  return next;
+                });
+              }}
               placeholder="Filter by date"
               style={{
                 backgroundColor: 'rgba(247, 255, 247, 0.05)',
                 border: '1px solid rgba(32, 214, 87, 0.2)',
-                color: 'var(--brand-white)'
+                color: 'var(--brand-white)',
+                colorScheme: 'dark'
               }}
             />
             <input 
-              type="number" 
-              className="form-control form-control-sm"
-              value={historyFilter.year}
-              onChange={(e) => setHistoryFilter(prev => ({ ...prev, year: e.target.value }))}
-              placeholder="Year"
-              min="2020"
-              max="2030"
+              type="date" 
+              className="form-control form-control-sm workout-history-filter workout-history-date"
+              value={historyFilter.endDate}
+              onChange={(e) => {
+                const nextEnd = e.target.value;
+                if (!nextEnd) return;
+                setHistoryFilter((prev) => {
+                  const next = { ...prev, endDate: nextEnd };
+                  if (next.startDate && nextEnd < next.startDate) next.startDate = nextEnd;
+                  return next;
+                });
+              }}
+              placeholder="Filter by date"
               style={{
                 backgroundColor: 'rgba(247, 255, 247, 0.05)',
                 border: '1px solid rgba(32, 214, 87, 0.2)',
-                color: 'var(--brand-white)'
+                color: 'var(--brand-white)',
+                colorScheme: 'dark'
               }}
             />
             <select 
-              className="form-select form-select-sm"
+              className="form-select form-select-sm workout-history-filter workout-history-plan"
               value={historyFilter.workoutPlan}
               onChange={(e) => setHistoryFilter(prev => ({ ...prev, workoutPlan: e.target.value }))}
               style={{
                 backgroundColor: 'rgba(247, 255, 247, 0.05)',
                 border: '1px solid rgba(32, 214, 87, 0.2)',
-                color: 'var(--brand-white)'
+                color: 'var(--brand-white)',
+                minWidth: '130px'
               }}
             >
               <option value="">All Plans</option>
@@ -1401,12 +1450,15 @@ const MyWorkouts = ({ embedded = false }) => {
               ))}
             </select>
             <button 
-              className="btn btn-sm rounded-pill"
-              onClick={() => setHistoryFilter({ date: '', year: '', workoutPlan: '', sortBy: 'date' })}
+              className="btn btn-sm rounded-pill workout-history-clear"
+              onClick={() => {
+                setHistoryFilter({ startDate: addDays(todayStr, -6), endDate: todayStr, workoutPlan: '', sortBy: 'date' });
+              }}
               style={{
                 backgroundColor: 'rgba(32, 214, 87, 0.1)',
                 color: 'var(--brand-primary)',
-                border: '1px solid rgba(32, 214, 87, 0.3)'
+                border: '1px solid rgba(32, 214, 87, 0.3)',
+                minWidth: '80px'
               }}
             >
               Clear
@@ -1458,40 +1510,44 @@ const MyWorkouts = ({ embedded = false }) => {
                         border: '1px solid rgba(32, 214, 87, 0.3)'
                       }}
                     >
-                      View Details
+                      View
                     </button>
                   </div>
                 </div>
               ))
             )}
-            <div className="d-flex justify-content-between align-items-center pt-3">
-              <button
-                className="btn btn-sm rounded-pill"
-                onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
-                disabled={historyLoading || historyPage === 1}
-                style={{
-                  backgroundColor: 'rgba(32, 214, 87, 0.1)',
-                  color: 'var(--brand-primary)',
-                  border: '1px solid rgba(32, 214, 87, 0.3)',
-                  opacity: (historyLoading || historyPage === 1) ? 0.5 : 1
-                }}
-              >
-                <i className="bi bi-chevron-left"></i> Previous
-              </button>
-              <div className="small" style={{ color: 'var(--text-secondary)' }}>Page {historyPage}</div>
-              <button
-                className="btn btn-sm rounded-pill"
-                onClick={() => setHistoryPage(p => p + 1)}
-                disabled={historyLoading || !historyHasMore}
-                style={{
-                  backgroundColor: 'rgba(32, 214, 87, 0.1)',
-                  color: 'var(--brand-primary)',
-                  border: '1px solid rgba(32, 214, 87, 0.3)',
-                  opacity: (historyLoading || !historyHasMore) ? 0.5 : 1
-                }}
-              >
-                Next <i className="bi bi-chevron-right"></i>
-              </button>
+            <div className="pt-3">
+              <div className="d-flex justify-content-between align-items-center">
+                <button
+                  className="btn btn-sm rounded-pill"
+                  onClick={goOlder}
+                  disabled={historyLoading}
+                  style={{
+                    backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                    color: 'var(--brand-primary)',
+                    border: '1px solid rgba(32, 214, 87, 0.3)',
+                    opacity: historyLoading ? 0.5 : 1
+                  }}
+                >
+                  <i className="bi bi-chevron-left"></i> Previous
+                </button>
+                <button
+                  className="btn btn-sm rounded-pill"
+                  onClick={goNewer}
+                  disabled={historyLoading || !canGoNewer}
+                  style={{
+                    backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                    color: 'var(--brand-primary)',
+                    border: '1px solid rgba(32, 214, 87, 0.3)',
+                    opacity: (historyLoading || !canGoNewer) ? 0.5 : 1
+                  }}
+                >
+                  Next <i className="bi bi-chevron-right"></i>
+                </button>
+              </div>
+              <div className="small text-center mt-2" style={{ color: 'var(--text-secondary)' }}>
+                {formatYmdShort(historyFilter.startDate)} – {formatYmdShort(historyFilter.endDate)}
+              </div>
             </div>
           </div>
         </div>
@@ -2790,7 +2846,7 @@ const MyWorkouts = ({ embedded = false }) => {
           border: none !important;
         }
       `}</style>
-      <div className="container-fluid px-3 px-md-4 py-3" style={{ paddingBottom: embedded ? '0' : '100px', backgroundColor: embedded ? 'transparent' : 'var(--brand-dark)', minHeight: embedded ? 'auto' : '100vh' }}>
+      <div className="container-fluid px-2 px-md-4 py-3" style={{ overflowX: 'hidden', paddingBottom: embedded ? '0' : '100px', backgroundColor: embedded ? 'transparent' : 'var(--brand-dark)', minHeight: embedded ? 'auto' : '100vh' }}>
         {/* Error State */}
         {error && (
           <div className="alert rounded-4" role="alert" style={{ border: '1px solid rgba(220, 53, 69, 0.3)', backgroundColor: 'rgba(220, 53, 69, 0.1)', color: 'var(--text-primary)' }}>

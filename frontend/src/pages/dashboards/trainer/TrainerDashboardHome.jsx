@@ -84,7 +84,7 @@ const TrainerDashboardHome = () => {
                       <i className="bi bi-arrow-up"></i> 12% this month
                     </small>
                   </div>
-                  <div className="rounded-circle p-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
+                  <div className="trainer-stat-icon" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
                     <i className="bi bi-people fs-4" style={{ color: '#10b981' }}></i>
                   </div>
                 </div>
@@ -103,7 +103,7 @@ const TrainerDashboardHome = () => {
                       <i className="bi bi-arrow-up"></i> 8% this month
                     </small>
                   </div>
-                  <div className="rounded-circle p-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
+                  <div className="trainer-stat-icon" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
                     <i className="bi bi-currency-dollar fs-4" style={{ color: '#10b981' }}></i>
                   </div>
                 </div>
@@ -120,7 +120,7 @@ const TrainerDashboardHome = () => {
                     <h3 className="mb-0" style={{ color: '#fff' }}>{stats.activePrograms}</h3>
                     <small style={{ color: '#9ca3af' }}>Published programs</small>
                   </div>
-                  <div className="rounded-circle p-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
+                  <div className="trainer-stat-icon" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
                     <i className="bi bi-collection fs-4" style={{ color: '#10b981' }}></i>
                   </div>
                 </div>
@@ -137,7 +137,7 @@ const TrainerDashboardHome = () => {
                     <h3 className="mb-0" style={{ color: '#fff' }}>{stats.totalSales}</h3>
                     <small style={{ color: '#9ca3af' }}>Program purchases</small>
                   </div>
-                  <div className="rounded-circle p-3" style={{ backgroundColor: 'rgba(251, 191, 36, 0.2)' }}>
+                  <div className="trainer-stat-icon" style={{ backgroundColor: 'rgba(251, 191, 36, 0.2)' }}>
                     <i className="bi bi-cart-check fs-4" style={{ color: '#fbbf24' }}></i>
                   </div>
                 </div>
@@ -218,7 +218,7 @@ const TrainerDashboardHome = () => {
                       <div key={index} className="list-group-item border-0 px-0" style={{ backgroundColor: 'transparent' }}>
                         <div className="d-flex justify-content-between align-items-start">
                           <div className="d-flex align-items-start">
-                            <div className={`rounded-circle p-2 me-3`} style={{ backgroundColor: activity.type === 'sale' ? 'rgba(16, 185, 129, 0.2)' : activity.type === 'client' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(16, 185, 129, 0.2)' }}>
+                            <div className="trainer-activity-icon me-3" style={{ backgroundColor: activity.type === 'sale' ? 'rgba(16, 185, 129, 0.2)' : activity.type === 'client' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(16, 185, 129, 0.2)' }}>
                               <i className={`bi bi-${activity.type === 'sale' ? 'cart-check' : activity.type === 'client' ? 'person-plus' : 'chat-dots'}`} style={{ color: activity.type === 'sale' ? '#10b981' : activity.type === 'client' ? '#3b82f6' : '#10b981' }}></i>
                             </div>
                             <div>

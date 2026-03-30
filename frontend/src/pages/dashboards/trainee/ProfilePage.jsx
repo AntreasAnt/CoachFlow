@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import LogoutButton from '../../../components/LogoutButton';
@@ -53,6 +53,9 @@ const ProfilePage = () => {
   
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(profileData);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Determine if viewing own profile or someone else's
   const isOwnProfile = !profileUsername || (currentUser && profileUsername === currentUser.username);
@@ -288,24 +291,68 @@ const ProfilePage = () => {
     return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
   };
 
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploadingPhoto(true);
+    const formData = new FormData();
+    formData.append('profile_picture', file);
+
+    try {
+      const response = await fetch(BACKEND_ROUTES_API + "UploadProfilePicture.php", {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+      
+      const result = await response.json();
+      if (result.success && result.imageUrl) {
+        setProfileData(prev => ({ ...prev, profile_photo: result.imageUrl }));
+        setEditData(prev => ({ ...prev, profile_photo: result.imageUrl }));
+        
+        // Custom event to update header profile picture
+        window.dispatchEvent(new CustomEvent('profilePhotoUpdated', { 
+          detail: { photoUrl: result.imageUrl } 
+        }));
+
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification success';
+        toast.innerHTML = '<i class="bi bi-check-circle me-2"></i>Profile photo updated!';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+      } else {
+        throw new Error(result.message || 'Failed to upload photo');
+      }
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      const toast = document.createElement('div');
+      toast.className = 'toast-notification error';
+      toast.innerHTML = `<i class="bi bi-exclamation-circle me-2"></i>${error.message || 'Failed to upload photo'}`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    } finally {
+      setIsUploadingPhoto(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <TraineeDashboard>
       <div className="profile-page">
       {/* Main Content */}
       <main className="container-fluid px-4 py-4 pb-5" style={{ minHeight: 'calc(100vh - 140px)' }}>
         {/* Profile Header Card */}
-        <div className="row mb-4">
+        <div className="row mb-4 position-relative" style={{ zIndex: 10 }}>
           <div className="col-12">
-            <div className="profile-card border-0 rounded-4 overflow-hidden">
+            <div className="profile-card border-0 rounded-4">
               <div className="position-relative">
-                {/* Cover Photo */}
-                <div 
-                  className="profile-header-gradient position-relative"
-                  style={{height: '200px'}}
-                >
-                  {/* Profile Actions - Top Right */}
-                  {isOwnProfile && (
-                    <div className="profile-actions-top position-absolute top-0 end-0 p-3 d-flex gap-2" style={{zIndex: 3}}>
+                {/* Profile Actions - Top Right */}
+                {isOwnProfile && (
+                  <div className="position-absolute top-0 end-0 p-3" style={{zIndex: 100}}>
+                    
+                    {/* Desktop Actions */}
+                    <div className="profile-actions-top d-none d-md-flex gap-2">
                       {isEditing ? (
                         <>
                           <button 
@@ -340,12 +387,56 @@ const ProfilePage = () => {
                       )}
                       <LogoutButton className="btn btn-outline-danger btn-sm rounded-pill" />
                     </div>
-                  )}
-                  
+
+                    {/* Mobile Kebab Menu */}
+                    <div className="mobile-actions-container d-md-none position-relative">
+                      <button 
+                        className="mobile-dots-btn"
+                        onClick={() => setShowMobileMenu(!showMobileMenu)}
+                      >
+                        <i className="bi bi-three-dots-vertical"></i>
+                      </button>
+                      
+                      {showMobileMenu && (
+                        <div className="mobile-dropdown-menu shadow-lg">
+                          {isEditing ? (
+                            <>
+                              <button 
+                                onClick={() => { handleSaveProfile(); setShowMobileMenu(false); }}
+                              >
+                                <i className="bi bi-check-lg me-2 text-primary"></i>Save
+                              </button>
+                              <button 
+                                onClick={() => { handleCancelEdit(); setShowMobileMenu(false); }}
+                              >
+                                <i className="bi bi-x-lg me-2 text-light"></i>Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <button 
+                              onClick={() => { setIsEditing(true); setShowMobileMenu(false); }}
+                            >
+                              <i className="bi bi-pencil me-2 text-primary"></i>Edit
+                            </button>
+                          )}
+                          <div className="mobile-logout-btn" onClick={() => setShowMobileMenu(false)}>
+                            <LogoutButton className="btn btn-outline-danger btn-sm w-100 rounded-pill" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Cover Photo */}
+                <div 
+                  className="profile-header-gradient position-relative rounded-4"
+                  style={{height: '200px'}}
+                >
                   <div className="position-absolute bottom-0 start-0 w-100 h-100 d-flex align-items-end p-4" style={{zIndex: 2}}>
                     <div className="d-flex align-items-end w-100">
                       {/* Profile Photo */}
-                      <div className="profile-photo-container me-4">
+                      <div className="profile-photo-container me-4 position-relative">
                         <img
                           src={profileData.profile_photo}
                           alt={profileData.full_name}
@@ -353,9 +444,27 @@ const ProfilePage = () => {
                           style={{width: '120px', height: '120px', objectFit: 'cover'}}
                         />
                         {isOwnProfile && isEditing && (
-                          <button className="profile-photo-edit-btn">
-                            <i className="bi bi-camera-fill"></i>
-                          </button>
+                          <>
+                            <input 
+                              type="file" 
+                              ref={fileInputRef} 
+                              onChange={handlePhotoUpload} 
+                              accept="image/*" 
+                              style={{ display: 'none' }} 
+                            />
+                            <button 
+                              className="profile-photo-edit-btn position-absolute bottom-0 end-0 rounded-circle btn btn-primary d-flex align-items-center justify-content-center p-0"
+                              style={{ width: '32px', height: '32px', transform: 'translate(10%, -10%)' }}
+                              onClick={() => fileInputRef.current?.click()}
+                              disabled={isUploadingPhoto}
+                            >
+                              {isUploadingPhoto ? (
+                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                              ) : (
+                                <i className="bi bi-camera-fill"></i>
+                              )}
+                            </button>
+                          </>
                         )}
                       </div>
                       
@@ -663,6 +772,7 @@ const ProfilePage = () => {
                 </div>
               </div>
             )}
+
           </div>
 
           {/* Sidebar */}
@@ -809,6 +919,40 @@ const ProfilePage = () => {
             </div>
           </div>
         </div>
+
+        {/* Bottom Action Buttons (Visible during Edit) */}
+        {isOwnProfile && isEditing && (
+          <div className="row mt-4 mb-2">
+            <div className="col-12">
+              <div className="d-flex flex-column-reverse flex-sm-row justify-content-sm-end gap-3">
+                <button 
+                  className="btn btn-outline-light rounded-pill px-4 py-3 py-sm-2 w-100"
+                  style={{ maxWidth: '400px', margin: '0 auto' }}
+                  onClick={() => {
+                    handleCancelEdit();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  <i className="bi bi-x-lg me-2"></i>Cancel
+                </button>
+                <button 
+                  className="btn rounded-pill px-5 py-3 py-sm-2 shadow w-100"
+                  style={{
+                    backgroundColor: 'var(--brand-primary)',
+                    color: 'var(--brand-dark)',
+                    border: 'none',
+                    fontWeight: '600',
+                    maxWidth: '400px',
+                    margin: '0 auto'
+                  }}
+                  onClick={handleSaveProfile}
+                >
+                  <i className="bi bi-check-lg me-2"></i>Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Bottom navigation provided by TraineeDashboard */}

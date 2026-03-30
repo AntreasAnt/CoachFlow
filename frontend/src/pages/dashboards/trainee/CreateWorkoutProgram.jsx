@@ -202,7 +202,7 @@ const CreateWorkoutProgram = ({ onSave, onCancel, allExercises, onAddCustomExerc
       `}</style>
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Create Workout Program</h4>
+        <h5 className="mb-0" style={{ color: 'var(--brand-white)', fontWeight: '700' }}>Create Workout Program</h5>
         <button className="btn btn-outline-secondary" onClick={onCancel}>
           <i className="bi bi-arrow-left me-2"></i>Back
         </button>

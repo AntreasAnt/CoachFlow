@@ -118,8 +118,8 @@
   letter-spacing: 0.025em;
 }
 
-/* Smooth Buttons */
-.btn {
+/* Smooth Buttons (scoped to Profile only to avoid leaking into other pages) */
+.profile-page .btn {
   font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: none;
@@ -130,14 +130,14 @@
   font-size: 0.9rem;
 }
 
-.btn-primary {
+.profile-page .btn-primary {
   background: #000000;
   border: 1px solid #000000;
   color: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.btn-primary:hover {
+.profile-page .btn-primary:hover {
   background: #1a1a1a;
   border-color: #1a1a1a;
   color: #ffffff;
@@ -145,14 +145,14 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.btn-success {
+.profile-page .btn-success {
   background: #000000;
   border: 1px solid #000000;
   color: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.btn-success:hover {
+.profile-page .btn-success:hover {
   background: #1a1a1a;
   border-color: #1a1a1a;
   color: #ffffff;
@@ -160,13 +160,13 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.btn-outline-secondary {
+.profile-page .btn-outline-secondary {
   border: 1px solid #4d4d4d;
   color: #cccccc;
   background: transparent;
 }
 
-.btn-outline-secondary:hover {
+.profile-page .btn-outline-secondary:hover {
   background: #4d4d4d;
   border-color: #4d4d4d;
   color: #ffffff;
@@ -174,13 +174,13 @@
   box-shadow: 0 2px 8px rgba(77, 77, 77, 0.15);
 }
 
-.btn-outline-primary {
+.profile-page .btn-outline-primary {
   border: 1px solid #10b981;
   color: #10b981;
   background: transparent;
 }
 
-.btn-outline-primary:hover {
+.profile-page .btn-outline-primary:hover {
   background: #10b981;
   border-color: #10b981;
   color: #ffffff;
@@ -188,8 +188,8 @@
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
 }
 
-/* Premium Alert & Badge Styles */
-.alert {
+/* Premium Alert & Badge Styles (Profile-only) */
+.profile-page .alert {
   border: none;
   border-radius: 0;
   border-left: 4px solid #000000;
@@ -198,7 +198,7 @@
   font-weight: 500;
 }
 
-.badge {
+.profile-page .badge {
   background: #000000 !important;
   color: #ffffff !important;
   font-weight: 700;

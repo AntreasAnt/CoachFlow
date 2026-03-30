@@ -5,17 +5,55 @@ import LogoutButton from './LogoutButton';
 const AdminDashboardLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const [isNarrowScreen, setIsNarrowScreen] = useState(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+    return window.matchMedia('(max-width: 991.98px)').matches;
+  });
   
   // Initialize sidebar state from localStorage, default to false (expanded)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+      if (window.matchMedia('(max-width: 991.98px)').matches) return true;
+    }
     const saved = localStorage.getItem('adminSidebarCollapsed');
     return saved === 'true';
   });
 
+  // Force collapsed sidebar on md/sm (no option to expand)
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+
+    const mediaQuery = window.matchMedia('(max-width: 991.98px)');
+
+    const apply = () => {
+      const narrow = mediaQuery.matches;
+      setIsNarrowScreen(narrow);
+      if (narrow) {
+        setIsSidebarCollapsed(true);
+      } else {
+        const saved = localStorage.getItem('adminSidebarCollapsed');
+        setIsSidebarCollapsed(saved === 'true');
+      }
+    };
+
+    apply();
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', apply);
+      return () => mediaQuery.removeEventListener('change', apply);
+    }
+
+    // Safari fallback
+    mediaQuery.addListener(apply);
+    return () => mediaQuery.removeListener(apply);
+  }, []);
+
   // Save sidebar state to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('adminSidebarCollapsed', isSidebarCollapsed);
-  }, [isSidebarCollapsed]);
+    if (!isNarrowScreen) {
+      localStorage.setItem('adminSidebarCollapsed', isSidebarCollapsed);
+    }
+  }, [isSidebarCollapsed, isNarrowScreen]);
 
   const isActive = (path) => {
     if (path === '/admin-dashboard') {
@@ -52,19 +90,21 @@ const AdminDashboardLayout = ({ children }) => {
       >
         {/* Logo */}
         <div className="p-3" style={{ borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
-          <div className={`d-flex ${isSidebarCollapsed ? 'justify-content-center' : 'justify-content-end'} ${isSidebarCollapsed ? '' : 'mb-2'}`}>
-            <button
-              className="btn btn-sm"
-              style={{ 
-                color: '#10b981', 
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                padding: '0.375rem 0.75rem'
-              }}
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            >
-              <i className={`bi bi-${isSidebarCollapsed ? 'chevron-right' : 'chevron-left'}`}></i>
-            </button>
-          </div>
+          {!isNarrowScreen && (
+            <div className={`d-flex ${isSidebarCollapsed ? 'justify-content-center' : 'justify-content-end'} ${isSidebarCollapsed ? '' : 'mb-2'}`}>
+              <button
+                className="btn btn-sm"
+                style={{ 
+                  color: '#10b981', 
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  padding: '0.375rem 0.75rem'
+                }}
+                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              >
+                <i className={`bi bi-${isSidebarCollapsed ? 'chevron-right' : 'chevron-left'}`}></i>
+              </button>
+            </div>
+          )}
           {!isSidebarCollapsed && (
             <div className="text-center">
               <h4 className="mb-0 text-white">
@@ -124,8 +164,16 @@ const AdminDashboardLayout = ({ children }) => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-grow-1" style={{ backgroundColor: '#1a1a1a', minHeight: '100vh', overflow: 'auto' }}>
-        <div className="container-fluid p-4" style={{ maxWidth: '1400px' }}>
+      <div
+        className="flex-grow-1"
+        style={{
+          backgroundColor: '#1a1a1a',
+          minHeight: '100vh',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+        }}
+      >
+        <div className="container-fluid py-4 px-3 px-lg-4" style={{ maxWidth: '1400px' }}>
           {children}
         </div>
       </div>

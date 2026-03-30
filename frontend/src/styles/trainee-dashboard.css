@@ -436,6 +436,88 @@ background-color: rgba(255, 255, 255, 0.612);
   overflow: hidden;
 }
 
+/* Meal History header controls */
+.meal-history-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.meal-history-controls .meal-history-range {
+  flex: 0 0 100%;
+  text-align: center;
+}
+
+.meal-history-controls .meal-history-btn {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+@media (min-width: 576px) {
+  .meal-history-controls {
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .meal-history-controls .meal-history-range {
+    flex: 0 0 auto;
+    text-align: left;
+  }
+
+  .meal-history-controls .meal-history-btn {
+    flex: 0 0 auto;
+  }
+}
+
+/* Recent Workouts (history) filters */
+.workout-history-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.workout-history-filters .workout-history-filter {
+  flex: 1 1 220px;
+  min-width: 180px;
+  height: 44px;
+  line-height: 1.2;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* WebKit (macOS/Safari/Chrome) date input vertical centering */
+.workout-history-filters .workout-history-date::-webkit-date-and-time-value {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.workout-history-filters .workout-history-date::-webkit-datetime-edit {
+  padding: 0;
+}
+
+.workout-history-filters .workout-history-clear {
+  flex: 0 0 auto;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 992px) {
+  .workout-history-filters {
+    justify-content: flex-end;
+  }
+
+  .workout-history-filters .workout-history-date,
+  .workout-history-filters .workout-history-plan {
+    flex: 0 1 240px;
+    min-width: 220px;
+  }
+}
+
 /* Coach profile styling */
 .coach-avatar {
   width: 80px;

@@ -6,6 +6,7 @@ import APIClient from '../../../utils/APIClient';
 const TrainerProfile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -31,12 +32,12 @@ const TrainerProfile = () => {
   const [newSpecialization, setNewSpecialization] = useState('');
 
   useEffect(() => {
-    fetchProfile();
+    fetchProfile(true);
   }, []);
 
-  const fetchProfile = async () => {
+  const fetchProfile = async (showPageLoader = false) => {
     try {
-      setLoading(true);
+      if (showPageLoader) setLoading(true);
       const response = await APIClient.get(`${BACKEND_ROUTES_API}GetTrainerProfile.php`);
       
       if (response.success) {
@@ -60,7 +61,16 @@ const TrainerProfile = () => {
     } catch (error) {
       console.error('Error fetching profile:', error);
     } finally {
-      setLoading(false);
+      if (showPageLoader) setLoading(false);
+    }
+  };
+
+  const handleResetProfile = async () => {
+    try {
+      setResetting(true);
+      await fetchProfile(false);
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -75,7 +85,6 @@ const TrainerProfile = () => {
         specializations: JSON.stringify(profile.specializations),
         certifications: profile.certifications,
         yearsOfExperience: profile.yearsOfExperience,
-        profileImage: profile.profileImage,
         instagram: profile.instagram,
         facebook: profile.facebook,
         twitter: profile.twitter,
@@ -175,7 +184,7 @@ const TrainerProfile = () => {
 
         <div className="row">
           {/* Main Profile Form */}
-          <div className="col-lg-9">
+          <div className="col-lg-9 order-2 order-lg-1">
             <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
               <div className="card-header border-bottom" style={{ borderTopLeftRadius: '12px', borderTopRightRadius: '12px', backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
                 <h5 className="mb-0 fw-semibold" style={{ color: '#fff' }}>
@@ -236,18 +245,6 @@ const TrainerProfile = () => {
                         filter: invert(1);
                       }
                     `}} />
-                  </div>
-
-                  <div className="col-12 mb-3">
-                    <label className="form-label fw-bold">Profile Image URL</label>
-                    <input
-                      type="url"
-                      className="form-control"
-                      value={profile.profileImage}
-                      onChange={(e) => setProfile({ ...profile, profileImage: e.target.value })}
-                      placeholder="https://example.com/your-profile-image.jpg"
-                    />
-                    <small className="text-muted">Paste a direct image URL to show your profile photo across trainee views.</small>
                   </div>
 
                   <div className="col-12 mb-3">
@@ -412,17 +409,26 @@ const TrainerProfile = () => {
               <button
                 className="btn"
                 style={{ backgroundColor: 'transparent', color: '#9ca3af', border: '1px solid rgba(156, 163, 175, 0.3)' }}
-                onClick={fetchProfile}
-                disabled={saving}
+                onClick={handleResetProfile}
+                disabled={saving || resetting}
               >
-                <i className="bi bi-arrow-clockwise me-2"></i>
-                Reset
+                {resetting ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2"></span>
+                    Reverting...
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-arrow-clockwise me-2"></i>
+                    Reset
+                  </>
+                )}
               </button>
               <button
                 className="btn px-4"
                 style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                 onClick={handleSaveProfile}
-                disabled={saving}
+                disabled={saving || resetting}
               >
                 {saving ? (
                   <>
@@ -440,7 +446,7 @@ const TrainerProfile = () => {
           </div>
 
           {/* Sidebar - Profile Preview */}
-          <div className="col-lg-3">
+          <div className="col-lg-3 order-1 order-lg-2 mb-4 mb-lg-0">
             <div className="card border-0 shadow-sm position-sticky" style={{ top: '20px', borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
               <div className="card-header border-bottom" style={{ borderTopLeftRadius: '12px', borderTopRightRadius: '12px', backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
                 <h6 className="mb-0 fw-semibold" style={{ color: '#fff' }}>Profile Preview</h6>

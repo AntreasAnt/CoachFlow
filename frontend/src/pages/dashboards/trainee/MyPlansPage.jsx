@@ -26,7 +26,7 @@ const MyPlansPage = () => {
 
   return (
     <TraineeDashboard>
-      <div className="container-fluid p-4" style={{ paddingBottom: '100px' }}>
+      <div className="container-fluid px-2 px-md-4 py-4" style={{ paddingBottom: '100px', overflowX: 'hidden' }}>
         {/* Tabs */}
         <ul className="nav nav-tabs mb-4 border-secondary">
           <li className="nav-item">

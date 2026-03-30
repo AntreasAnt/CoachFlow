@@ -469,19 +469,21 @@ const handleRoleSearch = (role) => {
   
   return (
     <AdminDashboardLayout>
-      <div style={{ color: '#fff' }}>
-        <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="admin-page">
+        <div className="admin-page-header">
           <div>
-            <h2 className="mb-1" style={{ color: '#fff' }}>User Management</h2>
-            <p style={{ color: '#9ca3af', marginBottom: 0 }}>Manage all users in the system</p>
+            <h2 className="admin-page-title">User Management</h2>
+            <p className="admin-page-subtitle">Manage all users in the system</p>
           </div>
-          <button 
-            className="btn"
-            style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
-            onClick={handleGeneratePDF}
-          >
-            Export <i className="bi bi-file-earmark-pdf ms-2"></i>
-          </button>
+          <div className="admin-page-header-actions">
+            <button 
+              className="btn btn-sm d-inline-flex align-items-center"
+              style={{ backgroundColor: '#10b981', color: '#fff', border: 'none', padding: '0.5rem 0.75rem' }}
+              onClick={handleGeneratePDF}
+            >
+              Export <i className="bi bi-file-earmark-pdf ms-2"></i>
+            </button>
+          </div>
         </div>
         
         {/* Error and Success Messages */}
@@ -513,18 +515,18 @@ const handleRoleSearch = (role) => {
 
         {/* Search Bar */}
         <div className="row mb-3">
-          <div className="col-8">
+          <div className="col-12 col-lg-8 mb-2 mb-lg-0">
             <Search onSearch={handleSearch} />
           </div>
-          <div className="col-4">
+          <div className="col-12 col-lg-4">
             <RoleSearch handleRoleSearch={handleRoleSearch} />
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="mb-3">
+        <div className="mb-3 d-flex flex-wrap gap-2">
           <button
-            className="btn btn-sm me-2"
+            className="btn btn-sm"
             style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
             onClick={() => setShowAddModal(true)}
           >
@@ -533,7 +535,7 @@ const handleRoleSearch = (role) => {
           </button>
 
           <button
-            className={`btn btn-sm me-2`}
+            className={`btn btn-sm`}
             style={{
               backgroundColor: selectedUsers.length !== 1 ? '#6b7280' : '#10b981',
               color: '#fff',
@@ -548,7 +550,7 @@ const handleRoleSearch = (role) => {
           </button>
 
           <button
-            className={`btn btn-sm me-2`}
+            className={`btn btn-sm`}
             style={{
               backgroundColor: selectedUsers.length === 0 ? '#6b7280' : '#10b981',
               color: '#fff',

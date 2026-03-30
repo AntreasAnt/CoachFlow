@@ -30,6 +30,7 @@ const styles = `
     padding: 0.75rem 1.5rem !important;
     border-radius: 0 !important;
     transition: all 0.3s ease !important;
+    white-space: nowrap !important;
   }
   
   .manage-client-tab:hover {
@@ -51,6 +52,7 @@ const styles = `
     padding: 0.5rem 1.25rem !important;
     border-radius: 50px !important;
     transition: all 0.3s ease !important;
+    white-space: nowrap !important;
   }
   
   .program-pill:hover {
@@ -63,6 +65,170 @@ const styles = `
     background: #10b981 !important;
     border-color: #10b981 !important;
     color: #ffffff !important;
+  }
+
+  @media (max-width: 575.98px) {
+    .manage-client-tab {
+      padding: 0.5rem 0.75rem !important;
+      font-size: 0.9rem !important;
+    }
+    .program-pill {
+      padding: 0.4rem 0.75rem !important;
+      font-size: 0.9rem !important;
+    }
+  }
+
+  /* Top navigation tabs: allow horizontal scroll on mobile */
+  .manage-client-nav-tabs {
+    gap: 0.25rem;
+  }
+
+  .manage-client-nav-tabs .nav-item {
+    flex: 0 0 auto;
+  }
+
+  @media (max-width: 575.98px) {
+    .manage-client-nav-tabs {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 0.25rem;
+    }
+    .manage-client-nav-tabs::-webkit-scrollbar {
+      height: 0;
+    }
+    .manage-client-tab {
+      white-space: nowrap !important;
+    }
+  }
+
+  /* Create Custom Program: dark theme contrast fixes */
+  .manage-client-create-program {
+    color: #ffffff;
+    --bs-body-color: rgba(255, 255, 255, 0.9);
+    --bs-heading-color: #ffffff;
+    --bs-secondary-color: rgba(255, 255, 255, 0.6);
+    --bs-border-color: #3d3d3d;
+  }
+
+  .manage-client-create-program h1,
+  .manage-client-create-program h2,
+  .manage-client-create-program h3,
+  .manage-client-create-program h4,
+  .manage-client-create-program h5,
+  .manage-client-create-program h6 {
+    color: #ffffff;
+    font-weight: 700;
+  }
+
+  .manage-client-create-program hr {
+    border-color: rgba(255, 255, 255, 0.12);
+    opacity: 1;
+  }
+
+  .manage-client-create-program .alert {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .manage-client-create-program .card {
+    background: #1a1a1a;
+    border: 1px solid #3d3d3d;
+  }
+
+  .manage-client-create-program .card-header {
+    background: #1a1a1a !important;
+    border-bottom: 1px solid #3d3d3d !important;
+    color: #ffffff !important;
+  }
+
+  .manage-client-create-program .card-header h5,
+  .manage-client-create-program .card-header h6 {
+    color: #ffffff !important;
+  }
+
+  .manage-client-create-program .card-body {
+    background: #1a1a1a;
+  }
+
+  .manage-client-create-program .form-label {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .manage-client-create-program .form-control,
+  .manage-client-create-program .form-select {
+    background: #2d2d2d;
+    border: 1px solid #3d3d3d;
+    color: #ffffff;
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+  }
+
+  .manage-client-create-program .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .manage-client-create-program .list-group-item {
+    background: #2d2d2d;
+    border: 1px solid #3d3d3d;
+    color: #ffffff;
+  }
+
+  /* Fix places still using light backgrounds inside the dark UI */
+  .manage-client-create-program .bg-light {
+    background: #2d2d2d !important;
+  }
+
+  .manage-client-create-program .rounded {
+    border: 1px solid #3d3d3d;
+  }
+
+  .manage-client-create-program .text-muted {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  /* Nutrition goals (overview card) */
+  .nutrition-goals-header {
+    gap: 0.75rem;
+  }
+
+  .nutrition-goals-btn {
+    background: #10b981 !important;
+    border: none !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+
+  .nutrition-goals-btn:hover {
+    background: #059669 !important;
+    transform: translateY(-1px);
+  }
+
+  .nutrition-goals-stat {
+    background: #2d2d2d !important;
+    border: 1px solid #3d3d3d !important;
+  }
+
+  .nutrition-goals-stat .label {
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .nutrition-goals-stat .value {
+    color: #ffffff;
+    font-weight: 700;
+    line-height: 1.1;
+    font-size: 1.35rem;
+  }
+
+  @media (max-width: 575.98px) {
+    .nutrition-goals-stat .value {
+      font-size: 1.2rem;
+    }
   }
 `;
 
@@ -1101,7 +1267,7 @@ const ManageClientPrograms = () => {
   if (loading) {
     return (
       <TrainerDashboardLayout>
-        <div className="container py-4">
+        <div className="container-fluid py-4 px-0">
           <div className="text-center py-5">
             <div className="spinner-border text-primary" role="status">
               <span className="visually-hidden">Loading...</span>
@@ -1116,7 +1282,7 @@ const ManageClientPrograms = () => {
   if (!loading && !clientInfo) {
     return (
       <TrainerDashboardLayout>
-        <div className="container py-4">
+        <div className="container-fluid py-4 px-0">
           <div className="text-center py-5">
             <div className="mb-4">
               <i className="bi bi-exclamation-triangle-fill display-1 text-warning"></i>
@@ -1127,9 +1293,9 @@ const ManageClientPrograms = () => {
               <br />
               This might happen if the relationship was not properly established.
             </p>
-            <div className="d-flex gap-3 justify-content-center">
+            <div className="d-grid gap-2 d-sm-flex justify-content-center">
               <button 
-                className="btn"
+                className="btn text-nowrap"
                 style={{
                   background: 'transparent',
                   border: '2px solid #6b7280',
@@ -1152,7 +1318,7 @@ const ManageClientPrograms = () => {
                 Back to Clients
               </button>
               <button 
-                className="btn"
+                className="btn text-nowrap"
                 style={{
                   background: '#10b981',
                   border: 'none',
@@ -1187,32 +1353,30 @@ const ManageClientPrograms = () => {
   return (
     <TrainerDashboardLayout>
       <style>{styles}</style>
-      <div className="container py-4" style={{ minHeight: 'calc(100vh - 0px)' }}>
+      <div className="container-fluid py-4 px-0" style={{ minHeight: 'calc(100vh - 0px)' }}>
         {/* Header */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <div>
-            <button 
-              className="btn btn-link p-0 mb-2"
-              style={{ color: '#10b981', textDecoration: 'none', transition: 'color 0.3s ease' }}
-              onMouseEnter={(e) => {
-                e.target.style.color = '#059669';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.color = '#10b981';
-              }}
-              onClick={() => navigate('/clients')}
-            >
-              <i className="bi bi-arrow-left me-2"></i>
-              Back to Clients
-            </button>
-            <h4 className="mb-0" style={{ color: '#ffffff' }}>
-              Manage Programs & Nutrition for {clientInfo?.full_name || clientInfo?.username}
-            </h4>
-          </div>
+        <div className="d-grid gap-2 mb-4">
+          <button 
+            className="btn btn-link p-0 text-start text-nowrap"
+            style={{ color: '#10b981', textDecoration: 'none', transition: 'color 0.3s ease' }}
+            onMouseEnter={(e) => {
+              e.target.style.color = '#059669';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.color = '#10b981';
+            }}
+            onClick={() => navigate('/clients')}
+          >
+            <i className="bi bi-arrow-left me-2"></i>
+            Back to Clients
+          </button>
+          <h4 className="mb-0 fs-5 fs-sm-4" style={{ color: '#ffffff' }}>
+            Manage Programs & Nutrition for {clientInfo?.full_name || clientInfo?.username}
+          </h4>
         </div>
         
         {/* Navigation Tabs */}
-        <ul className="nav nav-tabs mb-4" style={{ borderBottom: '2px solid #3d3d3d' }}>
+        <ul className="nav nav-tabs mb-4 manage-client-nav-tabs" style={{ borderBottom: '2px solid #3d3d3d' }}>
           <li className="nav-item">
             <button 
               className={`manage-client-tab ${activeView === 'overview' ? 'active' : ''}`}
@@ -1273,8 +1437,8 @@ const ManageClientPrograms = () => {
               </div>
               <div className="card-body" style={{ background: '#1a1a1a' }}>
                 {/* Program Tabs */}
-                <ul className="nav nav-pills mb-4">
-                  <li className="nav-item me-2">
+                <ul className="nav nav-pills mb-4 d-grid gap-2 d-sm-flex">
+                  <li className="nav-item me-0 me-sm-2">
                     <button 
                       className={`program-pill ${programTab === 'trainer' ? 'active' : ''}`}
                       onClick={() => setProgramTab('trainer')}
@@ -1326,10 +1490,10 @@ const ManageClientPrograms = () => {
                       </div>
                     ) : (
                       <div>
-                        <div className="d-flex justify-content-between align-items-center mb-3">
+                        <div className="d-grid gap-2 d-sm-flex justify-content-between align-items-center mb-3">
                           <span className="text-muted">Programs assigned by you as trainer</span>
                           <button 
-                            className="btn btn-sm"
+                            className="btn btn-sm text-nowrap"
                             style={{
                               background: '#10b981',
                               border: 'none',
@@ -1487,23 +1651,10 @@ const ManageClientPrograms = () => {
             
             {/* Nutrition Overview */}
             <div className="card" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d' }}>
-              <div className="card-header d-flex justify-content-between align-items-center" style={{ background: '#1a1a1a', borderBottom: '1px solid #3d3d3d' }}>
+              <div className="card-header d-grid nutrition-goals-header d-sm-flex justify-content-between align-items-center" style={{ background: '#1a1a1a', borderBottom: '1px solid #3d3d3d' }}>
                 <h5 className="mb-0" style={{ color: '#ffffff' }}>Nutrition Goals</h5>
                 <button 
-                  className="btn btn-sm"
-                  style={{
-                    background: '#10b981',
-                    border: 'none',
-                    color: '#ffffff',
-                    borderRadius: '8px',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = '#059669';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.background = '#10b981';
-                  }}
+                  className="btn btn-sm text-nowrap nutrition-goals-btn"
                   onClick={() => {
                     if (nutritionGoal) {
                       setGoalForm({
@@ -1522,22 +1673,38 @@ const ManageClientPrograms = () => {
               </div>
               <div className="card-body" style={{ background: '#1a1a1a' }}>
                 {nutritionGoal ? (
-                  <div className="row">
-                    <div className="col-md-3">
-                      <h6 className="text-muted small">CALORIES</h6>
-                      <h4 className="mb-0" style={{ color: '#ffffff' }}>{nutritionGoal.target_calories}</h4>
+                  <div className="row g-3">
+                    <div className="col-6 col-md-3">
+                      <div className="card nutrition-goals-stat h-100">
+                        <div className="card-body text-center">
+                          <div className="text-muted small label">CALORIES</div>
+                          <div className="value mt-1">{nutritionGoal.target_calories}</div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="col-md-3">
-                      <h6 className="text-muted small">PROTEIN</h6>
-                      <h4 className="mb-0" style={{ color: '#ffffff' }}>{nutritionGoal.target_protein}g</h4>
+                    <div className="col-6 col-md-3">
+                      <div className="card nutrition-goals-stat h-100">
+                        <div className="card-body text-center">
+                          <div className="text-muted small label">PROTEIN</div>
+                          <div className="value mt-1">{nutritionGoal.target_protein}g</div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="col-md-3">
-                      <h6 className="text-muted small">CARBS</h6>
-                      <h4 className="mb-0" style={{ color: '#ffffff' }}>{nutritionGoal.target_carbs}g</h4>
+                    <div className="col-6 col-md-3">
+                      <div className="card nutrition-goals-stat h-100">
+                        <div className="card-body text-center">
+                          <div className="text-muted small label">CARBS</div>
+                          <div className="value mt-1">{nutritionGoal.target_carbs}g</div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="col-md-3">
-                      <h6 className="text-muted small">FAT</h6>
-                      <h4 className="mb-0" style={{ color: '#ffffff' }}>{nutritionGoal.target_fat}g</h4>
+                    <div className="col-6 col-md-3">
+                      <div className="card nutrition-goals-stat h-100">
+                        <div className="card-body text-center">
+                          <div className="text-muted small label">FAT</div>
+                          <div className="value mt-1">{nutritionGoal.target_fat}g</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -2128,9 +2295,9 @@ const ManageClientPrograms = () => {
                     ))}
                   </div>
                   
-                  <div className="mt-4">
+                  <div className="mt-4 d-grid gap-2 d-sm-flex align-items-center">
                     <button 
-                      className="btn"
+                      className="btn text-nowrap"
                       style={{
                         background: selectedProgramToAssign ? '#10b981' : '#3d3d3d',
                         border: 'none',
@@ -2153,7 +2320,7 @@ const ManageClientPrograms = () => {
                       Assign Selected Program
                     </button>
                     <button 
-                      className="btn ms-2"
+                      className="btn text-nowrap ms-0 ms-sm-2"
                       style={{
                         background: 'transparent',
                         border: '2px solid #6b7280',
@@ -2234,9 +2401,9 @@ const ManageClientPrograms = () => {
                     ))}
                   </div>
                   
-                  <div className="mt-4">
+                  <div className="mt-4 d-grid gap-2 d-sm-flex align-items-center">
                     <button 
-                      className="btn btn-primary"
+                      className="btn btn-primary text-nowrap"
                       onClick={handleAssignProgram}
                       disabled={!selectedProgramToAssign}
                     >
@@ -2244,7 +2411,7 @@ const ManageClientPrograms = () => {
                       Assign Selected Program
                     </button>
                     <button 
-                      className="btn btn-secondary ms-2"
+                      className="btn btn-secondary text-nowrap ms-0 ms-sm-2"
                       onClick={() => {
                         setSelectedProgramToAssign('');
                         setActiveView('overview');
@@ -2261,7 +2428,7 @@ const ManageClientPrograms = () => {
         
         {/* Create Custom Program Tab - Same interface as CreatePrograms.jsx */}
         {activeView === 'create-program' && (
-          <div>
+          <div className="manage-client-create-program">
             <div className="alert alert-info">
               <i className="bi bi-info-circle me-2"></i>
               This custom program will be created specifically for {clientInfo?.full_name || clientInfo?.username} and automatically assigned to them.
@@ -2505,23 +2672,25 @@ const ManageClientPrograms = () => {
             {/* Save Program */}
             <div className="card">
               <div className="card-body">
-                <button 
-                  className="btn btn-primary btn-lg me-2"
-                  onClick={saveCustomProgram}
-                  disabled={!programPackage.title || workoutSessions.length === 0}
-                >
-                  <i className="bi bi-save me-2"></i>
-                  Create & Assign Program
-                </button>
-                <button 
-                  className="btn btn-secondary btn-lg"
-                  onClick={() => setActiveView('overview')}
-                >
-                  Cancel
-                </button>
-                <small className="text-muted ms-3">
-                  {workoutSessions.length} session(s) ready
-                </small>
+                <div className="d-grid gap-2 d-sm-flex align-items-center">
+                  <button 
+                    className="btn btn-primary btn-lg text-nowrap"
+                    onClick={saveCustomProgram}
+                    disabled={!programPackage.title || workoutSessions.length === 0}
+                  >
+                    <i className="bi bi-save me-2"></i>
+                    Create & Assign Program
+                  </button>
+                  <button 
+                    className="btn btn-secondary btn-lg text-nowrap"
+                    onClick={() => setActiveView('overview')}
+                  >
+                    Cancel
+                  </button>
+                  <small className="text-muted ms-0 ms-sm-3">
+                    {workoutSessions.length} session(s) ready
+                  </small>
+                </div>
               </div>
             </div>
           </div>
@@ -2533,10 +2702,10 @@ const ManageClientPrograms = () => {
             {/* Nutrition Goals Section */}
             <div className="card mb-4" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d' }}>
               <div className="card-header" style={{ background: '#1a1a1a', borderBottom: '1px solid #3d3d3d' }}>
-                <div className="d-flex justify-content-between align-items-center mb-3">
+                <div className="d-grid gap-2 d-sm-flex justify-content-between align-items-center mb-3">
                   <h5 className="mb-0" style={{ color: '#ffffff' }}>Nutrition Goals</h5>
                   <button 
-                    className="btn btn-sm"
+                    className="btn btn-sm text-nowrap"
                     style={{
                       background: '#10b981',
                       border: 'none',
@@ -2568,7 +2737,7 @@ const ManageClientPrograms = () => {
                 </div>
                 
                 {/* Tabs for Trainer vs Client Goals */}
-                <ul className="nav nav-tabs card-header-tabs" style={{ borderBottom: '2px solid #3d3d3d' }}>
+                <ul className="nav nav-tabs card-header-tabs d-grid gap-2 d-sm-flex" style={{ borderBottom: '2px solid #3d3d3d' }}>
                   <li className="nav-item">
                     <button 
                       className={`program-pill ${nutritionTab === 'trainer' ? 'active' : ''}`}
@@ -2600,8 +2769,8 @@ const ManageClientPrograms = () => {
                         <i className="bi bi-info-circle me-2"></i>
                         These are the nutrition goals you've assigned to this client.
                       </div>
-                      <div className="row">
-                        <div className="col-md-3">
+                      <div className="row g-3">
+                        <div className="col-6 col-md-3">
                           <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
                             <div className="card-body text-center">
                               <h6 className="text-muted small">CALORIES</h6>
@@ -2609,7 +2778,7 @@ const ManageClientPrograms = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="col-md-3">
+                        <div className="col-6 col-md-3">
                           <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
                             <div className="card-body text-center">
                               <h6 className="text-muted small">PROTEIN</h6>
@@ -2617,7 +2786,7 @@ const ManageClientPrograms = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="col-md-3">
+                        <div className="col-6 col-md-3">
                           <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
                             <div className="card-body text-center">
                               <h6 className="text-muted small">CARBS</h6>
@@ -2625,7 +2794,7 @@ const ManageClientPrograms = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="col-md-3">
+                        <div className="col-6 col-md-3">
                           <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
                             <div className="card-body text-center">
                               <h6 className="text-muted small">FAT</h6>
@@ -2669,8 +2838,8 @@ const ManageClientPrograms = () => {
                         <i className="bi bi-eye me-2"></i>
                         These are the nutrition goals your client set for themselves. You can view but not edit them.
                       </div>
-                      <div className="row">
-                        <div className="col-md-3">
+                      <div className="row g-3">
+                        <div className="col-6 col-md-3">
                           <div className="card" style={{ background: '#2d2d2d', border: '1px solid #6b7280' }}>
                             <div className="card-body text-center">
                               <h6 className="text-muted small">CALORIES</h6>
@@ -2678,7 +2847,7 @@ const ManageClientPrograms = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="col-md-3">
+                        <div className="col-6 col-md-3">
                           <div className="card" style={{ background: '#2d2d2d', border: '1px solid #6b7280' }}>
                             <div className="card-body text-center">
                               <h6 className="text-muted small">PROTEIN</h6>
@@ -2686,7 +2855,7 @@ const ManageClientPrograms = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="col-md-3">
+                        <div className="col-6 col-md-3">
                           <div className="card" style={{ background: '#2d2d2d', border: '1px solid #6b7280' }}>
                             <div className="card-body text-center">
                               <h6 className="text-muted small">CARBS</h6>
@@ -2694,7 +2863,7 @@ const ManageClientPrograms = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="col-md-3">
+                        <div className="col-6 col-md-3">
                           <div className="card" style={{ background: '#2d2d2d', border: '1px solid #6b7280' }}>
                             <div className="card-body text-center">
                               <h6 className="text-muted small">FAT</h6>
@@ -2716,7 +2885,7 @@ const ManageClientPrograms = () => {
             
             {/* Weekly Meal Plan Section */}
             <div className="card" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d' }}>
-              <div className="card-header d-flex justify-content-between align-items-center" style={{ background: '#1a1a1a', borderBottom: '1px solid #3d3d3d' }}>
+              <div className="card-header d-grid gap-2 d-sm-flex justify-content-between align-items-center" style={{ background: '#1a1a1a', borderBottom: '1px solid #3d3d3d' }}>
                 <div>
                   <h5 className="mb-0" style={{ color: '#ffffff' }}>Weekly Meal Plan</h5>
                   <small className="text-muted">Plan meals for each day of the week</small>
@@ -2823,10 +2992,12 @@ const ManageClientPrograms = () => {
                                   </div>
                                 ) : (
                                   <button 
-                                    className="btn btn-sm btn-outline-secondary w-100"
+                                    className="btn btn-sm btn-outline-secondary w-100 d-flex align-items-center justify-content-center"
                                     onClick={() => openMealModal(dayIndex + 1, mealType)}
+                                    aria-label="Add meal"
                                   >
-                                    <i className="bi bi-plus"></i> Add
+                                    <i className="bi bi-plus" aria-hidden="true"></i>
+                                    <span className="visually-hidden">Add</span>
                                   </button>
                                 )}
                               </td>
