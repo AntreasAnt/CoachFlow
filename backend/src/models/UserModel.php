@@ -307,22 +307,19 @@ class UserModel
 
 
 
-        // Get paginated results with search
-    // Tracking tables may not exist in some deployments; use placeholders instead of joins
-    $query = "SELECT 
-        u.userid, 
-        u.email, 
-        u.username, 
-        u.registrationdate, 
-        u.lastlogin, 
-        u.role, 
-        u.isdisabled,
-        NULL as trackmyself,
-        NULL as trackothers
-          FROM user u
-          $whereClause
-          GROUP BY u.userid
-          LIMIT ? OFFSET ?";
+                // Get paginated results with search
+                $query = "SELECT 
+                u.userid, 
+                u.email, 
+                u.username, 
+                u.registrationdate, 
+                u.lastlogin, 
+                u.role, 
+                u.isdisabled
+                    FROM user u
+                    $whereClause
+                    GROUP BY u.userid
+                    LIMIT ? OFFSET ?";
 
         $stmt = $this->conn->prepare($query);
 

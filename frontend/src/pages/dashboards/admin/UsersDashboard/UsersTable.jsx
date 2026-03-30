@@ -5,8 +5,6 @@ import defaultAvatar from "../../../../assets/images/default-avatar.png";
 import { API_BASE_URL } from '../../../../config/config';
 // Derive images base URL (adjust folder if backend serves images elsewhere)
 const BACKEND_IMAGES_URL = `${API_BASE_URL}/backend/public/images/`;
-import TrackUsersModal from "./TrackUsersModal";
-import { BACKEND_ROUTES_API } from '../../../../config/config';
 // Props destructuring in the component definition 
 //Makes it clear what props the component expects
 // isLoading instead of props.isLoading
@@ -22,7 +20,6 @@ export const UsersTable = ({
   pageSize,
   onPageChange,
   onPageSizeChange,
-  setShowTrackedUsersModal,
 }) => {
   // Calculate extra height based on error or success message presence
   const extraHeight = error || successMessage ? 58 : 0;
@@ -193,29 +190,6 @@ export const UsersTable = ({
           {formatDate(params.value)}
         </span>
       ),
-    },
-    {
-      field: "user_self_tracking",
-  headerName: "User Tracking",
-      width: 150,
-      renderCell: (params) => {
-        const { trackmyself, trackothers } = params.row;
-        // Hide button if there's no tracking data
-        if (!trackmyself && !trackothers) return null;
-        return (
-          <button
-            className="btn btn-sm btn-outline-primary"
-            onClick={(e) => {
-              e.stopPropagation();
-              setSelectedUsers([params.row]);
-              setShowTrackedUsersModal(true);
-            }}
-          >
-            <i className="bi bi-eye-fill me-1"></i>
-            View
-          </button>
-        );
-      },
     },
   ];
 

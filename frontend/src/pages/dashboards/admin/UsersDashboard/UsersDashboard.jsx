@@ -31,7 +31,6 @@ import { userDisable } from "./UserDisable";
 import { userEnable } from "./UserEnable";
 import { Search } from './Search';
 import {RoleSearch} from './RoleSearch';
-import  TrackUsersModal  from "./TrackUsersModal";
 
 function UsersDashboard() {
   const [users, setUsers] = useState([]); //Users Info
@@ -70,7 +69,7 @@ function UsersDashboard() {
   
   const [roleSearch,setroleSearch] = useState(''); // State to store the selected role for filtering
 
-  const [  showTrackedUsersModal, setShowTrackedUsersModal] = useState(false); // State to control the visibility of the tracking modal
+  
   // Function to handle opening the actions modal
 const handleOpenActionsModal = () => {
   if (selectedUsers.length === 0) {
@@ -251,9 +250,7 @@ const handleRoleSearch = (role) => {
             role: user.role,
             lastlogin: user.lastlogin,
             registrationdate: user.registrationdate,
-            isdisabled: user.isdisabled,
-            trackmyself: user.trackmyself,
-            trackothers: user.trackothers
+            isdisabled: user.isdisabled
           })));
           
           setTotalUsers(data.user.total);
@@ -578,7 +575,6 @@ const handleRoleSearch = (role) => {
           pageSize={pageSize}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
-          setShowTrackedUsersModal={setShowTrackedUsersModal}
         />
 
         {/* Add Modal */}
@@ -629,12 +625,6 @@ const handleRoleSearch = (role) => {
         />
         {showEditModal && <div className="modal-backdrop fade show"></div>}
         
-        <TrackUsersModal 
-          show={showTrackedUsersModal}
-          setshowTrackedUsersModal={setShowTrackedUsersModal}
-          user={selectedUsers}
-          setSelectedUsers={setSelectedUsers}
-        />
       </div>
     </AdminDashboardLayout>
   );
