@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { BACKEND_ROUTES_API } from '../config/config';
 import LogoutButton from '../components/LogoutButton';
+import React, { useState, useEffect, useRef } from 'react'; 
 import '../styles/ProfilePage.css';
 import '../styles/trainee-dashboard.css';
 
@@ -57,6 +58,10 @@ const ProfilePage = () => {
   const isOwnProfile = !profileUsername || (currentUser && profileUsername === currentUser.username);
   const displayUsername = profileUsername || (currentUser ? currentUser.username : 'unknown');
 
+
+
+
+  
   // Fetch profile data from backend
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -890,6 +895,8 @@ const ProfilePage = () => {
         </div>
       </nav>
     </div>
+
+    
   );
 };
 
