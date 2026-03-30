@@ -420,6 +420,23 @@ const MealsPage = ({ embedded = false }) => {
     setPendingQuery('');
   };
 
+  // Match Dashboard's formatting utils:
+  const toNumber = (value, fallback = 0) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+
+  const createPortionLabel = (portion, index) => {
+    if (!portion) return `portion ${index + 1}`;
+    if (portion.label) return portion.label;
+    if (portion.portion_description) return portion.portion_description;
+    const amount = toNumber(portion.amount, 0);
+    const unit = portion.measure_unit_name || portion.measureUnitName || portion.unit || '';
+    const modifier = portion.modifier || '';
+    const baseLabel = [amount > 0 ? amount : '', unit, modifier].filter(Boolean).join(' ').trim();
+    return baseLabel || `portion ${index + 1}`;
+  };
+
   const selectFood = async (food, source) => {
     const nutrients = source === 'usda' ? food.nutrients : food;
     const baseCalories = parseFloat(nutrients.calories || food.calories || 0);
@@ -471,8 +488,12 @@ const MealsPage = ({ embedded = false }) => {
     setLoading(true);
     
     // Fetch portions from API only when food is selected (for performance)
-    let portions = [];
-    if (source === 'usda' && food.fdc_id) {
+    let fetchedPortions = Array.isArray(food.portions) ? [...food.portions] : [];
+    if (food.food_portions && Array.isArray(food.food_portions)) {
+      fetchedPortions = [...fetchedPortions, ...food.food_portions];
+    }
+
+    if (source === 'usda' && food.fdc_id && fetchedPortions.length === 0) {
       try {
         const response = await fetch(
           `${BACKEND_ROUTES_API}/GetFoodPortions.php?fdc_id=${food.fdc_id}`,
@@ -480,13 +501,30 @@ const MealsPage = ({ embedded = false }) => {
         );
         const data = await response.json();
         if (data.success && data.portions) {
-          portions = data.portions;
+          fetchedPortions = [...fetchedPortions, ...data.portions];
         }
       } catch (error) {
         console.error('Error fetching portions:', error);
       }
-  }
-  setAvailablePortions(portions);
+    }
+    
+    // Sanitize portions to guarantee consistent properties for calculations
+    const sanitizedPortions = fetchedPortions.map((portion, index) => {
+      const gramWeight = toNumber(portion?.gram_weight ?? portion?.gramWeight, 0);
+      const servingSize = toNumber(portion?.serving_size ?? portion?.servingSize, 0);
+      const amount = toNumber(portion?.amount, 0);
+      const resolvedServingSize = gramWeight > 0 ? gramWeight : servingSize > 0 ? servingSize : amount > 0 ? amount : 1;
+      const label = createPortionLabel(portion, index);
+      
+      return {
+        ...portion,
+        label,
+        gram_weight: gramWeight > 0 ? gramWeight : null,
+        serving_size: resolvedServingSize
+      };
+    }).filter((portion) => portion.serving_size > 0);
+
+    setAvailablePortions(sanitizedPortions);
     setLoading(false);
   };
 
@@ -553,7 +591,7 @@ const MealsPage = ({ embedded = false }) => {
       
       if (portion) {
         defaultQuantity = 1;
-        portionGramWeight = portion.gram_weight;
+        portionGramWeight = portion.gram_weight || portion.serving_size;
         
         // Calculate nutrition based on the gram weight of the portion
         const multiplier = portionGramWeight / 100;
@@ -1430,7 +1468,7 @@ const MealsPage = ({ embedded = false }) => {
                             <option value="ml" style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}>Milliliters (ml)</option>
                             {availablePortions.map((portion, index) => (
                               <option key={index} value={`portion_${index}`} style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}>
-                                Per {portion.label} ({portion.gram_weight}g)
+                                {portion.gram_weight !== null ? `Per ${portion.label} (${portion.gram_weight}g)` : `Per ${portion.label}`}
                               </option>
                             ))}
                           </select>

@@ -72,7 +72,7 @@ class USDAService
      */
     private function enrichWithPortions($foods)
     {
-        error_log("Enriching " . count($foods) . " foods with portion data");
+        
         $enrichedCount = 0;
         
         foreach ($foods as &$food) {
@@ -87,7 +87,7 @@ class USDAService
             }
         }
         
-        error_log("Successfully enriched $enrichedCount foods with portions");
+        
         return $foods;
     }
     
@@ -132,7 +132,7 @@ class USDAService
                 'serving_size' => $food['servingSize'] ?? 100,
                 'serving_unit' => $food['servingSizeUnit'] ?? 'g',
                 'nutrients' => $this->extractNutrients($food['foodNutrients'] ?? []),
-                'food_portions' => $this->extractFoodPortions($food['foodPortions'] ?? [])
+                'food_portions' => $this->extractFoodPortions($food['foodPortions'] ?? $food['foodMeasures'] ?? [])
             ];
         }
         
@@ -216,14 +216,14 @@ class USDAService
      * 1. SR Legacy/Foundation: measureUnit.name (e.g., "cup, sliced")
      * 2. Survey (FNDDS): portionDescription (e.g., "1 cup, sliced")
      */
-    private function extractFoodPortions($foodPortions)
+    public function extractFoodPortions($foodPortions)
     {
         $extracted = [];
         
-        error_log("DEBUG: Processing " . count($foodPortions) . " portions");
+        
         
         foreach ($foodPortions as $index => $portion) {
-            error_log("DEBUG: Portion $index: " . json_encode($portion));
+            
             
             $gramWeight = $portion['gramWeight'] ?? null;
             $amount = $portion['amount'] ?? 1;
@@ -235,13 +235,13 @@ class USDAService
             
             // Structure 2 FIRST: Survey (FNDDS) Foods (flat portionDescription)
             // Check this first because some foods have BOTH but portionDescription is more accurate
-            if (isset($portion['portionDescription'])) {
-                $portionDesc = $portion['portionDescription'];
+            if (isset($portion['portionDescription']) || isset($portion['disseminationText'])) {
+                $portionDesc = $portion['portionDescription'] ?? $portion['disseminationText'];
                 // Only use it if it's not "Quantity not specified"
                 if (stripos($portionDesc, 'quantity not specified') === false && 
                     stripos($portionDesc, 'not specified') === false) {
                     $description = $portionDesc;
-                    error_log("DEBUG: Extracted from portionDescription: $description");
+                    
                     // Parse the description to separate amount/modifier from unit
                     // e.g., "1 fruit, medium" or "1 cup, sliced"
                     if (preg_match('/^(\d+\.?\d*)\s+(.+)/', $description, $matches)) {
@@ -256,27 +256,35 @@ class USDAService
             // Structure 1: SR Legacy/Foundation Foods (nested measureUnit)
             // Only use if we don't have description from portionDescription
             if (!$description && isset($portion['measureUnit'])) {
-                error_log("DEBUG: Found measureUnit: " . json_encode($portion['measureUnit']));
+                
                 if (is_array($portion['measureUnit']) && isset($portion['measureUnit']['name'])) {
                     $measureUnitName = $portion['measureUnit']['name'];
                     // Only use if it's not "undetermined"
                     if (stripos($measureUnitName, 'undetermined') === false) {
                         $description = $measureUnitName;
                         $measureUnit = $measureUnitName;
-                        error_log("DEBUG: Extracted from measureUnit.name: $description");
+                        
                     }
                 } elseif (is_string($portion['measureUnit'])) {
                     if (stripos($portion['measureUnit'], 'undetermined') === false) {
                         $description = $portion['measureUnit'];
                         $measureUnit = $portion['measureUnit'];
-                        error_log("DEBUG: Extracted from measureUnit (string): $description");
+                        
                     }
                 }
-                // Get modifier if available
-                $modifier = $portion['modifier'] ?? '';
+            }
+
+            // Always try to get modifier
+            $modifier = $portion['modifier'] ?? '';
+            
+            // If description is STILL null or undetermined, and we have a valid modifier, use it as description!
+            if (!$description && !empty($modifier) && !preg_match('/^\d+$/', $modifier)) {
+                $description = $modifier;
+                $measureUnit = $modifier;
+                
             }
             
-            error_log("DEBUG: Final description: " . ($description ?? 'NULL'));
+            
             
             // Only add if we have weight and description
             if ($gramWeight && $description) {
@@ -285,19 +293,25 @@ class USDAService
                 
                 // Skip numeric-only descriptions (e.g., "60710")
                 if (preg_match('/^\d+$/', $description)) {
-                    error_log("DEBUG: Skipping numeric-only description: $description");
+                    
                     continue;
                 }
                 
-                // Also skip if modifier is numeric-only (e.g., "90000", "60710")
-                if (!empty($modifier) && preg_match('/^\d+$/', $modifier)) {
-                    error_log("DEBUG: Skipping portion with numeric modifier: $modifier");
+                // Skip RACC portions (Reference Amounts Customarily Consumed)
+                if (stripos($description, 'racc') !== false) {
+                    
                     continue;
+                }
+                
+                // Do NOT skip just because modifier is numeric if we have a valid description.
+                // We just clear out the modifier if it's purely numeric so it doesn't pollute data.
+                if (!empty($modifier) && preg_match('/^\d+$/', $modifier)) {
+                    $modifier = '';
                 }
                 
                 // Create a clean label
                 $label = ucfirst(strtolower($description));
-                error_log("DEBUG: Adding portion: $label ({$gramWeight}g)");
+                
                 
                 $extracted[] = [
                     'label' => $label,
@@ -308,11 +322,11 @@ class USDAService
                     'gram_weight' => round($gramWeight, 2)
                 ];
             } else {
-                error_log("DEBUG: Skipping portion - gramWeight: $gramWeight, description: " . ($description ?? 'NULL'));
+                
             }
         }
         
-        error_log("Extracted " . count($extracted) . " food portions");
+        
         return $extracted;
     }
     
@@ -327,7 +341,7 @@ class USDAService
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $fullUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30); // Increased timeout for detailed queries
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json'
         ]);

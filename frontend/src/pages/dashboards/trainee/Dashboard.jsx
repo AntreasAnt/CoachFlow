@@ -627,8 +627,11 @@ const HomePage = () => {
     });
 
     let fetchedPortions = Array.isArray(food.portions) ? [...food.portions] : [];
+    if (food.food_portions && Array.isArray(food.food_portions)) {
+      fetchedPortions = [...fetchedPortions, ...food.food_portions];
+    }
 
-    if (food.source === 'usda' && food.id) {
+    if (food.source === 'usda' && food.id && fetchedPortions.length === 0) {
       try {
         const portionsResponse = await APIClient.get(
           `${BACKEND_ROUTES_API}GetFoodPortions.php?fdc_id=${encodeURIComponent(food.id)}`

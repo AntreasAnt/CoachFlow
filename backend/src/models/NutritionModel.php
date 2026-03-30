@@ -637,44 +637,50 @@ class NutritionModel
      */
     public function cacheUSDAFood($foodData)
     {
-        $query = "INSERT INTO usda_foods 
-                  (fdc_id, description, brand_name, data_type, serving_size, serving_unit, 
-                   calories, protein, carbs, fat, fiber, sugar, sodium, api_data) 
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                  ON DUPLICATE KEY UPDATE 
-                  description = VALUES(description),
-                  brand_name = VALUES(brand_name),
-                  calories = VALUES(calories),
-                  protein = VALUES(protein),
-                  carbs = VALUES(carbs),
-                  fat = VALUES(fat),
-                  fiber = VALUES(fiber),
-                  sugar = VALUES(sugar),
-                  sodium = VALUES(sodium),
-                  api_data = VALUES(api_data)";
-        
-        $apiDataJson = json_encode($foodData['api_data']);
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bind_param(
-            "sssssdddddddds",
-            $foodData['fdc_id'],
-            $foodData['description'],
-            $foodData['brand_name'],
-            $foodData['data_type'],
-            $foodData['serving_size'],
-            $foodData['serving_unit'],
-            $foodData['calories'],
-            $foodData['protein'],
-            $foodData['carbs'],
-            $foodData['fat'],
-            $foodData['fiber'],
-            $foodData['sugar'],
-            $foodData['sodium'],
-            $apiDataJson
-        );
-        
-        return $stmt->execute();
+        try {
+            $query = "INSERT INTO usda_foods 
+                      (fdc_id, description, brand_name, data_type, serving_size, serving_unit, 
+                       calories, protein, carbs, fat, fiber, sugar, sodium, api_data) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                      ON DUPLICATE KEY UPDATE 
+                      description = VALUES(description),
+                      brand_name = VALUES(brand_name),
+                      calories = VALUES(calories),
+                      protein = VALUES(protein),
+                      carbs = VALUES(carbs),
+                      fat = VALUES(fat),
+                      fiber = VALUES(fiber),
+                      sugar = VALUES(sugar),
+                      sodium = VALUES(sodium),
+                      api_data = VALUES(api_data)";
+            
+            $apiDataJson = json_encode($foodData['api_data']);
+            
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) return false;
+            
+            $stmt->bind_param(
+                "sssssdddddddds",
+                $foodData['fdc_id'],
+                $foodData['description'],
+                $foodData['brand_name'],
+                $foodData['data_type'],
+                $foodData['serving_size'],
+                $foodData['serving_unit'],
+                $foodData['calories'],
+                $foodData['protein'],
+                $foodData['carbs'],
+                $foodData['fat'],
+                $foodData['fiber'],
+                $foodData['sugar'],
+                $foodData['sodium'],
+                $apiDataJson
+            );
+            
+            return $stmt->execute();
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     /**
@@ -682,13 +688,19 @@ class NutritionModel
      */
     public function getCachedUSDAFood($fdcId)
     {
-        $query = "SELECT * FROM usda_foods WHERE fdc_id = ?";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("s", $fdcId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        return $result->fetch_assoc();
+        try {
+            $query = "SELECT * FROM usda_foods WHERE fdc_id = ?";
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) return null;
+            
+            $stmt->bind_param("s", $fdcId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            return $result->fetch_assoc() ?: null;
+        } catch (Exception $e) {
+            return null;
+        }
     }
 
     /**
@@ -696,17 +708,60 @@ class NutritionModel
      */
     public function searchCachedUSDAFoods($searchTerm, $limit = 20)
     {
-        $searchPattern = "%{$searchTerm}%";
-        $query = "SELECT * FROM usda_foods 
-                  WHERE description LIKE ? OR brand_name LIKE ?
-                  ORDER BY description ASC 
-                  LIMIT ?";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("ssi", $searchPattern, $searchPattern, $limit);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        return $result->fetch_all(MYSQLI_ASSOC);
+        try {
+            $searchPattern = "%{$searchTerm}%";
+            $query = "SELECT * FROM usda_foods 
+                      WHERE description LIKE ? OR brand_name LIKE ?
+                      ORDER BY description ASC 
+                      LIMIT ?";
+            
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) return [];
+            
+            $stmt->bind_param("ssi", $searchPattern, $searchPattern, $limit);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $rows = $result->fetch_all(MYSQLI_ASSOC);
+            $formatted = [];
+            
+            // Require USDAService to extract food portions properly
+            require_once __DIR__ . '/../services/USDAService.php';
+            $usdaService = new USDAService();
+
+            foreach ($rows as $row) {
+                // Parse cached JSON api_data to extract portions
+                $apiData = isset($row['api_data']) && !empty($row['api_data']) ? json_decode($row['api_data'], true) : [];
+                $rawPortions = $apiData['foodPortions'] ?? $apiData['foodMeasures'] ?? [];
+                
+                $foodPortions = [];
+                if (!empty($rawPortions)) {
+                    // Extract food_portions similar to what USDA service does
+                    $foodPortions = $usdaService->extractFoodPortions($rawPortions);
+                }
+                
+                $formatted[] = [
+                    'fdc_id' => $row['fdc_id'],
+                    'description' => $row['description'],
+                    'brand_name' => $row['brand_name'],
+                    'data_type' => $row['data_type'],
+                    'serving_size' => $row['serving_size'],
+                    'serving_unit' => $row['serving_unit'],
+                    'nutrients' => [
+                        'calories' => $row['calories'],
+                        'protein' => $row['protein'],
+                        'carbs' => $row['carbs'],
+                        'fat' => $row['fat'],
+                        'fiber' => $row['fiber'],
+                        'sugar' => $row['sugar'],
+                        'sodium' => $row['sodium']
+                    ],
+                    'food_portions' => $foodPortions
+                ];
+            }
+            return $formatted;
+        } catch (Exception $e) {
+            return [];
+        }
     }
 }
