@@ -92,10 +92,10 @@ try {
                 u.full_name as name,
                 u.email,
                 u.username,
-                tp.bio,
-                tp.specializations,
-                tp.certifications,
-                tp.experience_years,
+                COALESCE(tp.bio, u.bio) as bio,
+                COALESCE(tp.specializations, u.specializations) as specializations,
+                COALESCE(tp.certifications, u.certifications) as certifications,
+                COALESCE(tp.experience_years, u.years_of_experience, 0) as experience_years,
                 tp.hourly_rate,
                 tp.availability_status,
                 tp.max_clients,
@@ -126,7 +126,7 @@ try {
     
     // Add search filter (name + specializations only)
     if (!empty($search)) {
-        $query .= " AND (u.full_name LIKE ? OR u.username LIKE ? OR tp.specializations LIKE ?)";
+        $query .= " AND (u.full_name LIKE ? OR u.username LIKE ? OR COALESCE(tp.specializations, u.specializations) LIKE ?)";
         $searchParam = "%{$search}%";
         $params[] = $searchParam;
         $params[] = $searchParam;
@@ -136,7 +136,7 @@ try {
     
     // Add specialization filter
     if (!empty($specialization)) {
-        $query .= " AND tp.specializations LIKE ?";
+        $query .= " AND COALESCE(tp.specializations, u.specializations) LIKE ?";
         $params[] = "%{$specialization}%";
         $types .= "s";
     }
@@ -266,7 +266,7 @@ try {
     $countTypes = '';
 
     if (!empty($search)) {
-        $countQuery .= " AND (u.full_name LIKE ? OR u.username LIKE ? OR tp.specializations LIKE ?)";
+        $countQuery .= " AND (u.full_name LIKE ? OR u.username LIKE ? OR COALESCE(tp.specializations, u.specializations) LIKE ?)";
         $countParams[] = $searchParam;
         $countParams[] = $searchParam;
         $countParams[] = $searchParam;
@@ -274,7 +274,7 @@ try {
     }
 
     if (!empty($specialization)) {
-        $countQuery .= " AND tp.specializations LIKE ?";
+        $countQuery .= " AND COALESCE(tp.specializations, u.specializations) LIKE ?";
         $countParams[] = "%{$specialization}%";
         $countTypes .= 's';
     }

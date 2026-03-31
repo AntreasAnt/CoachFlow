@@ -40,6 +40,8 @@ try {
 
     $database = new Database();
     $conn = $database->connect();
+
+    $conn->begin_transaction();
     
     // Update trainer profile
     $query = "UPDATE user SET
@@ -64,6 +66,26 @@ try {
     $bio = $input['bio'] ?? '';
     $specializations = $input['specializations'] ?? '[]';
     $certifications = $input['certifications'] ?? '';
+    $certificationsForTrainerProfiles = '[]';
+    try {
+        $certTrim = is_string($certifications) ? trim($certifications) : '';
+        if ($certTrim === '') {
+            $certificationsForTrainerProfiles = '[]';
+        } else {
+            $decoded = json_decode($certTrim, true);
+            if (is_array($decoded)) {
+                $certificationsForTrainerProfiles = $certTrim;
+            } else {
+                $parts = preg_split('/[\n,]+/', $certTrim);
+                $parts = array_values(array_filter(array_map('trim', $parts), function ($v) {
+                    return $v !== '';
+                }));
+                $certificationsForTrainerProfiles = json_encode($parts, JSON_UNESCAPED_UNICODE);
+            }
+        }
+    } catch (Exception $e) {
+        $certificationsForTrainerProfiles = '[]';
+    }
     $yearsOfExperience = $input['yearsOfExperience'] ?? 0;
     // Convert empty string to 0 for integer field
     if ($yearsOfExperience === '' || $yearsOfExperience === null) {
@@ -112,13 +134,15 @@ try {
     if (!$syncStmt) {
         throw new Exception("Failed to prepare trainer_profiles sync: " . $conn->error);
     }
+
+    $yearsOfExperienceInt = (int) $yearsOfExperience;
     $syncStmt->bind_param(
         "isssi",
         $userId,
         $bio,
         $specializations,
-        $certifications,
-        (int) $yearsOfExperience
+        $certificationsForTrainerProfiles,
+        $yearsOfExperienceInt
     );
     if (!$syncStmt->execute()) {
         throw new Exception("Failed to sync trainer_profiles: " . $syncStmt->error);
@@ -160,6 +184,8 @@ try {
             }
         }
     }
+
+    $conn->commit();
     
     error_log("UpdateTrainerProfile - Profile updated successfully");
 
@@ -169,6 +195,13 @@ try {
     ]);
 
 } catch (Exception $e) {
+    if (isset($conn) && $conn instanceof mysqli) {
+        try {
+            $conn->rollback();
+        } catch (Exception $ignored) {
+            // no-op
+        }
+    }
     error_log("UpdateTrainerProfile - Error: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
