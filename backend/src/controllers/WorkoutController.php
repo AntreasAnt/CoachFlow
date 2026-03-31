@@ -25,13 +25,19 @@ class WorkoutController
     /**
      * Get user's workout data including plans, sessions, and premium plans
      */
-    public function getWorkoutData($userId)
+    public function getWorkoutData($userId, $options = [])
     {
         try {
             // Validate user authentication
             if (!$userId) {
                 throw new Exception('User ID is required');
             }
+
+            $includePlans = array_key_exists('includePlans', $options) ? (bool)$options['includePlans'] : true;
+            $includeRecentSessions = array_key_exists('includeRecentSessions', $options) ? (bool)$options['includeRecentSessions'] : true;
+            $includeExercises = array_key_exists('includeExercises', $options) ? (bool)$options['includeExercises'] : true;
+            $includePremiumPlans = array_key_exists('includePremiumPlans', $options) ? (bool)$options['includePremiumPlans'] : true;
+            $includePersonalRecords = array_key_exists('includePersonalRecords', $options) ? (bool)$options['includePersonalRecords'] : true;
 
             $response = [
                 'success' => true,
@@ -41,28 +47,129 @@ class WorkoutController
                 'personalRecords' => []
             ];
 
-            // Get user's workout plans
-            $workoutPlans = $this->workoutModel->getUserWorkoutPlans($userId);
-            $response['workoutPlans'] = $workoutPlans;
+            // Get user's workout plans (optionally paged)
+            if ($includePlans) {
+                $plansPage = isset($options['plansPage']) ? max(1, (int)$options['plansPage']) : null;
+                $plansLimit = isset($options['plansLimit']) ? max(1, (int)$options['plansLimit']) : null;
+                $plansIncludeDetails = array_key_exists('plansIncludeDetails', $options) ? (bool)$options['plansIncludeDetails'] : true;
+
+                if ($plansPage !== null && $plansLimit !== null) {
+                    $offset = ($plansPage - 1) * $plansLimit;
+                    $total = $this->workoutModel->countUserWorkoutPlans($userId);
+                    $plans = $this->workoutModel->getUserWorkoutPlansPaged($userId, $plansLimit, $offset, $plansIncludeDetails);
+
+                    $totalPages = (int)ceil($total / $plansLimit);
+                    $response['workoutPlans'] = $plans;
+                    $response['workoutPlansPagination'] = [
+                        'page' => $plansPage,
+                        'limit' => $plansLimit,
+                        'total' => $total,
+                        'total_pages' => $totalPages,
+                        'has_more' => $plansPage < $totalPages
+                    ];
+                } else {
+                    $workoutPlans = $this->workoutModel->getUserWorkoutPlans($userId);
+                    $response['workoutPlans'] = $workoutPlans;
+                }
+            }
 
             // Get recent workout sessions
-            $recentSessions = $this->workoutModel->getRecentSessions($userId);
-            $response['recentSessions'] = $recentSessions;
+            if ($includeRecentSessions) {
+                $recentSessions = $this->workoutModel->getRecentSessions($userId);
+                $response['recentSessions'] = $recentSessions;
+            }
 
             // Get all exercises (including user's custom exercises)
-            $exercises = $this->workoutModel->getAllExercises($userId);
-            $response['exercises'] = $exercises;
+            if ($includeExercises) {
+                $exercises = $this->workoutModel->getAllExercises($userId);
+                $response['exercises'] = $exercises;
+            }
 
             // Get premium workout plans
-            $premiumPlans = $this->workoutModel->getPremiumPlans();
-            $response['premiumPlans'] = $premiumPlans;
+            if ($includePremiumPlans) {
+                $premiumPlans = $this->workoutModel->getPremiumPlans();
+                $response['premiumPlans'] = $premiumPlans;
+            }
 
             // Get personal records
-            $personalRecords = $this->workoutModel->getPersonalRecords($userId);
-            $response['personalRecords'] = $personalRecords;
+            if ($includePersonalRecords) {
+                $personalRecords = $this->workoutModel->getPersonalRecords($userId);
+                $response['personalRecords'] = $personalRecords;
+            }
 
             return $response;
 
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Get user's workout plans paginated (lightweight or full details).
+     */
+    public function getUserWorkoutPlansPaged($userId, $page = 1, $limit = 10, $includeDetails = false)
+    {
+        try {
+            if (!$userId) {
+                throw new Exception('User ID is required');
+            }
+
+            $page = max(1, (int)$page);
+            $limit = max(1, (int)$limit);
+            $offset = ($page - 1) * $limit;
+
+            $total = $this->workoutModel->countUserWorkoutPlans($userId);
+            $plans = $this->workoutModel->getUserWorkoutPlansPaged($userId, $limit, $offset, (bool)$includeDetails);
+
+            $totalPages = (int)ceil($total / $limit);
+            return [
+                'success' => true,
+                'plans' => $plans,
+                'pagination' => [
+                    'page' => $page,
+                    'limit' => $limit,
+                    'total' => $total,
+                    'total_pages' => $totalPages,
+                    'has_more' => $page < $totalPages
+                ]
+            ];
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Get a single user's workout plan (with full details)
+     */
+    public function getUserWorkoutPlan($userId, $planId)
+    {
+        try {
+            if (!$userId) {
+                throw new Exception('User ID is required');
+            }
+
+            if (!$planId) {
+                throw new Exception('Plan ID is required');
+            }
+
+            $plan = $this->workoutModel->getUserWorkoutPlanById($userId, $planId);
+            if (!$plan) {
+                return [
+                    'success' => false,
+                    'message' => 'Plan not found'
+                ];
+            }
+
+            return [
+                'success' => true,
+                'plan' => $plan
+            ];
         } catch (Exception $e) {
             return [
                 'success' => false,

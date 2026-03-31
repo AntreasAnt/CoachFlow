@@ -324,10 +324,12 @@ const TrainerClients = () => {
 
                         {request.message && (
                           <div className="mb-3">
-                            <p className="text-muted mb-0 small">
+                            <div className="small" style={{ color: 'var(--text-secondary)' }}>
                               <i className="bi bi-chat-quote me-2"></i>
-                              "{request.message}"
-                            </p>
+                              <span style={{ color: 'var(--text-primary)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                {request.message}
+                              </span>
+                            </div>
                           </div>
                         )}
 
@@ -466,7 +468,7 @@ const TrainerClients = () => {
       {/* Request Details Modal */}
       {showRequestModal && selectedRequest && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">Coaching Request Details</h5>
@@ -485,7 +487,18 @@ const TrainerClients = () => {
                 {selectedRequest.message && (
                   <div className="mb-3">
                     <label className="form-label fw-bold">Message:</label>
-                    <p className="text-muted">{selectedRequest.message}</p>
+                    <div
+                      className="rounded p-3"
+                      style={{
+                        backgroundColor: 'rgba(0,0,0,0.08)',
+                        border: '1px solid rgba(0,0,0,0.08)',
+                        color: 'var(--text-primary)',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word'
+                      }}
+                    >
+                      {selectedRequest.message}
+                    </div>
                   </div>
                 )}
 

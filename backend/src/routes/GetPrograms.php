@@ -3,6 +3,7 @@
 require_once '../config/cors.php';
 require_once '../config/Auth.php';
 require_once '../models/ProgramModel.php';
+require_once '../models/PurchaseModel.php';
 
 // Only allow GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
@@ -37,6 +38,16 @@ try {
         // Get single program details
         $includeDrafts = ($userRole === 'trainer'); // Trainers can see their drafts
         $program = $programModel->getProgramById($programId, $includeDrafts);
+
+        // If trainee tries to open a non-published or removed program,
+        // allow access only if they have purchased it.
+        if (!$program && $userRole === 'trainee') {
+            $purchaseModel = new PurchaseModel();
+            $hasAccess = $purchaseModel->hasAccess($userId, (int)$programId);
+            if ($hasAccess) {
+                $program = $programModel->getProgramById((int)$programId, true, true);
+            }
+        }
         
         if (!$program) {
             throw new Exception('Program not found');

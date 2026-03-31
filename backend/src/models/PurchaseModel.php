@@ -249,6 +249,85 @@ class PurchaseModel
     }
 
     /**
+     * Count trainee purchases (non-hidden by default)
+     */
+    public function countTraineePurchases($traineeId, $status = 'completed', $isHidden = 0)
+    {
+        try {
+            $isHidden = (int)$isHidden;
+            $query = "SELECT COUNT(*) as total
+                      FROM program_purchases
+                      WHERE trainee_id = ? AND status = ? AND is_hidden = ?";
+
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Prepare failed: " . $this->conn->error);
+            }
+
+            $stmt->bind_param("isi", $traineeId, $status, $isHidden);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
+
+            return (int)($row['total'] ?? 0);
+        } catch (Exception $e) {
+            error_log("Error in countTraineePurchases: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Get trainee's purchased programs with pagination (non-hidden)
+     */
+    public function getTraineePurchasesPaged($traineeId, $status = 'completed', $limit = 10, $offset = 0)
+    {
+        try {
+            $limit = max(1, (int)$limit);
+            $offset = max(0, (int)$offset);
+
+            $query = "SELECT 
+                        pp.id as purchase_id,
+                        pp.purchased_at,
+                        pp.amount,
+                        pp.currency,
+                        pp.status,
+                        tp.id as program_id,
+                        tp.title,
+                        tp.description,
+                        tp.difficulty_level,
+                        tp.duration_weeks,
+                        tp.category,
+                        u.username as trainer_name,
+                        u.userid as trainer_id
+                      FROM program_purchases pp
+                      JOIN trainer_programs tp ON pp.program_id = tp.id
+                      JOIN user u ON pp.trainer_id = u.userid
+                      WHERE pp.trainee_id = ? AND pp.status = ? AND pp.is_hidden = 0
+                      ORDER BY pp.purchased_at DESC
+                      LIMIT ? OFFSET ?";
+
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Prepare failed: " . $this->conn->error);
+            }
+
+            $stmt->bind_param("isii", $traineeId, $status, $limit, $offset);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            $purchases = [];
+            while ($row = $result->fetch_assoc()) {
+                $purchases[] = $row;
+            }
+
+            return $purchases;
+        } catch (Exception $e) {
+            error_log("Error in getTraineePurchasesPaged: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
      * Get trainee's hidden purchases
      */
     public function getTraineeHiddenPurchases($traineeId)

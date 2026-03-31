@@ -123,6 +123,260 @@ class WorkoutModel
     }
 
     /**
+     * Count user's workout plans
+     */
+    public function countUserWorkoutPlans($userId)
+    {
+        try {
+            $stmt = $this->conn->prepare("SELECT COUNT(*) as total FROM user_workout_plans WHERE user_id = ?");
+            if (!$stmt) {
+                throw new Exception("Prepare failed: " . $this->conn->error);
+            }
+
+            $stmt->bind_param("i", $userId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
+
+            return (int)($row['total'] ?? 0);
+        } catch (Exception $e) {
+            error_log("Error in countUserWorkoutPlans: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Get user's workout plans with pagination.
+     *
+     * When includeDetails is false, returns a lightweight list with counts only (no exercises/sessions payload).
+     */
+    public function getUserWorkoutPlansPaged($userId, $limit = 10, $offset = 0, $includeDetails = false)
+    {
+        try {
+            $limit = max(1, (int)$limit);
+            $offset = max(0, (int)$offset);
+
+            if (!$includeDetails) {
+                $query = "SELECT 
+                            uwp.id,
+                            uwp.name,
+                            uwp.description,
+                            uwp.last_performed,
+                            uwp.created_at,
+                            uwp.is_program_package,
+                            uwp.duration_weeks,
+                            uwp.category,
+                            uwp.difficulty_level,
+                            (SELECT COUNT(*) FROM program_workout_sessions pws WHERE pws.program_package_id = uwp.id) as session_count,
+                            (SELECT COUNT(*) FROM workout_plan_exercises wpe WHERE wpe.workout_plan_id = uwp.id) as exercise_count
+                          FROM user_workout_plans uwp
+                          WHERE uwp.user_id = ?
+                          ORDER BY uwp.last_performed DESC, uwp.created_at DESC
+                          LIMIT ? OFFSET ?";
+
+                $stmt = $this->conn->prepare($query);
+                if (!$stmt) {
+                    throw new Exception("Prepare failed: " . $this->conn->error);
+                }
+
+                $stmt->bind_param("iii", $userId, $limit, $offset);
+                $stmt->execute();
+                $result = $stmt->get_result();
+
+                $plans = [];
+                while ($row = $result->fetch_assoc()) {
+                    $plans[] = $row;
+                }
+
+                return $plans;
+            }
+
+            // includeDetails=true (still paginated): fetch headers, then fetch per-plan details.
+            $query = "SELECT 
+                        id,
+                        name,
+                        description,
+                        last_performed,
+                        created_at,
+                        is_program_package,
+                        duration_weeks,
+                        category,
+                        difficulty_level
+                      FROM user_workout_plans
+                      WHERE user_id = ?
+                      ORDER BY last_performed DESC, created_at DESC
+                      LIMIT ? OFFSET ?";
+
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Prepare failed: " . $this->conn->error);
+            }
+
+            $stmt->bind_param("iii", $userId, $limit, $offset);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            $plans = [];
+            while ($row = $result->fetch_assoc()) {
+                if ($row['is_program_package'] == 1) {
+                    $sessionQuery = "SELECT 
+                                        id,
+                                        name,
+                                        description,
+                                        week_number,
+                                        day_number
+                                      FROM program_workout_sessions
+                                      WHERE program_package_id = ?
+                                      ORDER BY week_number ASC, day_number ASC";
+                    $sessionStmt = $this->conn->prepare($sessionQuery);
+                    $sessionStmt->bind_param("i", $row['id']);
+                    $sessionStmt->execute();
+                    $sessionResult = $sessionStmt->get_result();
+
+                    $sessions = [];
+                    while ($sessionRow = $sessionResult->fetch_assoc()) {
+                        $sessions[] = $sessionRow;
+                    }
+
+                    $row['sessions'] = $sessions;
+                    $row['session_count'] = count($sessions);
+                } else {
+                    $exerciseQuery = "SELECT 
+                                        wpe.exercise_id,
+                                        wpe.sets,
+                                        wpe.reps,
+                                        wpe.duration_seconds,
+                                        wpe.rest_seconds,
+                                        wpe.notes,
+                                        wpe.order_index,
+                                        e.name,
+                                        e.category,
+                                        e.muscle_group,
+                                        e.equipment,
+                                        e.instructions
+                                      FROM workout_plan_exercises wpe
+                                      JOIN exercises e ON wpe.exercise_id = e.id
+                                      WHERE wpe.workout_plan_id = ?
+                                      ORDER BY wpe.order_index ASC";
+                    $exerciseStmt = $this->conn->prepare($exerciseQuery);
+                    $exerciseStmt->bind_param("i", $row['id']);
+                    $exerciseStmt->execute();
+                    $exerciseResult = $exerciseStmt->get_result();
+
+                    $exercises = [];
+                    while ($exerciseRow = $exerciseResult->fetch_assoc()) {
+                        $exercises[] = $exerciseRow;
+                    }
+
+                    $row['exercises'] = $exercises;
+                }
+
+                $plans[] = $row;
+            }
+
+            return $plans;
+        } catch (Exception $e) {
+            error_log("Error in getUserWorkoutPlansPaged: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Get a single user's workout plan by ID (with full details)
+     */
+    public function getUserWorkoutPlanById($userId, $planId)
+    {
+        try {
+            $planId = (int)$planId;
+            $query = "SELECT 
+                        id,
+                        name,
+                        description,
+                        last_performed,
+                        created_at,
+                        is_program_package,
+                        duration_weeks,
+                        category,
+                        difficulty_level
+                      FROM user_workout_plans
+                      WHERE user_id = ? AND id = ?";
+
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Prepare failed: " . $this->conn->error);
+            }
+
+            $stmt->bind_param("ii", $userId, $planId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            if ($result->num_rows === 0) {
+                return null;
+            }
+
+            $row = $result->fetch_assoc();
+
+            if ($row['is_program_package'] == 1) {
+                $sessionQuery = "SELECT 
+                                    id,
+                                    name,
+                                    description,
+                                    week_number,
+                                    day_number
+                                  FROM program_workout_sessions
+                                  WHERE program_package_id = ?
+                                  ORDER BY week_number ASC, day_number ASC";
+                $sessionStmt = $this->conn->prepare($sessionQuery);
+                $sessionStmt->bind_param("i", $row['id']);
+                $sessionStmt->execute();
+                $sessionResult = $sessionStmt->get_result();
+
+                $sessions = [];
+                while ($sessionRow = $sessionResult->fetch_assoc()) {
+                    $sessions[] = $sessionRow;
+                }
+
+                $row['sessions'] = $sessions;
+                $row['session_count'] = count($sessions);
+            } else {
+                $exerciseQuery = "SELECT 
+                                    wpe.exercise_id,
+                                    wpe.sets,
+                                    wpe.reps,
+                                    wpe.duration_seconds,
+                                    wpe.rest_seconds,
+                                    wpe.notes,
+                                    wpe.order_index,
+                                    e.name,
+                                    e.category,
+                                    e.muscle_group,
+                                    e.equipment,
+                                    e.instructions
+                                  FROM workout_plan_exercises wpe
+                                  JOIN exercises e ON wpe.exercise_id = e.id
+                                  WHERE wpe.workout_plan_id = ?
+                                  ORDER BY wpe.order_index ASC";
+                $exerciseStmt = $this->conn->prepare($exerciseQuery);
+                $exerciseStmt->bind_param("i", $row['id']);
+                $exerciseStmt->execute();
+                $exerciseResult = $exerciseStmt->get_result();
+
+                $exercises = [];
+                while ($exerciseRow = $exerciseResult->fetch_assoc()) {
+                    $exercises[] = $exerciseRow;
+                }
+
+                $row['exercises'] = $exercises;
+            }
+
+            return $row;
+        } catch (Exception $e) {
+            error_log("Error in getUserWorkoutPlanById: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
      * Get recent workout sessions
      */
     public function getRecentSessions($userId, $limit = 10)

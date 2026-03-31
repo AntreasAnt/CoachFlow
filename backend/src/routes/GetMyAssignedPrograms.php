@@ -56,6 +56,19 @@ try {
         $target_user_id = $userId;
     }
     
+    // Optional pagination (backwards compatible: omit page/limit => full list)
+    $pageParam = $_GET['page'] ?? null;
+    $limitParam = $_GET['limit'] ?? null;
+    $page = null;
+    $limit = null;
+    $offset = null;
+
+    if ($pageParam !== null || $limitParam !== null) {
+        $page = $pageParam !== null ? max(1, (int)$pageParam) : 1;
+        $limit = $limitParam !== null ? max(1, min(50, (int)$limitParam)) : 10;
+        $offset = ($page - 1) * $limit;
+    }
+
     // Get assigned workout programs with trainer info.
     // IMPORTANT: For trainees, only return assignments from an ACTIVE coaching relationship.
     $joinActiveRelationship = "";
@@ -64,6 +77,25 @@ try {
                                    ON cr.trainer_id = pa.trainer_id 
                                   AND cr.trainee_id = pa.trainee_id 
                                   AND cr.status = 'active'";
+    }
+
+    // Count total for pagination
+    $total = null;
+    if ($page !== null && $limit !== null) {
+        $countQuery = "SELECT COUNT(*) as total
+                       FROM program_assignments pa
+                       JOIN premium_workout_plans p ON pa.program_id = p.id
+                       LEFT JOIN user u ON pa.trainer_id = u.userid
+                       $joinActiveRelationship
+                       WHERE pa.trainee_id = ?";
+
+        $countStmt = $conn->prepare($countQuery);
+        $countStmt->bind_param('i', $target_user_id);
+        $countStmt->execute();
+        $countResult = $countStmt->get_result();
+        $countRow = $countResult->fetch_assoc();
+        $total = (int)($countRow['total'] ?? 0);
+        $countStmt->close();
     }
 
     $query = "SELECT pa.id as assignment_id, 
@@ -84,9 +116,17 @@ try {
               $joinActiveRelationship
               WHERE pa.trainee_id = ?
               ORDER BY pa.assigned_at DESC";
+
+    if ($page !== null && $limit !== null) {
+        $query .= " LIMIT ? OFFSET ?";
+    }
     
     $stmt = $conn->prepare($query);
-    $stmt->bind_param('i', $target_user_id);
+    if ($page !== null && $limit !== null) {
+        $stmt->bind_param('iii', $target_user_id, $limit, $offset);
+    } else {
+        $stmt->bind_param('i', $target_user_id);
+    }
     $stmt->execute();
     $result = $stmt->get_result();
     
@@ -108,11 +148,24 @@ try {
         ];
     }
     
-    echo json_encode([
+    $payload = [
         'success' => true,
         'programs' => $programs,
         'count' => count($programs)
-    ]);
+    ];
+
+    if ($page !== null && $limit !== null) {
+        $totalPages = (int)ceil($total / $limit);
+        $payload['pagination'] = [
+            'page' => $page,
+            'limit' => $limit,
+            'total' => $total,
+            'total_pages' => $totalPages,
+            'has_more' => $page < $totalPages
+        ];
+    }
+
+    echo json_encode($payload);
 
 } catch (Exception $e) {
     error_log("GetMyAssignedPrograms - Error: " . $e->getMessage());

@@ -66,7 +66,11 @@ const mutedTextStyle = {
   color: 'var(--text-secondary)',
 };
 
-const getTodayString = () => new Date().toISOString().split('T')[0];
+const getTodayString = () => {
+  const now = new Date();
+  const localMidnightAligned = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return localMidnightAligned.toISOString().split('T')[0];
+};
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);

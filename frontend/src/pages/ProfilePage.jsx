@@ -58,6 +58,12 @@ const ProfilePage = () => {
   const isOwnProfile = !profileUsername || (currentUser && profileUsername === currentUser.username);
   const displayUsername = profileUsername || (currentUser ? currentUser.username : 'unknown');
 
+  const hasSidebarContent =
+    !isOwnProfile ||
+    (currentUser?.role === 'trainee' && !!profileData.assigned_trainer) ||
+    (currentUser?.role === 'trainee' && !!profileData.current_program) ||
+    (currentUser?.role === 'trainer' && (profileData.clients?.length || 0) > 0);
+
 
 
 
@@ -430,7 +436,7 @@ const ProfilePage = () => {
         {/* Profile Content */}
         <div className="row g-4">
           {/* Main Content */}
-          <div className="col-lg-8">
+          <div className={hasSidebarContent ? 'col-lg-8' : 'col-12'}>
             {/* Personal Information */}
             <div className="profile-card border-0 rounded-4 mb-4">
               <div className="card-header bg-white border-0 p-4">
@@ -654,6 +660,7 @@ const ProfilePage = () => {
           </div>
 
           {/* Sidebar */}
+          {hasSidebarContent && (
           <div className="col-lg-4">
             {/* Quick Actions */}
             {!isOwnProfile && (
@@ -759,46 +766,8 @@ const ProfilePage = () => {
               </div>
             )}
 
-            {/* Quick Stats */}
-            <div className="profile-card border-0 rounded-4">
-              <div className="card-body p-4">
-                <h6 className="fw-semibold mb-3">
-                  <i className="bi bi-graph-up me-2 text-success"></i>Quick Stats
-                </h6>
-                {currentUser?.role === 'trainee' ? (
-                  <>
-                    <div className="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 bg-light">
-                      <span className="text-muted small">Total Workouts:</span>
-                      <span className="fw-bold text-primary">{profileData.workouts_completed}</span>
-                    </div>
-                    <div className="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 bg-light">
-                      <span className="text-muted small">Total Time:</span>
-                      <span className="fw-bold text-primary">{formatWorkoutTime(profileData.total_workout_time)}</span>
-                    </div>
-                    <div className="d-flex justify-content-between align-items-center p-2 rounded-3 bg-light">
-                      <span className="text-muted small">This Month:</span>
-                      <span className="fw-bold text-success">12 Workouts</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 bg-light">
-                      <span className="text-muted small">Active Clients:</span>
-                      <span className="fw-bold text-primary">{profileData.clients?.length || 0}</span>
-                    </div>
-                    <div className="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 bg-light">
-                      <span className="text-muted small">Experience:</span>
-                      <span className="fw-bold text-primary">{profileData.experience_years || 0} Years</span>
-                    </div>
-                    <div className="d-flex justify-content-between align-items-center p-2 rounded-3 bg-light">
-                      <span className="text-muted small">Member Since:</span>
-                      <span className="fw-bold text-success">{new Date(profileData.member_since).getFullYear()}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
           </div>
+          )}
         </div>
       </main>
 

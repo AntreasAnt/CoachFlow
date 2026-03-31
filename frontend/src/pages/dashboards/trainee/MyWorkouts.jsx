@@ -30,10 +30,17 @@ const MyWorkouts = ({ embedded = false }) => {
   const [hiddenPurchasedPrograms, setHiddenPurchasedPrograms] = useState([]);
   const [trainerAssignedPrograms, setTrainerAssignedPrograms] = useState([]);
   const [assignedProgramsLoading, setAssignedProgramsLoading] = useState(false);
+  const [plansTab, setPlansTab] = useState('my'); // my | premium | coach
+  const [myPlansPagination, setMyPlansPagination] = useState({ page: 1, limit: 6, total: 0, has_more: false });
+  const [myPlansLoading, setMyPlansLoading] = useState(false);
+  const [purchasedPagination, setPurchasedPagination] = useState({ page: 1, limit: 6, total: 0, has_more: false });
+  const [purchasedLoading, setPurchasedLoading] = useState(false);
+  const [assignedPagination, setAssignedPagination] = useState({ page: 1, limit: 6, total: 0, has_more: false });
   const [workoutHistory, setWorkoutHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [allExercises, setAllExercises] = useState([]);
   const [premadeWorkoutPlans, setPremadeWorkoutPlans] = useState([]);
+  const [marketplaceLoading, setMarketplaceLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -92,10 +99,9 @@ const MyWorkouts = ({ embedded = false }) => {
   
   const workoutTimerRef = useRef(null);
   const breakTimerRef = useRef(null);
+  const didInitialLoadRef = useRef(false);
 
   useEffect(() => {
-    fetchWorkoutData();
-    
     // Check if we're coming from ProgramView with workout data to start
     if (location.state?.startWorkout && location.state?.workoutData) {
       console.log('Starting workout from location state:', location.state.workoutData);
@@ -110,8 +116,60 @@ const MyWorkouts = ({ embedded = false }) => {
       
       // Clear the location state so it doesn't restart on refresh
       window.history.replaceState({}, document.title);
+      return;
     }
+
+    if (didInitialLoadRef.current) return;
+    didInitialLoadRef.current = true;
+
+    fetchWorkoutData();
+    initDefaultPlansTab();
   }, [location.state]);
+
+  const initDefaultPlansTab = async () => {
+    try {
+      const coachResp = await APIClient.get(`${BACKEND_ROUTES_API}GetMyCoach.php`);
+      const hasCoach = Boolean(coachResp?.success && coachResp?.has_coach);
+
+      if (hasCoach) {
+        setPlansTab('coach');
+        // Preload the coach tab so it's immediately populated.
+        loadTrainerAssignedPrograms({ page: 1, replace: true });
+      } else {
+        setPlansTab('my');
+        loadMyWorkoutPlans({ page: 1, replace: true });
+      }
+    } catch (e) {
+      console.error('Error determining default plans tab', e);
+      setPlansTab('my');
+      loadMyWorkoutPlans({ page: 1, replace: true });
+    }
+  };
+
+  useEffect(() => {
+    // Lazy-load tab content when user switches tabs
+    if (plansTab === 'my' && workoutPlans.length === 0 && !myPlansLoading) {
+      loadMyWorkoutPlans({ page: 1, replace: true });
+    }
+    if (plansTab === 'premium' && purchasedPrograms.length === 0 && !purchasedLoading) {
+      loadPurchasedPrograms({ page: 1, replace: true });
+    }
+    if (plansTab === 'coach' && trainerAssignedPrograms.length === 0 && !assignedProgramsLoading) {
+      loadTrainerAssignedPrograms({ page: 1, replace: true });
+    }
+    if (plansTab === 'premium' && premadeWorkoutPlans.length === 0 && !marketplaceLoading) {
+      loadMarketplacePrograms();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plansTab]);
+
+  useEffect(() => {
+    // The create screen shows a small marketplace teaser; load it only when needed.
+    if (activeView === 'create' && premadeWorkoutPlans.length === 0 && !marketplaceLoading) {
+      loadMarketplacePrograms();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeView]);
 
   useEffect(() => {
     fetchRecentSessions(historyFilter.startDate, historyFilter.endDate);
@@ -151,40 +209,18 @@ const MyWorkouts = ({ embedded = false }) => {
   const fetchWorkoutData = async () => {
     try {
       setLoading(true);
-      
-      const data = await APIClient.get(`${BACKEND_ROUTES_API}GetWorkoutData.php`);
+
+      // Keep this call lightweight for faster loading (plans are fetched separately with pagination)
+      const data = await APIClient.get(
+        `${BACKEND_ROUTES_API}GetWorkoutData.php?include_plans=0&include_premium_plans=0&include_personal_records=0`
+      );
 
       if (data.success) {
-        setWorkoutPlans(data.workoutPlans);
-  // initial recent sessions come from GetWorkoutData; we will also fetch paged
-  setWorkoutHistory(data.recentSessions);
+        // initial recent sessions come from GetWorkoutData
+        setWorkoutHistory(data.recentSessions || []);
         setAllExercises(data.exercises || []);
       } else {
         throw new Error(data.message || 'Failed to load workout data');
-      }
-
-      // Fetch trainer-assigned programs
-      await loadTrainerAssignedPrograms();
-
-      // Fetch purchased programs
-      const purchasedData = await APIClient.get(`${BACKEND_ROUTES_API}GetPurchasedPrograms.php`);
-      let purchasedList = [];
-      let hiddenPurchasedList = [];
-      if (purchasedData.success) {
-        purchasedList = purchasedData.purchases || [];
-        hiddenPurchasedList = purchasedData.hiddenPurchases || [];
-        setPurchasedPrograms(purchasedList);
-        setHiddenPurchasedPrograms(hiddenPurchasedList);
-      }
-
-      // Fetch marketplace programs and filter out purchased ones
-      const marketplaceData = await APIClient.get(`${BACKEND_ROUTES_API}GetPrograms.php?type=marketplace&limit=6&sort_by=popular`);
-      if (marketplaceData.success) {
-        const purchasedProgramIds = [...purchasedList, ...hiddenPurchasedList].map(p => p.program_id);
-        const availablePrograms = (marketplaceData.programs || []).filter(
-          program => !purchasedProgramIds.includes(program.id)
-        );
-        setPremadeWorkoutPlans(availablePrograms);
       }
 
     } catch (err) {
@@ -195,23 +231,86 @@ const MyWorkouts = ({ embedded = false }) => {
     }
   };
 
-  const loadTrainerAssignedPrograms = async () => {
+  const loadMarketplacePrograms = async () => {
+    try {
+      setMarketplaceLoading(true);
+      const marketplaceData = await APIClient.get(
+        `${BACKEND_ROUTES_API}GetPrograms.php?type=marketplace&limit=6&sort_by=popular`
+      );
+      if (marketplaceData.success) {
+        setPremadeWorkoutPlans(marketplaceData.programs || []);
+      }
+    } catch (e) {
+      console.error('Error loading marketplace programs', e);
+    } finally {
+      setMarketplaceLoading(false);
+    }
+  };
+
+  const loadMyWorkoutPlans = async ({ page = 1, replace = false } = {}) => {
+    try {
+      setMyPlansLoading(true);
+      const limit = myPlansPagination.limit || 6;
+      const resp = await APIClient.get(
+        `${BACKEND_ROUTES_API}GetUserWorkoutPlans.php?page=${page}&limit=${limit}&include_details=0`
+      );
+      if (resp.success) {
+        setWorkoutPlans(prev => (replace ? (resp.plans || []) : [...prev, ...(resp.plans || [])]));
+        if (resp.pagination) {
+          setMyPlansPagination(resp.pagination);
+        }
+      }
+    } catch (e) {
+      console.error('Error loading paged workout plans', e);
+    } finally {
+      setMyPlansLoading(false);
+    }
+  };
+
+  const loadPurchasedPrograms = async ({ page = 1, replace = false } = {}) => {
+    try {
+      setPurchasedLoading(true);
+      const limit = purchasedPagination.limit || 6;
+      const resp = await APIClient.get(`${BACKEND_ROUTES_API}GetPurchasedPrograms.php?page=${page}&limit=${limit}`);
+      if (resp.success) {
+        setPurchasedPrograms(prev => (replace ? (resp.purchases || []) : [...prev, ...(resp.purchases || [])]));
+        setHiddenPurchasedPrograms(resp.hiddenPurchases || []);
+        if (resp.purchasesPagination) {
+          setPurchasedPagination(resp.purchasesPagination);
+        }
+      }
+    } catch (e) {
+      console.error('Error loading paged purchased programs', e);
+    } finally {
+      setPurchasedLoading(false);
+    }
+  };
+
+  const loadTrainerAssignedPrograms = async ({ page = 1, replace = false } = {}) => {
     setAssignedProgramsLoading(true);
     try {
-      const response = await fetch(`${BACKEND_ROUTES_API}/GetMyAssignedPrograms.php`, {
-        credentials: 'include'
-      });
-      const data = await response.json();
-      if (data.success && data.programs) {
-        setTrainerAssignedPrograms(data.programs);
+      const limit = assignedPagination.limit || 6;
+      const resp = await APIClient.get(`${BACKEND_ROUTES_API}GetMyAssignedPrograms.php?page=${page}&limit=${limit}`);
+      if (resp.success && resp.programs) {
+        setTrainerAssignedPrograms(prev => (replace ? resp.programs : [...prev, ...resp.programs]));
+        if (resp.pagination) {
+          setAssignedPagination(resp.pagination);
+        }
       } else {
-        setTrainerAssignedPrograms([]);
+        if (replace) setTrainerAssignedPrograms([]);
       }
     } catch (error) {
       console.error('Error loading trainer assigned programs:', error);
-      setTrainerAssignedPrograms([]);
+      if (replace) setTrainerAssignedPrograms([]);
     }
     setAssignedProgramsLoading(false);
+  };
+
+  const ensureUserPlanDetails = async (plan) => {
+    if (plan?.exercises?.length || plan?.sessions?.length) return plan;
+    const resp = await APIClient.get(`${BACKEND_ROUTES_API}GetUserWorkoutPlan.php?planId=${encodeURIComponent(plan.id)}`);
+    if (resp.success && resp.plan) return resp.plan;
+    throw new Error(resp.message || 'Failed to load plan details');
   };
 
   const fetchRecentSessions = async (startDate, endDate) => {
@@ -392,37 +491,44 @@ const MyWorkouts = ({ embedded = false }) => {
         setPurchasedPrograms(prev => [program, ...prev]);
         setSuccessMessage('Program restored to My Plans');
         setShowSuccessModal(true);
-        fetchWorkoutData();
+        // Refresh the premium tab list if it’s loaded
+        loadPurchasedPrograms({ page: 1, replace: true });
       }
     } catch (error) {
       console.error('Error restoring purchased program:', error);
     }
   };
 
-  const startWorkout = (plan) => {
-    console.log('Starting workout with plan:', plan);
-    
-    const workoutData = {
-      ...plan,
-      startTime: new Date(),
-      completedSets: plan.exercises.map(ex => Array(ex.sets).fill({
-        weight: 0,
-        reps: 0,
-        rpe: 0,
-        notes: '',
-        completed: false
-      }))
-    };
-    
-    console.log('Active workout data structure:', workoutData);
-    setActiveWorkout(workoutData);
-    setCurrentExerciseIndex(0);
-    setCurrentSetIndex(0);
-    setWorkoutLogs([]);
-    setCurrentSetData({ weight: '', reps: '', rpe: '', notes: '' });
-    setWorkoutTimer(0);
-    setIsWorkoutTimerRunning(true);
-    setActiveView('log');
+  const startWorkout = async (plan) => {
+    try {
+      console.log('Starting workout with plan:', plan);
+      const fullPlan = await ensureUserPlanDetails(plan);
+
+      const workoutData = {
+        ...fullPlan,
+        startTime: new Date(),
+        completedSets: (fullPlan.exercises || []).map(ex => Array(ex.sets).fill({
+          weight: 0,
+          reps: 0,
+          rpe: 0,
+          notes: '',
+          completed: false
+        }))
+      };
+
+      console.log('Active workout data structure:', workoutData);
+      setActiveWorkout(workoutData);
+      setCurrentExerciseIndex(0);
+      setCurrentSetIndex(0);
+      setWorkoutLogs([]);
+      setCurrentSetData({ weight: '', reps: '', rpe: '', notes: '' });
+      setWorkoutTimer(0);
+      setIsWorkoutTimerRunning(true);
+      setActiveView('log');
+    } catch (e) {
+      console.error('Failed to start workout', e);
+      alert(e.message || 'Failed to start workout');
+    }
   };
 
   const completeSet = () => {
@@ -888,26 +994,74 @@ const MyWorkouts = ({ embedded = false }) => {
           <h2 className="h5 mb-0 fw-bold" style={{ color: '#ffffff' }}>My Workout Plans</h2>
           <p className="small mb-0" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Your training programs and workouts</p>
         </div>
-        <button 
-          className="btn rounded-pill px-4 align-self-start align-self-sm-center text-nowrap"
-          onClick={() => {
-            resetPlanForm();
-            setActiveView('create');
-          }}
-          style={{
-            backgroundColor: 'var(--brand-primary)',
-            color: 'var(--brand-dark)',
-            border: 'none',
-            fontWeight: '600'
-          }}
-        >
-          <i className="bi bi-plus-circle me-2"></i>
-          Create Plan
-        </button>
+        {plansTab === 'my' && (
+          <button 
+            className="btn rounded-pill px-4 align-self-start align-self-sm-center text-nowrap"
+            onClick={() => {
+              resetPlanForm();
+              setActiveView('create');
+            }}
+            style={{
+              backgroundColor: 'var(--brand-primary)',
+              color: 'var(--brand-dark)',
+              border: 'none',
+              fontWeight: '600'
+            }}
+          >
+            <i className="bi bi-plus-circle me-2"></i>
+            Create Plan
+          </button>
+        )}
       </div>
 
+      {/* Plans Tabs */}
+      <ul className="nav nav-pills mb-4" style={{ gap: '0.5rem' }}>
+        <li className="nav-item">
+          <button
+            className={`nav-link rounded-pill ${plansTab === 'my' ? 'active' : ''}`}
+            onClick={() => setPlansTab('my')}
+            style={{
+              backgroundColor: plansTab === 'my' ? 'var(--brand-primary)' : 'rgba(32, 214, 87, 0.08)',
+              color: plansTab === 'my' ? 'var(--brand-dark)' : 'var(--brand-white)',
+              border: '1px solid rgba(32, 214, 87, 0.25)',
+              fontWeight: 600
+            }}
+          >
+            My Workout Plans
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link rounded-pill ${plansTab === 'premium' ? 'active' : ''}`}
+            onClick={() => setPlansTab('premium')}
+            style={{
+              backgroundColor: plansTab === 'premium' ? 'var(--brand-primary)' : 'rgba(32, 214, 87, 0.08)',
+              color: plansTab === 'premium' ? 'var(--brand-dark)' : 'var(--brand-white)',
+              border: '1px solid rgba(32, 214, 87, 0.25)',
+              fontWeight: 600
+            }}
+          >
+            Premium (Bought)
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link rounded-pill ${plansTab === 'coach' ? 'active' : ''}`}
+            onClick={() => setPlansTab('coach')}
+            style={{
+              backgroundColor: plansTab === 'coach' ? 'var(--brand-primary)' : 'rgba(32, 214, 87, 0.08)',
+              color: plansTab === 'coach' ? 'var(--brand-dark)' : 'var(--brand-white)',
+              border: '1px solid rgba(32, 214, 87, 0.25)',
+              fontWeight: 600
+            }}
+          >
+            By Coach
+          </button>
+        </li>
+      </ul>
+
       {/* Trainer Assigned Programs */}
-      {trainerAssignedPrograms && trainerAssignedPrograms.length > 0 && (
+      {plansTab === 'coach' && (
         <div 
           className="card border-0 rounded-4 mb-4"
           style={{
@@ -945,78 +1099,102 @@ const MyWorkouts = ({ embedded = false }) => {
                 </div>
                 <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>Loading assigned programs...</p>
               </div>
+            ) : trainerAssignedPrograms.length === 0 ? (
+              <div className="text-center py-4">
+                <i className="bi bi-person-check fs-1" style={{ color: 'var(--text-secondary)' }}></i>
+                <p className="mt-2 mb-0" style={{ color: 'var(--text-secondary)' }}>No coach programs assigned yet.</p>
+              </div>
             ) : (
-              <div className="row">
-                {trainerAssignedPrograms.map(program => (
-                  <div key={`assigned-${program.assignment_id}`} className="col-lg-6 mb-3">
-                    <div 
-                      className="card rounded-4 h-100" 
-                      style={{ 
-                        backgroundColor: 'rgba(15, 20, 15, 0.6)',
-                        border: '2px solid var(--brand-primary)',
-                        boxShadow: 'none',
-                        transition: 'all 0.3s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-4px)';
-                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(32, 214, 87, 0.25)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = 'none';
-                      }}
-                    >
-                      <div className="card-body p-4">
-                        <div className="d-flex justify-content-between align-items-start mb-3">
-                          <h5 className="card-title" style={{ color: '#ffffff', fontWeight: '600' }}>{program.title}</h5>
-                          <span className="badge rounded-pill" style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)' }}>
-                            <i className="bi bi-star me-1"></i>
-                            Trainer Assigned
-                          </span>
-                        </div>
-                        
-                        <div className="mb-2">
-                          <span className="badge rounded-pill me-1" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: '#ffffff' }}>{program.difficulty_level}</span>
-                          <span className="badge rounded-pill me-1" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: '#ffffff' }}>{program.duration_weeks}w</span>
-                          <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: '#ffffff' }}>{program.category}</span>
-                        </div>
+              <>
+                <div className="row">
+                  {trainerAssignedPrograms.map(program => (
+                    <div key={`assigned-${program.assignment_id}`} className="col-lg-6 mb-3">
+                      <div 
+                        className="card rounded-4 h-100" 
+                        style={{ 
+                          backgroundColor: 'rgba(15, 20, 15, 0.6)',
+                          border: '2px solid var(--brand-primary)',
+                          boxShadow: 'none',
+                          transition: 'all 0.3s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-4px)';
+                          e.currentTarget.style.boxShadow = '0 8px 24px rgba(32, 214, 87, 0.25)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        <div className="card-body p-4">
+                          <div className="d-flex justify-content-between align-items-start mb-3">
+                            <h5 className="card-title" style={{ color: '#ffffff', fontWeight: '600' }}>{program.title}</h5>
+                            <span className="badge rounded-pill" style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)' }}>
+                              <i className="bi bi-star me-1"></i>
+                              Trainer Assigned
+                            </span>
+                          </div>
+                          
+                          <div className="mb-2">
+                            <span className="badge rounded-pill me-1" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: '#ffffff' }}>{program.difficulty_level}</span>
+                            <span className="badge rounded-pill me-1" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: '#ffffff' }}>{program.duration_weeks}w</span>
+                            <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: '#ffffff' }}>{program.category}</span>
+                          </div>
 
-                        <div className="mb-3">
-                          <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Description:</small>
-                          <p className="small mb-0 mt-1" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{program.description || 'No description available'}</p>
-                        </div>
+                          <div className="mb-3">
+                            <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Description:</small>
+                            <p className="small mb-0 mt-1" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{program.description || 'No description available'}</p>
+                          </div>
 
-                        <div className="mb-3">
-                          <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                            Assigned by: <strong style={{ color: 'var(--brand-primary)' }}>{program.trainer_name}</strong> on {program.assigned_at_formatted}
-                          </small>
-                        </div>
+                          <div className="mb-3">
+                            <small style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                              Assigned by: <strong style={{ color: 'var(--brand-primary)' }}>{program.trainer_name}</strong> on {program.assigned_at_formatted}
+                            </small>
+                          </div>
 
-                        <div className="d-flex gap-2">
-                          <button 
-                            className="btn rounded-pill flex-fill"
-                            onClick={() => navigate(`/trainee-dashboard/program/${program.id}`, { 
-                              state: { 
-                                programData: program,
-                                fromAssigned: true
-                              } 
-                            })}
-                            style={{
-                              backgroundColor: 'var(--brand-primary)',
-                              color: 'var(--brand-dark)',
-                              border: 'none',
-                              fontWeight: '600'
-                            }}
-                          >
-                            <i className="bi bi-play-fill me-1"></i>
-                            Start Program
-                          </button>
+                          <div className="d-flex gap-2">
+                            <button 
+                              className="btn rounded-pill flex-fill"
+                              onClick={() => navigate(`/trainee-dashboard/program/${program.id}`, { 
+                                state: { 
+                                  programData: program,
+                                  fromAssigned: true
+                                } 
+                              })}
+                              style={{
+                                backgroundColor: 'var(--brand-primary)',
+                                color: 'var(--brand-dark)',
+                                border: 'none',
+                                fontWeight: '600'
+                              }}
+                            >
+                              <i className="bi bi-play-fill me-1"></i>
+                              Start Program
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
+                  ))}
+                </div>
+                {assignedPagination?.has_more && (
+                  <div className="d-flex justify-content-center pt-2">
+                    <button
+                      className="btn rounded-pill px-4"
+                      disabled={assignedProgramsLoading}
+                      onClick={() => loadTrainerAssignedPrograms({ page: (assignedPagination.page || 1) + 1, replace: false })}
+                      style={{
+                        backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                        color: 'var(--brand-primary)',
+                        border: '1px solid rgba(32, 214, 87, 0.3)',
+                        fontWeight: 600
+                      }}
+                    >
+                      Load more
+                    </button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -1024,22 +1202,27 @@ const MyWorkouts = ({ embedded = false }) => {
 
       {/* Workout Plans Grid */}
       <div className="row">
-        {/* Section Header for Other Programs */}
-        {(purchasedPrograms.length > 0 || hiddenPurchasedPrograms.length > 0 || workoutPlans.length > 0 || premadeWorkoutPlans.length > 0) && 
-         trainerAssignedPrograms.length > 0 && (
-          <div className="col-12 mb-4">
-            <div className="d-flex align-items-center">
-              <hr style={{ flexGrow: 1, borderColor: 'rgba(32, 214, 87, 0.2)' }} />
-              <h6 className="mx-3 mb-0" style={{ color: 'var(--text-secondary)' }}>
-                {trainerAssignedPrograms.length > 0 ? 'Your Other Workout Plans' : 'Your Workout Plans'}
-              </h6>
-              <hr style={{ flexGrow: 1, borderColor: 'rgba(32, 214, 87, 0.2)' }} />
+        {plansTab === 'premium' && purchasedLoading && purchasedPrograms.length === 0 && hiddenPurchasedPrograms.length === 0 && (
+          <div className="col-12">
+            <div className="text-center py-4">
+              <div className="spinner-border" role="status" style={{ color: 'var(--brand-primary)' }}>
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>Loading purchased programs...</p>
             </div>
           </div>
         )}
 
-        {/* Purchased Programs */}
-        {purchasedPrograms.map(program => (
+        {plansTab === 'premium' && !purchasedLoading && purchasedPrograms.length === 0 && hiddenPurchasedPrograms.length === 0 && (
+          <div className="col-12">
+            <div className="text-center py-4">
+              <i className="bi bi-bag-check fs-1" style={{ color: 'var(--text-secondary)' }}></i>
+              <p className="mt-2 mb-0" style={{ color: 'var(--text-secondary)' }}>No purchased programs yet.</p>
+            </div>
+          </div>
+        )}
+
+        {plansTab === 'premium' && purchasedPrograms.map(program => (
           <div key={`purchased-${program.program_id}`} className="col-lg-6 mb-3">
             <div 
               className="card border-0 rounded-4 h-100" 
@@ -1118,8 +1301,7 @@ const MyWorkouts = ({ embedded = false }) => {
           </div>
         ))}
 
-        {/* Hidden Purchased Programs */}
-        {hiddenPurchasedPrograms.map(program => (
+        {plansTab === 'premium' && hiddenPurchasedPrograms.map(program => (
           <div key={`hidden-purchased-${program.program_id}`} className="col-lg-6 mb-3">
             <div
               className="card border-0 rounded-4 h-100"
@@ -1169,8 +1351,47 @@ const MyWorkouts = ({ embedded = false }) => {
           </div>
         ))}
 
-        {/* User's Own Workout Plans */}
-        {workoutPlans.map(plan => (
+        {plansTab === 'premium' && purchasedPagination?.has_more && (
+          <div className="col-12">
+            <div className="d-flex justify-content-center pt-2">
+              <button
+                className="btn rounded-pill px-4"
+                disabled={purchasedLoading}
+                onClick={() => loadPurchasedPrograms({ page: (purchasedPagination.page || 1) + 1, replace: false })}
+                style={{
+                  backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                  color: 'var(--brand-primary)',
+                  border: '1px solid rgba(32, 214, 87, 0.3)',
+                  fontWeight: 600
+                }}
+              >
+                Load more
+              </button>
+            </div>
+          </div>
+        )}
+
+        {plansTab === 'my' && myPlansLoading && workoutPlans.length === 0 && (
+          <div className="col-12">
+            <div className="text-center py-4">
+              <div className="spinner-border" role="status" style={{ color: 'var(--brand-primary)' }}>
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>Loading your plans...</p>
+            </div>
+          </div>
+        )}
+
+        {plansTab === 'my' && !myPlansLoading && workoutPlans.length === 0 && (
+          <div className="col-12">
+            <div className="text-center py-4">
+              <i className="bi bi-journal-plus fs-1" style={{ color: 'var(--text-secondary)' }}></i>
+              <p className="mt-2 mb-0" style={{ color: 'var(--text-secondary)' }}>No workout plans yet. Create one to get started.</p>
+            </div>
+          </div>
+        )}
+
+        {plansTab === 'my' && workoutPlans.map(plan => (
           <div key={plan.id} className="col-lg-6 mb-3">
             <div 
               className="card border-0 rounded-4 h-100"
@@ -1197,7 +1418,7 @@ const MyWorkouts = ({ embedded = false }) => {
                   {plan.is_program_package == 1 ? (
                     <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)', padding: '0.5rem 1rem' }}>{plan.session_count || 0} sessions</span>
                   ) : (
-                    <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)', padding: '0.5rem 1rem' }}>{plan.exercises?.length || 0} exercises</span>
+                    <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)', padding: '0.5rem 1rem' }}>{plan.exercise_count ?? (plan.exercises?.length || 0)} exercises</span>
                   )}
                 </div>
                 
@@ -1263,16 +1484,21 @@ const MyWorkouts = ({ embedded = false }) => {
                       </button>
                       <button 
                         className="btn rounded-pill"
-                        onClick={() => {
-                          // Pre-fill the create form with existing plan data
-                          setNewPlan({
-                            name: plan.name,
-                            description: plan.description || '',
-                            exercises: plan.exercises || []
-                          });
-                          setIsEditMode(true);
-                          setEditingPlanId(plan.id);
-                          setActiveView('create');
+                        onClick={async () => {
+                          try {
+                            const fullPlan = await ensureUserPlanDetails(plan);
+                            setNewPlan({
+                              name: fullPlan.name,
+                              description: fullPlan.description || '',
+                              exercises: fullPlan.exercises || []
+                            });
+                            setIsEditMode(true);
+                            setEditingPlanId(fullPlan.id);
+                            setActiveView('create');
+                          } catch (e) {
+                            console.error('Failed to load plan for editing', e);
+                            alert(e.message || 'Failed to load plan for editing');
+                          }
                         }}
                         style={{
                           backgroundColor: 'rgba(32, 214, 87, 0.1)',
@@ -1303,10 +1529,30 @@ const MyWorkouts = ({ embedded = false }) => {
             </div>
           </div>
         ))}
+
+        {plansTab === 'my' && myPlansPagination?.has_more && (
+          <div className="col-12">
+            <div className="d-flex justify-content-center pt-2">
+              <button
+                className="btn rounded-pill px-4"
+                disabled={myPlansLoading}
+                onClick={() => loadMyWorkoutPlans({ page: (myPlansPagination.page || 1) + 1, replace: false })}
+                style={{
+                  backgroundColor: 'rgba(32, 214, 87, 0.1)',
+                  color: 'var(--brand-primary)',
+                  border: '1px solid rgba(32, 214, 87, 0.3)',
+                  fontWeight: 600
+                }}
+              >
+                Load more
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Premium Workout Plans Section */}
-      {premadeWorkoutPlans.length > 0 && (
+      {plansTab === 'premium' && premadeWorkoutPlans.length > 0 && (
         <div className="mt-5">
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h5 className="mb-0" style={{ color: 'var(--brand-white)', fontWeight: '700' }}>

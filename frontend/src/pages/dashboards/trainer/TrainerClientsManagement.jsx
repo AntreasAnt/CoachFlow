@@ -489,7 +489,22 @@ const TrainerClientsManagement = () => {
                         {request.message && (
                           <div className="mb-3">
                             <small className="d-block mb-1" style={{ color: '#9ca3af' }}>Message:</small>
-                            <p className="small mb-0" style={{ color: '#fff' }}>{request.message}</p>
+                            <p className="small mb-0" style={{ color: '#fff', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{request.message}</p>
+                          </div>
+                        )}
+
+                        {(request.experience_level || request.goals) && (
+                          <div className="mb-3">
+                            <div className="d-flex justify-content-between gap-3">
+                              <div style={{ minWidth: 0 }}>
+                                <small className="d-block mb-1" style={{ color: '#9ca3af' }}>Experience level:</small>
+                                <div className="small" style={{ color: '#fff', wordBreak: 'break-word' }}>{request.experience_level || 'Not specified'}</div>
+                              </div>
+                              <div style={{ minWidth: 0 }}>
+                                <small className="d-block mb-1" style={{ color: '#9ca3af' }}>Goals:</small>
+                                <div className="small" style={{ color: '#fff', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{request.goals || 'Not specified'}</div>
+                              </div>
+                            </div>
                           </div>
                         )}
 
@@ -527,7 +542,7 @@ const TrainerClientsManagement = () => {
         {/* Accept/Decline Request Modal */}
         {requestActionModal.show && (
           <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
-            <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
               <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
                 <div className="modal-header cf-dark-modal-header" style={{ borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
                   <h5 className="modal-title" style={{ color: '#fff' }}>
@@ -552,6 +567,20 @@ const TrainerClientsManagement = () => {
                     <div className="small" style={{ color: '#9ca3af' }}>
                       {requestActionModal.request?.trainee_email || ''}
                     </div>
+                    <div className="mt-3">
+                      <div className="small" style={{ color: '#9ca3af' }}>Experience level</div>
+                      <div style={{ color: '#fff', wordBreak: 'break-word' }}>{requestActionModal.request?.experience_level || 'Not specified'}</div>
+                    </div>
+                    <div className="mt-3">
+                      <div className="small" style={{ color: '#9ca3af' }}>Goals</div>
+                      <div style={{ color: '#fff', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{requestActionModal.request?.goals || 'Not specified'}</div>
+                    </div>
+                    {requestActionModal.request?.message && (
+                      <div className="mt-3">
+                        <div className="small" style={{ color: '#9ca3af' }}>Message</div>
+                        <div style={{ color: '#fff', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{requestActionModal.request?.message}</div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="modal-footer" style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>

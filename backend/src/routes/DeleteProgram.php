@@ -46,9 +46,13 @@ try {
     $programModel = new ProgramModel();
     $result = $programModel->deleteProgram($userId, $programId);
 
+    if (!$result) {
+        throw new Exception('Failed to remove program');
+    }
+
     echo json_encode([
         'success' => true,
-        'message' => 'Program deleted successfully'
+        'message' => 'Program removed successfully'
     ]);
 
 } catch (Exception $e) {

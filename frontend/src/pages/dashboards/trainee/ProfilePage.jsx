@@ -61,6 +61,159 @@ const ProfilePage = () => {
   const isOwnProfile = !profileUsername || (currentUser && profileUsername === currentUser.username);
   const displayUsername = profileUsername || (currentUser ? currentUser.username : 'unknown');
 
+  const showCompletionWidget = !!isOwnProfile;
+
+  const getProfileCompletionInfo = () => {
+    const fields = [];
+
+    const addField = (key, label, value) => {
+      const isFilled = !(value === null || value === undefined || String(value).trim() === '');
+      fields.push({ key, label, isFilled });
+    };
+
+    addField('full_name', 'Full name', profileData.full_name);
+    addField('phone', 'Phone', profileData.phone);
+    addField('date_of_birth', 'Date of birth', profileData.date_of_birth);
+    addField('age', 'Age', profileData.age);
+    addField('sex', 'Sex', profileData.sex);
+
+    if (currentUser?.role === 'trainee') {
+      addField('height', 'Height', profileData.height);
+      addField('weight', 'Weight', profileData.weight);
+      addField('fitness_goals', 'Fitness goals', profileData.fitness_goals);
+      addField('experience_level', 'Experience level', profileData.experience_level);
+    }
+
+    if (currentUser?.role === 'trainer') {
+      addField('specialization', 'Specialization', profileData.specialization);
+      addField('experience_years', 'Experience (years)', profileData.experience_years);
+      addField('certifications', 'Certifications', profileData.certifications);
+      addField('bio', 'Bio', profileData.bio);
+    }
+
+    const total = fields.length;
+    const completed = fields.filter((f) => f.isFilled).length;
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const missing = fields.filter((f) => !f.isFilled).map((f) => f.label);
+
+    return { percent, missing };
+  };
+
+  const completionInfo = showCompletionWidget ? getProfileCompletionInfo() : { percent: 0, missing: [] };
+  const completionPercent = completionInfo.percent;
+  const missingFields = completionInfo.missing;
+
+  const hasOtherSidebarContent =
+    !isOwnProfile ||
+    (currentUser?.role === 'trainee' && !!profileData.assigned_trainer) ||
+    (currentUser?.role === 'trainee' && !!profileData.current_program) ||
+    (currentUser?.role === 'trainer' && (profileData.clients?.length || 0) > 0);
+
+  const hasSidebarContent = hasOtherSidebarContent || (showCompletionWidget && completionPercent < 100) || (showCompletionWidget && completionPercent >= 100);
+  const sidebarOnlyCompletion = showCompletionWidget && !hasOtherSidebarContent;
+
+  const renderCompletionCard = () => {
+    if (!showCompletionWidget) return null;
+
+    const isComplete = completionPercent >= 100;
+
+    return (
+      <div className="profile-card border-0 rounded-4">
+        <div className="card-body p-4">
+          {isComplete ? (
+            <>
+              <h6 className="fw-semibold mb-2" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                <i className="bi bi-check-circle-fill me-2 text-success"></i>Profile complete
+              </h6>
+              <p className="small mb-3" style={{ color: '#9ca3af' }}>
+                You’re all set. Here are a few quick links.
+              </p>
+              {currentUser?.role === 'trainee' ? (
+                <div className="d-grid gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => navigate('/trainee-dashboard/my-plans')}
+                    style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)' }}
+                  >
+                    <i className="bi bi-journal-text me-2"></i>My Plans
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => navigate('/trainee-dashboard/marketplace')}
+                    style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)' }}
+                  >
+                    <i className="bi bi-shop me-2"></i>Marketplace
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => navigate('/trainee-dashboard/my-coach')}
+                    style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)' }}
+                  >
+                    <i className="bi bi-person-badge me-2"></i>My Coach
+                  </button>
+                </div>
+              ) : (
+                <div className="d-grid gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => navigate('/trainer-dashboard/clients')}
+                    style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)' }}
+                  >
+                    <i className="bi bi-people me-2"></i>Client Management
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="d-flex align-items-center justify-content-between mb-2">
+                <h6 className="fw-semibold mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                  <i className="bi bi-clipboard-check me-2 text-success"></i>Profile completion
+                </h6>
+                <span className="fw-bold" style={{ color: '#10b981' }}>{completionPercent}%</span>
+              </div>
+              <div className="progress" style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                <div
+                  className="progress-bar"
+                  role="progressbar"
+                  style={{ width: `${completionPercent}%`, backgroundColor: '#10b981' }}
+                  aria-valuenow={completionPercent}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                />
+              </div>
+
+              {missingFields.length > 0 && (
+                <div className="mt-3">
+                  <div className="small mb-2" style={{ color: '#9ca3af' }}>Missing</div>
+                  <div className="small" style={{ color: '#d1d5db', lineHeight: 1.4 }}>
+                    {missingFields.slice(0, 4).join(' • ')}
+                    {missingFields.length > 4 ? ` • +${missingFields.length - 4} more` : ''}
+                  </div>
+                </div>
+              )}
+
+              {!isEditing && (
+                <button
+                  type="button"
+                  className="btn btn-sm w-100 mt-3"
+                  onClick={() => setIsEditing(true)}
+                  style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
+                >
+                  <i className="bi bi-pencil me-2"></i>Complete profile
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   // Fetch profile data from backend
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -509,10 +662,17 @@ const ProfilePage = () => {
           </div>
         </div>
 
+        {/* Completion (mobile: on top) */}
+        {showCompletionWidget && (
+          <div className="d-lg-none mb-4">
+            {renderCompletionCard()}
+          </div>
+        )}
+
         {/* Profile Content */}
         <div className="row g-4">
           {/* Main Content */}
-          <div className="col-lg-8">
+          <div className={hasSidebarContent ? 'col-lg-8' : 'col-12'}>
             {/* Personal Information */}
             <div className="profile-card border-0 rounded-4 mb-4">
               <div className="card-header bg-white border-0 p-4">
@@ -776,7 +936,14 @@ const ProfilePage = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="col-lg-4">
+          {hasSidebarContent && (
+          <div className={sidebarOnlyCompletion ? 'col-lg-4 d-none d-lg-block' : 'col-lg-4'}>
+            {/* Completion (desktop: right sidebar) */}
+            {showCompletionWidget && (
+              <div className="d-none d-lg-block mb-4">
+                {renderCompletionCard()}
+              </div>
+            )}
             {/* Quick Actions */}
             {!isOwnProfile && (
               <div className="profile-card border-0 rounded-4 mb-4">
@@ -878,46 +1045,8 @@ const ProfilePage = () => {
               </div>
             )}
 
-            {/* Quick Stats */}
-            <div className="profile-card border-0 rounded-4">
-              <div className="card-body p-4">
-                <h6 className="fw-semibold mb-3" style={{ color: 'rgba(255,255,255,0.9)' }}>
-                  <i className="bi bi-graph-up me-2 text-success"></i>Quick Stats
-                </h6>
-                {currentUser?.role === 'trainee' ? (
-                  <>
-                    <div className="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 bg-secondary bg-opacity-25">
-                      <span className="text-white-50 small">Total Workouts:</span>
-                      <span className="fw-bold text-primary">{profileData.workouts_completed}</span>
-                    </div>
-                    <div className="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 bg-secondary bg-opacity-25">
-                      <span className="text-white-50 small">Total Time:</span>
-                      <span className="fw-bold text-primary">{formatWorkoutTime(profileData.total_workout_time)}</span>
-                    </div>
-                    <div className="d-flex justify-content-between align-items-center p-2 rounded-3 bg-secondary bg-opacity-25">
-                      <span className="text-white-50 small">This Month:</span>
-                      <span className="fw-bold text-success">12 Workouts</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 bg-secondary bg-opacity-25">
-                      <span className="text-white-50 small">Active Clients:</span>
-                      <span className="fw-bold text-primary">{profileData.clients?.length || 0}</span>
-                    </div>
-                    <div className="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 bg-secondary bg-opacity-25">
-                      <span className="text-white-50 small">Experience:</span>
-                      <span className="fw-bold text-primary">{profileData.experience_years || 0} Years</span>
-                    </div>
-                    <div className="d-flex justify-content-between align-items-center p-2 rounded-3 bg-secondary bg-opacity-25">
-                      <span className="text-white-50 small">Member Since:</span>
-                      <span className="fw-bold text-success">{new Date(profileData.member_since).getFullYear()}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
           </div>
+          )}
         </div>
 
         {/* Bottom Action Buttons (Visible during Edit) */}

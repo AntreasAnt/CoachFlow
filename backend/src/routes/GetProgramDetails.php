@@ -55,8 +55,9 @@ try {
         exit();
     }
 
-    // Get program details with sessions and exercises
-    $program = $programModel->getProgramById($programId, false);
+    // Get program details with sessions and exercises.
+    // If the trainee has access, allow viewing even if the trainer later archived/removed it.
+    $program = $programModel->getProgramById($programId, true, true);
     
     if (!$program) {
         error_log("GetProgramDetails - Program not found: $programId");

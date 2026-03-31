@@ -10,53 +10,6 @@ const TraineeHeader = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [firebaseUser, setFirebaseUser] = useState(null);
   const [hoveredBtn, setHoveredBtn] = useState(null);
-  // Initialize from localStorage if available
-  const [userName, setUserName] = useState(() => {
-    return localStorage.getItem('traineeUserName') || 'Trainee';
-  });
-
-  // Fetch current user name
-  useEffect(() => {
-    const fetchUserName = async () => {
-      try {
-        // Check if we have a cached name in localStorage (from profile updates)
-        const cachedName = localStorage.getItem('traineeUserName');
-        if (cachedName && cachedName !== 'Trainee') {
-          setUserName(cachedName);
-          return; // Use cached name, don't fetch from API
-        }
-
-        // Fetch from profile API to get full_name
-        const response = await fetch(BACKEND_ROUTES_API + 'GetUserProfile.php', {
-          credentials: 'include',
-          headers: { 'Accept': 'application/json' }
-        });
-        const data = await response.json();
-        if (data.success && data.user) {
-          // Prefer full_name over username
-          const displayName = data.user.full_name || data.user.username || 'Trainee';
-          setUserName(displayName);
-          // Cache in localStorage
-          localStorage.setItem('traineeUserName', displayName);
-        }
-      } catch (error) {
-        console.error('Failed to fetch user name:', error);
-      }
-    };
-    fetchUserName();
-
-    // Listen for profile updates
-    const handleProfileUpdate = (event) => {
-      if (event.detail?.name) {
-        setUserName(event.detail.name);
-      }
-    };
-    window.addEventListener('profileUpdated', handleProfileUpdate);
-    
-    return () => {
-      window.removeEventListener('profileUpdated', handleProfileUpdate);
-    };
-  }, []);
 
   // Sign in to Firebase to track unread messages
   useEffect(() => {
@@ -104,7 +57,6 @@ const TraineeHeader = () => {
         <div className="d-flex justify-content-between align-items-center">
           <div>
             <h1 className="h4 mb-0 fw-bold" style={{ color: 'var(--brand-white)' }}>CoachFlow</h1>
-            <p className="small mb-0" style={{ color: 'var(--text-secondary)' }}>Welcome back, {userName}!</p>
           </div>
           <div className="d-flex align-items-center gap-2 gap-md-3">
             <button 

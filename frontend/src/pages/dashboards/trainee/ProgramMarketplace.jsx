@@ -104,6 +104,7 @@ const ProgramMarketplace = () => {
   const [programs, setPrograms] = useState([]);
   const [purchasedPrograms, setPurchasedPrograms] = useState([]);
   const [hiddenPrograms, setHiddenPrograms] = useState([]);
+  const [purchasedLoaded, setPurchasedLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('marketplace');
   const [selectedProgram, setSelectedProgram] = useState(null);
@@ -141,9 +142,13 @@ const ProgramMarketplace = () => {
 
   useEffect(() => {
     if (activeTab === 'marketplace') {
-      fetchPrograms();
+      // Avoid rendering the marketplace list before we know what the user already bought.
+      // This prevents a visible "teleport" where purchased items briefly show then disappear.
+      if (purchasedLoaded) {
+        fetchPrograms();
+      }
     }
-  }, [filters, currentPage, activeTab, purchasedPrograms]);
+  }, [filters, currentPage, activeTab, purchasedPrograms, purchasedLoaded]);
 
   const initializeStripe = async () => {
     try {
@@ -221,6 +226,8 @@ const ProgramMarketplace = () => {
       }
     } catch (error) {
       console.error('Error fetching purchased programs:', error);
+    } finally {
+      setPurchasedLoaded(true);
     }
   };
 

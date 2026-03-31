@@ -237,8 +237,8 @@ class ProgramModel
                 throw new Exception("Program not found or access denied");
             }
 
-            // Soft delete - set is_deleted to 1
-            $query = "UPDATE trainer_programs SET is_deleted = 1 WHERE id = ? AND trainer_id = ?";
+            // Archive (remove from marketplace) but keep record for existing purchasers
+            $query = "UPDATE trainer_programs SET status = 'archived', updated_at = NOW() WHERE id = ? AND trainer_id = ?";
             $stmt = $this->conn->prepare($query);
             $stmt->bind_param("ii", $programId, $trainerId);
 
@@ -297,7 +297,7 @@ class ProgramModel
     /**
      * Get a single program with full details
      */
-    public function getProgramById($programId, $includeDrafts = false)
+    public function getProgramById($programId, $includeDrafts = false, $includeDeleted = false)
     {
         try {
             $query = "SELECT 
@@ -306,7 +306,11 @@ class ProgramModel
                         u.email as trainer_email
                       FROM trainer_programs tp
                       JOIN user u ON tp.trainer_id = u.userid
-                      WHERE tp.id = ? AND tp.is_deleted = 0";
+                      WHERE tp.id = ?";
+
+            if (!$includeDeleted) {
+                $query .= " AND tp.is_deleted = 0";
+            }
             
             if (!$includeDrafts) {
                 $query .= " AND tp.status = 'published'";

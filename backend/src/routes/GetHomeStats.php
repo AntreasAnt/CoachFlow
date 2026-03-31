@@ -46,7 +46,7 @@ try {
     $workoutsQuery = "SELECT COUNT(*) as count 
                       FROM workout_sessions 
                       WHERE user_id = ? 
-                      AND session_date >= ?";
+                      AND DATE(session_date) >= ?";
 
     $stmt = $conn->prepare($workoutsQuery);
     $stmt->bind_param('is', $userId, $weekStart);
@@ -70,7 +70,7 @@ try {
     $timeQuery = "SELECT SUM(duration_minutes) as total_minutes 
                   FROM workout_sessions 
                   WHERE user_id = ? 
-                  AND session_date >= ?";
+                  AND DATE(session_date) >= ?";
 
     $stmt = $conn->prepare($timeQuery);
     $stmt->bind_param('is', $userId, $monthStart);
