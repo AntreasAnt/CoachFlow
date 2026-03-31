@@ -164,7 +164,7 @@ const TrainerDashboardHome = () => {
                   <button
                     className="btn"
                     style={{ backgroundColor: '#fbbf24', color: '#1a1a1a' }}
-                    onClick={() => navigate('/clients')}
+                    onClick={() => navigate('/clients?tab=requests')}
                   >
                     Review
                   </button>

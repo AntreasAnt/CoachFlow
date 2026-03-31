@@ -58,10 +58,55 @@ try {
             'coach' => $coach
         ]);
     } else {
+        // If no active coach, try to fetch the most recent disconnected relationship
+        // so the trainee can tell who ended the relationship.
+        $lastRelationship = null;
+        try {
+            $lastQuery = "SELECT
+                            cr.id as relationship_id,
+                            cr.trainer_id,
+                            cr.ended_at,
+                            cr.disconnected_by,
+                            u.username,
+                            u.full_name as name,
+                            u.email
+                          FROM coaching_relationships cr
+                          JOIN user u ON cr.trainer_id = u.userid
+                          WHERE cr.trainee_id = ?
+                            AND cr.status = 'disconnected'
+                          ORDER BY COALESCE(cr.ended_at, cr.started_at) DESC
+                          LIMIT 1";
+            $lstmt = $conn->prepare($lastQuery);
+            if ($lstmt) {
+                $lstmt->bind_param("i", $trainee_id);
+                $lstmt->execute();
+                $lres = $lstmt->get_result();
+                if ($lres->num_rows > 0) {
+                    $row = $lres->fetch_assoc();
+                    $disconnectedByRole = 'unknown';
+                    if (!empty($row['disconnected_by'])) {
+                        $disconnectedByRole = ((int)$row['disconnected_by'] === (int)$row['trainer_id']) ? 'trainer' : 'trainee';
+                    }
+                    $lastRelationship = [
+                        'relationship_id' => (int)$row['relationship_id'],
+                        'trainer_id' => (int)$row['trainer_id'],
+                        'trainer_name' => $row['name'] ?: $row['username'],
+                        'trainer_email' => $row['email'],
+                        'ended_at' => $row['ended_at'],
+                        'disconnected_by_role' => $disconnectedByRole
+                    ];
+                }
+                $lstmt->close();
+            }
+        } catch (Exception $inner) {
+            error_log("GetMyCoach - last relationship query failed: " . $inner->getMessage());
+        }
+
         echo json_encode([
             'success' => true,
             'has_coach' => false,
-            'coach' => null
+            'coach' => null,
+            'last_relationship' => $lastRelationship
         ]);
     }
     

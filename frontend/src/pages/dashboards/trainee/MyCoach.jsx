@@ -7,6 +7,12 @@ import '../../../styles/CoachPage.css';
 
 const MyCoach = () => {
   const [coach, setCoach] = useState(null);
+  const [lastRelationship, setLastRelationship] = useState(null);
+  const [dismissedCoachDisconnectId, setDismissedCoachDisconnectId] = useState(() => {
+    if (typeof window === 'undefined') return null;
+    const val = localStorage.getItem('traineeDismissedCoachDisconnectId');
+    return val ? Number(val) : null;
+  });
   const [myReview, setMyReview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showDisconnectModal, setShowDisconnectModal] = useState(false);
@@ -314,6 +320,7 @@ const MyCoach = () => {
         console.log('Coach data loaded:', coachData);
         console.log('Trainer ID:', coachData.trainer_id);
         setCoach(coachData);
+        setLastRelationship(null);
         
         // Fetch my review if I've reviewed this trainer
         const reviewResp = await fetch(
@@ -333,6 +340,7 @@ const MyCoach = () => {
         }
       } else {
         setCoach(null);
+        setLastRelationship(data?.last_relationship || null);
         setMyReview(null);
         setRating(0);
         setReviewText('');
@@ -341,6 +349,22 @@ const MyCoach = () => {
       console.error('Error fetching coach:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const formatEndedAt = (endedAt) => {
+    if (!endedAt) return '';
+    try {
+      return new Date(endedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch {
+      return '';
+    }
+  };
+
+  const dismissCoachDisconnectBanner = (relationshipId) => {
+    setDismissedCoachDisconnectId(relationshipId);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('traineeDismissedCoachDisconnectId', String(relationshipId));
     }
   };
 
@@ -481,6 +505,42 @@ const MyCoach = () => {
           headerContent={(
             <>
               {renderCoachTabs('browse', Boolean(coach))}
+
+              {!coach &&
+                lastRelationship &&
+                lastRelationship.disconnected_by_role === 'trainer' &&
+                lastRelationship.relationship_id !== dismissedCoachDisconnectId && (
+                <div
+                  className="rounded-4 p-3 mb-3"
+                  style={{
+                    background: 'rgba(220, 53, 69, 0.12)',
+                    border: '1px solid rgba(220, 53, 69, 0.25)'
+                  }}
+                >
+                  <div className="d-flex align-items-start justify-content-between gap-3">
+                    <div className="d-flex align-items-start gap-2">
+                    <i className="bi bi-exclamation-triangle" style={{ color: 'rgba(255,255,255,0.9)', marginTop: '2px' }}></i>
+                    <div>
+                      <div style={{ color: 'rgba(255,255,255,0.92)', fontWeight: 700 }}>
+                        Your trainer disconnected the coaching relationship
+                      </div>
+                      <div style={{ color: 'rgba(255,255,255,0.72)' }}>
+                        {lastRelationship.trainer_name ? `Coach: ${lastRelationship.trainer_name}` : 'Your coach'}
+                        {lastRelationship.ended_at ? ` • Ended: ${formatEndedAt(lastRelationship.ended_at)}` : ''}
+                      </div>
+                    </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-close btn-close-white"
+                      aria-label="Dismiss"
+                      onClick={() => dismissCoachDisconnectBanner(lastRelationship.relationship_id)}
+                      style={{ marginTop: '2px' }}
+                    ></button>
+                  </div>
+                </div>
+              )}
+
               <div
                 className="rounded-4 p-4"
                 style={{

@@ -19,6 +19,8 @@ const FindTrainersPage = ({
   showMyCoachShortcut = true,
   initialConnectionView = 'all',
 }) => {
+  const PAGE_SIZE = 12;
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -39,7 +41,6 @@ const FindTrainersPage = ({
   const [error, setError] = useState(null);
   const [selectedTrainer, setSelectedTrainer] = useState(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
-  const [showFilterModal, setShowFilterModal] = useState(false);
   const [requestForm, setRequestForm] = useState({
     message: '',
     experienceLevel: '',
@@ -56,16 +57,13 @@ const FindTrainersPage = ({
   const [trainerToCancel, setTrainerToCancel] = useState(null);
   const [cancellingRequest, setCancellingRequest] = useState(null);
   const [connectionLock, setConnectionLock] = useState(EMPTY_CONNECTION_LOCK);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [total, setTotal] = useState(0);
   
   // Filter states
   const [filters, setFilters] = useState({
     search: '',
-    specialization: '',
     minRating: 0,
-    maxRate: '',
-    minRate: '',
-    experienceLevel: '',
-    verified: false,
     sortBy: 'rating'
   });
   
@@ -73,11 +71,30 @@ const FindTrainersPage = ({
 
   useEffect(() => {
     fetchTrainers();
-  }, [appliedFilters]);
+  }, [appliedFilters, currentPage, connectionView]);
 
   useEffect(() => {
     setConnectionView(resolveInitialConnectionView());
   }, [initialConnectionView, location.state]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [connectionView]);
+
+  // Auto-apply search (Search button removed)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAppliedFilters((prev) => ({ ...prev, search: filters.search }));
+      setCurrentPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [filters.search]);
+
+  // Auto-apply rating slider
+  useEffect(() => {
+    setAppliedFilters((prev) => ({ ...prev, minRating: filters.minRating }));
+    setCurrentPage(1);
+  }, [filters.minRating]);
 
   // Auto-dismiss notification after 3 seconds
   useEffect(() => {
@@ -97,13 +114,13 @@ const FindTrainersPage = ({
       // Build query params
       const params = new URLSearchParams();
       if (appliedFilters.search) params.append('search', appliedFilters.search);
-      if (appliedFilters.specialization) params.append('specialization', appliedFilters.specialization);
       if (appliedFilters.minRating > 0) params.append('minRating', appliedFilters.minRating);
-      if (appliedFilters.maxRate) params.append('maxRate', appliedFilters.maxRate);
-      if (appliedFilters.minRate) params.append('minRate', appliedFilters.minRate);
-      if (appliedFilters.experienceLevel) params.append('experienceLevel', appliedFilters.experienceLevel);
-      if (appliedFilters.verified) params.append('verified', 'true');
       params.append('sortBy', appliedFilters.sortBy);
+
+      const limit = connectionView === 'requests' ? 50 : PAGE_SIZE;
+      const offset = connectionView === 'requests' ? 0 : (currentPage - 1) * PAGE_SIZE;
+      params.append('limit', String(limit));
+      params.append('offset', String(offset));
       
       const response = await APIClient.get(
         `${BACKEND_ROUTES_API}GetAvailableTrainers.php?${params.toString()}`
@@ -111,6 +128,7 @@ const FindTrainersPage = ({
       
       if (response.success) {
         setTrainers(response.trainers || []);
+        setTotal(Number(response.total || 0));
         setConnectionLock({
           status: response.user_connection_status || 'none',
           trainerId: response.user_connected_trainer_id || response.user_pending_trainer_id || null,
@@ -128,25 +146,15 @@ const FindTrainersPage = ({
     }
   };
 
-  const handleApplyFilters = () => {
-    setAppliedFilters({ ...filters });
-    setShowFilterModal(false);
-  };
-
   const handleResetFilters = () => {
     const resetFilters = {
       search: '',
-      specialization: '',
       minRating: 0,
-      maxRate: '',
-      minRate: '',
-      experienceLevel: '',
-      verified: false,
       sortBy: 'rating'
     };
     setFilters(resetFilters);
     setAppliedFilters(resetFilters);
-    setShowFilterModal(false);
+    setCurrentPage(1);
   };
 
   const handleRequestConnection = (trainer) => {
@@ -354,9 +362,9 @@ const FindTrainersPage = ({
       return true;
     });
 
-  const requestRelatedCount = trainers.filter(
-    trainer => trainer.connection_status === 'pending' || trainer.connection_status === 'active'
-  ).length;
+  const requestRelatedCount = (connectionLock.status === 'pending' || connectionLock.status === 'active') ? 1 : 0;
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   if (loading && trainers.length === 0) {
     const loadingContent = (
@@ -431,11 +439,6 @@ const FindTrainersPage = ({
                     placeholder="Search by name, specialization, or keywords..."
                     value={filters.search}
                     onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleApplyFilters();
-                      }
-                    }}
                     style={{
                       backgroundColor: 'rgba(247, 255, 247, 0.05)',
                       border: '1px solid rgba(74, 74, 90, 0.3)',
@@ -452,6 +455,7 @@ const FindTrainersPage = ({
                   onChange={(e) => {
                     setFilters({ ...filters, sortBy: e.target.value });
                     setAppliedFilters({ ...appliedFilters, sortBy: e.target.value });
+                    setCurrentPage(1);
                   }}
                   style={{
                     backgroundColor: 'rgba(247, 255, 247, 0.05)',
@@ -461,61 +465,38 @@ const FindTrainersPage = ({
                   }}
                 >
                   <option value="rating">Highest Rated</option>
-                  <option value="price_asc">Price: Low to High</option>
-                  <option value="price_desc">Price: High to Low</option>
                   <option value="experience">Most Experienced</option>
                   <option value="clients">Most Popular</option>
                   <option value="newest">Newest</option>
                 </select>
               </div>
-              <div className="col-md-3 d-flex gap-2">
-                <button
-                  className="btn rounded-pill flex-fill"
-                  onClick={handleApplyFilters}
-                  style={{
-                    backgroundColor: 'var(--brand-primary)',
-                    color: 'var(--brand-dark)',
-                    border: 'none',
-                    fontWeight: '600'
-                  }}
-                >
-                  <i className="bi bi-search me-2"></i>
-                  Search
-                </button>
-                <button
-                  className="btn rounded-pill"
-                  onClick={() => setShowFilterModal(true)}
-                  style={{
-                    backgroundColor: 'transparent',
-                    color: 'var(--brand-primary)',
-                    border: '1px solid var(--brand-primary)',
-                    fontWeight: '600'
-                  }}
-                >
-                  <i className="bi bi-funnel"></i>
-                </button>
+              <div className="col-md-3">
+                <div className="d-flex align-items-center gap-3">
+                  <div className="flex-grow-1">
+                    <div className="d-flex justify-content-between align-items-center mb-1">
+                      <small style={{ color: 'var(--text-secondary)' }}>Min rating</small>
+                      <small style={{ color: 'var(--brand-white)', fontWeight: 600 }}>
+                        {filters.minRating > 0 ? `${filters.minRating}+` : 'Any'}
+                      </small>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="5"
+                      step="0.5"
+                      value={filters.minRating}
+                      onChange={(e) => setFilters({ ...filters, minRating: Number(e.target.value) })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
             
             {/* Active Filters Display */}
-            {(appliedFilters.specialization || appliedFilters.minRating > 0 || 
-              appliedFilters.experienceLevel || appliedFilters.verified) && (
+            {(appliedFilters.minRating > 0) && (
               <div className="mt-3 d-flex flex-wrap gap-2">
                 <small className="me-2" style={{ color: 'var(--text-secondary)' }}>Active filters:</small>
-                {appliedFilters.specialization && (
-                  <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)' }}>
-                    {appliedFilters.specialization}
-                    <i 
-                      className="bi bi-x ms-1" 
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => {
-                        const newFilters = { ...appliedFilters, specialization: '' };
-                        setFilters(newFilters);
-                        setAppliedFilters(newFilters);
-                      }}
-                    ></i>
-                  </span>
-                )}
                 {appliedFilters.minRating > 0 && (
                   <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)' }}>
                     {appliedFilters.minRating}+ stars
@@ -526,34 +507,7 @@ const FindTrainersPage = ({
                         const newFilters = { ...appliedFilters, minRating: 0 };
                         setFilters(newFilters);
                         setAppliedFilters(newFilters);
-                      }}
-                    ></i>
-                  </span>
-                )}
-                {appliedFilters.experienceLevel && (
-                  <span className="badge bg-primary">
-                    {appliedFilters.experienceLevel}
-                    <i 
-                      className="bi bi-x ms-1" 
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => {
-                        const newFilters = { ...appliedFilters, experienceLevel: '' };
-                        setFilters(newFilters);
-                        setAppliedFilters(newFilters);
-                      }}
-                    ></i>
-                  </span>
-                )}
-                {appliedFilters.verified && (
-                  <span className="badge bg-primary">
-                    Verified only
-                    <i 
-                      className="bi bi-x ms-1" 
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => {
-                        const newFilters = { ...appliedFilters, verified: false };
-                        setFilters(newFilters);
-                        setAppliedFilters(newFilters);
+                        setCurrentPage(1);
                       }}
                     ></i>
                   </span>
@@ -762,27 +716,11 @@ const FindTrainersPage = ({
                       {trainer.bio || 'No bio available'}
                     </p>
 
-                    {/* Stats */}
-                    <div className="d-flex justify-content-between small mb-3" style={{ color: 'var(--text-secondary)' }}>
-                      <div>
-                        <i className="bi bi-briefcase me-1" style={{ color: 'var(--brand-primary)' }}></i>
-                        {trainer.experience_years || 0} years
-                      </div>
-                      <div>
-                        <i className="bi bi-people me-1" style={{ color: 'var(--brand-primary)' }}></i>
-                        {trainer.current_clients || 0}/{trainer.max_clients || 0} clients
-                      </div>
-                    </div>
-
-                    {/* Price */}
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                      <span className="fw-bold fs-5" style={{ color: 'var(--brand-primary)' }}>
-                        ${trainer.hourly_rate || 0}/hr
-                      </span>
-                      {!trainer.accepting_clients && (
+                    {!trainer.accepting_clients && (
+                      <div className="mb-3">
                         <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(74, 74, 90, 0.3)', color: 'var(--text-secondary)' }}>Fully Booked</span>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     {/* Actions */}
                     <div className="d-flex gap-2">
@@ -864,6 +802,45 @@ const FindTrainersPage = ({
               </div>
             ))}
           </div>
+
+          {connectionView === 'all' && totalPages > 1 && (
+            <div className="d-flex justify-content-between align-items-center mt-4">
+              <button
+                type="button"
+                className="btn btn-sm rounded-pill"
+                disabled={currentPage <= 1 || loading}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                style={{
+                  backgroundColor: 'rgba(30, 35, 30, 0.5)',
+                  border: '1px solid rgba(32, 214, 87, 0.25)',
+                  color: 'var(--brand-white)',
+                  fontWeight: '600'
+                }}
+              >
+                Previous
+              </button>
+
+              <div className="small" style={{ color: 'var(--text-secondary)' }}>
+                Page {currentPage} of {totalPages}
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-sm rounded-pill"
+                disabled={currentPage >= totalPages || loading}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                style={{
+                  backgroundColor: 'rgba(30, 35, 30, 0.5)',
+                  border: '1px solid rgba(32, 214, 87, 0.25)',
+                  color: 'var(--brand-white)',
+                  fontWeight: '600'
+                }}
+              >
+                Next
+              </button>
+            </div>
+          )}
+
           </div>
         )}
 
@@ -960,173 +937,6 @@ const FindTrainersPage = ({
         </div>
       )}
 
-      {/* Filter Modal */}
-      {showFilterModal && (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div 
-              className="modal-content rounded-4 border-0"
-              style={{
-                backgroundColor: 'rgba(15, 20, 15, 0.95)',
-                border: '1px solid rgba(32, 214, 87, 0.3)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
-              }}
-            >
-              <div className="modal-header border-0 dark-modal-header">
-                <h5 className="modal-title" style={{ color: 'var(--brand-white)', fontWeight: '700' }}>Filter Trainers</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setShowFilterModal(false)}
-                  style={{ filter: 'invert(1)' }}
-                ></button>
-              </div>
-              <div className="modal-body">
-                {/* Specialization */}
-                <div className="mb-3">
-                  <label className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>Specialization</label>
-                  <select
-                    className="form-select"
-                    value={filters.specialization}
-                    onChange={(e) => setFilters({ ...filters, specialization: e.target.value })}
-                    style={{
-                      backgroundColor: 'rgba(247, 255, 247, 0.05)',
-                      border: '1px solid rgba(74, 74, 90, 0.3)',
-                      color: 'var(--brand-white)',
-                      borderRadius: '12px'
-                    }}
-                  >
-                    <option value="">All Specializations</option>
-                    <option value="Weight Loss">Weight Loss</option>
-                    <option value="Muscle Building">Muscle Building</option>
-                    <option value="Strength Training">Strength Training</option>
-                    <option value="Cardio">Cardio</option>
-                    <option value="Yoga">Yoga</option>
-                    <option value="CrossFit">CrossFit</option>
-                    <option value="Nutrition">Nutrition</option>
-                    <option value="Sports Performance">Sports Performance</option>
-                  </select>
-                </div>
-
-                {/* Rating */}
-                <div className="mb-3">
-                  <label className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>Minimum Rating</label>
-                  <select
-                    className="form-select"
-                    value={filters.minRating}
-                    onChange={(e) => setFilters({ ...filters, minRating: parseFloat(e.target.value) })}
-                    style={{
-                      backgroundColor: 'rgba(247, 255, 247, 0.05)',
-                      border: '1px solid rgba(74, 74, 90, 0.3)',
-                      color: 'var(--brand-white)',
-                      borderRadius: '12px'
-                    }}
-                  >
-                    <option value="0">Any Rating</option>
-                    <option value="3">3+ Stars</option>
-                    <option value="4">4+ Stars</option>
-                    <option value="4.5">4.5+ Stars</option>
-                  </select>
-                </div>
-
-                {/* Price Range */}
-                <div className="mb-3">
-                  <label className="form-label" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>Hourly Rate Range</label>
-                  <div className="row g-2">
-                    <div className="col-6">
-                      <input
-                        type="number"
-                        className="form-control"
-                        placeholder="Min"
-                        value={filters.minRate}
-                        onChange={(e) => setFilters({ ...filters, minRate: e.target.value })}
-                        style={{
-                          backgroundColor: 'rgba(247, 255, 247, 0.05)',
-                          border: '1px solid rgba(74, 74, 90, 0.3)',
-                          color: 'var(--brand-white)',
-                          borderRadius: '12px'
-                        }}
-                      />
-                    </div>
-                    <div className="col-6">
-                      <input
-                        type="number"
-                        className="form-control"
-                        placeholder="Max"
-                        value={filters.maxRate}
-                        onChange={(e) => setFilters({ ...filters, maxRate: e.target.value })}
-                        style={{
-                          backgroundColor: 'rgba(247, 255, 247, 0.05)',
-                          border: '1px solid rgba(74, 74, 90, 0.3)',
-                          color: 'var(--brand-white)',
-                          borderRadius: '12px'
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Experience Level */}
-                <div className="mb-3">
-                  <label className="form-label">Experience Level</label>
-                  <select
-                    className="form-select"
-                    value={filters.experienceLevel}
-                    onChange={(e) => setFilters({ ...filters, experienceLevel: e.target.value })}
-                  >
-                    <option value="">Any Experience</option>
-                    <option value="beginner">2+ Years (Beginner)</option>
-                    <option value="intermediate">5+ Years (Intermediate)</option>
-                    <option value="expert">10+ Years (Expert)</option>
-                  </select>
-                </div>
-
-                {/* Verified Only */}
-                <div className="form-check mb-3">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    id="verifiedOnly"
-                    checked={filters.verified}
-                    onChange={(e) => setFilters({ ...filters, verified: e.target.checked })}
-                  />
-                  <label className="form-check-label" htmlFor="verifiedOnly">
-                    Verified trainers only
-                  </label>
-                </div>
-              </div>
-              <div className="modal-footer border-0">
-                <button
-                  type="button"
-                  className="btn rounded-pill px-4"
-                  onClick={handleResetFilters}
-                  style={{
-                    backgroundColor: 'transparent',
-                    color: 'var(--text-secondary)',
-                    border: '1px solid rgba(74, 74, 90, 0.3)'
-                  }}
-                >
-                  Reset
-                </button>
-                <button
-                  type="button"
-                  className="btn rounded-pill px-4"
-                  onClick={handleApplyFilters}
-                  style={{
-                    backgroundColor: 'var(--brand-primary)',
-                    color: 'var(--brand-dark)',
-                    border: 'none',
-                    fontWeight: '600'
-                  }}
-                >
-                  Apply Filters
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Request Connection Modal */}
       {showRequestModal && selectedTrainer && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
@@ -1158,7 +968,6 @@ const FindTrainersPage = ({
                       {selectedTrainer.name?.charAt(0) || 'T'}
                     </div>
                     <h5 style={{ color: 'var(--brand-white)' }}>{selectedTrainer.name}</h5>
-                    <p style={{ color: 'var(--brand-primary)', fontWeight: '600' }}>${selectedTrainer.hourly_rate}/hr</p>
                   </div>
 
                   <div className="mb-3">

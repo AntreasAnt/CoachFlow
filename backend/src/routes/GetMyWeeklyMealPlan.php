@@ -56,9 +56,32 @@ try {
         }
         
         $target_user_id = $client_id;
+        $active_trainer_id = (int)$userId;
     } else {
         // Trainee viewing their own meal plan
         $target_user_id = $userId;
+
+        // Determine the trainee's currently active trainer.
+        $activeTrainerQuery = "SELECT trainer_id FROM coaching_relationships
+                               WHERE trainee_id = ? AND status = 'active'
+                               LIMIT 1";
+        $activeStmt = $conn->prepare($activeTrainerQuery);
+        $activeStmt->bind_param('i', $target_user_id);
+        $activeStmt->execute();
+        $activeRes = $activeStmt->get_result();
+        $activeRow = $activeRes->fetch_assoc();
+        $activeStmt->close();
+
+        $active_trainer_id = $activeRow ? (int)$activeRow['trainer_id'] : null;
+        if (!$active_trainer_id) {
+            // No active relationship means no trainer meal plan should be visible.
+            echo json_encode([
+                'success' => true,
+                'meals' => [],
+                'count' => 0
+            ]);
+            exit();
+        }
     }
     
     // Get weekly meal plan
@@ -67,11 +90,13 @@ try {
                      u.username as trainer_name
               FROM client_meal_plans cmp
               LEFT JOIN user u ON cmp.trainer_id = u.userid
-              WHERE cmp.client_id = ?
+              WHERE cmp.client_id = ? AND cmp.trainer_id = ?";
+
+    $query .= "
               ORDER BY cmp.day_of_week ASC, cmp.meal_type ASC";
     
     $stmt = $conn->prepare($query);
-    $stmt->bind_param('i', $target_user_id);
+    $stmt->bind_param('ii', $target_user_id, $active_trainer_id);
     $stmt->execute();
     $result = $stmt->get_result();
     

@@ -56,7 +56,16 @@ try {
         $target_user_id = $userId;
     }
     
-    // Get assigned workout programs with trainer info
+    // Get assigned workout programs with trainer info.
+    // IMPORTANT: For trainees, only return assignments from an ACTIVE coaching relationship.
+    $joinActiveRelationship = "";
+    if ($userRole !== 'trainer') {
+        $joinActiveRelationship = " JOIN coaching_relationships cr 
+                                   ON cr.trainer_id = pa.trainer_id 
+                                  AND cr.trainee_id = pa.trainee_id 
+                                  AND cr.status = 'active'";
+    }
+
     $query = "SELECT pa.id as assignment_id, 
                      pa.assigned_at,
                      p.id,
@@ -72,6 +81,7 @@ try {
               FROM program_assignments pa
               JOIN premium_workout_plans p ON pa.program_id = p.id
               LEFT JOIN user u ON pa.trainer_id = u.userid
+              $joinActiveRelationship
               WHERE pa.trainee_id = ?
               ORDER BY pa.assigned_at DESC";
     

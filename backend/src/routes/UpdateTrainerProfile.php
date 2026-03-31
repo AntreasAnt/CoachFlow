@@ -99,6 +99,31 @@ try {
         throw new Exception("Failed to update profile: " . $stmt->error);
     }
 
+    // Keep trainer_profiles in sync for trainee browsing/search.
+    // trainer_profiles is the source of truth for GetAvailableTrainers.
+    $syncQuery = "INSERT INTO trainer_profiles (user_id, bio, specializations, certifications, experience_years)
+                  VALUES (?, ?, ?, ?, ?)
+                  ON DUPLICATE KEY UPDATE
+                    bio = VALUES(bio),
+                    specializations = VALUES(specializations),
+                    certifications = VALUES(certifications),
+                    experience_years = VALUES(experience_years)";
+    $syncStmt = $conn->prepare($syncQuery);
+    if (!$syncStmt) {
+        throw new Exception("Failed to prepare trainer_profiles sync: " . $conn->error);
+    }
+    $syncStmt->bind_param(
+        "isssi",
+        $userId,
+        $bio,
+        $specializations,
+        $certifications,
+        (int) $yearsOfExperience
+    );
+    if (!$syncStmt->execute()) {
+        throw new Exception("Failed to sync trainer_profiles: " . $syncStmt->error);
+    }
+
     // Upsert trainer profile image in trainer_profiles.
     // Only update if the client explicitly sent profileImage.
     // Guard against oversized values (e.g., data URI/base64 gallery fallback).

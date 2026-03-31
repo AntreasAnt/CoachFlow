@@ -288,9 +288,22 @@ class NutritionModel
      */
     public function getActiveGoal($userId)
     {
-        $query = "SELECT * FROM nutrition_goals 
-                  WHERE user_id = ? AND is_active = 1 
-                  ORDER BY created_at DESC LIMIT 1";
+                // If the active goal is trainer-assigned, only return it when the coaching
+                // relationship with the assigning trainer is still active.
+                $query = "SELECT ng.*
+                                    FROM nutrition_goals ng
+                                    LEFT JOIN coaching_relationships cr
+                                        ON cr.trainer_id = ng.assigned_by_trainer_id
+                                     AND cr.trainee_id = ng.user_id
+                                     AND cr.status = 'active'
+                                    WHERE ng.user_id = ? AND ng.is_active = 1
+                                        AND (
+                                            ng.source IS NULL
+                                            OR ng.source <> 'trainer'
+                                            OR (ng.source = 'trainer' AND cr.trainer_id IS NOT NULL)
+                                        )
+                                    ORDER BY ng.created_at DESC
+                                    LIMIT 1";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param("i", $userId);

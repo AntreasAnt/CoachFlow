@@ -53,24 +53,45 @@ try {
         exit;
     }
     
-    // Check access: trainer who created it, or trainee assigned to it
+    // Check access: trainer who created it, or trainee assigned to it.
+    // IMPORTANT: When user is a trainee, assignment access is only valid if the
+    // trainee has an ACTIVE coaching relationship with the assigning trainer.
     $has_access = false;
     
     if ($user_role === 'trainer' && $program['created_by_trainer_id'] == $user_id) {
         // Trainer who created the program
         $has_access = true;
-    } elseif ($user_role === 'trainee' || $user_role === 'trainer') {
-        // Check if program is assigned to this user (for trainees) or if trainer has access
-        $assignment_query = "SELECT COUNT(*) as count FROM program_assignments 
-                            WHERE program_id = ? AND (trainee_id = ? OR trainer_id = ?)";
+    } elseif ($user_role === 'trainee') {
+        // Trainee can only access if assigned AND relationship is still active.
+        $assignment_query = "SELECT COUNT(*) as count
+                             FROM program_assignments pa
+                             JOIN coaching_relationships cr
+                               ON cr.trainer_id = pa.trainer_id
+                              AND cr.trainee_id = pa.trainee_id
+                              AND cr.status = 'active'
+                             WHERE pa.program_id = ? AND pa.trainee_id = ?";
         $stmt = $conn->prepare($assignment_query);
-        $stmt->bind_param('iii', $program_id, $user_id, $user_id);
+        $stmt->bind_param('ii', $program_id, $user_id);
         $stmt->execute();
         $result = $stmt->get_result();
         $assignment = $result->fetch_assoc();
         $stmt->close();
-        
-        if ($assignment['count'] > 0) {
+
+        if ((int)$assignment['count'] > 0) {
+            $has_access = true;
+        }
+    } elseif ($user_role === 'trainer') {
+        // Trainer access if they are the assigning trainer on an assignment.
+        $assignment_query = "SELECT COUNT(*) as count FROM program_assignments 
+                             WHERE program_id = ? AND trainer_id = ?";
+        $stmt = $conn->prepare($assignment_query);
+        $stmt->bind_param('ii', $program_id, $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $assignment = $result->fetch_assoc();
+        $stmt->close();
+
+        if ((int)$assignment['count'] > 0) {
             $has_access = true;
         }
     }

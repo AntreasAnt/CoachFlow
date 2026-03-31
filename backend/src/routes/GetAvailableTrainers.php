@@ -124,15 +124,14 @@ try {
     $params = [$userId, $userId];
     $types = "ii";
     
-    // Add search filter
+    // Add search filter (name + specializations only)
     if (!empty($search)) {
-        $query .= " AND (u.full_name LIKE ? OR u.username LIKE ? OR tp.bio LIKE ? OR tp.specializations LIKE ?)";
+        $query .= " AND (u.full_name LIKE ? OR u.username LIKE ? OR tp.specializations LIKE ?)";
         $searchParam = "%{$search}%";
         $params[] = $searchParam;
         $params[] = $searchParam;
         $params[] = $searchParam;
-        $params[] = $searchParam;
-        $types .= "ssss";
+        $types .= "sss";
     }
     
     // Add specialization filter
@@ -188,26 +187,30 @@ try {
         $query .= " AND tp.verified = 1";
     }
     
+    // Ensure the user's active/pending trainer appears first
+    // (so "My Requests" doesn't look empty when paging/sorting)
+    $query .= " ORDER BY (cr.id IS NOT NULL) DESC, (creq.id IS NOT NULL) DESC";
+
     // Add sorting
     switch ($sortBy) {
         case 'price_asc':
-            $query .= " ORDER BY tp.hourly_rate ASC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
+            $query .= ", tp.hourly_rate ASC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
             break;
         case 'price_desc':
-            $query .= " ORDER BY tp.hourly_rate DESC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
+            $query .= ", tp.hourly_rate DESC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
             break;
         case 'clients':
-            $query .= " ORDER BY tp.current_clients DESC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
+            $query .= ", tp.current_clients DESC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
             break;
         case 'experience':
-            $query .= " ORDER BY tp.experience_years DESC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
+            $query .= ", tp.experience_years DESC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
             break;
         case 'newest':
-            $query .= " ORDER BY tp.created_at DESC";
+            $query .= ", tp.created_at DESC";
             break;
         case 'rating':
         default:
-            $query .= " ORDER BY COALESCE(urs.average_rating, tp.average_rating, 0) DESC, COALESCE(urs.review_count, tp.total_reviews, 0) DESC";
+            $query .= ", COALESCE(urs.average_rating, tp.average_rating, 0) DESC, COALESCE(urs.review_count, tp.total_reviews, 0) DESC";
             break;
     }
     
@@ -251,20 +254,79 @@ try {
         $trainers[] = $row;
     }
     
-    // Get total count for pagination
+    // Get total count for pagination (must match the same filters as the main query)
     $countQuery = "SELECT COUNT(DISTINCT u.userid) as total
                    FROM user u
                    LEFT JOIN trainer_profiles tp ON u.userid = tp.user_id
+                   LEFT JOIN user_rating_stats urs ON u.userid = urs.user_id
                    WHERE u.role = 'trainer'
                    AND (tp.availability_status = 'available' OR tp.availability_status = 'limited')";
-    
+
+    $countParams = [];
+    $countTypes = '';
+
     if (!empty($search)) {
-        $countQuery .= " AND (u.full_name LIKE ? OR u.username LIKE ? OR tp.bio LIKE ? OR tp.specializations LIKE ?)";
+        $countQuery .= " AND (u.full_name LIKE ? OR u.username LIKE ? OR tp.specializations LIKE ?)";
+        $countParams[] = $searchParam;
+        $countParams[] = $searchParam;
+        $countParams[] = $searchParam;
+        $countTypes .= 'sss';
     }
-    
+
+    if (!empty($specialization)) {
+        $countQuery .= " AND tp.specializations LIKE ?";
+        $countParams[] = "%{$specialization}%";
+        $countTypes .= 's';
+    }
+
+    if ($minRating > 0) {
+        $countQuery .= " AND COALESCE(urs.average_rating, tp.average_rating, 0) >= ?";
+        $countParams[] = $minRating;
+        $countTypes .= 'd';
+    }
+
+    if ($minRate > 0) {
+        $countQuery .= " AND tp.hourly_rate >= ?";
+        $countParams[] = $minRate;
+        $countTypes .= 'd';
+    }
+
+    if ($maxRate < 999999) {
+        $countQuery .= " AND tp.hourly_rate <= ?";
+        $countParams[] = $maxRate;
+        $countTypes .= 'd';
+    }
+
+    if (!empty($experienceLevel)) {
+        $expYears = 0;
+        switch ($experienceLevel) {
+            case 'beginner':
+                $expYears = 2;
+                break;
+            case 'intermediate':
+                $expYears = 5;
+                break;
+            case 'expert':
+                $expYears = 10;
+                break;
+        }
+        if ($expYears > 0) {
+            $countQuery .= " AND tp.experience_years >= ?";
+            $countParams[] = $expYears;
+            $countTypes .= 'i';
+        }
+    }
+
+    if ($verified === 'true') {
+        $countQuery .= " AND tp.verified = 1";
+    }
+
     $countStmt = $conn->prepare($countQuery);
-    if (!empty($search)) {
-        $countStmt->bind_param("ssss", $searchParam, $searchParam, $searchParam, $searchParam);
+    if (!$countStmt) {
+        throw new Exception("Prepare failed (count): " . $conn->error);
+    }
+    if (!empty($countParams)) {
+        $countStmt->bind_param($countTypes, ...$countParams);
     }
     $countStmt->execute();
     $countResult = $countStmt->get_result();

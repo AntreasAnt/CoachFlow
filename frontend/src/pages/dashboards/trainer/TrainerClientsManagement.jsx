@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import TrainerDashboardLayout from '../../../components/TrainerDashboardLayout';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import APIClient from '../../../utils/APIClient';
 
 const TrainerClientsManagement = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('clients');
   const [clients, setClients] = useState([]);
+  const [recentDisconnects, setRecentDisconnects] = useState([]);
+  const [showAllDisconnects, setShowAllDisconnects] = useState(false);
+  const [dismissedDisconnectId, setDismissedDisconnectId] = useState(() => {
+    if (typeof window === 'undefined') return null;
+    const val = localStorage.getItem('trainerDismissedDisconnectId');
+    return val ? Number(val) : null;
+  });
   const [requests, setRequests] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [selectedClient, setSelectedClient] = useState(null);
@@ -16,12 +24,19 @@ const TrainerClientsManagement = () => {
   const [selectedProgram, setSelectedProgram] = useState('');
   const [showDisconnectModal, setShowDisconnectModal] = useState(false);
   const [disconnectReason, setDisconnectReason] = useState('');
+  const [requestActionModal, setRequestActionModal] = useState({ show: false, action: null, request: null, submitting: false });
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const tab = (searchParams.get('tab') || '').toLowerCase();
+    if (tab === 'requests') setActiveTab('requests');
+    if (tab === 'clients') setActiveTab('clients');
+  }, [searchParams]);
 
   // Auto-dismiss notification after 3 seconds
   useEffect(() => {
@@ -41,6 +56,7 @@ const TrainerClientsManagement = () => {
       const clientsResponse = await APIClient.get(`${BACKEND_ROUTES_API}GetTrainerClients.php`);
       if (clientsResponse.success) {
         setClients(clientsResponse.clients || []);
+        setRecentDisconnects(clientsResponse.recent_disconnects || []);
       }
 
       // Fetch coaching requests
@@ -62,42 +78,45 @@ const TrainerClientsManagement = () => {
     }
   };
 
-  const handleAcceptRequest = async (requestId) => {
-    if (!confirm('Accept this coaching request?')) return;
-    
-    try {
-      const response = await APIClient.post(`${BACKEND_ROUTES_API}AcceptCoachingRequest.php`, {
-        requestId
-      });
-
-      if (response.success) {
-        fetchData();
-        alert('Coaching request accepted successfully!');
-      } else {
-        alert(response.message || 'Failed to accept request');
-      }
-    } catch (error) {
-      console.error('Error accepting request:', error);
-      alert('Failed to accept request. Please try again.');
-    }
+  const openRequestActionModal = (action, request) => {
+    setRequestActionModal({ show: true, action, request, submitting: false });
   };
 
-  const handleDeclineRequest = async (requestId) => {
-    if (!confirm('Decline this coaching request?')) return;
-    
+  const closeRequestActionModal = () => {
+    if (requestActionModal.submitting) return;
+    setRequestActionModal({ show: false, action: null, request: null, submitting: false });
+  };
+
+  const handleConfirmRequestAction = async () => {
+    const requestId = requestActionModal.request?.id;
+    const action = requestActionModal.action;
+
+    if (!requestId || (action !== 'accept' && action !== 'decline')) {
+      closeRequestActionModal();
+      return;
+    }
+
+    setRequestActionModal((prev) => ({ ...prev, submitting: true }));
     try {
-      const response = await APIClient.post(`${BACKEND_ROUTES_API}DeclineCoachingRequest.php`, {
-        requestId
-      });
+      const endpoint = action === 'accept' ? 'AcceptCoachingRequest.php' : 'DeclineCoachingRequest.php';
+      const response = await APIClient.post(`${BACKEND_ROUTES_API}${endpoint}`, { requestId });
 
       if (response.success) {
+        setNotification({
+          show: true,
+          message: action === 'accept' ? 'Coaching request accepted successfully' : 'Coaching request declined',
+          type: 'success'
+        });
+        closeRequestActionModal();
         fetchData();
       } else {
-        alert(response.message || 'Failed to decline request');
+        setNotification({ show: true, message: response.message || `Failed to ${action} request`, type: 'danger' });
+        setRequestActionModal((prev) => ({ ...prev, submitting: false }));
       }
     } catch (error) {
-      console.error('Error declining request:', error);
-      alert('Failed to decline request. Please try again.');
+      console.error(`Error attempting to ${action} request:`, error);
+      setNotification({ show: true, message: `Failed to ${action} request. Please try again.`, type: 'danger' });
+      setRequestActionModal((prev) => ({ ...prev, submitting: false }));
     }
   };
 
@@ -182,6 +201,14 @@ const TrainerClientsManagement = () => {
     });
   };
 
+  const dismissDisconnectNotice = (relationshipId) => {
+    setDismissedDisconnectId(relationshipId);
+    setShowAllDisconnects(false);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('trainerDismissedDisconnectId', String(relationshipId));
+    }
+  };
+
   if (loading) {
     return (
       <TrainerDashboardLayout>
@@ -204,6 +231,57 @@ const TrainerClientsManagement = () => {
           </div>
         </div>
 
+        {recentDisconnects.length > 0 && recentDisconnects[0]?.relationship_id !== dismissedDisconnectId && (
+          <div className="alert mb-4" style={{ backgroundColor: 'rgba(251, 191, 36, 0.18)', border: '1px solid rgba(251, 191, 36, 0.28)', color: '#fbbf24' }}>
+            <div className="d-flex align-items-start justify-content-between gap-3">
+              <div className="d-flex align-items-start gap-2">
+                <i className="bi bi-info-circle" style={{ marginTop: '2px' }}></i>
+                <div>
+                  <div className="fw-semibold">Recent disconnect</div>
+                  <div className="small" style={{ color: '#d1d5db' }}>
+                    {recentDisconnects[0].name}
+                    {recentDisconnects[0].ended_at ? ` (ended ${formatDate(recentDisconnects[0].ended_at)})` : ''}
+                    {' — '}disconnected by {recentDisconnects[0].disconnected_by_role}
+                    {recentDisconnects.length > 1 && (
+                      <>
+                        {' • '}
+                        <button
+                          type="button"
+                          className="btn btn-link p-0 align-baseline"
+                          onClick={() => setShowAllDisconnects((v) => !v)}
+                          style={{ color: '#fbbf24', textDecoration: 'underline' }}
+                        >
+                          {showAllDisconnects
+                            ? 'Hide'
+                            : `Show ${recentDisconnects.length - 1} more`}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  {showAllDisconnects && recentDisconnects.length > 1 && (
+                    <div className="small mt-2" style={{ color: '#d1d5db' }}>
+                      {recentDisconnects.slice(1).map((d) => (
+                        <div key={d.relationship_id}>
+                          {d.name}
+                          {d.ended_at ? ` (ended ${formatDate(d.ended_at)})` : ''}
+                          {' — '}disconnected by {d.disconnected_by_role}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-close btn-close-white"
+                aria-label="Dismiss"
+                onClick={() => dismissDisconnectNotice(recentDisconnects[0].relationship_id)}
+                style={{ marginTop: '2px' }}
+              ></button>
+            </div>
+          </div>
+        )}
+
         {/* Tabs */}
         <style>
           {`
@@ -216,6 +294,12 @@ const TrainerClientsManagement = () => {
             .client-tab:hover {
               background-color: rgba(16, 185, 129, 0.1) !important;
               color: #10b981 !important;
+            }
+
+            .modal-header.cf-dark-modal-header {
+              background: #2d2d2d !important;
+              background-color: #2d2d2d !important;
+              background-image: none !important;
             }
           `}
         </style>
@@ -416,7 +500,7 @@ const TrainerClientsManagement = () => {
                         <div className="d-flex gap-2">
                           <button
                             className="btn btn-sm flex-grow-1"
-                            onClick={() => handleAcceptRequest(request.id)}
+                            onClick={() => openRequestActionModal('accept', request)}
                             style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                           >
                             <i className="bi bi-check-circle me-1"></i>
@@ -424,7 +508,7 @@ const TrainerClientsManagement = () => {
                           </button>
                           <button
                             className="btn btn-sm flex-grow-1"
-                            onClick={() => handleDeclineRequest(request.id)}
+                            onClick={() => openRequestActionModal('decline', request)}
                             style={{ backgroundColor: 'transparent', color: '#dc3545', border: '1px solid #dc3545' }}
                           >
                             <i className="bi bi-x-circle me-1"></i>
@@ -437,6 +521,67 @@ const TrainerClientsManagement = () => {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Accept/Decline Request Modal */}
+        {requestActionModal.show && (
+          <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <div className="modal-header cf-dark-modal-header" style={{ borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <h5 className="modal-title" style={{ color: '#fff' }}>
+                    {requestActionModal.action === 'accept' ? 'Accept coaching request?' : 'Decline coaching request?'}
+                  </h5>
+                  <button
+                    className="btn-close btn-close-white"
+                    onClick={closeRequestActionModal}
+                    disabled={requestActionModal.submitting}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <p className="mb-2" style={{ color: '#d1d5db' }}>
+                    {requestActionModal.action === 'accept'
+                      ? 'This will add the trainee to your active clients.'
+                      : 'This will remove the request from your pending list.'}
+                  </p>
+                  <div className="rounded p-3" style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                    <div className="fw-semibold" style={{ color: '#fff' }}>
+                      {requestActionModal.request?.trainee_name || 'Trainee'}
+                    </div>
+                    <div className="small" style={{ color: '#9ca3af' }}>
+                      {requestActionModal.request?.trainee_email || ''}
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer" style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <button
+                    className="btn"
+                    onClick={closeRequestActionModal}
+                    disabled={requestActionModal.submitting}
+                    style={{ backgroundColor: '#6b7280', color: '#fff', border: 'none' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={handleConfirmRequestAction}
+                    disabled={requestActionModal.submitting}
+                    style={{
+                      backgroundColor: requestActionModal.action === 'accept' ? '#10b981' : '#dc3545',
+                      color: '#fff',
+                      border: 'none'
+                    }}
+                  >
+                    {requestActionModal.submitting
+                      ? 'Please wait...'
+                      : requestActionModal.action === 'accept'
+                        ? 'Confirm Accept'
+                        : 'Confirm Decline'}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -508,7 +653,7 @@ const TrainerClientsManagement = () => {
           <div className="modal d-block" style={{backgroundColor: 'rgba(0,0,0,0.7)'}}>
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                <div className="modal-header" style={{ borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <div className="modal-header cf-dark-modal-header" style={{ borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
                   <h5 className="modal-title" style={{ color: '#fff' }}>End Coaching Relationship?</h5>
                   <button className="btn-close btn-close-white" onClick={() => setShowDisconnectModal(false)}></button>
                 </div>
