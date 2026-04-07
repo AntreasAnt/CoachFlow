@@ -584,38 +584,6 @@ const AdminAnalytics = () => {
               Overview
             </button>
           </li>
-          <li className="nav-item">
-            <button
-              className="analytics-tab"
-              onClick={() => setActiveTab('graphs')}
-              style={{
-                color: activeTab === 'graphs' ? '#fff' : '#9ca3af',
-                backgroundColor: activeTab === 'graphs' ? 'rgba(16, 185, 129, 0.16)' : 'transparent',
-                border: 'none',
-                borderBottom: activeTab === 'graphs' ? '3px solid #10b981' : 'none',
-                fontWeight: activeTab === 'graphs' ? '700' : '600',
-              }}
-            >
-              <i className="bi bi-graph-up me-2"></i>
-              Graphs
-            </button>
-          </li>
-          <li className="nav-item">
-            <button
-              className="analytics-tab"
-              onClick={() => setActiveTab('tables')}
-              style={{
-                color: activeTab === 'tables' ? '#fff' : '#9ca3af',
-                backgroundColor: activeTab === 'tables' ? 'rgba(16, 185, 129, 0.16)' : 'transparent',
-                border: 'none',
-                borderBottom: activeTab === 'tables' ? '3px solid #10b981' : 'none',
-                fontWeight: activeTab === 'tables' ? '700' : '600',
-              }}
-            >
-              <i className="bi bi-table me-2"></i>
-              Tables
-            </button>
-          </li>
 
           <li className="nav-item">
             <button
@@ -665,6 +633,39 @@ const AdminAnalytics = () => {
             >
               <i className="bi bi-person-check me-2"></i>
               Users
+            </button>
+          </li>
+
+          <li className="nav-item">
+            <button
+              className="analytics-tab"
+              onClick={() => setActiveTab('graphs')}
+              style={{
+                color: activeTab === 'graphs' ? '#fff' : '#9ca3af',
+                backgroundColor: activeTab === 'graphs' ? 'rgba(16, 185, 129, 0.16)' : 'transparent',
+                border: 'none',
+                borderBottom: activeTab === 'graphs' ? '3px solid #10b981' : 'none',
+                fontWeight: activeTab === 'graphs' ? '700' : '600',
+              }}
+            >
+              <i className="bi bi-graph-up me-2"></i>
+              Graphs
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              className="analytics-tab"
+              onClick={() => setActiveTab('tables')}
+              style={{
+                color: activeTab === 'tables' ? '#fff' : '#9ca3af',
+                backgroundColor: activeTab === 'tables' ? 'rgba(16, 185, 129, 0.16)' : 'transparent',
+                border: 'none',
+                borderBottom: activeTab === 'tables' ? '3px solid #10b981' : 'none',
+                fontWeight: activeTab === 'tables' ? '700' : '600',
+              }}
+            >
+              <i className="bi bi-table me-2"></i>
+              Tables
             </button>
           </li>
         </ul>

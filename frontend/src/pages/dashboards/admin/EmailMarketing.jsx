@@ -43,11 +43,14 @@ const EmailMarketing = () => {
   // Add Subscriber Form
   const [showAddSubscriberModal, setShowAddSubscriberModal] = useState(false);
   const [subscriberForm, setSubscriberForm] = useState({
-    email: '',
-    firstName: '',
-    lastName: '',
+    userId: '',
     audienceId: ''
   });
+
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [userSearchResults, setUserSearchResults] = useState([]);
+  const [isUserSearchLoading, setIsUserSearchLoading] = useState(false);
+  const [selectedUserForSubscriber, setSelectedUserForSubscriber] = useState(null);
   
   // Create Audience Form
   const [showCreateAudienceModal, setShowCreateAudienceModal] = useState(false);
@@ -171,6 +174,38 @@ const EmailMarketing = () => {
     fetchCampaigns();
     fetchAudiences();
   }, []);
+
+  useEffect(() => {
+    if (!showAddSubscriberModal) return;
+
+    let isCancelled = false;
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setIsUserSearchLoading(true);
+      try {
+        const response = await fetch(
+          BACKEND_ROUTES_API + `SearchUsers.php?q=${encodeURIComponent(userSearchQuery.trim())}&limit=10`,
+          { credentials: 'include', signal: controller.signal }
+        );
+        const data = await response.json();
+        if (!isCancelled) {
+          setUserSearchResults(data.success ? (data.users || []) : []);
+        }
+      } catch (error) {
+        if (!isCancelled && error?.name !== 'AbortError') {
+          setUserSearchResults([]);
+        }
+      } finally {
+        if (!isCancelled) setIsUserSearchLoading(false);
+      }
+    }, 250);
+
+    return () => {
+      isCancelled = true;
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [showAddSubscriberModal, userSearchQuery]);
 
   const fetchCampaigns = async () => {
     setIsLoading(true);
@@ -460,6 +495,12 @@ const EmailMarketing = () => {
     setIsLoading(true);
     setError(null);
     setSuccess(null);
+
+    if (!subscriberForm.audienceId || !subscriberForm.userId) {
+      setError('Please select an audience and a user');
+      setIsLoading(false);
+      return;
+    }
     
     try {
       const response = await fetch(BACKEND_ROUTES_API + 'AddMailchimpSubscriber.php', {
@@ -476,7 +517,10 @@ const EmailMarketing = () => {
       if (data.success) {
         setSuccess('Subscriber added successfully!');
         setShowAddSubscriberModal(false);
-        setSubscriberForm({ email: '', firstName: '', lastName: '', audienceId: '' });
+        setSubscriberForm({ userId: '', audienceId: '' });
+        setSelectedUserForSubscriber(null);
+        setUserSearchQuery('');
+        setUserSearchResults([]);
         // Refresh audiences to update member count
         fetchAudiences();
       } else {
@@ -879,10 +923,30 @@ const EmailMarketing = () => {
                   <div key={audience.id} className="col-md-6 mb-3">
                     <div className="card" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '12px' }}>
                       <div className="card-body">
-                        <h5 className="card-title" style={{ color: '#fff' }}>{audience.name}</h5>
+                        <div className="d-flex justify-content-between align-items-start gap-2">
+                          <h5 className="card-title" style={{ color: '#fff' }}>{audience.name}</h5>
+                          {audience.is_default ? (
+                            <span
+                              className="badge"
+                              style={{
+                                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                                color: '#10b981',
+                                border: '1px solid rgba(16, 185, 129, 0.35)',
+                                fontWeight: 700,
+                              }}
+                              title="Default audience (locked)"
+                            >
+                              <i className="bi bi-lock-fill me-1"></i>
+                              Default
+                            </span>
+                          ) : null}
+                        </div>
                         <p className="card-text mb-3" style={{ color: '#9ca3af' }}>
                           <i className="bi bi-people me-2"></i>{audience.member_count || 0} subscribers
                         </p>
+                        <div className="small mb-2" style={{ color: '#6b7280' }}>
+                          Audience ID: <span style={{ color: '#9ca3af' }}>{audience.id}</span>
+                        </div>
                         <div className="d-grid gap-2">
                           <button 
                             className="btn btn-sm"
@@ -894,7 +958,10 @@ const EmailMarketing = () => {
                           <button 
                             className="btn btn-sm"
                             onClick={() => {
-                              setSubscriberForm({ ...subscriberForm, audienceId: audience.id });
+                              setSubscriberForm({ userId: '', audienceId: audience.id });
+                              setSelectedUserForSubscriber(null);
+                              setUserSearchQuery('');
+                              setUserSearchResults([]);
                               setShowAddSubscriberModal(true);
                             }}
                             style={{ backgroundColor: '#2d2d2d', color: '#10b981', border: '1px solid #10b981' }}
@@ -1557,62 +1624,15 @@ const EmailMarketing = () => {
                       className="btn-close btn-close-white" 
                       onClick={() => {
                         setShowAddSubscriberModal(false);
-                        setSubscriberForm({ email: '', firstName: '', lastName: '', audienceId: '' });
+                        setSubscriberForm({ userId: '', audienceId: '' });
+                        setSelectedUserForSubscriber(null);
+                        setUserSearchQuery('');
+                        setUserSearchResults([]);
                       }}
                     ></button>
                   </div>
                   <div className="modal-body" style={{ padding: '20px' }}>
                     <form onSubmit={handleAddSubscriber}>
-                      <div className="mb-3">
-                        <label className="form-label" style={{ color: '#fff' }}>
-                          Email Address <span style={{ color: '#ef4444' }}>*</span>
-                        </label>
-                        <input
-                          type="email"
-                          className="form-control"
-                          value={subscriberForm.email}
-                          onChange={(e) => setSubscriberForm({ ...subscriberForm, email: e.target.value })}
-                          required
-                          style={{ 
-                            backgroundColor: '#1a1a1a', 
-                            border: '1px solid rgba(16, 185, 129, 0.2)', 
-                            color: '#fff' 
-                          }}
-                          placeholder="subscriber@example.com"
-                        />
-                      </div>
-                      
-                      <div className="mb-3">
-                        <label className="form-label" style={{ color: '#fff' }}>First Name</label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={subscriberForm.firstName}
-                          onChange={(e) => setSubscriberForm({ ...subscriberForm, firstName: e.target.value })}
-                          style={{ 
-                            backgroundColor: '#1a1a1a', 
-                            border: '1px solid rgba(16, 185, 129, 0.2)', 
-                            color: '#fff' 
-                          }}
-                          placeholder="John"
-                        />
-                      </div>
-                      
-                      <div className="mb-3">
-                        <label className="form-label" style={{ color: '#fff' }}>Last Name</label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={subscriberForm.lastName}
-                          onChange={(e) => setSubscriberForm({ ...subscriberForm, lastName: e.target.value })}
-                          style={{ 
-                            backgroundColor: '#1a1a1a', 
-                            border: '1px solid rgba(16, 185, 129, 0.2)', 
-                            color: '#fff' 
-                          }}
-                          placeholder="Doe"
-                        />
-                      </div>
                       
                       <div className="mb-3">
                         <label className="form-label" style={{ color: '#fff' }}>
@@ -1638,6 +1658,104 @@ const EmailMarketing = () => {
                           ))}
                         </select>
                       </div>
+
+                      <div className="mb-3">
+                        <label className="form-label" style={{ color: '#fff' }}>
+                          Search Users <span style={{ color: '#ef4444' }}>*</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={userSearchQuery}
+                          onChange={(e) => setUserSearchQuery(e.target.value)}
+                          style={{
+                            backgroundColor: '#1a1a1a',
+                            border: '1px solid rgba(16, 185, 129, 0.2)',
+                            color: '#fff'
+                          }}
+                          placeholder="Search by name, username, or email"
+                        />
+                        <div
+                          className="mt-2"
+                          style={{
+                            maxHeight: 220,
+                            overflowY: 'auto',
+                            border: '1px solid rgba(16, 185, 129, 0.2)',
+                            borderRadius: 8,
+                            backgroundColor: '#1a1a1a'
+                          }}
+                        >
+                          {isUserSearchLoading ? (
+                            <div
+                              style={{
+                                backgroundColor: '#1a1a1a',
+                                color: '#9ca3af',
+                                padding: '10px 12px',
+                                borderBottom: '1px solid rgba(16, 185, 129, 0.12)'
+                              }}
+                            >
+                              <span className="spinner-border spinner-border-sm me-2"></span>
+                              Searching...
+                            </div>
+                          ) : userSearchResults.length === 0 ? (
+                            <div
+                              style={{
+                                backgroundColor: '#1a1a1a',
+                                color: '#9ca3af',
+                                padding: '10px 12px'
+                              }}
+                            >
+                              No users found
+                            </div>
+                          ) : (
+                            userSearchResults.map((u) => {
+                              const isSelected = selectedUserForSubscriber?.id === u.id;
+                              return (
+                                <button
+                                  key={u.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedUserForSubscriber(u);
+                                    setSubscriberForm({ ...subscriberForm, userId: u.id });
+                                  }}
+                                  style={{
+                                    width: '100%',
+                                    textAlign: 'left',
+                                    backgroundColor: isSelected ? 'rgba(16, 185, 129, 0.15)' : '#1a1a1a',
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderBottom: '1px solid rgba(16, 185, 129, 0.12)',
+                                    padding: '10px 12px'
+                                  }}
+                                >
+                                  <div className="d-flex justify-content-between align-items-center">
+                                    <div style={{ fontWeight: 600 }}>
+                                      {u.full_name || u.username || 'User'}
+                                    </div>
+                                    <span
+                                      className="badge"
+                                      style={{
+                                        backgroundColor: 'rgba(156, 163, 175, 0.15)',
+                                        color: '#9ca3af',
+                                        border: '1px solid rgba(156, 163, 175, 0.25)'
+                                      }}
+                                    >
+                                      {u.role || 'user'}
+                                    </span>
+                                  </div>
+                                  <div className="small" style={{ color: '#9ca3af' }}>{u.email || 'No email'}</div>
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+
+                        {selectedUserForSubscriber ? (
+                          <div className="small mt-2" style={{ color: '#9ca3af' }}>
+                            Selected: <span style={{ color: '#fff' }}>{selectedUserForSubscriber.email}</span>
+                          </div>
+                        ) : null}
+                      </div>
                       
                       <div className="d-flex justify-content-end gap-2 mt-4">
                         <button
@@ -1645,7 +1763,10 @@ const EmailMarketing = () => {
                           className="btn"
                           onClick={() => {
                             setShowAddSubscriberModal(false);
-                            setSubscriberForm({ email: '', firstName: '', lastName: '', audienceId: '' });
+                            setSubscriberForm({ userId: '', audienceId: '' });
+                            setSelectedUserForSubscriber(null);
+                            setUserSearchQuery('');
+                            setUserSearchResults([]);
                           }}
                           style={{ backgroundColor: '#6b7280', color: '#fff', border: 'none' }}
                         >
@@ -1654,7 +1775,7 @@ const EmailMarketing = () => {
                         <button
                           type="submit"
                           className="btn"
-                          disabled={isLoading}
+                          disabled={isLoading || !subscriberForm.audienceId || !subscriberForm.userId}
                           style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                         >
                           {isLoading ? (

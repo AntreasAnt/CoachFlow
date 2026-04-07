@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BACKEND_ROUTES_API } from "../config/config";
 
+import "../styles/homepage.css";
+
 // Import dashboard components
 import AdminDashboard from "./dashboards/AdminDashboard";
 import ManagerDashboard from "./dashboards/ManagerDashboard";
@@ -91,23 +93,23 @@ function MainPage() {
             Build custom programs, track progress, and achieve your goals. All in one place.
           </p>
           
-          <div className="row justify-content-center mb-5">
-            <div className="col-md-4">
-              <div className="p-3" style={{backgroundColor: 'rgba(32, 214, 87, 0.1)', borderRadius: '12px', border: '1px solid var(--brand-primary)'}}>
-                <div className="display-6 fw-bold" style={{color: 'var(--brand-primary)'}}>100% FREE</div>
-                <p className="mb-0 mt-2" style={{color: 'var(--text-primary)'}}>Create Programs</p>
+          <div className="row justify-content-center mb-5 g-3 free-features">
+            <div className="col-12 col-sm-10 col-md-4">
+              <div className="p-3 p-sm-4 free-feature-card">
+                <div className="fw-bold free-feature-title">100% FREE</div>
+                <p className="mb-0 mt-2 free-feature-subtitle">Create Programs</p>
               </div>
             </div>
-            <div className="col-md-4">
-              <div className="p-3" style={{backgroundColor: 'rgba(32, 214, 87, 0.1)', borderRadius: '12px', border: '1px solid var(--brand-primary)'}}>
-                <div className="display-6 fw-bold" style={{color: 'var(--brand-primary)'}}>100% FREE</div>
-                <p className="mb-0 mt-2" style={{color: 'var(--text-primary)'}}>Log Workouts & Food</p>
+            <div className="col-12 col-sm-10 col-md-4">
+              <div className="p-3 p-sm-4 free-feature-card">
+                <div className="fw-bold free-feature-title">100% FREE</div>
+                <p className="mb-0 mt-2 free-feature-subtitle">Log Workouts & Food</p>
               </div>
             </div>
-            <div className="col-md-4">
-              <div className="p-3" style={{backgroundColor: 'rgba(32, 214, 87, 0.1)', borderRadius: '12px', border: '1px solid var(--brand-primary)'}}>
-                <div className="display-6 fw-bold" style={{color: 'var(--brand-primary)'}}>100% FREE</div>
-                <p className="mb-0 mt-2" style={{color: 'var(--text-primary)'}}>Track Analytics</p>
+            <div className="col-12 col-sm-10 col-md-4">
+              <div className="p-3 p-sm-4 free-feature-card">
+                <div className="fw-bold free-feature-title">100% FREE</div>
+                <p className="mb-0 mt-2 free-feature-subtitle">Track Analytics</p>
               </div>
             </div>
           </div>

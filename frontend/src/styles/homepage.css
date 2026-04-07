@@ -304,3 +304,35 @@
 .luxury-animate-delay-3 {
   animation: luxurySlideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.6s both;
 }
+
+/* CoachFlow marketing homepage (green/black) - responsive FREE cards */
+.free-features {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.free-feature-card {
+  background-color: rgba(32, 214, 87, 0.1);
+  border-radius: 12px;
+  border: 1px solid var(--brand-primary);
+  text-align: center;
+}
+
+.free-feature-title {
+  color: var(--brand-primary);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-size: clamp(1.75rem, 6vw, 2.75rem);
+}
+
+.free-feature-subtitle {
+  color: var(--text-primary);
+  line-height: 1.2;
+  font-size: clamp(1.05rem, 3.5vw, 1.35rem);
+}
+
+@media (min-width: 768px) {
+  .free-feature-card {
+    height: 100%;
+  }
+}

@@ -7,6 +7,7 @@ if (!defined('APP_RUNNING')) exit('No direct script access');
 
 include_once("../models/UserModel.php"); // Include the UserModel class for database interaction
 require(__DIR__ . '/NotificationController.php'); // Include the NotificationController to handle email notifications
+require_once(__DIR__ . '/../services/MailchimpService.php');
 
 class UserController extends UserModel
 {
@@ -154,6 +155,17 @@ class UserController extends UserModel
             $user = $this->saveUser(); // Save the new user to the database
 
             $this->updateLastLogin($this->UserID);
+
+            // Add new signup to default Mailchimp audiences (best-effort)
+            try {
+                $mailchimpRes = MailchimpService::subscribeSignupToDefaultAudiences($this->email, $this->username);
+                if (!($mailchimpRes['success'] ?? false)) {
+                    error_log('Mailchimp signup subscribe skipped/failed: ' . ($mailchimpRes['message'] ?? 'unknown'));
+                }
+            } catch (Exception $e) {
+                error_log('Mailchimp signup subscribe error: ' . $e->getMessage());
+            }
+
             // Send Confirmation email
             $notificationController = new NotificationController();
             $emailResult = $notificationController->SignUpVerificationRequest(

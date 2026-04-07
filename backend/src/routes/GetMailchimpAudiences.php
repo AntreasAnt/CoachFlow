@@ -37,6 +37,23 @@ try {
     }
     
     $serverPrefix = $parts[1];
+
+    // Determine default audiences from env
+    $defaultIds = [];
+    $csv = trim((string)($_ENV['MAILCHIMP_DEFAULT_AUDIENCE_IDS'] ?? ''));
+    if ($csv !== '') {
+        foreach (explode(',', $csv) as $part) {
+            $id = trim($part);
+            if ($id !== '') {
+                $defaultIds[] = $id;
+            }
+        }
+    }
+    $singleDefault = trim((string)($_ENV['MAILCHIMP_DEFAULT_AUDIENCE_ID'] ?? ''));
+    if ($singleDefault !== '') {
+        $defaultIds[] = $singleDefault;
+    }
+    $defaultIds = array_values(array_unique($defaultIds));
     
     // Fetch audiences (lists) from Mailchimp
     $ch = curl_init();
@@ -55,10 +72,12 @@ try {
         $data = json_decode($response, true);
         
         // Format audiences for frontend
-        $audiences = array_map(function($list) {
+        $audiences = array_map(function($list) use ($defaultIds) {
+            $isDefault = in_array($list['id'], $defaultIds, true);
             return [
                 'id' => $list['id'],
                 'name' => $list['name'],
+                'is_default' => $isDefault,
                 'member_count' => $list['stats']['member_count'] ?? 0,
                 'unsubscribe_count' => $list['stats']['unsubscribe_count'] ?? 0,
                 'cleaned_count' => $list['stats']['cleaned_count'] ?? 0,

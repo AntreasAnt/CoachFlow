@@ -2,6 +2,8 @@
 header('Content-Type: application/json');
 include_once("../config/cors.php");
 include_once("../config/Auth.php");
+require_once(__DIR__ . '/../services/MailchimpService.php');
+require_once(__DIR__ . '/../config/Database.php');
 
 // Only admins can add Mailchimp subscribers
 checkAuth(['admin']);
@@ -25,116 +27,90 @@ if (!isset($data['audienceId']) || empty($data['audienceId'])) {
     ]);
     exit;
 }
-
-if (!isset($data['email']) || empty($data['email']) || !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'Valid email address is required'
-    ]);
-    exit;
-}
-
 $audienceId = trim($data['audienceId']);
-$email = trim($data['email']);
-$firstName = isset($data['firstName']) ? trim($data['firstName']) : '';
-$lastName = isset($data['lastName']) ? trim($data['lastName']) : '';
-$status = isset($data['status']) ? trim($data['status']) : 'subscribed'; // subscribed, pending, unsubscribed
+
+$userId = isset($data['userId']) ? trim((string)$data['userId']) : '';
+$email = isset($data['email']) ? trim((string)$data['email']) : '';
+$firstName = isset($data['firstName']) ? trim((string)$data['firstName']) : '';
+$lastName = isset($data['lastName']) ? trim((string)$data['lastName']) : '';
 
 try {
-    // Get API key from environment variables
-    $apiKey = $_ENV['MAILCHIMP_API_KEY'] ?? null;
-    
-    if (!$apiKey || $apiKey === 'your_mailchimp_api_key_here-us1') {
+    if (!MailchimpService::isConfigured()) {
         echo json_encode([
             'success' => false,
             'message' => 'No Mailchimp API key configured in .env file'
         ]);
         exit;
     }
-    
-    // Extract server prefix from API key
-    $parts = explode('-', $apiKey);
-    if (count($parts) !== 2) {
+
+    // If a userId is provided, lookup email/name from existing users (preferred flow).
+    if ($userId !== '') {
+        $conn = (new Database())->connect();
+        $stmt = $conn->prepare("SELECT email, full_name, username FROM user WHERE userid = ? AND isdeleted = 0 LIMIT 1");
+        $stmt->bind_param('s', $userId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $row = $res ? $res->fetch_assoc() : null;
+        $stmt->close();
+
+        if (!$row || empty($row['email'])) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'User not found or missing email'
+            ]);
+            exit;
+        }
+
+        $email = trim((string)$row['email']);
+        $fullName = trim((string)($row['full_name'] ?? ''));
+        $username = trim((string)($row['username'] ?? ''));
+
+        if ($fullName !== '' && ($firstName === '' && $lastName === '')) {
+            $parts = preg_split('/\s+/', $fullName);
+            $firstName = $parts[0] ?? '';
+            $lastName = count($parts) > 1 ? implode(' ', array_slice($parts, 1)) : '';
+        }
+
+        if ($firstName === '' && $username !== '') {
+            $firstName = $username;
+        }
+    }
+
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         echo json_encode([
             'success' => false,
-            'message' => 'Invalid API key format in .env file'
+            'message' => 'Valid email address is required'
         ]);
         exit;
     }
-    
-    $serverPrefix = $parts[1];
-    
-    // Prepare member data
-    $memberData = [
-        'email_address' => $email,
-        'status' => $status,
-    ];
-    
-    // Add merge fields if provided
-    if (!empty($firstName) || !empty($lastName)) {
-        $memberData['merge_fields'] = [];
-        if (!empty($firstName)) {
-            $memberData['merge_fields']['FNAME'] = $firstName;
-        }
-        if (!empty($lastName)) {
-            $memberData['merge_fields']['LNAME'] = $lastName;
-        }
+
+    $mergeFields = [];
+    if ($firstName !== '') {
+        $mergeFields['FNAME'] = $firstName;
     }
-    
-    // Add member to Mailchimp audience
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "https://{$serverPrefix}.api.mailchimp.com/3.0/lists/{$audienceId}/members");
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($memberData));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Authorization: Bearer ' . $apiKey,
-        'Content-Type: application/json'
-    ]);
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlError = curl_error($ch);
-    curl_close($ch);
-    
-    if ($curlError) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to connect to Mailchimp API: ' . $curlError
-        ]);
-        exit;
+    if ($lastName !== '') {
+        $mergeFields['LNAME'] = $lastName;
     }
-    
-    $responseData = json_decode($response, true);
-    
-    if ($httpCode === 200 || $httpCode === 201) {
+
+    $result = MailchimpService::upsertMember($audienceId, $email, $mergeFields);
+    if ($result['success'] ?? false) {
+        $responseData = $result['data'] ?? [];
         echo json_encode([
             'success' => true,
             'message' => 'Subscriber added successfully',
             'data' => [
                 'email' => $responseData['email_address'] ?? $email,
-                'status' => $responseData['status'] ?? $status,
+                'status' => $responseData['status'] ?? 'subscribed',
                 'id' => $responseData['id'] ?? null
             ]
         ]);
-    } else {
-        $errorMessage = 'Failed to add subscriber';
-        
-        if (isset($responseData['title']) && isset($responseData['detail'])) {
-            $errorMessage = $responseData['title'] . ': ' . $responseData['detail'];
-        } elseif (isset($responseData['title'])) {
-            $errorMessage = $responseData['title'];
-        } elseif (isset($responseData['detail'])) {
-            $errorMessage = $responseData['detail'];
-        }
-        
-        echo json_encode([
-            'success' => false,
-            'message' => $errorMessage,
-            'httpCode' => $httpCode,
-            'response' => $responseData
-        ]);
+        exit;
     }
+
+    echo json_encode([
+        'success' => false,
+        'message' => $result['message'] ?? 'Failed to add subscriber'
+    ]);
     
 } catch (Exception $e) {
     echo json_encode([
