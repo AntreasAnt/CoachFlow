@@ -64,6 +64,23 @@ try {
         $updateData['weight'] = is_numeric($inputData['weight']) ? (float)$inputData['weight'] : null;
     }
     
+    $bodyCompUpdates = [];
+    if (isset($inputData['body_fat'])) {
+        $bodyCompUpdates['body_fat_percentage'] = is_numeric($inputData['body_fat']) ? (float)$inputData['body_fat'] : null;
+    }
+    if (isset($inputData['muscle_mass'])) {
+        $bodyCompUpdates['muscle_mass_kg'] = is_numeric($inputData['muscle_mass']) ? (float)$inputData['muscle_mass'] : null;
+    }
+    if (isset($inputData['chest'])) {
+        $bodyCompUpdates['chest_cm'] = is_numeric($inputData['chest']) ? (float)$inputData['chest'] : null;
+    }
+    if (isset($inputData['waist'])) {
+        $bodyCompUpdates['waist_cm'] = is_numeric($inputData['waist']) ? (float)$inputData['waist'] : null;
+    }
+    if (isset($inputData['hips'])) {
+        $bodyCompUpdates['hips_cm'] = is_numeric($inputData['hips']) ? (float)$inputData['hips'] : null;
+    }
+    
     if (isset($inputData['age'])) {
         $ageValue = trim($inputData['age']);
         if (empty($ageValue)) {
@@ -119,23 +136,35 @@ try {
 
     // Update the user profile
     if ($userModel->updateUserProfile($userId, $updateData)) {
-        // Keep body measurements in sync when profile weight is edited
-        if (array_key_exists('weight', $updateData) && $updateData['weight'] !== null) {
+        // Keep body measurements in sync when profile weight or comp is edited
+        if (array_key_exists('weight', $updateData) || !empty($bodyCompUpdates)) {
             try {
-                $weightValue = (float)$updateData['weight'];
+                $weightValue = isset($updateData['weight']) ? (float)$updateData['weight'] : null;
+                $bfValue = isset($bodyCompUpdates['body_fat_percentage']) ? $bodyCompUpdates['body_fat_percentage'] : null;
+                $mmValue = isset($bodyCompUpdates['muscle_mass_kg']) ? $bodyCompUpdates['muscle_mass_kg'] : null;
+                $cValue = isset($bodyCompUpdates['chest_cm']) ? $bodyCompUpdates['chest_cm'] : null;
+                $wValue = isset($bodyCompUpdates['waist_cm']) ? $bodyCompUpdates['waist_cm'] : null;
+                $hValue = isset($bodyCompUpdates['hips_cm']) ? $bodyCompUpdates['hips_cm'] : null;
+
                 $syncStmt = $userModel->conn->prepare(
-                    "INSERT INTO body_measurements (user_id, measurement_date, weight_kg)
-                     VALUES (?, CURDATE(), ?)
-                     ON DUPLICATE KEY UPDATE weight_kg = VALUES(weight_kg)"
+                    "INSERT INTO body_measurements (user_id, measurement_date, weight_kg, body_fat_percentage, muscle_mass_kg, chest_cm, waist_cm, hips_cm)
+                     VALUES (?, CURDATE(), COALESCE(?, (SELECT weight_kg FROM body_measurements bm2 WHERE bm2.user_id = ? ORDER BY measurement_date DESC LIMIT 1)), ?, ?, ?, ?, ?)
+                     ON DUPLICATE KEY UPDATE 
+                        weight_kg = COALESCE(VALUES(weight_kg), weight_kg),
+                        body_fat_percentage = COALESCE(VALUES(body_fat_percentage), body_fat_percentage),
+                        muscle_mass_kg = COALESCE(VALUES(muscle_mass_kg), muscle_mass_kg),
+                        chest_cm = COALESCE(VALUES(chest_cm), chest_cm),
+                        waist_cm = COALESCE(VALUES(waist_cm), waist_cm),
+                        hips_cm = COALESCE(VALUES(hips_cm), hips_cm)"
                 );
 
                 if ($syncStmt) {
-                    $syncStmt->bind_param("id", $userId, $weightValue);
+                    $syncStmt->bind_param("ididdddd", $userId, $weightValue, $userId, $bfValue, $mmValue, $cValue, $wValue, $hValue);
                     $syncStmt->execute();
                     $syncStmt->close();
                 }
             } catch (Exception $e) {
-                error_log("UpdateUserProfile weight sync failed: " . $e->getMessage());
+                error_log("UpdateUserProfile body comp sync failed: " . $e->getMessage());
             }
         }
 

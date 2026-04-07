@@ -244,9 +244,36 @@ class AnalyticsModel
             $frequency[] = $row;
         }
 
+        // Calculate active days and weeks
+        $start = new \DateTime($startDate);
+        $end = new \DateTime($endDate);
+        $diff = $start->diff($end);
+        $days = $diff->days ?: 1; // Prevent division by zero
+        $weeks = max(1, $days / 7);
+
+        // Get active days
+        $activeDaysQuery = "SELECT COUNT(DISTINCT DATE(session_date)) as active_days
+                             FROM workout_sessions
+                             WHERE user_id = ? AND session_date BETWEEN ? AND ?";
+        $stmt = $this->conn->prepare($activeDaysQuery);
+        $stmt->bind_param("iss", $userId, $startDate, $endDate);
+        $stmt->execute();
+        $activeDaysResult = $stmt->get_result()->fetch_assoc();
+        $activeDays = $activeDaysResult['active_days'] ?? 0;
+
+        $workoutsPerWeek = round($activeDays / $weeks, 1);
+        // Simple adherence calculation based on active days vs total days in period, assuming a 3-4 days/week goal approx
+        // Alternatively, if they have a target, use that. For now, max 100% based on an assumption of 4 workouts a week being 100%
+        $targetDaysPerWeek = 4;
+        $targetTotalDays = $weeks * $targetDaysPerWeek;
+        $adherencePercentage = min(100, $targetTotalDays > 0 ? round(($activeDays / $targetTotalDays) * 100) : 0);
+
         return [
             'streaks' => $streaks,
-            'frequency_by_day' => $frequency
+            'frequency_by_day' => $frequency,
+            'active_days' => $activeDays,
+            'workouts_per_week' => $workoutsPerWeek,
+            'adherence_percentage' => $adherencePercentage
         ];
     }
 

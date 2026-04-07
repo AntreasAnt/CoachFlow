@@ -318,6 +318,11 @@ const HomePage = () => {
   const [recentSessions, setRecentSessions] = useState([]);
   const [coach, setCoach] = useState(null);
   const [weightValue, setWeightValue] = useState('');
+  const [bodyFatValue, setBodyFatValue] = useState('');
+  const [muscleMassValue, setMuscleMassValue] = useState('');
+  const [chestValue, setChestValue] = useState('');
+  const [waistValue, setWaistValue] = useState('');
+  const [hipsValue, setHipsValue] = useState('');
   const [quickFood, setQuickFood] = useState(EMPTY_QUICK_FOOD);
   const [foodSearchQuery, setFoodSearchQuery] = useState('');
   const [foodSearchResults, setFoodSearchResults] = useState(EMPTY_SEARCH_RESULT);
@@ -718,12 +723,38 @@ const HomePage = () => {
 
     try {
       setSavingWeight(true);
-      const response = await APIClient.post(`${BACKEND_ROUTES_API}QuickLogWeight.php`, {
-        weight: parsedWeight,
-      });
+      
+      const payload = { weight: parsedWeight };
+      
+      const parsedFat = Number.parseFloat(bodyFatValue);
+      if (Number.isFinite(parsedFat) && parsedFat > 0) {
+        payload.body_fat = parsedFat;
+      }
+      
+      const parsedMuscle = Number.parseFloat(muscleMassValue);
+      if (Number.isFinite(parsedMuscle) && parsedMuscle > 0) {
+        payload.muscle_mass = parsedMuscle;
+      }
+      
+      const parsedChest = Number.parseFloat(chestValue);
+      if (Number.isFinite(parsedChest) && parsedChest > 0) {
+        payload.chest_cm = parsedChest;
+      }
+      
+      const parsedWaist = Number.parseFloat(waistValue);
+      if (Number.isFinite(parsedWaist) && parsedWaist > 0) {
+        payload.waist_cm = parsedWaist;
+      }
+      
+      const parsedHips = Number.parseFloat(hipsValue);
+      if (Number.isFinite(parsedHips) && parsedHips > 0) {
+        payload.hips_cm = parsedHips;
+      }
+
+      const response = await APIClient.post(`${BACKEND_ROUTES_API}QuickLogWeight.php`, payload);
 
       if (!response.success) {
-        throw new Error(response.message || 'Failed to log weight');
+        throw new Error(response.message || 'Failed to log body composition');
       }
 
       setStats((previous) => ({
@@ -733,7 +764,12 @@ const HomePage = () => {
         change_type: response.data?.change_type || previous.change_type,
       }));
       setWeightValue('');
-      showFlash('weight', 'success', 'Weight logged.');
+      setBodyFatValue('');
+      setMuscleMassValue('');
+      setChestValue('');
+      setWaistValue('');
+      setHipsValue('');
+      showFlash('weight', 'success', 'Body composition logged.');
     } catch (submitError) {
       console.error('Error logging weight:', submitError);
       showFlash('weight', 'danger', submitError.message || 'Failed to log weight.');
@@ -1308,8 +1344,8 @@ const HomePage = () => {
                   <div className="card-body p-4">
                     <div className="d-flex align-items-start justify-content-between gap-3 mb-3">
                       <div>
-                        <h5 className="mb-1" style={{ color: 'var(--brand-white)', fontWeight: 700 }}>Quick weight log</h5>
-                        <p className="small mb-0" style={mutedTextStyle}>Save today&apos;s weight.</p>
+                        <h5 className="mb-1" style={{ color: 'var(--brand-white)', fontWeight: 700 }}>Quick Log</h5>
+                        <p className="small mb-0" style={mutedTextStyle}>Save today&apos;s body composition.</p>
                       </div>
                       <i className="bi bi-speedometer2" style={{ color: 'var(--brand-primary)' }}></i>
                     </div>
@@ -1322,13 +1358,14 @@ const HomePage = () => {
                     </div>
 
                     <form onSubmit={handleWeightSubmit}>
-                      <div className="row g-2 align-items-center">
-                        <div className="col-8 col-sm-9">
-                          <label className="form-label small" style={{ color: 'var(--brand-white)' }}>Weight (kg)</label>
+                      <div className="row g-2 align-items-center mb-3">
+                        <div className="col-12">
+                          <label className="form-label small" style={{ color: 'var(--brand-white)' }}>Weight (kg) *</label>
                           <input
                             type="number"
                             min="1"
                             step="0.1"
+                            required
                             className="form-control"
                             value={weightValue}
                             onChange={(event) => setWeightValue(event.target.value)}
@@ -1340,14 +1377,98 @@ const HomePage = () => {
                             }}
                           />
                         </div>
-                        <div className="col-4 col-sm-3">
-                          <label
-                            className="form-label small"
-                            style={{ visibility: 'hidden' }}
-                            aria-hidden="true"
-                          >
-                            Action
-                          </label>
+                      </div>
+                      <div className="row g-2 align-items-center mb-3">
+                        <div className="col-6">
+                          <label className="form-label small" style={{ color: 'var(--brand-white)' }}>Fat (%)</label>
+                          <input
+                            type="number"
+                            min="0.1"
+                            step="0.1"
+                            className="form-control"
+                            value={bodyFatValue}
+                            onChange={(event) => setBodyFatValue(event.target.value)}
+                            placeholder="e.g. 15"
+                            style={{
+                              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              color: 'var(--brand-white)',
+                            }}
+                          />
+                        </div>
+                        <div className="col-6">
+                          <label className="form-label small" style={{ color: 'var(--brand-white)' }}>Muscle (kg)</label>
+                          <input
+                            type="number"
+                            min="1"
+                            step="0.1"
+                            className="form-control"
+                            value={muscleMassValue}
+                            onChange={(event) => setMuscleMassValue(event.target.value)}
+                            placeholder="e.g. 35"
+                            style={{
+                              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              color: 'var(--brand-white)',
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className="row g-2 align-items-center mb-3">
+                        <div className="col-4">
+                          <label className="form-label small" style={{ color: 'var(--brand-white)' }}>Chest (cm)</label>
+                          <input
+                            type="number"
+                            min="1"
+                            step="0.1"
+                            className="form-control"
+                            value={chestValue}
+                            onChange={(event) => setChestValue(event.target.value)}
+                            placeholder="e.g. 100"
+                            style={{
+                              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              color: 'var(--brand-white)',
+                            }}
+                          />
+                        </div>
+                        <div className="col-4">
+                          <label className="form-label small" style={{ color: 'var(--brand-white)' }}>Waist (cm)</label>
+                          <input
+                            type="number"
+                            min="1"
+                            step="0.1"
+                            className="form-control"
+                            value={waistValue}
+                            onChange={(event) => setWaistValue(event.target.value)}
+                            placeholder="e.g. 85"
+                            style={{
+                              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              color: 'var(--brand-white)',
+                            }}
+                          />
+                        </div>
+                        <div className="col-4">
+                          <label className="form-label small" style={{ color: 'var(--brand-white)' }}>Hips (cm)</label>
+                          <input
+                            type="number"
+                            min="1"
+                            step="0.1"
+                            className="form-control"
+                            value={hipsValue}
+                            onChange={(event) => setHipsValue(event.target.value)}
+                            placeholder="e.g. 95"
+                            style={{
+                              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              color: 'var(--brand-white)',
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className="row g-2">
+                        <div className="col-12">
                           <button
                             type="submit"
                             className="btn w-100"
@@ -1359,7 +1480,7 @@ const HomePage = () => {
                               fontWeight: 700,
                             }}
                           >
-                            {savingWeight ? 'Saving...' : 'Save'}
+                            {savingWeight ? 'Saving...' : 'Save Measurements'}
                           </button>
                         </div>
                       </div>

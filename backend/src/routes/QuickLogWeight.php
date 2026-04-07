@@ -17,16 +17,19 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $data = json_decode(file_get_contents('php://input'), true);
 
-if (!isset($data['weight']) || empty($data['weight'])) {
+$userId = $_SESSION['user_id'];
+$weight = isset($data['weight']) && !empty($data['weight']) ? floatval($data['weight']) : null;
+$bodyFat = isset($data['body_fat']) ? floatval($data['body_fat']) : null;
+$muscleMass = isset($data['muscle_mass']) ? floatval($data['muscle_mass']) : null;
+$chest = isset($data['chest_cm']) ? floatval($data['chest_cm']) : null;
+$waist = isset($data['waist_cm']) ? floatval($data['waist_cm']) : null;
+$hips = isset($data['hips_cm']) ? floatval($data['hips_cm']) : null;
+
+if ($weight === null) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Weight is required']);
     exit;
 }
-
-$userId = $_SESSION['user_id'];
-$weight = floatval($data['weight']);
-$bodyFat = isset($data['body_fat']) ? floatval($data['body_fat']) : null;
-$muscleMass = isset($data['muscle_mass']) ? floatval($data['muscle_mass']) : null;
 
 try {
     $db = new Database();
@@ -34,16 +37,18 @@ try {
 
     // Insert new measurement
     $query = "INSERT INTO body_measurements 
-              (user_id, measurement_date, weight_kg, body_fat_percentage, muscle_mass_kg) 
-              VALUES (?, CURDATE(), ?, ?, ?)
+              (user_id, measurement_date, weight_kg, body_fat_percentage, muscle_mass_kg, chest_cm, waist_cm, hips_cm)
+              VALUES (?, CURDATE(), ?, ?, ?, ?, ?, ?)
               ON DUPLICATE KEY UPDATE 
               weight_kg = VALUES(weight_kg),
               body_fat_percentage = VALUES(body_fat_percentage),
-              muscle_mass_kg = VALUES(muscle_mass_kg)";
+              muscle_mass_kg = VALUES(muscle_mass_kg),
+              chest_cm = VALUES(chest_cm),
+              waist_cm = VALUES(waist_cm),
+              hips_cm = VALUES(hips_cm)";
 
     $stmt = $conn->prepare($query);
-    $stmt->bind_param('iddd', $userId, $weight, $bodyFat, $muscleMass);
-    
+    $stmt->bind_param('idddddd', $userId, $weight, $bodyFat, $muscleMass, $chest, $waist, $hips);
     $stmt->execute();
 
     // Keep profile table weight in sync with quick logs

@@ -26,6 +26,11 @@ const ProfilePage = () => {
     // Physical Info
     height: '',
     weight: '',
+    body_fat: '',
+    muscle_mass: '',
+    chest: '',
+    waist: '',
+    hips: '',
     age: '',
     sex: '',
     
@@ -80,6 +85,8 @@ const ProfilePage = () => {
     if (currentUser?.role === 'trainee') {
       addField('height', 'Height', profileData.height);
       addField('weight', 'Weight', profileData.weight);
+      addField('body_fat', 'Body Fat %', profileData.body_fat);
+      addField('muscle_mass', 'Muscle Mass (kg)', profileData.muscle_mass);
       addField('fitness_goals', 'Fitness goals', profileData.fitness_goals);
       addField('experience_level', 'Experience level', profileData.experience_level);
     }
@@ -272,6 +279,11 @@ const ProfilePage = () => {
               // Physical Info
               height: user.height || '',
               weight: user.weight || '',
+              body_fat: user.body_fat || '',
+              muscle_mass: user.muscle_mass || '',
+              chest: user.chest || '',
+              waist: user.waist || '',
+              hips: user.hips || '',
               age: user.age || '',
               sex: user.sex || '',
               
@@ -851,7 +863,7 @@ const ProfilePage = () => {
                 </div>
                 <div className="card-body p-4">
                   <div className="row g-4">
-                    <div className="col-md-6">
+                    <div className="col-md-4">
                       <label className="form-label fw-medium text-white-50 small">Height (cm)</label>
                       {isEditing ? (
                         <input
@@ -867,7 +879,7 @@ const ProfilePage = () => {
                         <p className="mb-0 text-white fw-medium">{profileData.height ? `${profileData.height} cm` : 'Not set'}</p>
                       )}
                     </div>
-                    <div className="col-md-6">
+                    <div className="col-md-4">
                       <label className="form-label fw-medium text-white-50 small">Weight (kg)</label>
                       {isEditing ? (
                         <input
@@ -883,7 +895,81 @@ const ProfilePage = () => {
                         <p className="mb-0 text-white fw-medium">{profileData.weight ? `${profileData.weight} kg` : 'Not set'}</p>
                       )}
                     </div>
-                    <div className="col-md-6">
+                    <div className="col-md-4">
+                      <label className="form-label fw-medium text-white-50 small">Body Fat %</label>
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          className="form-control modern-input"
+                          value={editData.body_fat || ''}
+                          onChange={(e) => setEditData({...editData, body_fat: e.target.value})}
+                          placeholder="15"
+                          min="1"
+                          max="80"
+                        />
+                      ) : (
+                        <p className="mb-0 text-white fw-medium">{profileData.body_fat ? `${profileData.body_fat}%` : 'Not set'}</p>
+                      )}
+                    </div>
+                    <div className="col-md-4">
+                      <label className="form-label fw-medium text-white-50 small">Muscle Mass (kg)</label>
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          className="form-control modern-input"
+                          value={editData.muscle_mass || ''}
+                          onChange={(e) => setEditData({...editData, muscle_mass: e.target.value})}
+                          placeholder="35"
+                          min="1"
+                          max="150"
+                        />
+                      ) : (
+                        <p className="mb-0 text-white fw-medium">{profileData.muscle_mass ? `${profileData.muscle_mass} kg` : 'Not set'}</p>
+                      )}
+                    </div>
+                    <div className="col-md-4">
+                      <label className="form-label fw-medium text-white-50 small">Chest (cm)</label>
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          className="form-control modern-input"
+                          value={editData.chest || ''}
+                          onChange={(e) => setEditData({...editData, chest: e.target.value})}
+                          placeholder="100"
+                        />
+                      ) : (
+                        <p className="mb-0 text-white fw-medium">{profileData.chest ? `${profileData.chest} cm` : 'Not set'}</p>
+                      )}
+                    </div>
+                    <div className="col-md-4">
+                      <label className="form-label fw-medium text-white-50 small">Waist (cm)</label>
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          className="form-control modern-input"
+                          value={editData.waist || ''}
+                          onChange={(e) => setEditData({...editData, waist: e.target.value})}
+                          placeholder="85"
+                        />
+                      ) : (
+                        <p className="mb-0 text-white fw-medium">{profileData.waist ? `${profileData.waist} cm` : 'Not set'}</p>
+                      )}
+                    </div>
+                    <div className="col-md-4">
+                      <label className="form-label fw-medium text-white-50 small">Hips (cm)</label>
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          className="form-control modern-input"
+                          value={editData.hips || ''}
+                          onChange={(e) => setEditData({...editData, hips: e.target.value})}
+                          placeholder="95"
+                        />
+                      ) : (
+                        <p className="mb-0 text-white fw-medium">{profileData.hips ? `${profileData.hips} cm` : 'Not set'}</p>
+                      )}
+                    </div>
+                    <div className="col-md-4">
                       <label className="form-label fw-medium text-white-50 small">Fitness Goals</label>
                       {isEditing ? (
                         <input
@@ -897,7 +983,7 @@ const ProfilePage = () => {
                         <p className="mb-0 text-white fw-medium">{profileData.fitness_goals || 'Not set'}</p>
                       )}
                     </div>
-                    <div className="col-md-6">
+                    <div className="col-md-4">
                       <label className="form-label fw-medium text-white-50 small">Experience Level</label>
                       {isEditing ? (
                         <select

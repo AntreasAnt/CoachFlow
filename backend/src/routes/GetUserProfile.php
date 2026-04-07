@@ -38,21 +38,31 @@ if ($requestedUsername) {
 $user = $userModel->getprofileById($targetUserId);
 
 if ($user) {
-    // Prefer latest logged body measurement weight so profile matches dashboard quick log
+    // Prefer latest logged body measurement so profile matches dashboard quick log
     $latestLoggedWeight = null;
+    $latestBf = null;
+    $latestMm = null;
+    $latestChest = null;
+    $latestWaist = null;
+    $latestHips = null;
     try {
-        $weightStmt = $userModel->conn->prepare("SELECT weight_kg FROM body_measurements WHERE user_id = ? ORDER BY measurement_date DESC LIMIT 1");
+        $weightStmt = $userModel->conn->prepare("SELECT * FROM body_measurements WHERE user_id = ? ORDER BY measurement_date DESC LIMIT 1");
         if ($weightStmt) {
             $weightStmt->bind_param("i", $targetUserId);
             $weightStmt->execute();
             $weightResult = $weightStmt->get_result()->fetch_assoc();
-            if ($weightResult && isset($weightResult['weight_kg'])) {
-                $latestLoggedWeight = (float)$weightResult['weight_kg'];
+            if ($weightResult) {
+                if (isset($weightResult['weight_kg'])) $latestLoggedWeight = (float)$weightResult['weight_kg'];
+                if (isset($weightResult['body_fat_percentage'])) $latestBf = (float)$weightResult['body_fat_percentage'];
+                if (isset($weightResult['muscle_mass_kg'])) $latestMm = (float)$weightResult['muscle_mass_kg'];
+                if (isset($weightResult['chest_cm'])) $latestChest = (float)$weightResult['chest_cm'];
+                if (isset($weightResult['waist_cm'])) $latestWaist = (float)$weightResult['waist_cm'];
+                if (isset($weightResult['hips_cm'])) $latestHips = (float)$weightResult['hips_cm'];
             }
             $weightStmt->close();
         }
     } catch (Exception $e) {
-        error_log("GetUserProfile latest weight lookup failed: " . $e->getMessage());
+        error_log("GetUserProfile latest measurements lookup failed: " . $e->getMessage());
     }
 
     // Calculate member since date
@@ -74,6 +84,11 @@ if ($user) {
         // Physical info
         'height' => $user['height'],
         'weight' => $latestLoggedWeight !== null ? $latestLoggedWeight : $user['weight'],
+        'body_fat' => $latestBf,
+        'muscle_mass' => $latestMm,
+        'chest' => $latestChest,
+        'waist' => $latestWaist,
+        'hips' => $latestHips,
         'age' => $user['age'],
         'sex' => $user['sex'],
         

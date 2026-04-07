@@ -651,11 +651,8 @@ const AnalyticsDashboard = () => {
               <div className="card border-0 shadow-sm dark-card">
                 <div className="card-body text-center py-5">
                   <i className="bi bi-person-badge display-1 text-white-50"></i>
-                  <h5 className="mt-3">No Body Composition Data</h5>
+                  <h5 className="mt-3 text-white">No Body Composition Data</h5>
                   <p className="text-white-50">Start logging your weight and measurements to track your body composition progress</p>
-                  <button className="btn btn-primary" onClick={() => navigate('/progress')}>
-                    <i className="bi bi-plus-circle me-2"></i>Add Measurement
-                  </button>
                 </div>
               </div>
             )}
