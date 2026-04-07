@@ -208,8 +208,8 @@ const AnalyticsDashboard = () => {
                     <div className="d-flex justify-content-between align-items-center gap-2">
                       <div className="text-truncate">
                         <p className="text-white-50 mb-1 small text-truncate">Total Volume</p>
-                        <h3 className="mb-0 text-white text-truncate" title={`${(overview.total_volume_kg || 0).toLocaleString()}kg`}>
-                          {(overview.total_volume_kg || 0).toLocaleString()}kg
+                        <h3 className="mb-0 text-white text-truncate" title={`${Number(overview.total_volume_kg || 0).toLocaleString()}kg`}>
+                          {Number(overview.total_volume_kg || 0) >= 1000 ? `${(Number(overview.total_volume_kg || 0) / 1000).toFixed(1)}k` : Number(overview.total_volume_kg || 0).toLocaleString()} kg
                         </h3>
                       </div>
                       <div className="bg-success bg-opacity-10 p-3 rounded flex-shrink-0">
@@ -225,7 +225,7 @@ const AnalyticsDashboard = () => {
                     <div className="d-flex justify-content-between align-items-center gap-2">
                       <div className="text-truncate">
                         <p className="text-white-50 mb-1 small text-truncate">Avg RPE</p>
-                        <h3 className="mb-0 text-white">{(overview.avg_rpe || 0).toFixed(1)}</h3>
+                        <h3 className="mb-0 text-white">{Number(overview.avg_rpe || 0).toFixed(1)}</h3>
                       </div>
                       <div className="bg-warning bg-opacity-10 p-3 rounded flex-shrink-0">
                         <i className="bi bi-speedometer text-warning fs-4"></i>
@@ -347,12 +347,12 @@ const AnalyticsDashboard = () => {
                                   </small>
                                 </td>
                                 <td><strong>{week.total_workouts || 0}</strong></td>
-                                <td><strong>{(week.total_volume_kg || 0).toLocaleString()} kg</strong></td>
+                                <td><strong>{Number(week.total_volume_kg || 0).toLocaleString()} kg</strong></td>
                                 <td>{week.total_sets || 0}</td>
-                                <td>{(week.total_reps || 0).toLocaleString()}</td>
+                                <td>{Number(week.total_reps || 0).toLocaleString()}</td>
                                 <td>
-                                  <span className={`badge ${week.avg_rpe >= 8 ? 'bg-danger' : week.avg_rpe >= 6 ? 'bg-warning' : 'bg-success'}`}>
-                                    {(week.avg_rpe || 0).toFixed(1)}
+                                  <span className={`badge ${Number(week.avg_rpe) >= 8 ? 'bg-danger' : Number(week.avg_rpe) >= 6 ? 'bg-warning' : 'bg-success'}`}>
+                                    {Number(week.avg_rpe || 0).toFixed(1)}
                                   </span>
                                 </td>
                                 <td>{week.total_duration_minutes || 0} min</td>
@@ -413,7 +413,7 @@ const AnalyticsDashboard = () => {
                     <h6 className="text-white-50 mb-3">Consistency</h6>
                     <div className="d-flex justify-content-between mb-2">
                       <span className="text-white-50">Workouts/Week:</span>
-                      <strong className="text-white">{consistency.workouts_per_week ? consistency.workouts_per_week.toFixed(1) : 0}</strong>
+                      <strong className="text-white">{consistency.workouts_per_week ? Number(consistency.workouts_per_week).toFixed(1) : 0}</strong>
                     </div>
                     <div className="d-flex justify-content-between mb-2">
                       <span className="text-white-50">Active Days:</span>
@@ -538,7 +538,7 @@ const AnalyticsDashboard = () => {
                   <div className="col-12">
                     <div className="card border-0 shadow-sm dark-card">
                       <div className="card-header dark-card border-0">
-                        <h5 className="mb-0">Weight Progress</h5>
+                        <h5 className="mb-0 text-white">Weight Progress</h5>
                       </div>
                       <div className="card-body">
                         <ResponsiveContainer width="100%" height={300}>
@@ -561,7 +561,7 @@ const AnalyticsDashboard = () => {
                   <div className="col-md-6">
                     <div className="card border-0 shadow-sm dark-card">
                       <div className="card-header dark-card border-0">
-                        <h5 className="mb-0">Body Fat %</h5>
+                        <h5 className="mb-0 text-white">Body Fat %</h5>
                       </div>
                       <div className="card-body">
                         {bodyCompositionData.some(d => d.body_fat_percentage) ? (
@@ -584,7 +584,7 @@ const AnalyticsDashboard = () => {
                   <div className="col-md-6">
                     <div className="card border-0 shadow-sm dark-card">
                       <div className="card-header dark-card border-0">
-                        <h5 className="mb-0">Muscle Mass</h5>
+                        <h5 className="mb-0 text-white">Muscle Mass</h5>
                       </div>
                       <div className="card-body">
                         {bodyCompositionData.some(d => d.muscle_mass_kg) ? (
@@ -611,32 +611,32 @@ const AnalyticsDashboard = () => {
                   <div className="col-12">
                     <div className="card border-0 shadow-sm dark-card">
                       <div className="card-header dark-card border-0">
-                        <h5 className="mb-0">Recent Measurements</h5>
+                        <h5 className="mb-0 text-white">Recent Measurements</h5>
                       </div>
                       <div className="card-body">
                         <div className="table-responsive">
-                          <table className="table table-hover">
+                          <table className="table table-hover text-white">
                             <thead>
                               <tr>
-                                <th>Date</th>
-                                <th>Weight (kg)</th>
-                                <th>Body Fat %</th>
-                                <th>Muscle Mass (kg)</th>
-                                <th>Chest (cm)</th>
-                                <th>Waist (cm)</th>
-                                <th>Hips (cm)</th>
+                                <th className="text-white">Date</th>
+                                <th className="text-white">Weight (kg)</th>
+                                <th className="text-white">Body Fat %</th>
+                                <th className="text-white">Muscle Mass (kg)</th>
+                                <th className="text-white">Chest (cm)</th>
+                                <th className="text-white">Waist (cm)</th>
+                                <th className="text-white">Hips (cm)</th>
                               </tr>
                             </thead>
                             <tbody>
                               {bodyCompositionData.slice(0, 10).map((measurement, index) => (
-                                <tr key={index}>
-                                  <td>{new Date(measurement.measurement_date).toLocaleDateString()}</td>
-                                  <td>{measurement.weight_kg || '-'}</td>
-                                  <td>{measurement.body_fat_percentage ? `${measurement.body_fat_percentage}%` : '-'}</td>
-                                  <td>{measurement.muscle_mass_kg || '-'}</td>
-                                  <td>{measurement.chest_cm || '-'}</td>
-                                  <td>{measurement.waist_cm || '-'}</td>
-                                  <td>{measurement.hips_cm || '-'}</td>
+                                <tr key={index} className="text-white-50">
+                                  <td className="text-white-50">{new Date(measurement.measurement_date).toLocaleDateString()}</td>
+                                  <td className="text-white-50">{measurement.weight_kg || '-'}</td>
+                                  <td className="text-white-50">{measurement.body_fat_percentage ? `${measurement.body_fat_percentage}%` : '-'}</td>
+                                  <td className="text-white-50">{measurement.muscle_mass_kg || '-'}</td>
+                                  <td className="text-white-50">{measurement.chest_cm || '-'}</td>
+                                  <td className="text-white-50">{measurement.waist_cm || '-'}</td>
+                                  <td className="text-white-50">{measurement.hips_cm || '-'}</td>
                                 </tr>
                               ))}
                             </tbody>

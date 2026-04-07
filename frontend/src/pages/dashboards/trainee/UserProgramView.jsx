@@ -10,6 +10,36 @@ const UserProgramView = () => {
   const [program, setProgram] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [ratingValue, setRatingValue] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+  const [submittingRating, setSubmittingRating] = useState(false);
+
+  const handleRateProgram = async () => {
+    if (ratingValue === 0) {
+      alert('Please select a rating from 1 to 5.');
+      return;
+    }
+    setSubmittingRating(true);
+    try {
+      const response = await APIClient.post(`${BACKEND_ROUTES_API}RateProgram.php`, {
+        programId: programId,
+        rating: ratingValue,
+        reviewText: reviewText
+      });
+      if (response.success) {
+        alert('Rating submitted successfully!');
+        setShowRatingModal(false);
+      } else {
+        alert(response.message || 'Failed to submit rating');
+      }
+    } catch (err) {
+      alert('Error submitting rating');
+    } finally {
+      setSubmittingRating(false);
+    }
+  };
 
   useEffect(() => {
     fetchProgramDetails();
@@ -140,6 +170,26 @@ const UserProgramView = () => {
               <div className="col-md-8">
                 <h5 className="mb-3" style={{ color: 'rgba(255,255,255,0.95)', fontWeight: '600' }}>About This Program</h5>
                 <p style={{ color: 'rgba(255,255,255,0.7)', lineHeight: '1.6' }}>{program.description || 'No description available'}</p>
+
+                <div className="mt-4 mb-4">
+                  {!showRatingModal ? (
+                    <button className="btn btn-sm" style={{ background: 'rgba(255, 193, 7, 0.2)', border: '1px solid rgba(255, 193, 7, 0.3)', color: '#ffc107', borderRadius: '0.5rem' }} onClick={() => setShowRatingModal(true)}>
+                      <i className="bi bi-star-fill me-2"></i>Rate this Program
+                    </button>
+                  ) : (
+                    <div className="p-3 mt-2" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem' }}>
+                      <h6 style={{color: 'rgba(255,255,255,0.9)'}}>Rate Program</h6>
+                      <div className="mb-3 d-flex gap-2">
+                        {[1, 2, 3, 4, 5].map(star => (
+                           <i key={star} className={`bi bi-star${ratingValue >= star ? '-fill' : ''}`} style={{ cursor: 'pointer', color: '#ffc107', fontSize: '1.5rem' }} onClick={() => setRatingValue(star)}></i>
+                        ))}
+                      </div>
+                      <textarea className="form-control mb-3" style={{ background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)' }} placeholder="Leave a review (optional)..." value={reviewText} onChange={(e) => setReviewText(e.target.value)}></textarea>
+                      <button className="btn btn-sm btn-success me-2" style={{ background: 'rgba(32, 214, 87, 0.8)', border: 'none' }} onClick={handleRateProgram} disabled={submittingRating}>{submittingRating ? 'Submitting...' : 'Submit Rating'}</button>
+                      <button className="btn btn-sm" style={{ border: '1px solid rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.7)' }} onClick={() => setShowRatingModal(false)}>Cancel</button>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="col-md-4">
                 <div className="mb-3">

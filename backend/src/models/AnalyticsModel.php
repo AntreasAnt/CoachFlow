@@ -749,8 +749,8 @@ class AnalyticsModel
     {
         try {
             $query = "SELECT 
-                        ws.program_id,
-                        COALESCE(wp.title, up.title, 'No Program') as program_name,
+                        ws.workout_plan_id as program_id,
+                        COALESCE(ws.plan_name, 'No Program') as program_name,
                         COUNT(DISTINCT ws.id) as total_workouts,
                         SUM(ws.duration_minutes) as total_minutes,
                         SUM(wel.weight_kg * wel.reps_completed) as total_volume_kg,
@@ -762,11 +762,9 @@ class AnalyticsModel
                         MAX(ws.session_date) as last_workout
                       FROM workout_sessions ws
                       LEFT JOIN workout_exercise_logs wel ON ws.id = wel.workout_session_id
-                      LEFT JOIN workout_programs wp ON ws.program_id = wp.id
-                      LEFT JOIN user_programs up ON ws.program_id = up.id
                       WHERE ws.user_id = ?
                         AND ws.session_date BETWEEN ? AND ?
-                      GROUP BY ws.program_id, program_name
+                      GROUP BY ws.workout_plan_id, program_name
                       ORDER BY total_workouts DESC";
 
             $stmt = $this->conn->prepare($query);

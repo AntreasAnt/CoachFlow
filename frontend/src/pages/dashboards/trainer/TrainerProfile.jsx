@@ -145,6 +145,10 @@ const TrainerProfile = () => {
   };
 
   const addSpecialization = () => {
+    if (profile.specializations.length >= 3) {
+      alert('You can only add a maximum of 3 specializations.');
+      return;
+    }
     if (newSpecialization.trim()) {
       setProfile({
         ...profile,

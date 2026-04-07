@@ -13,8 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 try {
-    // Check authentication
-    $userId = checkAuth();
+    checkAuth(['trainee', 'trainer', 'admin']);
+    $userId = $_SESSION['user_id'] ?? null;
     if (!$userId) {
         throw new Exception('Authentication required');
     }

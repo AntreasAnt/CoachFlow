@@ -65,6 +65,14 @@ try {
     $phone = $input['phone'] ?? '';
     $bio = $input['bio'] ?? '';
     $specializations = $input['specializations'] ?? '[]';
+    
+    $specArray = json_decode($specializations, true);
+    if (is_array($specArray) && count($specArray) > 3) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Maximum of 3 specializations allowed']);
+        exit();
+    }
+    
     $certifications = $input['certifications'] ?? '';
     $certificationsForTrainerProfiles = '[]';
     try {
