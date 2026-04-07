@@ -32,6 +32,12 @@ const AnalyticsDashboard = () => {
   const [endDate, setEndDate] = useState(getDefaultEndDate());
   const [activeTab, setActiveTab] = useState('overview');
 
+  const [strengthPage, setStrengthPage] = useState(1);
+  const [strengthFilter, setStrengthFilter] = useState('');
+  const [strengthSearchInput, setStrengthSearchInput] = useState('');
+  const [strengthPaginationData, setStrengthPaginationData] = useState({ page: 1, limit: 4, total_pages: 1, total: 0 });
+  const [paginatedStrengthData, setPaginatedStrengthData] = useState({});
+
   useEffect(() => {
     // Keep a fixed period window ending at the selected endDate
     const days = Math.max(1, parseInt(dateRange, 10) || 90);
@@ -47,6 +53,30 @@ const AnalyticsDashboard = () => {
     fetchAnalytics();
     fetchAlerts();
   }, [startDate, endDate]);
+
+  useEffect(() => {
+    fetchStrengthAnalytics();
+  }, [startDate, endDate, strengthPage, strengthFilter]);
+
+  const fetchStrengthAnalytics = async () => {
+    try {
+      const qs = new URLSearchParams({
+        start_date: startDate,
+        end_date: endDate,
+        page: strengthPage,
+        filter: strengthFilter,
+        limit: 4
+      });
+      const response = await fetch(`${BACKEND_ROUTES_API}GetStrengthAnalytics.php?${qs.toString()}`, { credentials: 'include' });
+      const data = await response.json();
+      if (data.success) {
+        setPaginatedStrengthData(data.strength_progress || {});
+        setStrengthPaginationData(data.pagination || { page: 1, limit: 4, total_pages: 1, total: 0 });
+      }
+    } catch (error) {
+      console.error('Error fetching paginated strength analytics:', error);
+    }
+  };
 
   const fetchAnalytics = async () => {
     try {
@@ -111,7 +141,6 @@ const AnalyticsDashboard = () => {
 
   const overview = analytics?.overview || {};
   const volumeTrends = analytics?.volume_trends || [];
-  const strengthProgress = analytics?.strength_progress || {};
   const consistency = analytics?.consistency || {};
   const personalRecords = analytics?.personal_records || [];
   const bodyCompositionData = analytics?.body_composition || [];
@@ -433,9 +462,37 @@ const AnalyticsDashboard = () => {
         {/* Strength Tab */}
         {activeTab === 'strength' && (
           <div>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 className="mb-0 text-white">Strength Progress</h5>
+              <div className="d-flex gx-2">
+                <input 
+                  type="text" 
+                  className="form-control dark-input" 
+                  placeholder="Filter exercises..." 
+                  value={strengthSearchInput}
+                  onChange={(e) => setStrengthSearchInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setStrengthFilter(strengthSearchInput);
+                      setStrengthPage(1);
+                    }
+                  }}
+                />
+                <button 
+                  className="btn btn-primary ms-2"
+                  onClick={() => {
+                    setStrengthFilter(strengthSearchInput);
+                    setStrengthPage(1);
+                  }}
+                >
+                  <i className="bi bi-search"></i>
+                </button>
+              </div>
+            </div>
+
             <div className="row">
-              {Object.keys(strengthProgress).length > 0 ? (
-                Object.entries(strengthProgress).map(([exercise, data]) => (
+              {Object.keys(paginatedStrengthData).length > 0 ? (
+                Object.entries(paginatedStrengthData).map(([exercise, data]) => (
                   <div key={exercise} className="col-md-6 mb-4">
                     <div className="card border-0 shadow-sm dark-card">
                       <div className="card-header dark-card border-0">
@@ -460,11 +517,38 @@ const AnalyticsDashboard = () => {
                 <div className="col-12">
                   <div className="alert alert-info">
                     <i className="bi bi-info-circle me-2"></i>
-                    Complete workouts with weight and reps (1-12 reps) to see strength progression charts.
+                    No strength data found for your filters. Complete workouts with weight and reps (1-12 reps) to see strength progression charts.
                   </div>
                 </div>
               )}
             </div>
+
+            {/* Pagination Controls */}
+            {strengthPaginationData.total_pages > 1 && (
+              <div className="row mb-5 pb-4">
+                <div className="col-12">
+                  <div className="d-flex justify-content-center align-items-center mt-3">
+                    <button 
+                      className="btn btn-outline-secondary me-3" 
+                      disabled={strengthPaginationData.page <= 1}
+                      onClick={() => setStrengthPage(p => Math.max(1, p - 1))}
+                    >
+                      <i className="bi bi-chevron-left me-1"></i> Previous
+                    </button>
+                    <span className="text-white-50 mx-2">
+                      Page {strengthPaginationData.page} of {strengthPaginationData.total_pages} ({strengthPaginationData.total} items)
+                    </span>
+                    <button 
+                      className="btn btn-outline-secondary ms-3" 
+                      disabled={strengthPaginationData.page >= strengthPaginationData.total_pages}
+                      onClick={() => setStrengthPage(p => Math.min(strengthPaginationData.total_pages, p + 1))}
+                    >
+                      Next <i className="bi bi-chevron-right ms-1"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -503,24 +587,24 @@ const AnalyticsDashboard = () => {
               <div className="col-md-4 mb-3">
                 <div className="card border-0 shadow-sm dark-card">
                   <div className="card-body text-center">
-                    <h6 className="text-white-50">Total Reps</h6>
-                    <h2 className="text-white">{(overview.total_reps || 0).toLocaleString()}</h2>
+                    <h6 className="text-white-50 fw-normal">Total Reps</h6>
+                    <h2 className="text-white fw-light">{(overview.total_reps || 0).toLocaleString()}</h2>
                   </div>
                 </div>
               </div>
               <div className="col-md-4 mb-3">
                 <div className="card border-0 shadow-sm dark-card">
                   <div className="card-body text-center">
-                    <h6 className="text-white-50">Total Sets</h6>
-                    <h2 className="text-white">{(overview.total_sets || 0).toLocaleString()}</h2>
+                    <h6 className="text-white-50 fw-normal">Total Sets</h6>
+                    <h2 className="text-white fw-light">{(overview.total_sets || 0).toLocaleString()}</h2>
                   </div>
                 </div>
               </div>
               <div className="col-md-4 mb-3">
                 <div className="card border-0 shadow-sm dark-card">
                   <div className="card-body text-center">
-                    <h6 className="text-white-50">Unique Exercises</h6>
-                    <h2 className="text-white">{overview.unique_exercises || 0}</h2>
+                    <h6 className="text-white-50 fw-normal">Unique Exercises</h6>
+                    <h2 className="text-white fw-light">{overview.unique_exercises || 0}</h2>
                   </div>
                 </div>
               </div>
