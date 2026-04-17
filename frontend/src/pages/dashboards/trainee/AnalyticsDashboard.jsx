@@ -27,7 +27,6 @@ const AnalyticsDashboard = () => {
     return date.toISOString().split('T')[0];
   };
   
-  const [dateRange, setDateRange] = useState('90');
   const [startDate, setStartDate] = useState(getDefaultStartDate());
   const [endDate, setEndDate] = useState(getDefaultEndDate());
   const [activeTab, setActiveTab] = useState('overview');
@@ -37,17 +36,6 @@ const AnalyticsDashboard = () => {
   const [strengthSearchInput, setStrengthSearchInput] = useState('');
   const [strengthPaginationData, setStrengthPaginationData] = useState({ page: 1, limit: 4, total_pages: 1, total: 0 });
   const [paginatedStrengthData, setPaginatedStrengthData] = useState({});
-
-  useEffect(() => {
-    // Keep a fixed period window ending at the selected endDate
-    const days = Math.max(1, parseInt(dateRange, 10) || 90);
-    const end = new Date(`${endDate}T00:00:00`);
-    if (Number.isNaN(end.getTime())) return;
-    const start = new Date(end);
-    start.setDate(start.getDate() - (days - 1));
-
-    setStartDate(start.toISOString().split('T')[0]);
-  }, [dateRange, endDate]);
 
   useEffect(() => {
     fetchAnalytics();
@@ -175,27 +163,28 @@ const AnalyticsDashboard = () => {
         </ul>
 
         {/* Date Range Filters */}
-        <div className="workout-history-filters w-100 justify-content-start justify-content-lg-end mb-3">
-          <select
-            className="form-select dark-input workout-history-filter"
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
-          >
-            <option value="30">Last 30 Days</option>
-            <option value="60">Last 60 Days</option>
-            <option value="90">Last 90 Days</option>
-            <option value="180">Last 6 Months</option>
-            <option value="365">Last Year</option>
-          </select>
-          <input 
-            type="date" 
-            className="form-control dark-input workout-history-filter workout-history-date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            min={startDate}
-            max={getDefaultEndDate()}
-            style={{ colorScheme: 'dark' }}
-          />
+        <div className="workout-history-filters d-flex flex-wrap gap-3 align-items-center w-100 justify-content-start justify-content-lg-end mb-3">
+          <div className="d-flex align-items-center">
+            <span className="me-2 text-white-50 fw-bold">From:</span>
+            <input 
+              type="date" 
+              className="form-control dark-input workout-history-filter workout-history-date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              style={{ colorScheme: 'dark', width: 'auto', flex: 'none' }}
+            />
+          </div>
+          <div className="d-flex align-items-center">
+            <span className="me-2 text-white-50 fw-bold">To:</span>
+            <input 
+              type="date" 
+              className="form-control dark-input workout-history-filter workout-history-date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              min={startDate}
+              style={{ colorScheme: 'dark', width: 'auto', flex: 'none' }}
+            />
+          </div>
         </div>
 
         {/* Performance Alerts */}

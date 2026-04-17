@@ -69,7 +69,7 @@ const TrainerPayments = () => {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'EUR'
     }).format(amount || 0);
   };
 
@@ -133,7 +133,7 @@ const TrainerPayments = () => {
                     <p className="mb-1 small" style={{ color: '#9ca3af' }}>Total Earnings</p>
                     <h3 className="mb-0" style={{ color: '#fff' }}>{formatCurrency(earnings.total)}</h3>
                   </div>
-                  <div className="rounded-circle p-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
+                  <div className="rounded-circle d-flex justify-content-center align-items-center" style={{ width: '48px', height: '48px', backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
                     <i className="bi bi-currency-dollar fs-4" style={{ color: '#10b981' }}></i>
                   </div>
                 </div>
@@ -149,7 +149,7 @@ const TrainerPayments = () => {
                     <p className="mb-1 small" style={{ color: '#9ca3af' }}>This Month</p>
                     <h3 className="mb-0" style={{ color: '#fff' }}>{formatCurrency(earnings.thisMonth)}</h3>
                   </div>
-                  <div className="rounded-circle p-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
+                  <div className="rounded-circle d-flex justify-content-center align-items-center" style={{ width: '48px', height: '48px', backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
                     <i className="bi bi-graph-up-arrow fs-4" style={{ color: '#10b981' }}></i>
                   </div>
                 </div>
@@ -165,7 +165,7 @@ const TrainerPayments = () => {
                     <p className="mb-1 small" style={{ color: '#9ca3af' }}>Available Balance</p>
                     <h3 className="mb-0" style={{ color: '#fff' }}>{formatCurrency(earnings.available)}</h3>
                   </div>
-                  <div className="rounded-circle p-3" style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)' }}>
+                  <div className="rounded-circle d-flex justify-content-center align-items-center" style={{ width: '48px', height: '48px', backgroundColor: 'rgba(59, 130, 246, 0.2)' }}>
                     <i className="bi bi-wallet2 fs-4" style={{ color: '#3b82f6' }}></i>
                   </div>
                 </div>
@@ -181,7 +181,7 @@ const TrainerPayments = () => {
                     <p className="mb-1 small" style={{ color: '#9ca3af' }}>Pending</p>
                     <h3 className="mb-0" style={{ color: '#fff' }}>{formatCurrency(earnings.pending)}</h3>
                   </div>
-                  <div className="rounded-circle p-3" style={{ backgroundColor: 'rgba(251, 191, 36, 0.2)' }}>
+                  <div className="rounded-circle d-flex justify-content-center align-items-center" style={{ width: '48px', height: '48px', backgroundColor: 'rgba(251, 191, 36, 0.2)' }}>
                     <i className="bi bi-clock-history fs-4" style={{ color: '#fbbf24' }}></i>
                   </div>
                 </div>
@@ -283,7 +283,7 @@ const TrainerPayments = () => {
                 <div className="card-body">
                   <div className="text-center py-5" style={{ color: '#9ca3af' }}>
                     <i className="bi bi-graph-up fs-1 mb-3 d-block" style={{ color: '#10b981' }}></i>
-                    <p>Earnings chart will be displayed here</p>
+                    <p style={{ color: '#9ca3af' }}>Earnings chart will be displayed here</p>
                   </div>
                 </div>
               </div>
@@ -304,7 +304,7 @@ const TrainerPayments = () => {
                       <span style={{ color: '#9ca3af' }}>Avg. Sale Value</span>
                       <strong style={{ color: '#fff' }}>{formatCurrency(earnings.total / (sales.length || 1))}</strong>
                     </div>
-                    <div className="d-flex justify-content-between">
+                    <div className="d-flex justify-content-between align-items-center">
                       <span style={{ color: '#9ca3af' }}>Stripe Status</span>
                       <span className={`badge ${stripeConnected ? 'bg-success' : 'bg-warning'}`}>
                         {stripeConnected ? 'Connected' : 'Not Connected'}
@@ -326,7 +326,7 @@ const TrainerPayments = () => {
               {sales.length === 0 ? (
                 <div className="text-center py-5" style={{ color: '#9ca3af' }}>
                   <i className="bi bi-cart-x fs-1 mb-3 d-block" style={{ color: '#6b7280' }}></i>
-                  <p>No sales yet</p>
+                  <p style={{ color: '#9ca3af' }}>No sales yet</p>
                 </div>
               ) : (
                 <div className="table-responsive">
@@ -380,7 +380,7 @@ const TrainerPayments = () => {
               {transactions.length === 0 ? (
                 <div className="text-center py-5" style={{ color: '#9ca3af' }}>
                   <i className="bi bi-receipt fs-1 mb-3 d-block" style={{ color: '#6b7280' }}></i>
-                  <p>No transactions yet</p>
+                  <p style={{ color: '#9ca3af' }}>No transactions yet</p>
                 </div>
               ) : (
                 <div className="table-responsive">

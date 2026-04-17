@@ -35,6 +35,7 @@ try {
                 cr.goals,
                 cr.created_at,
                 u.full_name as trainee_name,
+                u.username as trainee_username,
                                 u.email as trainee_email,
                                 (SELECT g.image FROM gallery g WHERE g.imageid = u.imageid LIMIT 1) as profile_image
               FROM coaching_requests cr

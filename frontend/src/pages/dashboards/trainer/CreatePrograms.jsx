@@ -5,6 +5,22 @@ import TrainerDashboardLayout from '../../../components/TrainerDashboardLayout';
 
 // Add inline styles for card hover effect
 const styles = `
+  .form-control, .form-select {
+    background-color: #1a1a1a !important;
+    border: 1px solid #3d3d3d !important;
+    color: #fff !important;
+  }
+  .form-control:focus, .form-select:focus {
+    background-color: #1a1a1a !important;
+    border-color: #3d3d3d !important;
+    color: #fff !important;
+    box-shadow: none !important;
+  }
+  .cf-dark-modal-header {
+    background: #2d2d2d !important;
+    background-color: #2d2d2d !important;
+    background-image: none !important;
+  }
   .card-hover {
     transition: all 0.3s ease;
     border: 1px solid rgba(16, 185, 129, 0.2);
@@ -40,13 +56,20 @@ const styles = `
 
 const CreatePrograms = () => {
   const [programs, setPrograms] = useState([]);
+  const [totalPrograms, setTotalPrograms] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [programsPerPage] = useState(6);
+  const [programSearch, setProgramSearch] = useState('');
   const [activeView, setActiveView] = useState('list'); // list, create, edit
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [deleteModal, setDeleteModal] = useState({ show: false, programId: null, programTitle: '' });
+  const [deleteExerciseModal, setDeleteExerciseModal] = useState({ show: false, exerciseId: null, exerciseName: '' });
+  const [editExerciseModal, setEditExerciseModal] = useState({ show: false, exerciseId: null, name: '', muscle_group: '', category: 'strength', equipment: '', instructions: '' });
   const [allExercises, setAllExercises] = useState([]);
   const [showExerciseModal, setShowExerciseModal] = useState(false);
   const [exerciseSearch, setExerciseSearch] = useState('');
+  const [customExerciseSearch, setCustomExerciseSearch] = useState('');
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [exerciseToAdd, setExerciseToAdd] = useState({ sets: 3, reps: '', rpe: '', type: 'reps' });
   
@@ -71,7 +94,7 @@ const CreatePrograms = () => {
     duration_weeks: 4,
     category: 'Strength',
     price: 0,
-    currency: 'USD',
+    currency: 'EUR',
     status: 'draft'
   });
 
@@ -99,17 +122,24 @@ const CreatePrograms = () => {
   };
   
   useEffect(() => {
-    fetchPrograms();
+    // fetchPrograms is handled by the dependency array useEffects below
     fetchExercises();
   }, []);
 
-  const fetchPrograms = async () => {
+  const fetchPrograms = async (page = currentPage, search = programSearch) => {
     try {
       setLoading(true);
-      const data = await APIClient.get(`${BACKEND_ROUTES_API}GetPrograms.php?type=my-programs`);
+      const params = new URLSearchParams({
+        type: 'my-programs',
+        page: page,
+        limit: programsPerPage,
+        search: search
+      });
+      const data = await APIClient.get(`${BACKEND_ROUTES_API}GetPrograms.php?${params.toString()}`);
       
       if (data.success) {
         setPrograms(data.programs || []);
+        setTotalPrograms(data.total || 0);
       }
     } catch (err) {
       console.error('Error fetching programs:', err);
@@ -117,6 +147,18 @@ const CreatePrograms = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      setCurrentPage(1);
+      fetchPrograms(1, programSearch);
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [programSearch]);
+
+  useEffect(() => {
+    fetchPrograms(currentPage, programSearch);
+  }, [currentPage]);
 
   const fetchExercises = async () => {
     try {
@@ -160,9 +202,18 @@ const CreatePrograms = () => {
     return allExercises.filter(exercise => exercise.is_custom == 1);
   }, [allExercises]);
 
+  // Filter custom exercises by search (memoized)
+  const filteredCustomExercises = React.useMemo(() => {
+    return customExercises.filter(exercise =>
+      exercise.name?.toLowerCase().includes(customExerciseSearch.toLowerCase()) ||
+      exercise.category?.toLowerCase().includes(customExerciseSearch.toLowerCase()) ||
+      exercise.muscle_group?.toLowerCase().includes(customExerciseSearch.toLowerCase())
+    );
+  }, [customExercises, customExerciseSearch]);
+
   // Add tag
   const addTag = () => {
-    if (currentTag && !programPackage.tags.includes(currentTag)) {
+    if (currentTag && !programPackage.tags.includes(currentTag) && programPackage.tags.length < 3) {
       setProgramPackage(prev => ({
         ...prev,
         tags: [...prev.tags, currentTag]
@@ -244,17 +295,44 @@ const CreatePrograms = () => {
     }
   };
 
+  // Edit Custom Exercise
+  const executeEditCustomExercise = async () => {
+    if (!editExerciseModal.name) return;
+
+    try {
+      const data = await APIClient.post(`${BACKEND_ROUTES_API}EditCustomExercise.php`, {
+        exerciseId: editExerciseModal.exerciseId,
+        name: editExerciseModal.name,
+        category: editExerciseModal.category,
+        muscle_group: editExerciseModal.muscle_group,
+        equipment: editExerciseModal.equipment,
+        instructions: editExerciseModal.instructions
+      });
+
+      if (data.success) {
+        showToast('Exercise updated successfully!', 'success');
+        setEditExerciseModal({ show: false, exerciseId: null, name: '', muscle_group: '', category: 'strength', equipment: '', instructions: '' });
+        fetchExercises();
+      } else {
+        showToast(data.message || 'Could not update exercise', 'error');
+      }
+    } catch (err) {
+      showToast('Error updating exercise: ' + err.message, 'error');
+    }
+  };
+
   // Delete Custom Exercise
-  const deleteCustomExercise = async (exerciseId) => {
-    if (!confirm('Are you sure you want to delete this exercise?')) return;
+  const executeDeleteCustomExercise = async () => {
+    if (!deleteExerciseModal.exerciseId) return;
 
     try {
       const data = await APIClient.delete(`${BACKEND_ROUTES_API}DeleteCustomExercise.php`, { 
-        exerciseId 
+        exerciseId: deleteExerciseModal.exerciseId 
       });
 
       if (data.success) {
         showToast('Exercise deleted successfully!', 'success');
+        setDeleteExerciseModal({ show: false, exerciseId: null, exerciseName: '' });
         fetchExercises();
       } else {
         showToast(data.message || 'Could not delete exercise', 'error');
@@ -365,7 +443,7 @@ const CreatePrograms = () => {
       duration_weeks: 4,
       category: 'Strength',
       price: 0,
-      currency: 'USD',
+      currency: 'EUR',
       status: 'draft'
     });
     setWorkoutSessions([]);
@@ -482,8 +560,11 @@ const CreatePrograms = () => {
     <div>
       <style>{styles}</style>
       
-      <div className="d-grid gap-3 d-sm-flex justify-content-sm-between align-items-sm-center mb-4">
-        <h2 className="mb-0 fw-bold" style={{ color: '#fff' }}>My Training Programs</h2>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 className="mb-1 fw-bold" style={{ color: '#fff' }}>My Training Programs</h2>
+          <p style={{ color: '#9ca3af' }}>Create, manage, and organize your training programs</p>
+        </div>
         <button 
           className="btn text-nowrap"
           style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
@@ -495,6 +576,17 @@ const CreatePrograms = () => {
           <i className="bi bi-plus-circle me-2"></i>
           Create New Program
         </button>
+      </div>
+
+      <div className="mb-4">
+        <input 
+          type="text" 
+          className="form-control" 
+          placeholder="Search programs by title, category..." 
+          value={programSearch} 
+          onChange={(e) => setProgramSearch(e.target.value)} 
+          style={{ backgroundColor: '#1f1f1f', color: '#fff', border: '1px solid #333' }}
+        />
       </div>
 
       {loading ? (
@@ -524,7 +616,7 @@ const CreatePrograms = () => {
                   <p className="text-muted small" style={{ color: '#9ca3af' }}>{program.description}</p>
                   
                   <div className="d-flex flex-wrap gap-1 mb-3">
-                    <span className="badge" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px' }}>{program.category}</span>
+                    <span className="badge" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px' }}>{categories[program.category] || program.category}</span>
                     <span className="badge" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px' }}>{program.difficulty_level}</span>
                     <span className="badge" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px' }}>{program.duration_weeks} weeks</span>
                   </div>
@@ -552,6 +644,48 @@ const CreatePrograms = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {totalPrograms > programsPerPage && (
+        <div className="d-flex justify-content-center mt-4">
+          <nav>
+            <ul className="pagination">
+              <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                <button
+                  className="page-link"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  style={{ backgroundColor: '#2d2d2d', color: '#10b981', border: '1px solid #333' }}
+                >
+                  Previous
+                </button>
+              </li>
+              {[...Array(Math.ceil(totalPrograms / programsPerPage))].map((_, index) => (
+                <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
+                  <button
+                    className="page-link"
+                    onClick={() => setCurrentPage(index + 1)}
+                    style={{ 
+                      backgroundColor: currentPage === index + 1 ? '#10b981' : '#2d2d2d', 
+                      color: currentPage === index + 1 ? '#fff' : '#10b981', 
+                      border: '1px solid #333' 
+                    }}
+                  >
+                    {index + 1}
+                  </button>
+                </li>
+              ))}
+              <li className={`page-item ${currentPage === Math.ceil(totalPrograms / programsPerPage) ? 'disabled' : ''}`}>
+                <button
+                  className="page-link"
+                  onClick={() => setCurrentPage(prev => Math.min(Math.ceil(totalPrograms / programsPerPage), prev + 1))}
+                  style={{ backgroundColor: '#2d2d2d', color: '#10b981', border: '1px solid #333' }}
+                >
+                  Next
+                </button>
+              </li>
+            </ul>
+          </nav>
         </div>
       )}
     </div>
@@ -598,7 +732,7 @@ const CreatePrograms = () => {
                   />
                 </div>
                 <div className="col-md-4">
-                  <label className="form-label">Price (USD) *</label>
+                  <label className="form-label">Price (EUR) *</label>
                   <input 
                     type="number" 
                     className="form-control number-input-light-arrows"
@@ -686,12 +820,14 @@ const CreatePrograms = () => {
                       value={currentTag}
                       onChange={(e) => setCurrentTag(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                      placeholder="Add tags (press Enter)"
+                      placeholder={programPackage.tags.length >= 3 ? "Max 3 tags allowed" : "Add tags (press Enter)"}
+                      disabled={programPackage.tags.length >= 3}
                     />
                     <button 
                       className="btn btn-outline-secondary" 
                       type="button"
                       onClick={addTag}
+                      disabled={programPackage.tags.length >= 3}
                     >
                       Add
                     </button>
@@ -853,12 +989,12 @@ const CreatePrograms = () => {
                 />
               </div>
               
-              <p className="small" style={{ color: '#9ca3af' }}>
-                Showing {filteredExercises.length} global exercises (custom exercises shown below)
+              <p className="small mt-2" style={{ color: '#9ca3af' }}>
+                Showing {filteredExercises.length} global exercises
               </p>
               
-              <div className="exercise-list" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                <div className="row">
+              <div className="exercise-list" style={{ maxHeight: '300px', overflowY: 'auto', overflowX: 'hidden' }}>
+                <div className="row g-2 m-0">
                   {filteredExercises.map((exercise) => (
                     
                       <div key={`global-${exercise.id}`} className="col-md-6 mb-2">
@@ -890,12 +1026,30 @@ const CreatePrograms = () => {
 
               {/* My Custom Exercises */}
               <h6 className="mb-3" style={{ color: '#fff' }}>My Exercises ({customExercises.length})</h6>
+              
+              {customExercises.length > 0 && (
+                <div className="mb-3">
+                  <input 
+                    type="text" 
+                    className="form-control"
+                    placeholder="Search my exercises by name, category, or muscle group..."
+                    value={customExerciseSearch}
+                    onChange={(e) => setCustomExerciseSearch(e.target.value)}
+                  />
+                  <p className="small mt-2" style={{ color: '#9ca3af' }}>
+                    Showing {filteredCustomExercises.length} out of {customExercises.length} custom exercises
+                  </p>
+                </div>
+              )}
+
               {customExercises.length === 0 ? (
                 <p className="small" style={{ color: '#9ca3af' }}>No custom exercises yet. Create one above!</p>
+              ) : filteredCustomExercises.length === 0 ? (
+                <p className="small" style={{ color: '#9ca3af' }}>No custom exercises match your search.</p>
               ) : (
-                <div className="exercise-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                  <div className="row">
-                    {customExercises.map((exercise) => (
+                <div className="exercise-list" style={{ maxHeight: '200px', overflowY: 'auto', overflowX: 'hidden' }}>
+                  <div className="row g-2 m-0">
+                    {filteredCustomExercises.map((exercise) => (
                       <div key={`custom-${exercise.id}`} className="col-md-6 mb-2">
                         <div className="card" style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
                           <div className="card-body py-2">
@@ -910,7 +1064,7 @@ const CreatePrograms = () => {
                                   {exercise.category} • {exercise.muscle_group}
                                 </small>
                               </div>
-                              <div className="d-flex gap-1">
+                              <div className="d-flex gap-1" style={{ alignItems: 'center' }}>
                                 <button
                                   className="btn btn-sm"
                                   onClick={(e) => {
@@ -923,10 +1077,28 @@ const CreatePrograms = () => {
                                   <i className="bi bi-plus-circle"></i>
                                 </button>
                                 <button
+                                  className="btn btn-sm btn-outline-warning"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditExerciseModal({
+                                      show: true,
+                                      exerciseId: exercise.id,
+                                      name: exercise.name,
+                                      category: exercise.category,
+                                      muscle_group: exercise.muscle_group,
+                                      equipment: exercise.equipment || '',
+                                      instructions: exercise.instructions || ''
+                                    });
+                                  }}
+                                  title="Edit exercise"
+                                >
+                                  <i className="bi bi-pencil"></i>
+                                </button>
+                                <button
                                   className="btn btn-sm btn-outline-danger"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    deleteCustomExercise(exercise.id);
+                                    setDeleteExerciseModal({ show: true, exerciseId: exercise.id, exerciseName: exercise.name });
                                   }}
                                   title="Delete exercise"
                                 >
@@ -1093,58 +1265,62 @@ const CreatePrograms = () => {
       {showExerciseModal && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Add {selectedExercise?.name}</h5>
+            <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <div className="modal-header cf-dark-modal-header" style={{ borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <h5 className="modal-title fw-bold" style={{ color: '#fff' }}>Add {selectedExercise?.name}</h5>
                 <button 
                   type="button" 
-                  className="btn-close" 
+                  className="btn-close btn-close-white" 
                   onClick={() => setShowExerciseModal(false)}
                 ></button>
               </div>
-              <div className="modal-body">
+              <div className="modal-body" style={{ color: '#ffffff' }}>
                 <div className="mb-3">
-                  <label className="form-label">Sets *</label>
+                  <label className="form-label fw-semibold" style={{ color: '#d1d5db' }}>Sets *</label>
                   <input 
                     type="number" 
                     className="form-control"
+                    
                     value={exerciseToAdd.sets}
                     onChange={(e) => setExerciseToAdd(prev => ({ ...prev, sets: parseInt(e.target.value) || 0 }))}
                     min="1"
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Reps *</label>
+                  <label className="form-label fw-semibold" style={{ color: '#d1d5db' }}>Reps *</label>
                   <input 
                     type="text" 
                     className="form-control"
+                    
                     value={exerciseToAdd.reps}
                     onChange={(e) => setExerciseToAdd(prev => ({ ...prev, reps: e.target.value }))}
                     placeholder="e.g., 8-12 or 10"
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">RPE</label>
+                  <label className="form-label fw-semibold" style={{ color: '#d1d5db' }}>RPE</label>
                   <input 
                     type="text" 
                     className="form-control"
+                    
                     value={exerciseToAdd.rpe}
                     onChange={(e) => setExerciseToAdd(prev => ({ ...prev, rpe: e.target.value }))}
                     placeholder="e.g., 7-8"
                   />
                 </div>
               </div>
-              <div className="modal-footer">
+              <div className="modal-footer" style={{ backgroundColor: '#2d2d2d', borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
                 <button 
                   type="button" 
-                  className="btn btn-secondary" 
+                  className="btn btn-outline-secondary text-white" 
                   onClick={() => setShowExerciseModal(false)}
                 >
                   Cancel
                 </button>
                 <button 
                   type="button" 
-                  className="btn btn-primary"
+                  className="btn"
+                  style={{ backgroundColor: '#10b981', color: '#fff', border: '1px solid #10b981' }}
                   onClick={addExerciseFromModal}
                 >
                   Add Exercise
@@ -1159,7 +1335,7 @@ const CreatePrograms = () => {
 
   return (
     <TrainerDashboardLayout>
-      <div className="container py-4" style={{ minHeight: 'calc(100vh - 0px)', backgroundColor: '#1a1a1a', color: '#fff' }}>
+      <div style={{ backgroundColor: '#1a1a1a', minHeight: '100vh', color: '#fff' }}>
         {activeView === 'list' && renderListView()}
         {activeView === 'create' && renderCreateView()}
       
@@ -1167,10 +1343,10 @@ const CreatePrograms = () => {
         {deleteModal.show && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-              <div className="modal-header" style={{ background: 'rgba(15, 20, 15, 0.95)', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>
-                  <i className="bi bi-exclamation-triangle me-2" style={{ color: '#dc3545' }}></i>
+            <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+              <div className="modal-header cf-dark-modal-header" style={{ borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <h5 className="modal-title fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                  <i className="bi bi-exclamation-triangle me-2 text-danger"></i>
                   Confirm Delete
                 </h5>
                 <button 
@@ -1183,10 +1359,10 @@ const CreatePrograms = () => {
                 <p className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Are you sure you want to delete <strong>"{deleteModal.programTitle}"</strong>?</p>
                 <p className="small mt-2 mb-0" style={{ color: 'rgba(255,255,255,0.7)' }}>This action cannot be undone.</p>
               </div>
-              <div className="modal-footer" style={{ background: 'rgba(15, 20, 15, 0.95)', borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <div className="modal-footer" style={{ backgroundColor: '#2d2d2d', borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
                 <button 
                   type="button" 
-                  className="btn btn-secondary" 
+                  className="btn btn-outline-secondary text-white" 
                   onClick={() => setDeleteModal({ show: false, programId: null, programTitle: '' })}
                 >
                   Cancel
@@ -1203,6 +1379,123 @@ const CreatePrograms = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Edit Custom Exercise Modal */}
+      {editExerciseModal.show && (
+      <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+            <div className="modal-header cf-dark-modal-header" style={{ borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <h5 className="modal-title fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                <i className="bi bi-pencil me-2 text-warning"></i>
+                Edit Custom Exercise
+              </h5>
+              <button 
+                type="button" 
+                className="btn-close btn-close-white" 
+                onClick={() => setEditExerciseModal({ show: false, exerciseId: null, name: '', muscle_group: '', category: 'strength', equipment: '', instructions: '' })}
+              ></button>
+            </div>
+            <div className="modal-body" style={{ color: 'rgba(255,255,255,0.9)' }}>
+              <div className="mb-3">
+                <label className="form-label text-white">Exercise Name *</label>
+                <input 
+                  type="text" 
+                  className="form-control"
+                  style={{ backgroundColor: '#1a1a1a', border: '1px solid #3d3d3d', color: '#fff' }}
+                  value={editExerciseModal.name}
+                  onChange={(e) => setEditExerciseModal(prev => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+              <div className="mb-3">
+                <label className="form-label text-white">Category</label>
+                <select 
+                  className="form-select"
+                  style={{ backgroundColor: '#1a1a1a', border: '1px solid #3d3d3d', color: '#fff' }}
+                  value={editExerciseModal.category}
+                  onChange={(e) => setEditExerciseModal(prev => ({ ...prev, category: e.target.value }))}
+                >
+                  <option value="strength">Strength</option>
+                  <option value="cardio">Cardio</option>
+                  <option value="flexibility">Flexibility</option>
+                  <option value="core">Core</option>
+                </select>
+              </div>
+              <div className="mb-3">
+                <label className="form-label text-white">Muscle Group</label>
+                <input 
+                  type="text" 
+                  className="form-control"
+                  style={{ backgroundColor: '#1a1a1a', border: '1px solid #3d3d3d', color: '#fff' }}
+                  value={editExerciseModal.muscle_group}
+                  onChange={(e) => setEditExerciseModal(prev => ({ ...prev, muscle_group: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="modal-footer" style={{ backgroundColor: '#2d2d2d', borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <button 
+                type="button" 
+                className="btn btn-outline-secondary text-white" 
+                onClick={() => setEditExerciseModal({ show: false, exerciseId: null, name: '', muscle_group: '', category: 'strength', equipment: '', instructions: '' })}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-warning text-dark fw-bold" 
+                onClick={executeEditCustomExercise}
+                disabled={!editExerciseModal.name}
+              >
+                <i className="bi bi-save me-2"></i>
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      )}
+
+      {/* Delete Custom Exercise Confirmation Modal */}
+      {deleteExerciseModal.show && (
+      <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+            <div className="modal-header cf-dark-modal-header" style={{ borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <h5 className="modal-title fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                <i className="bi bi-exclamation-triangle me-2 text-danger"></i>
+                Confirm Delete Exercise
+              </h5>
+              <button 
+                type="button" 
+                className="btn-close btn-close-white" 
+                onClick={() => setDeleteExerciseModal({ show: false, exerciseId: null, exerciseName: '' })}
+              ></button>
+            </div>
+            <div className="modal-body">
+              <p className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Are you sure you want to delete <strong>"{deleteExerciseModal.exerciseName}"</strong>?</p>
+              <p className="small mt-2 mb-0" style={{ color: 'rgba(255,255,255,0.7)' }}>This action cannot be undone and will permanently remove this exercise.</p>
+            </div>
+            <div className="modal-footer" style={{ backgroundColor: '#2d2d2d', borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <button 
+                type="button" 
+                className="btn btn-outline-secondary text-white" 
+                onClick={() => setDeleteExerciseModal({ show: false, exerciseId: null, exerciseName: '' })}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-danger" 
+                onClick={executeDeleteCustomExercise}
+              >
+                <i className="bi bi-trash me-2"></i>
+                Delete Exercise
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
       )}
 
       {/* Bootstrap Toast Notification */}

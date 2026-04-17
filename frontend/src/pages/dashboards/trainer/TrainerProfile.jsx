@@ -13,6 +13,7 @@ const TrainerProfile = () => {
   const fileInputRef = useRef(null);
   
   const [profile, setProfile] = useState({
+    username: '',
     fullName: '',
     email: '',
     phone: '',
@@ -42,7 +43,8 @@ const TrainerProfile = () => {
       
       if (response.success) {
         setProfile({
-          fullName: response.profile.full_name || '',
+          username: response.profile.username || '',
+          fullName: response.profile.full_name || response.profile.username || '',
           email: response.profile.email || '',
           phone: response.profile.phone || '',
           bio: response.profile.bio || '',
@@ -198,6 +200,18 @@ const TrainerProfile = () => {
               </div>
               <div className="card-body">
                 <div className="row">
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label fw-bold">Username</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={profile.username}
+                      disabled
+                      placeholder="Username"
+                    />
+                    <small className="text-muted">Username cannot be changed</small>
+                  </div>
+
                   <div className="col-md-6 mb-3">
                     <label className="form-label fw-bold">Full Name</label>
                     <input

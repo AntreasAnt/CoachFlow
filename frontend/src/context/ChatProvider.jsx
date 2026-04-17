@@ -66,7 +66,7 @@ export function ChatProvider({ currentUserBackend, children }) {
         setDoc(userRef, {
           username: currentUserBackend.username || 'Unknown',
           role: currentUserBackend.role || 'user',
-          createdAt: serverTimestamp(),
+          createdAt: new Date(),
           blocked: [],
         });
         setBlocked([]);
@@ -160,10 +160,15 @@ export function ChatProvider({ currentUserBackend, children }) {
           participants: [firebaseUser.uid, String(otherUserId)],
           isGroup: false,
           lastMessage: null,
-          lastMessageAt: null,
-          createdAt: serverTimestamp(),
+          lastMessageAt: new Date(),
+          createdAt: new Date(),
           createdBy: firebaseUser.uid,
         });
+      } else {
+        const data = snap.data();
+        if (!data.lastMessageAt) {
+          await updateDoc(convDoc, { lastMessageAt: new Date() });
+        }
       }
       setActiveConversationId(cid);
     } catch (error) {
@@ -182,7 +187,7 @@ export function ChatProvider({ currentUserBackend, children }) {
     const docData = {
       senderId: firebaseUser.uid,
       text: text.trim(),
-      createdAt: serverTimestamp(),
+      createdAt: new Date(),
       readBy: [firebaseUser.uid],
       type: 'text',
     };
@@ -192,7 +197,7 @@ export function ChatProvider({ currentUserBackend, children }) {
     // Update conversation last message
     await updateDoc(doc(db, 'conversations', activeConversationId), {
       lastMessage: docData.text,
-      lastMessageAt: serverTimestamp(),
+      lastMessageAt: new Date(),
       lastMessageSenderId: firebaseUser.uid,
       lastMessageReadBy: [firebaseUser.uid], // Reset readBy when new message is sent
     });

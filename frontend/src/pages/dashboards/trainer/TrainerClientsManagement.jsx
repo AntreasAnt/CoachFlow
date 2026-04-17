@@ -28,37 +28,51 @@ const TrainerClientsManagement = () => {
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
+  // Pagination & Search States
+  const [clientSearch, setClientSearch] = useState('');
+  const [clientPage, setClientPage] = useState(1);
+  const [clientTotalPages, setClientTotalPages] = useState(1);
+  const [debouncedClientSearch, setDebouncedClientSearch] = useState('');
+
   useEffect(() => {
-    fetchData();
+    const timer = setTimeout(() => {
+      setDebouncedClientSearch(clientSearch);
+      setClientPage(1); // Reset to page 1 on new search
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [clientSearch]);
+
+  useEffect(() => {
+    fetchActiveClients(clientPage, debouncedClientSearch);
+  }, [clientPage, debouncedClientSearch]);
+
+  useEffect(() => {
+    fetchInitialData();
   }, []);
 
-  useEffect(() => {
-    const tab = (searchParams.get('tab') || '').toLowerCase();
-    if (tab === 'requests') setActiveTab('requests');
-    if (tab === 'clients') setActiveTab('clients');
-  }, [searchParams]);
-
-  // Auto-dismiss notification after 3 seconds
-  useEffect(() => {
-    if (notification.show) {
-      const timer = setTimeout(() => {
-        setNotification({ show: false, message: '', type: '' });
-      }, 3000);
-      return () => clearTimeout(timer);
+  const fetchActiveClients = async (page = 1, search = '') => {
+    try {
+      const response = await APIClient.get(`${BACKEND_ROUTES_API}GetTrainerClients.php?page=${page}&limit=5&search=${encodeURIComponent(search)}`);
+      if (response.success) {
+        setClients(response.clients || []);
+        if (response.pagination) {
+          setClientTotalPages(response.pagination.total_pages || 1);
+        }
+        if (response.recent_disconnects) {
+           setRecentDisconnects(response.recent_disconnects || []);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching clients:', error);
     }
-  }, [notification.show]);
+  };
 
-  const fetchData = async () => {
+  const fetchInitialData = async () => {
     try {
       setLoading(true);
       
-      // Fetch active clients
-      const clientsResponse = await APIClient.get(`${BACKEND_ROUTES_API}GetTrainerClients.php`);
-      if (clientsResponse.success) {
-        setClients(clientsResponse.clients || []);
-        setRecentDisconnects(clientsResponse.recent_disconnects || []);
-      }
-
+      // Clients are fetched by fetchActiveClients separately based on deps
+      
       // Fetch coaching requests
       const requestsResponse = await APIClient.get(`${BACKEND_ROUTES_API}GetCoachingRequests.php`);
       if (requestsResponse.success) {
@@ -77,6 +91,22 @@ const TrainerClientsManagement = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const tab = (searchParams.get('tab') || '').toLowerCase();
+    if (tab === 'requests') setActiveTab('requests');
+    if (tab === 'clients') setActiveTab('clients');
+  }, [searchParams]);
+
+  // Auto-dismiss notification after 3 seconds
+  useEffect(() => {
+    if (notification.show) {
+      const timer = setTimeout(() => {
+        setNotification({ show: false, message: '', type: '' });
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification.show]);
 
   const openRequestActionModal = (action, request) => {
     setRequestActionModal({ show: true, action, request, submitting: false });
@@ -201,6 +231,14 @@ const TrainerClientsManagement = () => {
     });
   };
 
+  const formatMonthYear = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long'
+    });
+  };
+
   const dismissDisconnectNotice = (relationshipId) => {
     setDismissedDisconnectId(relationshipId);
     setShowAllDisconnects(false);
@@ -296,7 +334,7 @@ const TrainerClientsManagement = () => {
               color: #10b981 !important;
             }
 
-            .modal-header.cf-dark-modal-header {
+            .modal-header.dark-modal-header {
               background: #2d2d2d !important;
               background-color: #2d2d2d !important;
               background-image: none !important;
@@ -341,14 +379,25 @@ const TrainerClientsManagement = () => {
         {/* Clients Tab */}
         {activeTab === 'clients' && (
           <div>
+            <div className="mb-4">
+              <input 
+                type="text" 
+                className="form-control" 
+                placeholder="Search clients by name, username, or email..." 
+                value={clientSearch} 
+                onChange={(e) => setClientSearch(e.target.value)} 
+                style={{ backgroundColor: '#1f1f1f', color: '#fff', border: '1px solid #333' }}
+              />
+            </div>
             {clients.length === 0 ? (
               <div className="alert" style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)', border: '1px solid rgba(59, 130, 246, 0.3)', color: '#3b82f6' }}>
                 <i className="bi bi-info-circle me-2"></i>
-                No clients yet. Accept coaching requests to get started!
+                {debouncedClientSearch ? 'No clients match your search.' : 'No clients yet. Accept coaching requests to get started!'}
               </div>
             ) : (
-              <div className="row">
-                {clients.map(client => (
+              <>
+                <div className="row">
+                  {clients.map(client => (
                   <div key={client.id} className="col-md-6 col-lg-4 mb-4">
                     <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
                       <div className="card-body position-relative">
@@ -413,13 +462,14 @@ const TrainerClientsManagement = () => {
                             </div>
                           )}
                           <div className="flex-grow-1">
-                            <h5 className="mb-0" style={{ color: '#fff' }}>{client.name || 'Client'}</h5>
+                              <h5 className="mb-0" style={{ color: '#fff' }}>{client.name || client.username || 'Client'}</h5>
+                              {client.username && <div className="small mb-1" style={{ color: '#10b981', fontWeight: '500' }}>@{client.username}</div>}
                             <small style={{ color: '#9ca3af' }}>{client.email}</small>
                           </div>
                         </div>
 
                         <div className="mb-3">
-                          <small className="d-block" style={{ color: '#9ca3af' }}>Since: {formatDate(client.accepted_at || client.created_at)}</small>
+                            <small className="d-block" style={{ color: '#9ca3af' }}>Since: {formatMonthYear(client.started_at)}</small>
                           {client.assigned_programs > 0 && (
                             <small className="d-block" style={{ color: '#9ca3af' }}>Programs: {client.assigned_programs}</small>
                           )}
@@ -448,6 +498,42 @@ const TrainerClientsManagement = () => {
                   </div>
                 ))}
               </div>
+              
+              {/* Pagination Controls */}
+              {clientTotalPages > 1 && (
+                <div className="d-flex justify-content-center align-items-center mt-4 gap-3">
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => setClientPage(Math.max(1, clientPage - 1))}
+                    disabled={clientPage === 1}
+                    style={{
+                      backgroundColor: clientPage === 1 ? '#333' : '#2d2d2d',
+                      color: clientPage === 1 ? '#666' : '#fff',
+                      border: '1px solid #444',
+                      cursor: clientPage === 1 ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    <i className="bi bi-chevron-left me-1"></i> Previous
+                  </button>
+                  <span style={{ color: '#9ca3af' }}>
+                    Page {clientPage} of {clientTotalPages}
+                  </span>
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => setClientPage(Math.min(clientTotalPages, clientPage + 1))}
+                    disabled={clientPage === clientTotalPages}
+                    style={{
+                      backgroundColor: clientPage === clientTotalPages ? '#333' : '#2d2d2d',
+                      color: clientPage === clientTotalPages ? '#666' : '#fff',
+                      border: '1px solid #444',
+                      cursor: clientPage === clientTotalPages ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    Next <i className="bi bi-chevron-right ms-1"></i>
+                  </button>
+                </div>
+              )}
+            </>
             )}
           </div>
         )}
@@ -481,7 +567,8 @@ const TrainerClientsManagement = () => {
                             </div>
                           )}
                           <div className="flex-grow-1">
-                            <h5 className="mb-0" style={{ color: '#fff' }}>{request.trainee_name || 'Trainee'}</h5>
+                              <h5 className="mb-0" style={{ color: '#fff' }}>{request.trainee_name || request.trainee_username || 'Trainee'}</h5>
+                              {request.trainee_username && <div className="small mb-1" style={{ color: '#10b981', fontWeight: '500' }}>@{request.trainee_username}</div>}
                             <small style={{ color: '#9ca3af' }}>{request.trainee_email}</small>
                           </div>
                         </div>
@@ -544,7 +631,7 @@ const TrainerClientsManagement = () => {
           <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
             <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
               <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                <div className="modal-header cf-dark-modal-header" style={{ borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <div className="modal-header dark-modal-header" style={{ borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
                   <h5 className="modal-title" style={{ color: '#fff' }}>
                     {requestActionModal.action === 'accept' ? 'Accept coaching request?' : 'Decline coaching request?'}
                   </h5>
@@ -562,8 +649,13 @@ const TrainerClientsManagement = () => {
                   </p>
                   <div className="rounded p-3" style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
                     <div className="fw-semibold" style={{ color: '#fff' }}>
-                      {requestActionModal.request?.trainee_name || 'Trainee'}
-                    </div>
+                        {requestActionModal.request?.trainee_name || requestActionModal.request?.trainee_username || 'Trainee'}
+                      </div>
+                      {requestActionModal.request?.trainee_username && (
+                        <div className="small mb-1" style={{ color: '#10b981', fontWeight: '500' }}>
+                          @{requestActionModal.request.trainee_username}
+                        </div>
+                      )}
                     <div className="small" style={{ color: '#9ca3af' }}>
                       {requestActionModal.request?.trainee_email || ''}
                     </div>
@@ -682,7 +774,7 @@ const TrainerClientsManagement = () => {
           <div className="modal d-block" style={{backgroundColor: 'rgba(0,0,0,0.7)'}}>
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                <div className="modal-header cf-dark-modal-header" style={{ borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <div className="modal-header dark-modal-header" style={{ borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
                   <h5 className="modal-title" style={{ color: '#fff' }}>End Coaching Relationship?</h5>
                   <button className="btn-close btn-close-white" onClick={() => setShowDisconnectModal(false)}></button>
                 </div>

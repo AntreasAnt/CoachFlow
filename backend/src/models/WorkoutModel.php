@@ -667,7 +667,7 @@ class WorkoutModel
                         is_custom,
                         created_by_user_id
                       FROM exercises
-                      WHERE is_custom = 0 OR created_by_user_id = ?
+                      WHERE is_deleted = 0 AND (is_custom = 0 OR created_by_user_id = ?)
                       ORDER BY is_custom ASC, name ASC";
 
             $stmt = $this->conn->prepare($query);
@@ -728,6 +728,65 @@ class WorkoutModel
     }
 
     /**
+     * Edit a custom exercise
+     */
+    public function editCustomExercise($userId, $exerciseData)
+    {
+        try {
+            $exerciseId = $exerciseData['exerciseId'];
+            $name = $exerciseData['name'];
+            $category = $exerciseData['category'] ?? 'strength';
+            $muscle_group = $exerciseData['muscle_group'] ?? '';
+            $equipment = $exerciseData['equipment'] ?? '';
+            $instructions = $exerciseData['instructions'] ?? '';
+
+            // First verify the exercise is custom and belongs to the user
+            $checkQuery = "SELECT id FROM exercises WHERE id = ? AND is_custom = 1 AND created_by_user_id = ?";
+            $checkStmt = $this->conn->prepare($checkQuery);
+            if (!$checkStmt) {
+                throw new Exception("Prepare failed: " . $this->conn->error);
+            }
+
+            $checkStmt->bind_param("ii", $exerciseId, $userId);
+            $checkStmt->execute();
+            if ($checkStmt->get_result()->num_rows === 0) {
+                return [
+                    'success' => false,
+                    'message' => 'Exercise not found or you do not have permission to edit it'
+                ];
+            }
+
+            $updateQuery = "UPDATE exercises SET name = ?, category = ?, muscle_group = ?, equipment = ?, instructions = ? WHERE id = ? AND is_custom = 1 AND created_by_user_id = ?";
+            $updateStmt = $this->conn->prepare($updateQuery);
+            if (!$updateStmt) {
+                throw new Exception("Prepare failed: " . $this->conn->error);
+            }
+
+            $updateStmt->bind_param("sssssii", $name, $category, $muscle_group, $equipment, $instructions, $exerciseId, $userId);
+            $result = $updateStmt->execute();
+
+            if ($result) {
+                return [
+                    'success' => true,
+                    'message' => 'Exercise updated successfully'
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => 'Failed to update exercise'
+            ];
+
+        } catch (Exception $e) {
+            error_log("Error in editCustomExercise: " . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Error updating exercise: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
      * Delete a custom exercise
      */
     public function deleteCustomExercise($userId, $exerciseId)
@@ -751,8 +810,8 @@ class WorkoutModel
                 ];
             }
 
-            // Delete the exercise
-            $deleteQuery = "DELETE FROM exercises WHERE id = ? AND is_custom = 1 AND created_by_user_id = ?";
+            // Soft-delete the exercise so existing programs using it remain intact
+            $deleteQuery = "UPDATE exercises SET is_deleted = 1 WHERE id = ? AND is_custom = 1 AND created_by_user_id = ?";
             $deleteStmt = $this->conn->prepare($deleteQuery);
             if (!$deleteStmt) {
                 throw new Exception("Prepare failed: " . $this->conn->error);

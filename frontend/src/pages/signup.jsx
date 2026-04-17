@@ -150,7 +150,16 @@ function SignUp() {
   };
 
   return (
-    <>
+    <div
+      style={{
+        backgroundColor: "var(--brand-dark)",
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       <div
         className="container d-flex flex-column justify-content-center align-items-center"
         style={{ minHeight: "100vh", backgroundColor: 'var(--brand-dark)', paddingTop: '2rem', paddingBottom: '2rem' }}
@@ -385,7 +394,7 @@ function SignUp() {
           Already have an account?
         </Link>
       </div>
-    </>
+    </div>
   );
 }
 

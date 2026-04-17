@@ -79,7 +79,7 @@ try {
     
     $stmt = $conn->prepare($query);
     $portions_json = $portions ? json_encode($portions) : null;
-    $stmt->bind_param('isssdddds', 
+    $stmt->bind_param('issdsdddds', 
         $trainer_id, 
         $name, 
         $brand, 

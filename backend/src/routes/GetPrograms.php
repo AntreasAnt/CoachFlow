@@ -58,8 +58,15 @@ try {
     } elseif ($type === 'my-programs' && $userRole === 'trainer') {
         // Get trainer's programs
         $includeArchived = isset($_GET['includeArchived']) && $_GET['includeArchived'] === 'true';
-        $programs = $programModel->getTrainerPrograms($userId, $includeArchived);
-        $response['programs'] = $programs;
+        $filters = [
+            'search' => $_GET['search'] ?? null,
+            'limit' => isset($_GET['limit']) ? (int)$_GET['limit'] : null,
+            'page' => isset($_GET['page']) ? (int)$_GET['page'] : 1
+        ];
+        
+        $result = $programModel->getTrainerPrograms($userId, $includeArchived, $filters);
+        $response['programs'] = $result['programs'];
+        $response['total'] = $result['total'];
         
     } elseif ($type === 'marketplace') {
         // Get marketplace programs with filters

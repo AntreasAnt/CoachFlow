@@ -246,16 +246,23 @@ const ManageClientPrograms = () => {
   const [allTrainerPrograms, setAllTrainerPrograms] = useState([]); // All programs including from other clients
   const [selectedProgramToAssign, setSelectedProgramToAssign] = useState('');
   const [programSearchQuery, setProgramSearchQuery] = useState('');
+  const [programPage, setProgramPage] = useState(1);
+  const [programTotalPages, setProgramTotalPages] = useState(1);
+  const [programAssignmentFilter, setProgramAssignmentFilter] = useState('all');
   
   // Program viewing/editing
   const [viewingProgram, setViewingProgram] = useState(null);
   const [editingProgram, setEditingProgram] = useState(null);
+  const [editingProgramId, setEditingProgramId] = useState(null);
   const [showProgramModal, setShowProgramModal] = useState(false);
   
   // Exercises for program creation
   const [allExercises, setAllExercises] = useState([]);
   const [showExerciseModal, setShowExerciseModal] = useState(false);
+  const [deleteExerciseModal, setDeleteExerciseModal] = useState({ show: false, exerciseId: null, exerciseName: '' });
+  const [editExerciseModal, setEditExerciseModal] = useState({ show: false, exerciseId: null, name: '', muscle_group: '', category: 'strength', equipment: '', instructions: '' });
   const [exerciseSearch, setExerciseSearch] = useState('');
+  const [customExerciseSearch, setCustomExerciseSearch] = useState('');
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [exerciseToAdd, setExerciseToAdd] = useState({ sets: 3, reps: '', rpe: '', type: 'reps' });
   
@@ -331,81 +338,56 @@ const ManageClientPrograms = () => {
     }
   };
   
-  const handleEditProgram = (program) => {
-    setEditingProgram({ ...program });
-    setViewingProgram(null);
-  };
-  
-  const handleSaveProgram = async () => {
+  const handleEditProgram = async (programId) => {
     try {
-      setLoading(true);
-      
-      const response = await APIClient.put(`${BACKEND_ROUTES_API}UpdateProgram.php`, {
-        programId: editingProgram.id,
-        title: editingProgram.title,
-        description: editingProgram.description,
-        duration_weeks: editingProgram.duration_weeks,
-        difficulty_level: editingProgram.difficulty_level,
-        category: editingProgram.category
-      });
-      
-      if (response.success) {
-        // Update the local state
-        setAssignedPrograms(prev => 
-          prev.map(p => p.id === editingProgram.id ? { ...p, ...editingProgram } : p)
-        );
-        setEditingProgram(null);
-        setShowProgramModal(false);
+      const response = await APIClient.get(`${BACKEND_ROUTES_API}GetCustomProgramDetails.php?programId=${programId}`);
+      if (response.success && response.program) {
+        setProgramPackage({
+          title: response.program.title || '',
+          description: response.program.description || '',
+          category: response.program.category || 'General Fitness',
+          difficulty_level: response.program.difficulty_level || 'beginner',
+          duration_weeks: response.program.duration_weeks || 4
+        });
+        setWorkoutSessions(response.program.sessions || []);
+        setEditingProgramId(response.program.id);
+        setActiveView('create-program');
+        window.scrollTo(0, 0);
       } else {
-        alert('Failed to update program: ' + response.message);
+         showToast('Failed to load program details for editing', 'error');
       }
-    } catch (error) {
-      console.error('Error updating program:', error);
-      alert('Error updating program. Please try again.');
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching program details:', err);
+      showToast('Error loading program for editing', 'error');
     }
   };
-  
-  const handleCancelEdit = () => {
-    setEditingProgram(null);
-    if (viewingProgram) {
-      setShowProgramModal(true);
-    }
+
+  const handleDeleteProgram = (programId) => {
+    setDeleteProgramModal({ show: true, programId });
   };
   
-  const handleDeleteProgram = async (program) => {
-    if (!confirm(`Are you sure you want to delete the program "${program.title}"? This action cannot be undone.`)) {
-      return;
-    }
-    
+  const executeDeleteProgram = async () => {
     try {
-      setLoading(true);
-      
-      const response = await APIClient.delete(`${BACKEND_ROUTES_API}DeleteProgram.php`, {
-        data: { programId: program.id }
+      const response = await APIClient.post(`${BACKEND_ROUTES_API}DeleteTrainerProgram.php`, { 
+        program_id: deleteProgramModal.programId 
       });
-      
       if (response.success) {
-        // Update the local state to remove the program
-        setAssignedPrograms(prev => 
-          prev.filter(p => p.id !== program.id)
-        );
-        setShowProgramModal(false);
-        setViewingProgram(null);
-        showToast('Program deleted successfully!', 'success');
-        fetchClientData(); // Refresh data
+        showToast('Program deleted successfully', 'success');
+        setDeleteProgramModal({ show: false, programId: null });
+        if (typeof fetchAvailablePrograms === 'function') {
+            fetchAvailablePrograms(1, programSearchQuery);
+        } else {
+            fetchClientData();
+        }
       } else {
-        showToast(response.message || 'Failed to delete program', 'error');
+        showToast(response.message || 'Error deleting program', 'error');
       }
-    } catch (error) {
-      console.error('Error deleting program:', error);
-      showToast('Error deleting program. Please try again.', 'error');
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error('Error deleting program:', err);
+      showToast('Error deleting program', 'error');
     }
   };
-  
+
   // Meals
   const [nutritionGoal, setNutritionGoal] = useState(null); // Trainer-assigned goal
   const [selfNutritionGoal, setSelfNutritionGoal] = useState(null); // Client's self-created goal
@@ -416,6 +398,11 @@ const ManageClientPrograms = () => {
   const [showMealModal, setShowMealModal] = useState(false);
   const [showCustomFoodModal, setShowCustomFoodModal] = useState(false);
   const [showCustomMealTypeModal, setShowCustomMealTypeModal] = useState(false);
+  const [unassignProgramModal, setUnassignProgramModal] = useState({ show: false, assignmentId: null });
+  const [deleteMealModal, setDeleteMealModal] = useState({ show: false, mealId: null });
+  const [deleteMealTypeModal, setDeleteMealTypeModal] = useState({ show: false, mealType: '' });
+  const [deleteCustomFoodModal, setDeleteCustomFoodModal] = useState({ show: false, foodId: null });
+  const [deleteProgramModal, setDeleteProgramModal] = useState({ show: false, programId: null });
   const [customMealTypes, setCustomMealTypes] = useState(['breakfast', 'lunch', 'dinner', 'snack']); // Customizable
   const [newMealType, setNewMealType] = useState('');
   const [trainerCustomFoods, setTrainerCustomFoods] = useState([]);
@@ -461,7 +448,17 @@ const ManageClientPrograms = () => {
   // Analytics state
   const [analytics, setAnalytics] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
-  const [dateRange, setDateRange] = useState('90');
+  
+  // Date formatting helper for initial state
+  const getDaysAgoDate = (days) => {
+    const d = new Date();
+    d.setDate(d.getDate() - days);
+    return d.toISOString().split('T')[0];
+  };
+  
+  const [analyticsStartDate, setAnalyticsStartDate] = useState(getDaysAgoDate(90));
+  const [analyticsEndDate, setAnalyticsEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [analyticsActiveTab, setAnalyticsActiveTab] = useState('overview');
   
   const categories = ['Strength', 'Cardio', 'Hybrid', 'Weight Loss', 'Muscle Building', 'Endurance', 'Flexibility', 'General Fitness'];
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -478,7 +475,7 @@ const ManageClientPrograms = () => {
     if (activeView === 'analytics' && clientId) {
       fetchAnalytics();
     }
-  }, [activeView, clientId, dateRange]);
+  }, [activeView, clientId, analyticsStartDate, analyticsEndDate]);
   
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -508,6 +505,28 @@ const ManageClientPrograms = () => {
     }
   };
   
+  
+  const fetchAvailablePrograms = async (page = programPage, search = programSearchQuery, filter = programAssignmentFilter) => {
+    console.log('[DEBUG_MANAGE_CLIENT] Fetching available programs...', { page, search, filter });
+    try {
+      const response = await APIClient.get(`${BACKEND_ROUTES_API}GetTrainerPrograms.php?page=${page}&limit=6&client_id=${clientId}&assignment_filter=${filter}${search ? '&search=' + encodeURIComponent(search) : ''}`);
+      if (response.success) {
+        setAvailablePrograms(response.programs || []);
+        if (response.pagination) {
+          setProgramTotalPages(response.pagination.totalPages || 1);
+        }
+      }
+    } catch (err) {
+      console.error('[DEBUG_MANAGE_CLIENT] Available programs request failed:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeView === 'assign-program') {
+      fetchAvailablePrograms(programPage, programSearchQuery, programAssignmentFilter);
+    }
+  }, [programPage, programAssignmentFilter, activeView]);
+
   const fetchClientData = async () => {
     console.log('[DEBUG_MANAGE_CLIENT] fetchClientData called for clientId:', clientId);
     
@@ -571,19 +590,7 @@ const ManageClientPrograms = () => {
       }
       
       // Fetch available programs to assign
-      console.log('[DEBUG_MANAGE_CLIENT] Fetching available programs...');
-      try {
-        const availableResponse = await APIClient.get(`${BACKEND_ROUTES_API}GetTrainerPrograms.php`);
-        console.log('[DEBUG_MANAGE_CLIENT] Available programs response:', availableResponse);
-        if (availableResponse.success) {
-          setAvailablePrograms(availableResponse.programs || []);
-        } else {
-          console.warn('[DEBUG_MANAGE_CLIENT] Available programs request unsuccessful:', availableResponse.message);
-        }
-      } catch (availableError) {
-        console.error('[DEBUG_MANAGE_CLIENT] Available programs request failed:', availableError);
-        // Don't throw, continue with other requests
-      }
+      await fetchAvailablePrograms();
       
       // Fetch client nutrition goal
       console.log('[DEBUG_MANAGE_CLIENT] Fetching nutrition goal...');
@@ -675,16 +682,10 @@ const ManageClientPrograms = () => {
     try {
       setAnalyticsLoading(true);
 
-      // Calculate date range
-      const endDate = new Date().toISOString().split('T')[0];
-      const startDate = new Date(Date.now() - parseInt(dateRange) * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split('T')[0];
-
       const params = new URLSearchParams({
         trainee_id: clientId,
-        start_date: startDate,
-        end_date: endDate,
+        start_date: analyticsStartDate,
+        end_date: analyticsEndDate,
       });
 
       const response = await APIClient.get(
@@ -707,6 +708,14 @@ const ManageClientPrograms = () => {
   
   const formatNumber = (num) => {
     if (!num) return '0';
+    return num.toLocaleString();
+  };
+
+  const formatVolume = (vol) => {
+    const num = Number(vol || 0);
+    if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)}k`;
+    }
     return num.toLocaleString();
   };
 
@@ -752,16 +761,21 @@ const ManageClientPrograms = () => {
     }
   };
   
-  const handleUnassignProgram = async (assignmentId) => {
-    if (!confirm('Remove this program from client?')) return;
-    
+  const handleUnassignProgram = (assignmentId) => {
+    setUnassignProgramModal({ show: true, assignmentId });
+  };
+
+  const executeUnassignProgram = async () => {
+    if (!unassignProgramModal.assignmentId) return;
+
     try {
       const response = await APIClient.delete(`${BACKEND_ROUTES_API}UnassignProgramFromClient.php`, {
-        assignment_id: assignmentId
+        assignment_id: unassignProgramModal.assignmentId
       });
       
       if (response.success) {
         showToast('Program removed successfully!', 'success');
+        setUnassignProgramModal({ show: false, assignmentId: null });
         fetchClientData();
       } else {
         showToast(response.message || 'Failed to remove program', 'error');
@@ -816,12 +830,16 @@ const ManageClientPrograms = () => {
     }
   };
   
-  const handleDeleteMeal = async (mealId) => {
-    if (!confirm('Delete this meal?')) return;
+  const handleDeleteMeal = (mealId) => {
+    setDeleteMealModal({ show: true, mealId });
+  };
+
+  const confirmDeleteMeal = async () => {
+    if (!deleteMealModal.mealId) return;
     
     try {
       const response = await APIClient.delete(`${BACKEND_ROUTES_API}DeleteClientMeal.php`, {
-        meal_id: mealId
+        meal_id: deleteMealModal.mealId
       });
       
       if (response.success) {
@@ -833,6 +851,8 @@ const ManageClientPrograms = () => {
     } catch (error) {
       console.error('Error deleting meal:', error);
       showToast('Error deleting meal', 'error');
+    } finally {
+      setDeleteMealModal({ show: false, mealId: null });
     }
   };
   
@@ -897,23 +917,23 @@ const ManageClientPrograms = () => {
   
   const selectFood = async (food) => {
     // Extract portions if available
-    const portions = food.portions || food.foodPortions || [];
+    let portions = food.food_portions || food.portions || food.foodPortions || [];
     setAvailablePortions(portions);
     
     // Calculate base nutrition per 100g
     let calories, protein, carbs, fat;
     
     if (food.source === 'usda') {
-      const nutrients = food.foodNutrients || [];
-      calories = nutrients.find(n => n.nutrientId === 1008)?.value || 0;
-      protein = nutrients.find(n => n.nutrientId === 1003)?.value || 0;
-      carbs = nutrients.find(n => n.nutrientId === 1005)?.value || 0;
-      fat = nutrients.find(n => n.nutrientId === 1004)?.value || 0;
+      const nutrients = food.nutrients || {};
+      calories = parseFloat(nutrients.calories || 0);
+      protein = parseFloat(nutrients.protein || 0);
+      carbs = parseFloat(nutrients.carbs || 0);
+      fat = parseFloat(nutrients.fat || 0);
     } else {
-      calories = food.calories || 0;
-      protein = food.protein || 0;
-      carbs = food.carbs || 0;
-      fat = food.fat || 0;
+      calories = parseFloat(food.calories || 0);
+      protein = parseFloat(food.protein || 0);
+      carbs = parseFloat(food.carbs || 0);
+      fat = parseFloat(food.fat || 0);
     }
     
     setBaseNutrition({
@@ -931,11 +951,16 @@ const ManageClientPrograms = () => {
       source: food.source,
       serving_size: food.serving_size || 100,
       serving_unit: 'g',
-      quantity: 1,
+      quantity: 100,
       calories: calories.toFixed(1),
       protein: protein.toFixed(1),
       carbs: carbs.toFixed(1),
-      fat: fat.toFixed(1)
+      fat: fat.toFixed(1),
+      base_calories: calories,
+      base_protein: protein,
+      base_carbs: carbs,
+      base_fat: fat,
+      available_portions: portions || []
     };
     
     addFoodToMeal(foodItem);
@@ -943,6 +968,36 @@ const ManageClientPrograms = () => {
     setFoodSearchResults([]);
   };
   
+  const handleQuantityChange = (newQuantity, foodItemIndex) => {
+    const updatedFoodItems = [...currentMeal.food_items];
+    const foodItem = updatedFoodItems[foodItemIndex];
+    let quantity = parseFloat(newQuantity) || 0;
+    
+    if (foodItem.serving_unit === 'g' || foodItem.serving_unit === 'ml') {
+      quantity = Math.max(0, Math.round(quantity));
+    }
+    
+    let multiplier;
+    if (foodItem.serving_unit === 'g' || foodItem.serving_unit === 'ml') {
+      multiplier = quantity / 100;
+    } else if (foodItem.serving_unit.startsWith('portion_') && foodItem.portion_gram_weight) {
+      multiplier = (foodItem.portion_gram_weight * quantity) / 100;
+    } else {
+      multiplier = quantity;
+    }
+    
+    foodItem.quantity = quantity;
+    foodItem.calories = (foodItem.base_calories * multiplier).toFixed(1);
+    foodItem.protein = (foodItem.base_protein * multiplier).toFixed(1);
+    foodItem.carbs = (foodItem.base_carbs * multiplier).toFixed(1);
+    foodItem.fat = (foodItem.base_fat * multiplier).toFixed(1);
+    
+    setCurrentMeal(prev => ({
+      ...prev,
+      food_items: updatedFoodItems
+    }));
+  };
+
   const handleMeasurementTypeChange = (newUnit, foodItemIndex) => {
     const updatedFoodItems = [...currentMeal.food_items];
     const foodItem = updatedFoodItems[foodItemIndex];
@@ -953,20 +1008,20 @@ const ManageClientPrograms = () => {
     
     if (newUnit === 'g' || newUnit === 'ml') {
       const multiplier = 100 / 100; // per 100g
-      calories = (baseNutrition.calories * multiplier).toFixed(1);
-      protein = (baseNutrition.protein * multiplier).toFixed(1);
-      carbs = (baseNutrition.carbs * multiplier).toFixed(1);
-      fat = (baseNutrition.fat * multiplier).toFixed(1);
+      calories = (foodItem.base_calories * multiplier).toFixed(1);
+      protein = (foodItem.base_protein * multiplier).toFixed(1);
+      carbs = (foodItem.base_carbs * multiplier).toFixed(1);
+      fat = (foodItem.base_fat * multiplier).toFixed(1);
       defaultQuantity = 100;
     } else if (newUnit.startsWith('portion_')) {
       const portionIndex = parseInt(newUnit.split('_')[1]);
-      const portion = availablePortions[portionIndex];
+      const portion = foodItem.available_portions[portionIndex];
       portionGramWeight = portion.gramWeight || portion.gram_weight || 100;
       const multiplier = portionGramWeight / 100;
-      calories = (baseNutrition.calories * multiplier).toFixed(1);
-      protein = (baseNutrition.protein * multiplier).toFixed(1);
-      carbs = (baseNutrition.carbs * multiplier).toFixed(1);
-      fat = (baseNutrition.fat * multiplier).toFixed(1);
+      calories = (foodItem.base_calories * multiplier).toFixed(1);
+      protein = (foodItem.base_protein * multiplier).toFixed(1);
+      carbs = (foodItem.base_carbs * multiplier).toFixed(1);
+      fat = (foodItem.base_fat * multiplier).toFixed(1);
     }
     
     foodItem.serving_unit = newUnit;
@@ -994,12 +1049,16 @@ const ManageClientPrograms = () => {
     }
   };
   
-  const handleCreateCustomFood = async (e) => {
+  const handleSaveCustomFood = async (e) => {
     e.preventDefault();
     try {
-      const response = await APIClient.post(`${BACKEND_ROUTES_API}CreateTrainerCustomFood.php`, customFoodForm);
+      const endpoint = customFoodForm.id 
+        ? `${BACKEND_ROUTES_API}UpdateTrainerCustomFood.php`
+        : `${BACKEND_ROUTES_API}CreateTrainerCustomFood.php`;
+        
+      const response = await APIClient.post(endpoint, customFoodForm);
       if (response.success) {
-        showToast('Custom food created successfully!', 'success');
+        showToast(customFoodForm.id ? 'Custom food updated!' : 'Custom food created!', 'success');
         setShowCustomFoodModal(false);
         setCustomFoodForm({
           name: '',
@@ -1014,18 +1073,22 @@ const ManageClientPrograms = () => {
         });
         fetchTrainerCustomFoods();
       } else {
-        showToast(response.message || 'Failed to create custom food', 'error');
+        showToast(response.message || 'Failed to save custom food', 'error');
       }
     } catch (error) {
-      console.error('Error creating custom food:', error);
-      showToast('Error creating custom food', 'error');
+      console.error('Error saving custom food:', error);
+      showToast('Error saving custom food', 'error');
     }
   };
   
-  const handleDeleteCustomFood = async (foodId) => {
-    if (!confirm('Delete this custom food?')) return;
+  const handleDeleteCustomFood = (foodId) => {
+    setDeleteCustomFoodModal({ show: true, foodId });
+  };
+
+  const confirmDeleteCustomFood = async () => {
+    if (!deleteCustomFoodModal.foodId) return;
     try {
-      const response = await APIClient.delete(`${BACKEND_ROUTES_API}DeleteTrainerCustomFood.php`, { food_id: foodId });
+      const response = await APIClient.delete(`${BACKEND_ROUTES_API}DeleteTrainerCustomFood.php`, { food_id: deleteCustomFoodModal.foodId });
       if (response.success) {
         showToast('Custom food deleted!', 'success');
         fetchTrainerCustomFoods();
@@ -1035,6 +1098,8 @@ const ManageClientPrograms = () => {
     } catch (error) {
       console.error('Error deleting custom food:', error);
       showToast('Error deleting custom food', 'error');
+    } finally {
+      setDeleteCustomFoodModal({ show: false, foodId: null });
     }
   };
   
@@ -1052,10 +1117,15 @@ const ManageClientPrograms = () => {
       showToast('Must have at least one meal type', 'error');
       return;
     }
-    if (confirm(`Remove "${mealType}" meal type?`)) {
-      setCustomMealTypes(customMealTypes.filter(mt => mt !== mealType));
-      showToast('Meal type removed!', 'success');
-    }
+    setDeleteMealTypeModal({ show: true, mealType });
+  };
+
+  const confirmRemoveMealType = () => {
+    if (!deleteMealTypeModal.mealType) return;
+    
+    setCustomMealTypes(customMealTypes.filter(mt => mt !== deleteMealTypeModal.mealType));
+    showToast('Meal type removed!', 'success');
+    setDeleteMealTypeModal({ show: false, mealType: '' });
   };
   
   const getMealForDayAndType = (dayOfWeek, mealType) => {
@@ -1141,6 +1211,82 @@ const ManageClientPrograms = () => {
     setExerciseToAdd({ sets: 3, reps: '10-12', rpe: '7-8', type: 'reps' });
   };
   
+  // Custom Exercise Creation
+  const addCustomExercise = async () => {
+    if (!newExercise.name) return;
+
+    try {
+      const data = await APIClient.post(`${BACKEND_ROUTES_API}CreateCustomExercise.php`, {
+        name: newExercise.name,
+        category: newExercise.category,
+        muscle_group: newExercise.muscle_group,
+        equipment: newExercise.equipment,
+        instructions: newExercise.instructions
+      });
+
+      if (data.success) {
+        setNewExercise({ 
+          name: '', 
+          muscle_group: '',
+          category: 'strength',
+          equipment: '',
+          instructions: ''
+        });
+        fetchExercises();
+        showToast('Exercise added successfully!', 'success');
+      }
+    } catch (err) {
+      console.error('Error creating custom exercise:', err);
+    }
+  };
+
+  // Edit Custom Exercise
+  const executeEditCustomExercise = async () => {
+    if (!editExerciseModal.name) return;
+
+    try {
+      const data = await APIClient.post(`${BACKEND_ROUTES_API}EditCustomExercise.php`, {
+        exerciseId: editExerciseModal.exerciseId,
+        name: editExerciseModal.name,
+        category: editExerciseModal.category,
+        muscle_group: editExerciseModal.muscle_group,
+        equipment: editExerciseModal.equipment,
+        instructions: editExerciseModal.instructions
+      });
+
+      if (data.success) {
+        showToast('Exercise updated successfully!', 'success');
+        setEditExerciseModal({ show: false, exerciseId: null, name: '', muscle_group: '', category: 'strength', equipment: '', instructions: '' });
+        fetchExercises();
+      } else {
+        showToast(data.message || 'Could not update exercise', 'error');
+      }
+    } catch (err) {
+      showToast('Error updating exercise: ' + err.message, 'error');
+    }
+  };
+
+  // Delete Custom Exercise
+  const executeDeleteCustomExercise = async () => {
+    if (!deleteExerciseModal.exerciseId) return;
+
+    try {
+      const data = await APIClient.delete(`${BACKEND_ROUTES_API}DeleteCustomExercise.php`, { 
+        exerciseId: deleteExerciseModal.exerciseId 
+      });
+
+      if (data.success) {
+        showToast('Exercise deleted successfully!', 'success');
+        setDeleteExerciseModal({ show: false, exerciseId: null, exerciseName: '' });
+        fetchExercises();
+      } else {
+        showToast(data.message || 'Could not delete exercise', 'error');
+      }
+    } catch (err) {
+      showToast('Error deleting exercise: ' + err.message, 'error');
+    }
+  };
+  
   const filteredExercises = React.useMemo(() => {
     return allExercises
       .filter(exercise => exercise.is_custom == 0)
@@ -1150,6 +1296,16 @@ const ManageClientPrograms = () => {
         exercise.muscle_group?.toLowerCase().includes(exerciseSearch.toLowerCase())
       );
   }, [allExercises, exerciseSearch]);
+
+  const filteredCustomExercises = React.useMemo(() => {
+    return allExercises
+      .filter(exercise => exercise.is_custom == 1)
+      .filter(exercise =>
+        exercise.name?.toLowerCase().includes(customExerciseSearch.toLowerCase()) ||
+        exercise.category?.toLowerCase().includes(customExerciseSearch.toLowerCase()) ||
+        exercise.muscle_group?.toLowerCase().includes(customExerciseSearch.toLowerCase())
+      );
+  }, [allExercises, customExerciseSearch]);
   
   const filteredPrograms = React.useMemo(() => {
     if (!programSearchQuery) return allTrainerPrograms;
@@ -1223,7 +1379,13 @@ const ManageClientPrograms = () => {
       };
       
       console.log('[DEBUG_MANAGE_CLIENT] Sending custom program request with data:', programData);
-      const response = await APIClient.post(`${BACKEND_ROUTES_API}CreateClientProgram.php`, programData);
+      let response;
+      if (editingProgramId) {
+        programData.program_id = editingProgramId;
+        response = await APIClient.post(`${BACKEND_ROUTES_API}UpdateClientProgram.php`, programData);
+      } else {
+        response = await APIClient.post(`${BACKEND_ROUTES_API}CreateClientProgram.php`, programData);
+      }
       
       console.log('[DEBUG_MANAGE_CLIENT] Custom program response:', response);
       
@@ -1517,60 +1679,126 @@ const ManageClientPrograms = () => {
                         <div className="row">
                           {assignedPrograms.map(program => (
                             <div key={program.assignment_id} className="col-md-6 col-lg-4 mb-3">
-                              <div className="card card-hover h-100" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
-                                <div className="card-body d-flex flex-column" style={{ background: '#2d2d2d' }}>
-                                  <div className="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 className="card-title mb-0" style={{ color: '#ffffff' }}>{program.title}</h6>
-                                    <span className="badge" style={{ background: '#4f46e5', color: '#ffffff' }}>ASSIGNED</span>
-                                  </div>
-                                  <p className="text-muted small mb-2">{program.description}</p>
-                                  <div className="d-flex flex-wrap gap-1 mb-2">
-                                    <span className="badge" style={{ background: '#ffffff', color: '#000000' }}>{program.category}</span>
-                                    <span className="badge" style={{ background: '#ffffff', color: '#000000' }}>{program.duration_weeks} WEEKS</span>
-                                  </div>
-                                  <small className="text-muted">
-                                    <i className="bi bi-calendar3 me-1"></i>
-                                    Assigned {new Date(program.assigned_at).toLocaleDateString()}
-                                  </small>
-                                  <div className="mt-auto pt-3 d-flex gap-2">
-                                    <button 
-                                      className="btn btn-sm flex-fill"
-                                      style={{ 
+                              <div className="card h-100" style={{ background: '#252525', border: '1px solid #333333', borderRadius: '12px' }}>
+                                <div className="card-body d-flex flex-column p-4">
+                                  <div className="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                      <h5 className="fw-bold mb-2 outline-none" style={{ color: '#ffffff', fontSize: '1.2rem' }}>{program.title}</h5>
+                                      <span className="badge" style={{ 
                                         background: 'transparent',
-                                        border: '2px solid #10b981',
-                                        color: '#10b981',
+                                        color: '#9ca3af', 
+                                        border: '1px solid #4b5563', 
+                                        padding: '0.4em 0.8em',
                                         borderRadius: '8px',
-                                        transition: 'all 0.3s ease'
-                                      }}
-                                      onMouseEnter={(e) => {
-                                        e.target.style.background = 'rgba(16, 185, 129, 0.1)';
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        e.target.style.background = 'transparent';
-                                      }}
-                                      onClick={() => handleViewProgram(program)}
-                                    >
-                                      <i className="bi bi-eye me-1"></i>
-                                      View
-                                    </button>
+                                        fontWeight: '500',
+                                        fontSize: '0.75rem'
+                                      }}>
+                                        Already Assigned
+                                      </span>
+                                    </div>
+                                    
+                                    <div className="dropdown position-relative">
+                                      <button 
+                                        className="btn btn-link text-muted p-0" 
+                                        style={{ color: '#9ca3af', textDecoration: 'none' }}
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          const menu = e.currentTarget.nextElementSibling;
+                                          const isShowing = menu.classList.contains('show');
+                                          
+                                          // Close all other dropdowns
+                                          document.querySelectorAll('.program-dropdown-menu.show').forEach(m => m.classList.remove('show'));
+                                          
+                                          if (!isShowing) {
+                                            menu.classList.add('show');
+                                            const closeDropdown = (evt) => {
+                                              if (menu && !menu.contains(evt.target)) {
+                                                menu.classList.remove('show');
+                                                document.removeEventListener('click', closeDropdown);
+                                              }
+                                            };
+                                            setTimeout(() => document.addEventListener('click', closeDropdown), 0);
+                                          }
+                                        }}
+                                      >
+                                        <i className="bi bi-three-dots-vertical fs-5"></i>
+                                      </button>
+                                      <ul className="dropdown-menu program-dropdown-menu position-absolute shadow border-0" style={{ 
+                                        right: 0, 
+                                        top: '100%', 
+                                        minWidth: '130px', 
+                                        zIndex: 1050,
+                                        background: '#f8f9fa',
+                                        borderRadius: '12px',
+                                        padding: '4px',
+                                        overflow: 'hidden'
+                                      }}>
+                                        <li style={{ margin: 0, padding: 0 }}>
+                                          <button 
+                                            className="dropdown-item d-flex align-items-center" 
+                                            style={{
+                                              color: '#ef4444',
+                                              borderRadius: '8px',
+                                              padding: '8px 12px',
+                                              fontWeight: '500',
+                                              transition: 'all 0.2s ease',
+                                              margin: 0
+                                            }}
+                                            onMouseEnter={(e) => {
+                                              e.target.style.background = '#fee2e2';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                              e.target.style.background = 'transparent';
+                                            }}
+                                            onClick={(e) => { e.stopPropagation(); handleUnassignProgram(program.assignment_id); }}
+                                          >
+                                            <i className="bi bi-trash3 me-2"></i> Unassign
+                                          </button>
+                                        </li>
+                                      </ul>
+                                    </div>
+                                  </div>
+                                  
+                                  {program.description && (
+                                    <p className="text-muted small mb-4" style={{ color: '#9ca3af', minHeight: '40px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{program.description}</p>
+                                  )}
+                                  
+                                  <div className="d-flex flex-wrap gap-2 mb-3 mt-auto">
+                                    <span className="badge d-flex align-items-center inline-flex" style={{ background: '#374151', color: '#e5e7eb', padding: '0.4em 0.9em', borderRadius: '50rem', fontWeight: '500' }}>
+                                      <i className="bi bi-tag" style={{ marginRight: '6px', fontSize: '0.85rem' }}></i> {program.category}
+                                    </span>
+                                    {program.difficulty_level && (
+                                      <span className="badge d-flex align-items-center inline-flex" style={{ background: '#374151', color: '#e5e7eb', padding: '0.4em 0.9em', borderRadius: '50rem', fontWeight: '500' }}>
+                                        {program.difficulty_level}
+                                      </span>
+                                    )}
+                                    <span className="badge d-flex align-items-center inline-flex" style={{ background: '#374151', color: '#e5e7eb', padding: '0.4em 0.9em', borderRadius: '50rem', fontWeight: '500' }}>
+                                      <i className="bi bi-clock" style={{ marginRight: '6px', fontSize: '0.85rem' }}></i> {program.duration_weeks} WEEKS
+                                    </span>
+                                  </div>
+                                  
+                                  <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top" style={{ borderColor: '#333333' }}>
+                                    <div style={{ color: '#10b981', fontSize: '0.85rem', fontWeight: '500' }}>
+                                      <i className="bi bi-calendar-check me-2"></i>
+                                      {new Date(program.assigned_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                    </div>
                                     <button 
-                                      className="btn btn-sm"
+                                      className="btn btn-sm text-white"
                                       style={{ 
-                                        background: 'transparent',
-                                        border: '2px solid #ef4444',
-                                        color: '#ef4444',
+                                        background: '#000000',
+                                        border: '1px solid #111111',
                                         borderRadius: '8px',
-                                        transition: 'all 0.3s ease'
+                                        padding: '0.5rem 1rem',
+                                        fontWeight: '600',
+                                        fontSize: '0.85rem',
+                                        transition: 'all 0.2s'
                                       }}
-                                      onMouseEnter={(e) => {
-                                        e.target.style.background = 'rgba(239, 68, 68, 0.1)';
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        e.target.style.background = 'transparent';
-                                      }}
-                                      onClick={() => handleUnassignProgram(program.assignment_id)}
+                                      onMouseEnter={(e) => e.target.style.background = '#1a1a1a'}
+                                      onMouseLeave={(e) => e.target.style.background = '#000000'}
+                                      onClick={(e) => { e.stopPropagation(); handleViewProgram(program); }}
                                     >
-                                      <i className="bi bi-trash"></i>
+                                      View Details
                                     </button>
                                   </div>
                                 </div>
@@ -1720,42 +1948,108 @@ const ManageClientPrograms = () => {
         {/* Analytics Tab */}
         {activeView === 'analytics' && (
           <div>
-            {/* Debug Info - shows what data is available */}
-            {analytics && analytics.overview && (
-              <div className="alert alert-info mb-3" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d', color: '#ffffff' }}>
-                <strong>Analytics Data Status:</strong>
-                <ul className="mb-0 mt-2" style={{ fontSize: '0.9rem' }}>
-                  <li>Overview Stats: ✓ ({analytics.overview.total_workouts} workouts)</li>
-                  <li>Volume Trends: {analytics.volume_trends?.length > 0 ? `✓ (${analytics.volume_trends.length} weeks)` : '✗ No data'}</li>
-                  <li>Strength Progress: {analytics.strength_progress?.length > 0 ? `✓ (${analytics.strength_progress.length} records)` : '✗ No data'}</li>
-                  <li>Program Performance: {analytics.program_performance?.length > 0 ? `✓ (${analytics.program_performance.length} programs)` : '✗ No data'}</li>
-                  <li>Personal Records: {analytics.personal_records?.length > 0 ? `✓ (${analytics.personal_records.length} PRs)` : '✗ No data'}</li>
-                  <li>Body Composition: {analytics.body_composition?.length > 0 ? `✓ (${analytics.body_composition.length} measurements)` : '✗ No data'}</li>
-                  <li>Consistency: {analytics.consistency ? '✓ Available' : '✗ No data'}</li>
-                </ul>
+            {/* Note of the day Assigned Together */}
+            {clientInfo?.joined_date && (
+              <div className="alert mb-3" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#10b981' }}>
+                <i className="bi bi-clock-history me-2"></i>
+                Started Coaching on: <strong>{new Date(clientInfo.joined_date).toLocaleDateString()}</strong>
               </div>
             )}
             
-            {/* Date Range Filter */}
-            <div className="d-flex justify-content-end mb-3">
-              <select
-                className="form-select"
-                value={dateRange}
-                onChange={(e) => setDateRange(e.target.value)}
-                style={{ 
-                  width: 'auto',
-                  background: '#2d2d2d',
-                  border: '1px solid #3d3d3d',
-                  color: '#ffffff'
-                }}
-              >
-                <option value="30">Last 30 Days</option>
-                <option value="60">Last 60 Days</option>
-                <option value="90">Last 90 Days</option>
-                <option value="180">Last 6 Months</option>
-                <option value="365">Last Year</option>
-              </select>
+            {/* Specific Date Range Filter */}
+            <div className="d-flex justify-content-end mb-4 flex-wrap gap-3 align-items-center">
+              <div className="d-flex align-items-center">
+                <span className="me-2 text-white-50 fw-bold">From:</span>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={analyticsStartDate}
+                  onChange={(e) => setAnalyticsStartDate(e.target.value)}
+                  style={{
+                    background: '#2d2d2d',
+                    border: '1px solid #3d3d3d',
+                    color: '#ffffff',
+                    width: 'auto',
+                    colorScheme: 'dark'
+                  }}
+                />
+              </div>
+              <div className="d-flex align-items-center">
+                <span className="me-2 text-white-50 fw-bold">To:</span>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={analyticsEndDate}
+                  onChange={(e) => setAnalyticsEndDate(e.target.value)}
+                  style={{
+                    background: '#2d2d2d',
+                    border: '1px solid #3d3d3d',
+                    color: '#ffffff',
+                    width: 'auto',
+                    colorScheme: 'dark'
+                  }}
+                />
+              </div>
             </div>
+
+            <ul className="nav nav-tabs mb-4 border-secondary" style={{ borderColor: '#3d3d3d !important' }}>
+              <li className="nav-item">
+                <button 
+                  className={`nav-link ${analyticsActiveTab === 'overview' ? 'active' : ''}`} 
+                  onClick={() => setAnalyticsActiveTab('overview')}
+                  style={{ 
+                    color: analyticsActiveTab === 'overview' ? '#10b981' : '#ffffff', 
+                    backgroundColor: analyticsActiveTab === 'overview' ? '#2d2d2d' : 'transparent',
+                    borderColor: analyticsActiveTab === 'overview' ? '#3d3d3d #3d3d3d #2d2d2d' : 'transparent',
+                    marginBottom: '-1px'
+                  }}
+                >
+                  <i className="bi bi-speedometer2 me-2"></i>Overview
+                </button>
+              </li>
+              <li className="nav-item">
+                <button 
+                  className={`nav-link ${analyticsActiveTab === 'strength' ? 'active' : ''}`} 
+                  onClick={() => setAnalyticsActiveTab('strength')}
+                  style={{ 
+                    color: analyticsActiveTab === 'strength' ? '#10b981' : '#ffffff', 
+                    backgroundColor: analyticsActiveTab === 'strength' ? '#2d2d2d' : 'transparent',
+                    borderColor: analyticsActiveTab === 'strength' ? '#3d3d3d #3d3d3d #2d2d2d' : 'transparent',
+                    marginBottom: '-1px'
+                  }}
+                >
+                  <i className="bi bi-lightning-charge me-2"></i>Strength
+                </button>
+              </li>
+              <li className="nav-item">
+                <button 
+                  className={`nav-link ${analyticsActiveTab === 'volume' ? 'active' : ''}`} 
+                  onClick={() => setAnalyticsActiveTab('volume')}
+                  style={{ 
+                    color: analyticsActiveTab === 'volume' ? '#10b981' : '#ffffff', 
+                    backgroundColor: analyticsActiveTab === 'volume' ? '#2d2d2d' : 'transparent',
+                    borderColor: analyticsActiveTab === 'volume' ? '#3d3d3d #3d3d3d #2d2d2d' : 'transparent',
+                    marginBottom: '-1px'
+                  }}
+                >
+                  <i className="bi bi-bar-chart me-2"></i>Volume
+                </button>
+              </li>
+              <li className="nav-item">
+                <button 
+                  className={`nav-link ${analyticsActiveTab === 'body' ? 'active' : ''}`} 
+                  onClick={() => setAnalyticsActiveTab('body')}
+                  style={{ 
+                    color: analyticsActiveTab === 'body' ? '#10b981' : '#ffffff', 
+                    backgroundColor: analyticsActiveTab === 'body' ? '#2d2d2d' : 'transparent',
+                    borderColor: analyticsActiveTab === 'body' ? '#3d3d3d #3d3d3d #2d2d2d' : 'transparent',
+                    marginBottom: '-1px'
+                  }}
+                >
+                  <i className="bi bi-person-badge me-2"></i>Body Composition
+                </button>
+              </li>
+            </ul>
 
             {analyticsLoading ? (
               <div className="card" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d' }}>
@@ -1768,17 +2062,19 @@ const ManageClientPrograms = () => {
               </div>
             ) : analytics && analytics.overview ? (
               <>
+                {analyticsActiveTab === 'overview' && (
+                  <>
                 {/* Overview Stats */}
                 <div className="row mb-4">
                   <div className="col-lg-3 col-md-6 mb-3">
                     <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
                       <div className="card-body">
                         <div className="d-flex justify-content-between align-items-center">
-                          <div>
-                            <p className="text-muted mb-1 small">Total Workouts</p>
-                            <h3 className="mb-0" style={{ color: '#ffffff' }}>{formatNumber(analytics.overview.total_workouts)}</h3>
+                          <div className="text-truncate me-2">
+                            <p className="text-muted mb-1 small text-truncate">Total Workouts</p>
+                            <h3 className="mb-0 text-truncate" style={{ color: '#ffffff' }}>{formatNumber(analytics.overview.total_workouts)}</h3>
                           </div>
-                          <div className="rounded-circle p-3" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+                          <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ background: 'rgba(16, 185, 129, 0.1)', width: '48px', height: '48px' }}>
                             <i className="bi bi-activity fs-4" style={{ color: '#10b981' }}></i>
                           </div>
                         </div>
@@ -1790,11 +2086,11 @@ const ManageClientPrograms = () => {
                     <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
                       <div className="card-body">
                         <div className="d-flex justify-content-between align-items-center">
-                          <div>
-                            <p className="text-muted mb-1 small">Total Volume</p>
-                            <h3 className="mb-0" style={{ color: '#ffffff' }}>{formatNumber(analytics.overview.total_volume_kg)} kg</h3>
+                          <div className="text-truncate me-2">
+                            <p className="text-muted mb-1 small text-truncate">Total Volume</p>
+                            <h3 className="mb-0 text-truncate" style={{ color: '#ffffff' }}>{formatVolume(analytics.overview.total_volume_kg)}&nbsp;kg</h3>
                           </div>
-                          <div className="rounded-circle p-3" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+                          <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ background: 'rgba(16, 185, 129, 0.1)', width: '48px', height: '48px' }}>
                             <i className="bi bi-graph-up fs-4" style={{ color: '#10b981' }}></i>
                           </div>
                         </div>
@@ -1806,11 +2102,11 @@ const ManageClientPrograms = () => {
                     <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
                       <div className="card-body">
                         <div className="d-flex justify-content-between align-items-center">
-                          <div>
-                            <p className="text-muted mb-1 small">Unique Exercises</p>
-                            <h3 className="mb-0" style={{ color: '#ffffff' }}>{formatNumber(analytics.overview.unique_exercises)}</h3>
+                          <div className="text-truncate me-2">
+                            <p className="text-muted mb-1 small text-truncate">Unique Exercises</p>
+                            <h3 className="mb-0 text-truncate" style={{ color: '#ffffff' }}>{formatNumber(analytics.overview.unique_exercises)}</h3>
                           </div>
-                          <div className="rounded-circle p-3" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+                          <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ background: 'rgba(16, 185, 129, 0.1)', width: '48px', height: '48px' }}>
                             <i className="bi bi-list-task fs-4" style={{ color: '#10b981' }}></i>
                           </div>
                         </div>
@@ -1822,11 +2118,11 @@ const ManageClientPrograms = () => {
                     <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
                       <div className="card-body">
                         <div className="d-flex justify-content-between align-items-center">
-                          <div>
-                            <p className="text-muted mb-1 small">Average RPE</p>
-                            <h3 className="mb-0" style={{ color: '#ffffff' }}>{formatDecimal(analytics.overview.avg_rpe)}</h3>
+                          <div className="text-truncate me-2">
+                            <p className="text-muted mb-1 small text-truncate">Average RPE</p>
+                            <h3 className="mb-0 text-truncate" style={{ color: '#ffffff' }}>{formatDecimal(analytics.overview.avg_rpe)}</h3>
                           </div>
-                          <div className="rounded-circle p-3" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+                          <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ background: 'rgba(16, 185, 129, 0.1)', width: '48px', height: '48px' }}>
                             <i className="bi bi-lightning fs-4" style={{ color: '#10b981' }}></i>
                           </div>
                         </div>
@@ -1834,7 +2130,11 @@ const ManageClientPrograms = () => {
                     </div>
                   </div>
                 </div>
+                  </>
+                )}
 
+                {analyticsActiveTab === 'volume' && (
+                  <>
                 {/* Additional Stats Row */}
                 <div className="row mb-4">
                   <div className="col-lg-4 col-md-6 mb-3">
@@ -1851,7 +2151,7 @@ const ManageClientPrograms = () => {
                         </div>
                         <div className="d-flex justify-content-between">
                           <span className="text-muted">Training Time:</span>
-                          <strong style={{ color: '#ffffff' }}>{formatNumber(analytics.overview.total_minutes)} min</strong>
+                          <strong style={{ color: '#ffffff' }}>{formatNumber(analytics.overview.total_minutes)}&nbsp;min</strong>
                         </div>
                       </div>
                     </div>
@@ -1931,18 +2231,18 @@ const ManageClientPrograms = () => {
                             </tr>
                           </thead>
                           <tbody style={{ background: '#2d2d2d' }}>
-                            {analytics.volume_trends.slice(0, 12).map((week, index) => (
+                            {analytics.volume_trends.map((week, index) => (
                               <tr key={index} style={{ borderColor: '#3d3d3d' }}>
-                                <td style={{ borderColor: '#3d3d3d' }}>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>
                                   <small className="text-muted">
                                     {new Date(week.week_start_date).toLocaleDateString()}
                                   </small>
                                 </td>
-                                <td style={{ borderColor: '#3d3d3d' }}><strong>{week.total_workouts}</strong></td>
-                                <td style={{ borderColor: '#3d3d3d' }}><strong>{formatNumber(week.total_volume_kg)} kg</strong></td>
-                                <td style={{ borderColor: '#3d3d3d' }}>{formatNumber(week.total_sets)}</td>
-                                <td style={{ borderColor: '#3d3d3d' }}>{formatNumber(week.total_reps)}</td>
-                                <td style={{ borderColor: '#3d3d3d' }}>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}><strong>{week.total_workouts}</strong></td>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}><strong>{formatVolume(week.total_volume_kg)}&nbsp;kg</strong></td>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>{formatNumber(week.total_sets)}</td>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>{formatNumber(week.total_reps)}</td>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>
                                   <span className="badge" style={{ 
                                     background: week.avg_rpe >= 8 ? '#ef4444' : week.avg_rpe >= 6 ? '#f59e0b' : '#10b981',
                                     color: '#ffffff'
@@ -1950,8 +2250,8 @@ const ManageClientPrograms = () => {
                                     {formatDecimal(week.avg_rpe)}
                                   </span>
                                 </td>
-                                <td style={{ borderColor: '#3d3d3d' }}>{week.total_duration_minutes || 0} min</td>
-                                <td style={{ borderColor: '#3d3d3d' }}>{week.unique_exercises || 0}</td>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>{week.total_duration_minutes || 0}&nbsp;min</td>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>{week.unique_exercises || 0}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1959,15 +2259,15 @@ const ManageClientPrograms = () => {
                             <tr>
                               <td style={{ color: '#ffffff', fontWeight: 'bold', borderColor: '#3d3d3d' }}>TOTAL</td>
                               <td style={{ color: '#ffffff', fontWeight: 'bold', borderColor: '#3d3d3d' }}>{formatNumber(analytics.overview.total_workouts)}</td>
-                              <td style={{ color: '#ffffff', fontWeight: 'bold', borderColor: '#3d3d3d' }}>{formatNumber(analytics.overview.total_volume_kg)} kg</td>
+                              <td style={{ color: '#ffffff', fontWeight: 'bold', borderColor: '#3d3d3d' }}>{formatVolume(analytics.overview.total_volume_kg)}&nbsp;kg</td>
                               <td style={{ color: '#ffffff', fontWeight: 'bold', borderColor: '#3d3d3d' }}>{formatNumber(analytics.overview.total_sets)}</td>
                               <td style={{ color: '#ffffff', fontWeight: 'bold', borderColor: '#3d3d3d' }}>{formatNumber(analytics.overview.total_reps)}</td>
-                              <td style={{ borderColor: '#3d3d3d' }}>
+                              <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>
                                 <span className="badge" style={{ background: '#10b981', color: '#ffffff' }}>
                                   {formatDecimal(analytics.overview.avg_rpe)}
                                 </span>
                               </td>
-                              <td style={{ color: '#ffffff', fontWeight: 'bold', borderColor: '#3d3d3d' }}>{formatNumber(analytics.overview.total_minutes)} min</td>
+                              <td style={{ color: '#ffffff', fontWeight: 'bold', borderColor: '#3d3d3d' }}>{formatNumber(analytics.overview.total_minutes)}&nbsp;min</td>
                               <td style={{ color: '#ffffff', fontWeight: 'bold', borderColor: '#3d3d3d' }}>{formatNumber(analytics.overview.unique_exercises)}</td>
                             </tr>
                           </tfoot>
@@ -1988,7 +2288,7 @@ const ManageClientPrograms = () => {
                     </div>
                     <div className="card-body" style={{ background: '#2d2d2d' }}>
                       <ResponsiveContainer width="100%" height={350}>
-                        <BarChart data={analytics.volume_trends.slice(0, 12)}>
+                        <BarChart data={analytics.volume_trends}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#3d3d3d" />
                           <XAxis 
                             dataKey="week_start_date" 
@@ -2009,7 +2309,11 @@ const ManageClientPrograms = () => {
                     </div>
                   </div>
                 )}
+                  </>
+                )}
 
+                {analyticsActiveTab === 'strength' && (
+                  <>
                 {/* Strength Progress Chart */}
                 {analytics.strength_progress && analytics.strength_progress.length > 0 && (
                   <div className="card mb-4" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
@@ -2021,7 +2325,7 @@ const ManageClientPrograms = () => {
                     </div>
                     <div className="card-body" style={{ background: '#2d2d2d' }}>
                       <ResponsiveContainer width="100%" height={350}>
-                        <LineChart data={analytics.strength_progress.slice(0, 20)}>
+                        <LineChart data={analytics.strength_progress}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#3d3d3d" />
                           <XAxis 
                             dataKey="recorded_date" 
@@ -2046,7 +2350,11 @@ const ManageClientPrograms = () => {
                     </div>
                   </div>
                 )}
+                  </>
+                )}
 
+                {analyticsActiveTab === 'overview' && (
+                  <>
                 {/* Program Performance Breakdown */}
                 {analytics.program_performance && analytics.program_performance.length > 0 && (
                   <div className="card mb-4" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
@@ -2077,16 +2385,16 @@ const ManageClientPrograms = () => {
                           <tbody style={{ background: '#2d2d2d' }}>
                             {analytics.program_performance.map((program, index) => (
                               <tr key={index} style={{ borderColor: '#3d3d3d' }}>
-                                <td style={{ borderColor: '#3d3d3d' }}>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>
                                   <strong>{program.program_name}</strong>
                                 </td>
-                                <td style={{ borderColor: '#3d3d3d' }}><strong>{program.total_workouts}</strong></td>
-                                <td style={{ borderColor: '#3d3d3d' }}>
-                                  <strong style={{ color: '#10b981' }}>{formatNumber(program.total_volume_kg)} kg</strong>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}><strong>{program.total_workouts}</strong></td>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>
+                                  <strong style={{ color: '#10b981' }}>{formatVolume(program.total_volume_kg)}&nbsp;kg</strong>
                                 </td>
-                                <td style={{ borderColor: '#3d3d3d' }}>{formatNumber(program.total_sets)}</td>
-                                <td style={{ borderColor: '#3d3d3d' }}>{formatNumber(program.total_reps)}</td>
-                                <td style={{ borderColor: '#3d3d3d' }}>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>{formatNumber(program.total_sets)}</td>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>{formatNumber(program.total_reps)}</td>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>
                                   <span className="badge" style={{ 
                                     background: program.avg_rpe >= 8 ? '#ef4444' : program.avg_rpe >= 6 ? '#f59e0b' : '#10b981',
                                     color: '#ffffff'
@@ -2094,8 +2402,8 @@ const ManageClientPrograms = () => {
                                     {formatDecimal(program.avg_rpe)}
                                   </span>
                                 </td>
-                                <td style={{ borderColor: '#3d3d3d' }}>{program.unique_exercises}</td>
-                                <td style={{ borderColor: '#3d3d3d' }}>{formatNumber(program.total_minutes)} min</td>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>{program.unique_exercises}</td>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>{formatNumber(program.total_minutes)}&nbsp;min</td>
                               </tr>
                             ))}
                           </tbody>
@@ -2104,7 +2412,7 @@ const ManageClientPrograms = () => {
 
                       {/* Program Performance Cards */}
                       <div className="row mt-4">
-                        {analytics.program_performance.slice(0, 3).map((program, index) => (
+                        {analytics.program_performance.map((program, index) => (
                           <div key={index} className="col-md-4 mb-3">
                             <div className="card" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d' }}>
                               <div className="card-body">
@@ -2113,7 +2421,7 @@ const ManageClientPrograms = () => {
                                 </h6>
                                 <div className="d-flex justify-content-between mb-2">
                                   <span className="text-muted small">Total Volume:</span>
-                                  <strong style={{ color: '#ffffff' }}>{formatNumber(program.total_volume_kg)} kg</strong>
+                                  <strong style={{ color: '#ffffff' }}>{formatVolume(program.total_volume_kg)}&nbsp;kg</strong>
                                 </div>
                                 <div className="d-flex justify-content-between mb-2">
                                   <span className="text-muted small">Workouts:</span>
@@ -2140,7 +2448,11 @@ const ManageClientPrograms = () => {
                     </div>
                   </div>
                 )}
+                  </>
+                )}
 
+                {analyticsActiveTab === 'strength' && (
+                  <>
                 {/* Personal Records */}
                 {analytics.personal_records && analytics.personal_records.length > 0 && (
                   <div className="card mb-4" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
@@ -2152,7 +2464,7 @@ const ManageClientPrograms = () => {
                     </div>
                     <div className="card-body" style={{ background: '#2d2d2d' }}>
                       <div className="row">
-                        {analytics.personal_records.slice(0, 6).map((record, index) => (
+                        {analytics.personal_records.map((record, index) => (
                           <div key={index} className="col-lg-4 col-md-6 mb-3">
                             <div className="p-3 rounded" style={{ border: '1px solid #3d3d3d', background: '#1a1a1a' }}>
                               <div className="d-flex justify-content-between align-items-center mb-2">
@@ -2160,11 +2472,11 @@ const ManageClientPrograms = () => {
                                   {record.exercise_name}
                                 </strong>
                                 <span className="badge" style={{ background: '#10b981', color: '#ffffff' }}>
-                                  {formatDecimal(record.estimated_1rm)} kg
+                                  {formatDecimal(record.record_value)}&nbsp;kg
                                 </span>
                               </div>
                               <small className="text-muted">
-                                {record.based_on_weight} kg × {record.based_on_reps} reps
+                                {record.based_on_weight}&nbsp;kg × {record.based_on_reps} reps
                               </small>
                             </div>
                           </div>
@@ -2175,12 +2487,90 @@ const ManageClientPrograms = () => {
                 )}
 
                 {/* Body Composition */}
-                {analytics.body_composition && analytics.body_composition.length > 0 && (
+                  </>
+                )}
+                
+                {analyticsActiveTab === 'body' && (
+                  <>
+                {analytics.body_composition && analytics.body_composition.length > 0 ? (
+                  <>
+                    <div className="row mb-4">
+                      <div className="col-12">
+                        <div className="card" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                          <div className="card-header" style={{ background: '#2d2d2d', borderBottom: '1px solid #3d3d3d' }}>
+                            <h5 className="mb-0" style={{ color: '#ffffff' }}>Weight Progress</h5>
+                          </div>
+                          <div className="card-body" style={{ background: '#2d2d2d' }}>
+                            <ResponsiveContainer width="100%" height={300}>
+                              <LineChart data={analytics.body_composition}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#3d3d3d" />
+                                <XAxis dataKey="measurement_date" stroke="#9ca3af" />
+                                <YAxis stroke="#9ca3af" />
+                                <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', borderColor: '#3d3d3d', color: '#ffffff' }} />
+                                <Legend wrapperStyle={{ color: '#ffffff' }} />
+                                <Line type="monotone" dataKey="weight_kg" stroke="#10b981" name="Weight (kg)" strokeWidth={2} />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="row mb-4">
+                      <div className="col-md-6 mb-3">
+                        <div className="card h-100" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                          <div className="card-header" style={{ background: '#2d2d2d', borderBottom: '1px solid #3d3d3d' }}>
+                            <h5 className="mb-0" style={{ color: '#ffffff' }}>Body Fat %</h5>
+                          </div>
+                          <div className="card-body" style={{ background: '#2d2d2d' }}>
+                            {analytics.body_composition.some(d => d.body_fat_percentage) ? (
+                              <ResponsiveContainer width="100%" height={250}>
+                                <LineChart data={analytics.body_composition.filter(d => d.body_fat_percentage)}>
+                                  <CartesianGrid strokeDasharray="3 3" stroke="#3d3d3d" />
+                                  <XAxis dataKey="measurement_date" stroke="#9ca3af" />
+                                  <YAxis stroke="#9ca3af" />
+                                  <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', borderColor: '#3d3d3d', color: '#ffffff' }} />
+                                  <Legend wrapperStyle={{ color: '#ffffff' }} />
+                                  <Line type="monotone" dataKey="body_fat_percentage" stroke="#f59e0b" name="Body Fat %" strokeWidth={2} />
+                                </LineChart>
+                              </ResponsiveContainer>
+                            ) : (
+                              <p className="text-muted text-center mt-5">No body fat data available</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="col-md-6 mb-3">
+                        <div className="card h-100" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
+                          <div className="card-header" style={{ background: '#2d2d2d', borderBottom: '1px solid #3d3d3d' }}>
+                            <h5 className="mb-0" style={{ color: '#ffffff' }}>Muscle Mass</h5>
+                          </div>
+                          <div className="card-body" style={{ background: '#2d2d2d' }}>
+                            {analytics.body_composition.some(d => d.muscle_mass_kg) ? (
+                              <ResponsiveContainer width="100%" height={250}>
+                                <LineChart data={analytics.body_composition.filter(d => d.muscle_mass_kg)}>
+                                  <CartesianGrid strokeDasharray="3 3" stroke="#3d3d3d" />
+                                  <XAxis dataKey="measurement_date" stroke="#9ca3af" />
+                                  <YAxis stroke="#9ca3af" />
+                                  <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', borderColor: '#3d3d3d', color: '#ffffff' }} />
+                                  <Legend wrapperStyle={{ color: '#ffffff' }} />
+                                  <Line type="monotone" dataKey="muscle_mass_kg" stroke="#3b82f6" name="Muscle Mass (kg)" strokeWidth={2} />
+                                </LineChart>
+                              </ResponsiveContainer>
+                            ) : (
+                              <p className="text-muted text-center mt-5">No muscle mass data available</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                   <div className="card mb-4" style={{ background: '#2d2d2d', border: '1px solid #3d3d3d' }}>
                     <div className="card-header" style={{ background: '#2d2d2d', borderBottom: '1px solid #3d3d3d' }}>
                       <h5 className="mb-0" style={{ color: '#ffffff' }}>
                         <i className="bi bi-person me-2"></i>
-                        Body Composition
+                        Recent Measurements
                       </h5>
                     </div>
                     <div className="card-body" style={{ background: '#2d2d2d' }}>
@@ -2197,19 +2587,19 @@ const ManageClientPrograms = () => {
                           <tbody style={{ background: '#2d2d2d' }}>
                             {analytics.body_composition.map((entry, index) => (
                               <tr key={index} style={{ borderColor: '#3d3d3d' }}>
-                                <td style={{ borderColor: '#3d3d3d' }}>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>
                                   <small className="text-muted">
-                                    {new Date(entry.recorded_date).toLocaleDateString()}
+                                    {new Date(entry.measurement_date).toLocaleDateString()}
                                   </small>
                                 </td>
-                                <td style={{ borderColor: '#3d3d3d' }}>
-                                  <strong>{formatDecimal(entry.weight_kg)} kg</strong>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>
+                                  <strong>{formatDecimal(entry.weight_kg)}&nbsp;kg</strong>
                                 </td>
-                                <td style={{ borderColor: '#3d3d3d' }}>
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>
                                   {entry.body_fat_percentage ? `${formatDecimal(entry.body_fat_percentage)}%` : 'N/A'}
                                 </td>
-                                <td style={{ borderColor: '#3d3d3d' }}>
-                                  {entry.muscle_mass_kg ? `${formatDecimal(entry.muscle_mass_kg)} kg` : 'N/A'}
+                                <td style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>
+                                  {entry.muscle_mass_kg ? `${formatDecimal(entry.muscle_mass_kg)}\u00A0kg` : 'N/A'}
                                 </td>
                               </tr>
                             ))}
@@ -2218,6 +2608,17 @@ const ManageClientPrograms = () => {
                       </div>
                     </div>
                   </div>
+                  </>
+                ) : (
+                  <div className="card" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d' }}>
+                    <div className="card-body text-center py-5">
+                      <i className="bi bi-person-badge display-1 mb-3" style={{ color: '#6b7280' }}></i>
+                      <h5 className="mb-3" style={{ color: '#ffffff' }}>No Body Composition Data Available</h5>
+                      <p className="text-muted">This client hasn't logged any body composition measurements yet.</p>
+                    </div>
+                  </div>
+                )}
+                </>
                 )}
               </>
             ) : (
@@ -2239,61 +2640,136 @@ const ManageClientPrograms = () => {
               <h5 className="mb-0" style={{ color: '#ffffff' }}>Select a Program to Assign</h5>
             </div>
             <div className="card-body" style={{ background: '#1a1a1a' }}>
+              <div className="mb-4 d-flex flex-column flex-md-row gap-2">
+                <div style={{ flex: 1 }}>
+                  <input 
+                    type="text"
+                    className="form-control"
+                    placeholder="Search your programs..."
+                    value={programSearchQuery}
+                    onChange={(e) => { setProgramSearchQuery(e.target.value); setProgramPage(1); }}
+                    onKeyPress={(e) => { if (e.key === 'Enter') fetchAvailablePrograms(1, programSearchQuery, programAssignmentFilter); }}
+                    style={{ backgroundColor: '#2d2d2d', color: '#fff', border: '1px solid #3d3d3d', minHeight: '40px' }}
+                  />
+                </div>
+                <div className="d-flex gap-2">
+                  <select 
+                    className="form-select flex-grow-1" 
+                    value={programAssignmentFilter} 
+                    onChange={(e) => { setProgramAssignmentFilter(e.target.value); setProgramPage(1); }}
+                    style={{ backgroundColor: '#2d2d2d', color: '#fff', border: '1px solid #3d3d3d', minWidth: '160px' }}
+                  >
+                    <option value="all">All Programs</option>
+                    <option value="unassigned">Not Assigned</option>
+                    <option value="assigned">Already Assigned</option>
+                  </select>
+                  <button className="btn px-4" style={{ backgroundColor: '#10b981', color: '#fff', whiteSpace: 'nowrap' }} onClick={() => fetchAvailablePrograms(1, programSearchQuery, programAssignmentFilter)}>Search</button>
+                </div>
+              </div>
               {availablePrograms.length === 0 ? (
                 <div className="text-center py-4">
-                  <p className="text-muted">You don't have any programs yet. Create one first!</p>
+                  <p className="text-muted">No programs found.</p>
                   <button 
                     className="btn"
                     style={{
-                      background: '#10b981',
-                      border: 'none',
-                      color: '#ffffff',
-                      padding: '0.5rem 1.5rem',
-                      borderRadius: '8px',
-                      transition: 'all 0.3s ease'
+                      background: '#10b981', border: 'none', color: '#ffffff',
+                      padding: '0.5rem 1.5rem', borderRadius: '8px', transition: 'all 0.3s ease'
                     }}
-                    onMouseEnter={(e) => {
-                      e.target.style.background = '#059669';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.background = '#10b981';
-                    }}
-                    onClick={() => navigate('/programs')}
+                    onMouseEnter={(e) => e.target.style.background = '#059669'}
+                    onMouseLeave={(e) => e.target.style.background = '#10b981'}
+                    onClick={() => { setProgramPackage({ title: '', description: '', category: 'General Fitness', difficulty_level: 'beginner', duration_weeks: 4 }); setWorkoutSessions([]); setEditingProgramId(null); setActiveView('create-program'); }}
                   >
-                    Create a Program
+                    Create Custom Program
                   </button>
                 </div>
               ) : (
                 <div>
                   <div className="row">
-                    {availablePrograms.map(program => (
+                    {availablePrograms.map(program => {
+                      const isAssigned = assignedPrograms.some(ap => ap.id === program.id);
+                      return (
                       <div key={program.id} className="col-md-6 col-lg-4 mb-3">
                         <div 
-                          className="card card-hover cursor-pointer h-100"
+                          className={`card h-100 border-0 shadow-sm ${isAssigned ? '' : 'card-hover cursor-pointer'}`}
                           style={{
-                            border: selectedProgramToAssign === program.id ? '2px solid #10b981' : '1px solid #3d3d3d',
-                            background: selectedProgramToAssign === program.id ? 'rgba(16, 185, 129, 0.1)' : '#2d2d2d'
+                            border: isAssigned ? '1px solid rgba(255,255,255,0.1)' : (selectedProgramToAssign === program.id ? '2px solid #10b981' : '1px solid rgba(16, 185, 129, 0.2)'),
+                            background: isAssigned ? 'rgba(255,255,255,0.03)' : (selectedProgramToAssign === program.id ? 'rgba(16, 185, 129, 0.1)' : '#2d2d2d'),
+                            opacity: isAssigned ? 0.7 : 1,
+                            pointerEvents: isAssigned ? 'none' : 'auto'
                           }}
-                          onClick={() => setSelectedProgramToAssign(program.id)}
+                          onClick={() => {
+                            if (!isAssigned) setSelectedProgramToAssign(program.id);
+                          }}
                         >
                           <div className="card-body">
                             <div className="d-flex justify-content-between align-items-start mb-2">
-                              <h6 className="card-title mb-0" style={{ color: '#ffffff' }}>{program.title}</h6>
-                              {selectedProgramToAssign === program.id && (
-                                <i className="bi bi-check-circle-fill" style={{ color: '#10b981' }}></i>
-                              )}
+                              <div className="d-flex flex-column">
+                                <h5 className="card-title fw-bold mb-1" style={{ color: '#ffffff' }}>{program.title}</h5>
+                                {isAssigned && (
+                                  <span className="badge" style={{ width: 'fit-content', backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#9ca3af', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '6px', fontSize: '0.7rem' }}>
+                                    Already Assigned
+                                  </span>
+                                )}
+                              </div>
+                              <div className="d-flex align-items-center gap-2" style={{ pointerEvents: 'auto' }}>
+                                {!isAssigned && selectedProgramToAssign === program.id && (
+                                  <i className="bi bi-check-circle-fill me-2 fs-5" style={{ color: '#10b981' }}></i>
+                                )}
+                                <button className="btn btn-sm btn-outline-success p-1 border-0" style={{color: '#10b981'}} onClick={(e) => { e.stopPropagation(); handleEditProgram(program.id); }} title="Edit"><i className="bi bi-pencil fs-5"></i></button>
+                                <button className="btn btn-sm btn-outline-danger p-1 border-0" style={{color: '#ef4444'}} onClick={(e) => { e.stopPropagation(); handleDeleteProgram(program.id); }} title="Delete"><i className="bi bi-trash fs-5"></i></button>
+                              </div>
                             </div>
-                            <p className="text-muted small mb-2">{program.description}</p>
-                            <div className="d-flex flex-wrap gap-1">
-                              <span className="badge" style={{ background: '#ffffff', color: '#000000' }}>{program.category}</span>
-                              <span className="badge" style={{ background: '#ffffff', color: '#000000' }}>{program.difficulty_level}</span>
-                              <span className="badge" style={{ background: '#ffffff', color: '#000000' }}>{program.duration_weeks} weeks</span>
+                            
+                            <p className="text-muted small mb-3" style={{ color: '#9ca3af', minHeight: '40px' }}>{program.description}</p>
+                            
+                            <div className="d-flex flex-wrap gap-1 mt-auto">
+                              <span className="badge" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px' }}>{program.category}</span>
+                              <span className="badge" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px' }}>{program.difficulty_level}</span>
+                              <span className="badge" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px' }}>{program.duration_weeks} weeks</span>
                             </div>
                           </div>
                         </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
+                  {programTotalPages > 1 && (
+                    <div className="d-flex justify-content-center mt-4">
+                      <nav>
+                        <ul className="pagination pagination-sm m-0" style={{ gap: '5px' }}>
+                          <li className={`page-item ${programPage === 1 ? 'disabled' : ''}`}>
+                            <button className="page-link" style={{ backgroundColor: '#2d2d2d', borderColor: '#3d3d3d', color: '#fff', borderRadius: '4px' }} onClick={() => setProgramPage(p => Math.max(1, p - 1))}>Previous</button>
+                          </li>
+                          {[...Array(programTotalPages)].map((_, i) => (
+                            <li key={i + 1} className={`page-item ${programPage === i + 1 ? 'active' : ''}`}>
+                              <button className="page-link" style={{ backgroundColor: programPage === i + 1 ? '#10b981' : '#2d2d2d', borderColor: programPage === i + 1 ? '#10b981' : '#3d3d3d', color: '#fff', borderRadius: '4px' }} onClick={() => setProgramPage(i + 1)}>{i + 1}</button>
+                            </li>
+                          ))}
+                          <li className={`page-item ${programPage === programTotalPages ? 'disabled' : ''}`}>
+                            <button className="page-link" style={{ backgroundColor: '#2d2d2d', borderColor: '#3d3d3d', color: '#fff', borderRadius: '4px' }} onClick={() => setProgramPage(p => Math.min(programTotalPages, p + 1))}>Next</button>
+                          </li>
+                        </ul>
+                      </nav>
+                    </div>
+                  )}
+                  {programTotalPages > 1 && (
+                    <div className="d-flex justify-content-center mt-4">
+                      <nav>
+                        <ul className="pagination pagination-sm m-0" style={{ gap: '5px' }}>
+                          <li className={`page-item ${programPage === 1 ? 'disabled' : ''}`}>
+                            <button className="page-link" style={{ backgroundColor: '#2d2d2d', borderColor: '#3d3d3d', color: '#fff', borderRadius: '4px' }} onClick={() => setProgramPage(p => Math.max(1, p - 1))}>Previous</button>
+                          </li>
+                          {[...Array(programTotalPages)].map((_, i) => (
+                            <li key={i + 1} className={`page-item ${programPage === i + 1 ? 'active' : ''}`}>
+                              <button className="page-link" style={{ backgroundColor: programPage === i + 1 ? '#10b981' : '#2d2d2d', borderColor: programPage === i + 1 ? '#10b981' : '#3d3d3d', color: '#fff', borderRadius: '4px' }} onClick={() => setProgramPage(i + 1)}>{i + 1}</button>
+                            </li>
+                          ))}
+                          <li className={`page-item ${programPage === programTotalPages ? 'disabled' : ''}`}>
+                            <button className="page-link" style={{ backgroundColor: '#2d2d2d', borderColor: '#3d3d3d', color: '#fff', borderRadius: '4px' }} onClick={() => setProgramPage(p => Math.min(programTotalPages, p + 1))}>Next</button>
+                          </li>
+                        </ul>
+                      </nav>
+                    </div>
+                  )}
                   
                   <div className="mt-4 d-grid gap-2 d-sm-flex align-items-center">
                     <button 
@@ -2350,10 +2826,10 @@ const ManageClientPrograms = () => {
         
         {/* Browse & Reuse Programs Tab */}
         {activeView === 'browse-programs' && (
-          <div className="card">
-            <div className="card-header bg-white">
-              <h5 className="mb-0">Browse All Your Programs</h5>
-              <small className="text-muted">Select any program you've created to assign to this client</small>
+          <div className="card border-0 shadow-sm" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div className="card-header text-white" style={{ backgroundColor: '#10b981' }}>
+              <h6 className="mb-0">Browse All Your Programs</h6>
+              <small className="text-white-50">Select any program you've created to assign to this client</small>
             </div>
             <div className="card-body">
               <div className="mb-4">
@@ -2435,9 +2911,9 @@ const ManageClientPrograms = () => {
             </div>
             
             {/* Program creation interface - simplified version for client-specific programs */}
-            <div className="card mb-4">
-              <div className="card-header bg-white">
-                <h5 className="mb-0">Program Details</h5>
+            <div className="card mb-4 border-0 shadow-sm" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <div className="card-header text-white" style={{ backgroundColor: '#10b981' }}>
+                <h6 className="mb-0">Program Details</h6>
               </div>
               <div className="card-body">
                 <div className="row mb-3">
@@ -2504,33 +2980,39 @@ const ManageClientPrograms = () => {
             </div>
             
             {/* Workout Sessions */}
-            <div className="card mb-4">
-              <div className="card-header bg-white">
-                <h5 className="mb-0">Workout Sessions ({workoutSessions.length})</h5>
+            <div className="card mb-4" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <div className="card-header border-bottom d-flex justify-content-between align-items-center" style={{ backgroundColor: 'transparent', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+                <h5 className="mb-0" style={{ color: '#fff' }}>Workout Sessions ({workoutSessions.length})</h5>
               </div>
               <div className="card-body">
                 {workoutSessions.length === 0 ? (
-                  <p className="text-muted text-center py-3">
+                  <p className="text-center py-3" style={{ color: '#9ca3af' }}>
                     No workout sessions added yet. Create one below!
                   </p>
                 ) : (
-                  <div className="list-group mb-3">
+                  <div className="list-group mb-3" style={{ backgroundColor: 'transparent' }}>
                     {workoutSessions.map((session, index) => (
-                      <div key={index} className="list-group-item">
+                      <div key={index} style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', marginBottom: '12px', borderRadius: '12px', padding: '16px' }}>
                         <div className="d-flex justify-content-between align-items-start">
-                          <div>
-                            <h6>{session.name}</h6>
-                            <p className="text-muted small mb-1">{session.description}</p>
-                            <span className="badge bg-info me-1">Week {session.week_number}</span>
-                            <span className="badge bg-info me-1">Day {session.day_number}</span>
-                            <span className="badge bg-secondary">{session.exercises.length} exercises</span>
+                          <div className="flex-grow-1">
+                            <h6 className="mb-2" style={{ color: '#10b981', fontWeight: 'bold' }}>{session.name}</h6>
+                            <p className="mb-2 small" style={{ color: '#9ca3af' }}>{session.description}</p>
+                            <div className="d-flex gap-2">
+                              <span className="badge" style={{ backgroundColor: '#000', color: '#fff', padding: '6px 12px', fontWeight: '600' }}>WEEK {session.week_number}</span>
+                              <span className="badge" style={{ backgroundColor: '#000', color: '#fff', padding: '6px 12px', fontWeight: '600' }}>DAY {session.day_number}</span>
+                              <span className="badge" style={{ backgroundColor: '#000', color: '#fff', padding: '6px 12px', fontWeight: '600' }}>{session.exercises.length} EXERCISES</span>
+                            </div>
                           </div>
-                          <button 
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => setWorkoutSessions(prev => prev.filter((_, i) => i !== index))}
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
+                          <div className="d-flex gap-2">
+                            <button 
+                              className="btn btn-sm"
+                              onClick={() => setWorkoutSessions(prev => prev.filter((_, i) => i !== index))}
+                              title="Delete"
+                              style={{ backgroundColor: '#ef4444', color: '#fff', border: 'none' }}
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -2540,9 +3022,9 @@ const ManageClientPrograms = () => {
             </div>
             
             {/* Session Builder */}
-            <div className="card mb-4">
-              <div className="card-header bg-primary text-white">
-                <h5 className="mb-0">Create Workout Session</h5>
+            <div className="card mb-4 border-0 shadow-sm" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <div className="card-header text-white" style={{ backgroundColor: '#10b981' }}>
+                <h6 className="mb-0">Create Workout Session</h6>
               </div>
               <div className="card-body">
                 <div className="row mb-3">
@@ -2594,31 +3076,35 @@ const ManageClientPrograms = () => {
                 <hr />
                 
                 {/* Exercise List */}
-                <h6 className="mb-3">Add Exercises</h6>
+                <h6 className="mb-3">Add Global Exercises</h6>
                 <div className="mb-3">
                   <input 
                     type="text" 
                     className="form-control"
-                    placeholder="Search exercises..."
+                    placeholder="Search global exercises by name, category..."
                     value={exerciseSearch}
                     onChange={(e) => setExerciseSearch(e.target.value)}
                   />
+                  <p className="small mt-2 text-muted">
+                    Showing {filteredExercises.length} global exercises
+                  </p>
                 </div>
                 
-                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                  <div className="row">
-                    {filteredExercises.slice(0, 20).map((exercise) => (
+                <div style={{ maxHeight: '200px', overflowY: 'auto', overflowX: 'hidden' }}>
+                  <div className="row g-2 m-0">
+                    {filteredExercises.slice(0, 50).map((exercise) => (
                       <div key={exercise.id} className="col-md-6 mb-2">
                         <div 
                           className="card card-hover cursor-pointer"
+                          style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)' }}
                           onClick={() => openExerciseModal(exercise)}
                         >
                           <div className="card-body py-2">
-                            <div className="d-flex justify-content-between">
+                            <div className="d-flex justify-content-between align-items-center">
                               <div>
-                                <small className="fw-bold">{exercise.name}</small>
+                                <small className="fw-bold" style={{ color: '#fff' }}>{exercise.name}</small>
                                 <br />
-                                <small className="text-muted">{exercise.muscle_group}</small>
+                                <small style={{ color: '#9ca3af' }}>{exercise.muscle_group} • {exercise.category}</small>
                               </div>
                               <i className="bi bi-plus-circle text-primary"></i>
                             </div>
@@ -2628,24 +3114,156 @@ const ManageClientPrograms = () => {
                     ))}
                   </div>
                 </div>
+
+                <hr style={{ borderColor: 'rgba(16, 185, 129, 0.2)' }} />
+
+                <h6 className="mb-3">Add Custom Exercises</h6>
+                <div className="mb-3">
+                  <input 
+                    type="text" 
+                    className="form-control"
+                    placeholder="Search your custom exercises..."
+                    value={customExerciseSearch}
+                    onChange={(e) => setCustomExerciseSearch(e.target.value)}
+                  />
+                  <p className="small mt-2 text-muted">
+                    Showing {filteredCustomExercises.length} custom exercises
+                  </p>
+                </div>
                 
-                <hr />
+                <div style={{ maxHeight: '200px', overflowY: 'auto', overflowX: 'hidden' }}>
+                  <div className="row g-2 m-0">
+                    {filteredCustomExercises.map((exercise) => (
+                      <div key={exercise.id} className="col-md-6 mb-2">
+                        <div 
+                          className="card card-hover"
+                          style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)' }}
+                        >
+                          <div className="card-body py-2">
+                            <div className="d-flex justify-content-between align-items-center">
+                              <div 
+                                className="flex-grow-1 cursor-pointer"
+                                onClick={() => openExerciseModal(exercise)}
+                              >
+                                <small className="fw-bold" style={{ color: '#fff' }}>{exercise.name}</small>
+                                <br />
+                                <small style={{ color: '#9ca3af' }}>{exercise.muscle_group} • {exercise.category}</small>
+                              </div>
+                              <div className="d-flex gap-1" style={{ alignItems: 'center' }}>
+                                <button
+                                  className="btn btn-sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openExerciseModal(exercise);
+                                  }}
+                                  title="Add to session"
+                                  style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)' }}
+                                >
+                                  <i className="bi bi-plus-circle"></i>
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-outline-warning"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditExerciseModal({
+                                      show: true,
+                                      exerciseId: exercise.id,
+                                      name: exercise.name,
+                                      category: exercise.category,
+                                      muscle_group: exercise.muscle_group,
+                                      equipment: exercise.equipment || '',
+                                      instructions: exercise.instructions || ''
+                                    });
+                                  }}
+                                  title="Edit exercise"
+                                >
+                                  <i className="bi bi-pencil"></i>
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-outline-danger"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteExerciseModal({ show: true, exerciseId: exercise.id, exerciseName: exercise.name });
+                                  }}
+                                  title="Delete exercise"
+                                >
+                                  <i className="bi bi-trash"></i>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <hr style={{ borderColor: 'rgba(16, 185, 129, 0.2)' }} />
+
+                {/* Add Custom Exercise */}
+                <h6 className="mb-3" style={{ color: '#fff' }}>Create Your Own Exercise</h6>
+                <div className="row">
+                  <div className="col-md-4 mb-3">
+                    <input 
+                      type="text" 
+                      className="form-control bg-dark border-secondary text-white"
+                      placeholder="Exercise name"
+                      value={newExercise.name}
+                      onChange={(e) => setNewExercise(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                  </div>
+                  <div className="col-md-3 mb-3">
+                    <select 
+                      className="form-select bg-dark border-secondary text-white"
+                      value={newExercise.category}
+                      onChange={(e) => setNewExercise(prev => ({ ...prev, category: e.target.value }))}
+                    >
+                      <option value="strength">Strength</option>
+                      <option value="cardio">Cardio</option>
+                      <option value="flexibility">Flexibility</option>
+                      <option value="core">Core</option>
+                    </select>
+                  </div>
+                  <div className="col-md-3 mb-3">
+                    <input 
+                      type="text" 
+                      className="form-control bg-dark border-secondary text-white"
+                      placeholder="Muscle group"
+                      value={newExercise.muscle_group}
+                      onChange={(e) => setNewExercise(prev => ({ ...prev, muscle_group: e.target.value }))}
+                    />
+                  </div>
+                  <div className="col-md-2 mb-3">
+                    <button 
+                      className="btn w-100"
+                      onClick={(e) => { e.preventDefault(); addCustomExercise(); }}
+                      disabled={!newExercise.name}
+                      style={{ backgroundColor: '#10b981', color: '#fff', border: 'none', fontWeight: '600' }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+                
+                <hr style={{ borderColor: 'rgba(16, 185, 129, 0.2)' }} />
                 
                 {/* Current Session Exercises */}
-                <h6 className="mb-3">Session Exercises ({currentSession.exercises.length})</h6>
+                <h6 className="mb-3" style={{ color: '#fff' }}>Session Exercises ({currentSession.exercises.length})</h6>
                 {currentSession.exercises.length === 0 ? (
-                  <p className="text-muted small">No exercises added yet</p>
+                  <p className="small" style={{ color: '#9ca3af' }}>No exercises added yet</p>
                 ) : (
                   <div className="mb-3">
                     {currentSession.exercises.map((exercise, index) => (
-                      <div key={index} className="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                      <div key={index} className="d-flex justify-content-between align-items-center mb-2 p-2 rounded" style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16,185,129,0.2)' }}>
                         <div>
-                          <small className="fw-bold">{exercise.name}</small>
+                          <small className="fw-bold" style={{ color: '#fff' }}>{exercise.name}</small>
                           <br />
-                          <small className="text-muted">{exercise.sets} sets x {exercise.reps} {exercise.rpe && `• RPE ${exercise.rpe}`}</small>
+                          <small style={{ color: '#9ca3af' }}>{exercise.sets} sets x {exercise.reps} {exercise.rpe && `• RPE ${exercise.rpe}`}</small>
                         </div>
                         <button 
-                          className="btn btn-sm btn-outline-danger"
+                          className="btn btn-sm"
+                          style={{ color: '#ef4444', borderColor: '#ef4444' }}
+                          title="Remove Exercise"
                           onClick={() => setCurrentSession(prev => ({
                             ...prev,
                             exercises: prev.exercises.filter((_, i) => i !== index)
@@ -2670,7 +3288,7 @@ const ManageClientPrograms = () => {
             </div>
             
             {/* Save Program */}
-            <div className="card">
+            <div className="card border-0 shadow-sm" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
               <div className="card-body">
                 <div className="d-grid gap-2 d-sm-flex align-items-center">
                   <button 
@@ -2940,12 +3558,12 @@ const ManageClientPrograms = () => {
               </div>
               <div className="card-body" style={{ background: '#1a1a1a' }}>
                 <div className="table-responsive">
-                  <table className="table table-bordered" style={{ borderColor: '#3d3d3d' }}>
+                  <table className="table table-bordered table-dark mb-0" style={{ borderColor: '#3d3d3d' }}>
                     <thead style={{ background: '#2d2d2d' }}>
                       <tr>
-                        <th style={{ width: '15%', color: '#ffffff', borderColor: '#3d3d3d' }}>Day</th>
+                        <th style={{ width: '15%', minWidth: '120px', color: '#ffffff', borderColor: '#3d3d3d' }}>Day</th>
                         {customMealTypes.map(mealType => (
-                          <th key={mealType} className="text-capitalize" style={{ color: '#ffffff', borderColor: '#3d3d3d' }}>{mealType}</th>
+                          <th key={mealType} className="text-capitalize" style={{ color: '#ffffff', borderColor: '#3d3d3d', minWidth: '250px' }}>{mealType}</th>
                         ))}
                       </tr>
                     </thead>
@@ -3032,7 +3650,20 @@ const ManageClientPrograms = () => {
                   <div className="modal-body">
                     {/* Search Foods */}
                     <div className="mb-3">
-                      <label className="form-label" style={{ color: '#fff' }}>Search & Add Foods</label>
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <label className="form-label mb-0" style={{ color: '#fff' }}>Search & Add Foods</label>
+                        <button 
+                          type="button" 
+                          className="btn btn-sm"
+                          onClick={() => {
+                            setCustomFoodForm({ name: '', brand: '', serving_size: 100, serving_unit: 'g', calories: 0, protein: 0, carbs: 0, fat: 0 });
+                            setShowCustomFoodModal(true);
+                          }}
+                          style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', border: '1px solid rgba(16, 185, 129, 0.4)', color: '#10b981' }}
+                        >
+                          <i className="bi bi-plus-circle me-1"></i> New Custom Food
+                        </button>
+                      </div>
                       <div className="input-group">
                         <input 
                           type="text"
@@ -3054,11 +3685,24 @@ const ManageClientPrograms = () => {
                       </div>
                     </div>
                     
-                    {/* Search Results */}
-                    {foodSearchResults.length > 0 && (
-                      <div className="mb-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                    {/* Search State & Results */}
+                    {searching && (
+                      <div className="mb-3 small" style={{ color: '#9ca3af' }}>
+                        <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        Searching...
+                      </div>
+                    )}
+                    
+                    {!searching && mealSearchQuery.trim().length >= 2 && resultsFor === mealSearchQuery.trim() && foodSearchResults.length === 0 && (
+                      <div className="mb-3 small" style={{ color: '#9ca3af' }}>
+                        No results found for "{mealSearchQuery.trim()}"
+                      </div>
+                    )}
+
+                    {!searching && foodSearchResults.length > 0 && (
+                      <div className="mb-3" style={{ maxHeight: '300px', overflowY: 'auto' }}>
                         <h6 className="small" style={{ color: '#9ca3af' }}>
-                          {searching ? 'Searching...' : `Results for "${resultsFor}":`}
+                          Results for "{resultsFor}":
                         </h6>
                         <div>
                           {foodSearchResults.slice(0, 15).map((food, idx) => (
@@ -3083,17 +3727,13 @@ const ManageClientPrograms = () => {
                                   {food.trainer_name && (
                                     <div className="small" style={{ color: '#10b981' }}>By: {food.trainer_name}</div>
                                   )}
-                                  <div className="small" style={{ color: '#9ca3af' }}>
-                                    {food.source === 'usda' && (
+                                  <div className="small mt-1" style={{ color: '#9ca3af' }}>
+                                    {food.source === 'usda' && food.nutrients && (
                                       <>
-                                        {food.foodNutrients && (
-                                          <>
-                                            Cal: {food.foodNutrients.find(n => n.nutrientId === 1008)?.value?.toFixed(0) || 0} • 
-                                            P: {food.foodNutrients.find(n => n.nutrientId === 1003)?.value?.toFixed(1) || 0}g • 
-                                            C: {food.foodNutrients.find(n => n.nutrientId === 1005)?.value?.toFixed(1) || 0}g • 
-                                            F: {food.foodNutrients.find(n => n.nutrientId === 1004)?.value?.toFixed(1) || 0}g
-                                          </>
-                                        )}
+                                        Cal: {Math.round(food.nutrients.calories || 0)} • 
+                                        P: {(food.nutrients.protein || 0).toFixed(1)}g • 
+                                        C: {(food.nutrients.carbs || 0).toFixed(1)}g • 
+                                        F: {(food.nutrients.fat || 0).toFixed(1)}g
                                       </>
                                     )}
                                     {(food.source === 'custom' || food.source === 'trainer_custom') && (
@@ -3107,12 +3747,74 @@ const ManageClientPrograms = () => {
                                     )}
                                   </div>
                                 </div>
-                                <span className={`badge ${food.source === 'trainer_custom' ? 'bg-success' : food.source === 'custom' ? 'bg-info' : 'bg-secondary'}`}>
+                                <span className={`badge ${food.source === 'trainer_custom' ? 'bg-success text-dark' : food.source === 'custom' ? 'bg-info text-dark' : 'bg-secondary'}`}>
                                   {food.source === 'trainer_custom' ? 'Trainer' : food.source}
                                 </span>
                               </div>
                             </button>
                           ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Custom Foods List */}
+                    {!searching && trainerCustomFoods.length > 0 && (
+                      <div className="mb-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                        <h6 className="small" style={{ color: '#10b981' }}>My Custom Foods:</h6>
+                        <div>
+                          {trainerCustomFoods
+                            .filter(f => !mealSearchQuery || f.name.toLowerCase().includes(mealSearchQuery.toLowerCase()))
+                            .map((food, idx) => (
+                              <div
+                                key={`custom_${food.id}_${idx}`}
+                                className="w-100 text-start p-3 mb-2 rounded d-flex justify-content-between align-items-center"
+                                style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
+                              >
+                                <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => selectFood({ ...food, source: 'trainer_custom' })}>
+                                  <div className="fw-bold small">{food.name}</div>
+                                  {food.brand && (
+                                    <div className="small" style={{ color: '#9ca3af' }}>{food.brand}</div>
+                                  )}
+                                  <div className="small mt-1" style={{ color: '#9ca3af' }}>
+                                    Cal: {food.calories || 0} • P: {food.protein || 0}g • C: {food.carbs || 0}g • F: {food.fat || 0}g
+                                    {food.serving_size && ` (per ${parseFloat(food.serving_size)}${food.serving_unit || 'g'})`}
+                                  </div>
+                                </div>
+                                <div className="d-flex flex-column align-items-end" style={{ minWidth: '70px' }}>
+                                  <span className="badge bg-success text-dark mb-2">Trainer</span>
+                                  <div className="btn-group">
+                                    <button
+                                      type="button"
+                                      className="btn btn-sm btn-outline-success p-1"
+                                      title="Edit"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCustomFoodForm({ ...food, portions: [] });
+                                        setShowCustomFoodModal(true);
+                                      }}
+                                      style={{ border: 'none', color: '#10b981' }}
+                                    >
+                                      <i className="bi bi-pencil"></i>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn btn-sm btn-outline-danger p-1"
+                                      title="Delete"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteCustomFood(food.id);
+                                      }}
+                                      style={{ border: 'none', color: '#ef4444' }}
+                                    >
+                                      <i className="bi bi-trash"></i>
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          {trainerCustomFoods.filter(f => !mealSearchQuery || f.name.toLowerCase().includes(mealSearchQuery.toLowerCase())).length === 0 && (
+                            <p className="small text-muted">No custom foods match.</p>
+                          )}
                         </div>
                       </div>
                     )}
@@ -3127,18 +3829,66 @@ const ManageClientPrograms = () => {
                           {currentMeal.food_items.map((food, idx) => (
                             <div 
                               key={idx} 
-                              className="d-flex justify-content-between align-items-center mb-2 p-3 rounded"
+                              className="mb-2 p-3 rounded"
                               style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)' }}
                             >
-                              <span style={{ color: '#fff' }}>{food.name || food.food_name}</span>
-                              <button 
-                                type="button"
-                                className="btn btn-sm"
-                                onClick={() => removeFoodFromMeal(idx)}
-                                style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#ef4444' }}
-                              >
-                                <i className="bi bi-trash"></i>
-                              </button>
+                              <div className="d-flex justify-content-between align-items-center mb-2">
+                                <span style={{ color: '#fff', fontWeight: 'bold' }}>{food.name || food.food_name}</span>
+                                <button 
+                                  type="button"
+                                  className="btn btn-sm"
+                                  onClick={() => removeFoodFromMeal(idx)}
+                                  style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#ef4444' }}
+                                >
+                                  <i className="bi bi-trash"></i>
+                                </button>
+                              </div>
+                              <div className="row g-2">
+                                <div className="col-md-4">
+                                  <label className="form-label small" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Quantity</label>
+                                  <input 
+                                    type="number"
+                                    className="form-control"
+                                    value={food.quantity}
+                                    onChange={(e) => handleQuantityChange(e.target.value, idx)}
+                                    step="any"
+                                    min="0.1"
+                                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', borderColor: 'rgba(32, 214, 87, 0.3)' }}
+                                  />
+                                </div>
+                                <div className="col-md-8">
+                                  <label className="form-label small" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Measurement Type</label>
+                                  <select 
+                                    className="form-select"
+                                    value={food.serving_unit}
+                                    onChange={(e) => handleMeasurementTypeChange(e.target.value, idx)}
+                                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', borderColor: 'rgba(32, 214, 87, 0.3)' }}
+                                  >
+                                    <option value="g" style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}>Grams (g)</option>
+                                    <option value="ml" style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}>Milliliters (ml)</option>
+                                    {food.available_portions?.map((port, pIdx) => {
+                                      let label = port.modifier || port.measureUnit?.name || port.measureUnitName || port.measure_unit_name || port.portion_description || port.label || `Portion ${pIdx + 1}`;
+                                      let weight = port.gramWeight || port.gram_weight || 0;
+                                      return (
+                                        <option key={`portion_${pIdx}`} value={`portion_${pIdx}`} style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}>
+                                          {label} {weight ? `(${weight}g)` : ''}
+                                        </option>
+                                      );
+                                    })}
+                                  </select>
+                                </div>
+                              </div>
+                              <div className="mt-2 text-end">
+                                <small style={{ color: '#9ca3af', fontSize: '0.8rem' }}>
+                                  <span style={{ color: '#10b981', fontWeight: 'bold' }}>{food.calories} cal</span>
+                                  <span className="mx-2">•</span>
+                                  <span>P: {food.protein}g</span>
+                                  <span className="mx-2">•</span>
+                                  <span>C: {food.carbs}g</span>
+                                  <span className="mx-2">•</span>
+                                  <span>F: {food.fat}g</span>
+                                </small>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -3181,59 +3931,231 @@ const ManageClientPrograms = () => {
           </div>
         )}
         
-        {/* Exercise Modal */}
-        {showExerciseModal && (
-          <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        {/* Delete Meal Confirmation Modal */}
+        {deleteMealModal.show && (
+          <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1060 }}>
             <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">Add {selectedExercise?.name}</h5>
+              <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                <div className="modal-header dark-modal-header" style={{ backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <h5 className="modal-title fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                    <i className="bi bi-exclamation-triangle me-2 text-danger"></i>
+                    Confirm Delete Meal
+                  </h5>
                   <button 
-                    className="btn-close" 
-                    onClick={() => setShowExerciseModal(false)}
+                    type="button" 
+                    className="btn-close btn-close-white" 
+                    onClick={() => setDeleteMealModal({ show: false, mealId: null })}
                   ></button>
                 </div>
                 <div className="modal-body">
+                  <p className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Are you sure you want to delete this meal?</p>
+                  <p className="small mt-2 mb-0" style={{ color: 'rgba(255,255,255,0.7)' }}>This action cannot be undone.</p>
+                </div>
+                <div className="modal-footer" style={{ backgroundColor: '#2d2d2d', borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-outline-secondary text-white" 
+                    onClick={() => setDeleteMealModal({ show: false, mealId: null })}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn"
+                    style={{ backgroundColor: '#ef4444', color: '#fff' }}
+                    onClick={confirmDeleteMeal}
+                  >
+                    Delete Meal
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Meal Type Confirmation Modal */}
+        {deleteMealTypeModal.show && (
+          <div className="modal show d-block" tabindex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1060 }}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                <div className="modal-header dark-modal-header" style={{ backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <h5 className="modal-title fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                    <i className="bi bi-exclamation-triangle me-2 text-danger"></i>
+                    Confirm Remove Meal Type
+                  </h5>
+                  <button 
+                    type="button" 
+                    className="btn-close btn-close-white" 
+                    onClick={() => setDeleteMealTypeModal({ show: false, mealType: '' })}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <p className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Are you sure you want to remove the <strong>"{deleteMealTypeModal.mealType}"</strong> meal type?</p>
+                </div>
+                <div className="modal-footer" style={{ backgroundColor: '#2d2d2d', borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-outline-secondary text-white" 
+                    onClick={() => setDeleteMealTypeModal({ show: false, mealType: '' })}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn"
+                    style={{ backgroundColor: '#ef4444', color: '#fff' }}
+                    onClick={confirmRemoveMealType}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Delete Custom Food Confirmation Modal */}
+        {deleteCustomFoodModal.show && (
+          <div className="modal show d-block" tabindex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1060 }}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                <div className="modal-header dark-modal-header" style={{ backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <h5 className="modal-title fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                    <i className="bi bi-exclamation-triangle me-2 text-danger"></i>
+                    Confirm Delete Custom Food
+                  </h5>
+                  <button 
+                    type="button" 
+                    className="btn-close btn-close-white" 
+                    onClick={() => setDeleteCustomFoodModal({ show: false, foodId: null })}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <p className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Are you sure you want to delete this custom food?</p>
+                </div>
+                <div className="modal-footer" style={{ backgroundColor: '#2d2d2d', borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-outline-secondary text-white" 
+                    onClick={() => setDeleteCustomFoodModal({ show: false, foodId: null })}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn"
+                    style={{ backgroundColor: '#ef4444', color: '#fff' }}
+                    onClick={confirmDeleteCustomFood}
+                  >
+                    Delete Food
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Custom Exercise Confirmation Modal */}
+        {deleteExerciseModal.show && (
+          <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1060 }}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                <div className="modal-header dark-modal-header" style={{ backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <h5 className="modal-title fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                    <i className="bi bi-exclamation-triangle me-2 text-danger"></i>
+                    Confirm Delete Exercise
+                  </h5>
+                  <button 
+                    type="button" 
+                    className="btn-close btn-close-white" 
+                    onClick={() => setDeleteExerciseModal({ show: false, exerciseId: null, exerciseName: '' })}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <p className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Are you sure you want to delete <strong>"{deleteExerciseModal.exerciseName}"</strong>?</p>
+                  <p className="small mt-2 mb-0" style={{ color: 'rgba(255,255,255,0.7)' }}>This action cannot be undone and will permanently remove this exercise.</p>
+                </div>
+                <div className="modal-footer" style={{ backgroundColor: '#2d2d2d', borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-outline-secondary text-white" 
+                    onClick={() => setDeleteExerciseModal({ show: false, exerciseId: null, exerciseName: '' })}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-danger" 
+                    onClick={executeDeleteCustomExercise}
+                  >
+                    <i className="bi bi-trash me-2"></i>
+                    Delete Exercise
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Exercise Modal */}
+        {showExerciseModal && (
+          <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.8)' }}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <div className="modal-header dark-modal-header" style={{ backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <h5 className="modal-title fw-bold" style={{ color: '#fff' }}>Add {selectedExercise?.name}</h5>
+                  <button 
+                    type="button" 
+                    className="btn-close btn-close-white" 
+                    onClick={() => setShowExerciseModal(false)}
+                  ></button>
+                </div>
+                <div className="modal-body" style={{ color: '#ffffff' }}>
                   <div className="mb-3">
-                    <label className="form-label">Sets *</label>
+                    <label className="form-label fw-semibold" style={{ color: '#d1d5db' }}>Sets *</label>
                     <input 
                       type="number" 
                       className="form-control"
+                      style={{ backgroundColor: '#1a1a1a', color: '#fff', border: '1px solid rgba(16, 185, 129, 0.2)' }}
                       value={exerciseToAdd.sets}
                       onChange={(e) => setExerciseToAdd(prev => ({ ...prev, sets: parseInt(e.target.value) || 0 }))}
                       min="1"
                     />
                   </div>
                   <div className="mb-3">
-                    <label className="form-label">Reps *</label>
+                    <label className="form-label fw-semibold" style={{ color: '#d1d5db' }}>Reps *</label>
                     <input 
                       type="text" 
                       className="form-control"
+                      style={{ backgroundColor: '#1a1a1a', color: '#fff', border: '1px solid rgba(16, 185, 129, 0.2)' }}
                       value={exerciseToAdd.reps}
                       onChange={(e) => setExerciseToAdd(prev => ({ ...prev, reps: e.target.value }))}
                       placeholder="e.g., 8-12"
                     />
                   </div>
                   <div className="mb-3">
-                    <label className="form-label">RPE</label>
+                    <label className="form-label fw-semibold" style={{ color: '#d1d5db' }}>RPE</label>
                     <input 
                       type="text" 
                       className="form-control"
+                      style={{ backgroundColor: '#1a1a1a', color: '#fff', border: '1px solid rgba(16, 185, 129, 0.2)' }}
                       value={exerciseToAdd.rpe}
                       onChange={(e) => setExerciseToAdd(prev => ({ ...prev, rpe: e.target.value }))}
                       placeholder="e.g., 7-8"
                     />
                   </div>
                 </div>
-                <div className="modal-footer">
+                <div className="modal-footer" style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
                   <button 
-                    className="btn btn-secondary" 
+                    className="btn btn-outline-secondary" 
+                    style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#fff' }}
                     onClick={() => setShowExerciseModal(false)}
                   >
                     Cancel
                   </button>
                   <button 
-                    className="btn btn-primary"
+                    className="btn fw-bold" 
+                    style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                     onClick={addExerciseFromModal}
                   >
                     Add Exercise
@@ -3243,84 +4165,167 @@ const ManageClientPrograms = () => {
             </div>
           </div>
         )}
+
+        {/* Edit Custom Exercise Modal */}
+        {editExerciseModal.show && (
+          <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                <div className="modal-header dark-modal-header" style={{ backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <h5 className="modal-title fw-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                    <i className="bi bi-pencil me-2 text-warning"></i>
+                    Edit Custom Exercise
+                  </h5>
+                  <button 
+                    type="button" 
+                    className="btn-close btn-close-white" 
+                    onClick={() => setEditExerciseModal({ show: false, exerciseId: null, name: '', muscle_group: '', category: 'strength', equipment: '', instructions: '' })}
+                  ></button>
+                </div>
+                <div className="modal-body" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                  <div className="mb-3">
+                    <label className="form-label text-white">Exercise Name *</label>
+                    <input 
+                      type="text" 
+                      className="form-control"
+                      style={{ backgroundColor: '#1a1a1a', border: '1px solid #3d3d3d', color: '#fff' }}
+                      value={editExerciseModal.name}
+                      onChange={(e) => setEditExerciseModal(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label text-white">Category</label>
+                    <select 
+                      className="form-select"
+                      style={{ backgroundColor: '#1a1a1a', border: '1px solid #3d3d3d', color: '#fff' }}
+                      value={editExerciseModal.category}
+                      onChange={(e) => setEditExerciseModal(prev => ({ ...prev, category: e.target.value }))}
+                    >
+                      <option value="strength">Strength</option>
+                      <option value="cardio">Cardio</option>
+                      <option value="flexibility">Flexibility</option>
+                      <option value="core">Core</option>
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label text-white">Muscle Group</label>
+                    <input 
+                      type="text" 
+                      className="form-control"
+                      style={{ backgroundColor: '#1a1a1a', border: '1px solid #3d3d3d', color: '#fff' }}
+                      value={editExerciseModal.muscle_group}
+                      onChange={(e) => setEditExerciseModal(prev => ({ ...prev, muscle_group: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer" style={{ backgroundColor: '#2d2d2d', borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-outline-secondary text-white" 
+                    onClick={() => setEditExerciseModal({ show: false, exerciseId: null, name: '', muscle_group: '', category: 'strength', equipment: '', instructions: '' })}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-warning text-dark fw-bold" 
+                    onClick={executeEditCustomExercise}
+                    disabled={!editExerciseModal.name}
+                  >
+                    <i className="bi bi-save me-2"></i>
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Nutrition Goal Modal */}
         {showGoalModal && (
-          <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
             <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">Set Nutrition Goals</h5>
+              <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <div className="modal-header dark-modal-header" style={{ backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <h5 className="modal-title" style={{ color: '#fff' }}>Set Nutrition Goals</h5>
                   <button 
-                    className="btn-close" 
+                    type="button"
+                    className="btn-close btn-close-white" 
                     onClick={() => setShowGoalModal(false)}
                   ></button>
                 </div>
                 <form onSubmit={handleSetNutritionGoal}>
-                  <div className="modal-body">
+                  <div className="modal-body" style={{ color: '#fff' }}>
                     <div className="mb-3">
-                      <label className="form-label">Goal Type</label>
+                      <label className="form-label" style={{ color: '#d1d5db' }}>Goal Type</label>
                       <select 
-                        className="form-select"
+                        className="form-select dropdown-dark"
                         value={goalForm.goal_type}
                         onChange={(e) => setGoalForm(prev => ({ ...prev, goal_type: e.target.value }))}
+                        style={{ backgroundColor: '#1a1a1a', color: '#fff', border: '1px solid #444' }}
                       >
                         <option value="daily">Daily</option>
                         <option value="weekly">Weekly</option>
                       </select>
                     </div>
                     <div className="mb-3">
-                      <label className="form-label">Target Calories</label>
+                      <label className="form-label" style={{ color: '#d1d5db' }}>Target Calories</label>
                       <input 
                         type="number" 
                         className="form-control"
                         value={goalForm.target_calories}
                         onChange={(e) => setGoalForm(prev => ({ ...prev, target_calories: e.target.value }))}
+                        style={{ backgroundColor: '#1a1a1a', color: '#fff', border: '1px solid #444' }}
                         required
                       />
                     </div>
                     <div className="mb-3">
-                      <label className="form-label">Target Protein (g)</label>
+                      <label className="form-label" style={{ color: '#d1d5db' }}>Target Protein (g)</label>
                       <input 
                         type="number" 
                         className="form-control"
                         value={goalForm.target_protein}
                         onChange={(e) => setGoalForm(prev => ({ ...prev, target_protein: e.target.value }))}
+                        style={{ backgroundColor: '#1a1a1a', color: '#fff', border: '1px solid #444' }}
                         required
                       />
                     </div>
                     <div className="mb-3">
-                      <label className="form-label">Target Carbs (g)</label>
+                      <label className="form-label" style={{ color: '#d1d5db' }}>Target Carbs (g)</label>
                       <input 
                         type="number" 
                         className="form-control"
                         value={goalForm.target_carbs}
                         onChange={(e) => setGoalForm(prev => ({ ...prev, target_carbs: e.target.value }))}
+                        style={{ backgroundColor: '#1a1a1a', color: '#fff', border: '1px solid #444' }}
                         required
                       />
                     </div>
                     <div className="mb-3">
-                      <label className="form-label">Target Fat (g)</label>
+                      <label className="form-label" style={{ color: '#d1d5db' }}>Target Fat (g)</label>
                       <input 
                         type="number" 
                         className="form-control"
                         value={goalForm.target_fat}
                         onChange={(e) => setGoalForm(prev => ({ ...prev, target_fat: e.target.value }))}
+                        style={{ backgroundColor: '#1a1a1a', color: '#fff', border: '1px solid #444' }}
                         required
                       />
                     </div>
                   </div>
-                  <div className="modal-footer">
+                  <div className="modal-footer" style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
                     <button 
                       type="button"
-                      className="btn btn-secondary" 
+                      className="btn" 
                       onClick={() => setShowGoalModal(false)}
+                      style={{ backgroundColor: '#4b5563', color: '#fff', border: 'none' }}
                     >
                       Cancel
                     </button>
                     <button 
                       type="submit"
-                      className="btn btn-primary"
+                      className="btn"
+                      style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                     >
                       Save Goals
                     </button>
@@ -3333,18 +4338,21 @@ const ManageClientPrograms = () => {
         
         {/* Custom Food Modal */}
         {showCustomFoodModal && (
-          <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+          <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1060 }}>
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
                 <div className="modal-header dark-modal-header" style={{ backgroundColor: '#2d2d2d', borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                  <h5 className="modal-title" style={{ color: '#fff' }}>Create Custom Food</h5>
+                  <h5 className="modal-title" style={{ color: '#fff' }}>{customFoodForm.id ? 'Edit' : 'Create'} Custom Food</h5>
                   <button 
                     type="button" 
                     className="btn-close btn-close-white" 
-                    onClick={() => setShowCustomFoodModal(false)}
+                    onClick={() => {
+                      setShowCustomFoodModal(false);
+                      setCustomFoodForm({ name: '', brand: '', serving_size: 100, serving_unit: 'g', calories: 0, protein: 0, carbs: 0, fat: 0, portions: [] });
+                    }}
                   ></button>
                 </div>
-                <form onSubmit={handleCreateCustomFood}>
+                <form onSubmit={handleSaveCustomFood}>
                   <div className="modal-body">
                     <div className="mb-3">
                       <label className="form-label" style={{ color: '#fff' }}>Food Name *</label>
@@ -3354,16 +4362,6 @@ const ManageClientPrograms = () => {
                         value={customFoodForm.name}
                         onChange={(e) => setCustomFoodForm({...customFoodForm, name: e.target.value})}
                         required
-                        style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label" style={{ color: '#fff' }}>Brand</label>
-                      <input 
-                        type="text"
-                        className="form-control"
-                        value={customFoodForm.brand}
-                        onChange={(e) => setCustomFoodForm({...customFoodForm, brand: e.target.value})}
                         style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
                       />
                     </div>
@@ -3449,6 +4447,8 @@ const ManageClientPrograms = () => {
                         />
                       </div>
                     </div>
+                    
+
                   </div>
                   <div className="modal-footer" style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
                     <button 
@@ -3464,7 +4464,7 @@ const ManageClientPrograms = () => {
                       className="btn"
                       style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                     >
-                      Create Food
+                      {customFoodForm.id ? 'Save Changes' : 'Create Food'}
                     </button>
                   </div>
                 </form>
@@ -3787,8 +4787,8 @@ const ManageClientPrograms = () => {
         {/* Toast Notification */}
         {toast.show && (
           <div className="position-fixed top-0 end-0 p-3" style={{ zIndex: 11 }}>
-            <div className="toast show" role="alert">
-              <div className={`toast-header bg-${toast.type === 'success' ? 'success' : toast.type === 'error' ? 'danger' : 'warning'} text-white`}>
+            <div className="toast show" role="alert" style={{ backgroundColor: '#2d2d2d', color: '#fff', border: '1px solid #444' }}>
+              <div className={`toast-header bg-${toast.type === 'success' ? 'success' : toast.type === 'error' ? 'danger' : 'warning'} text-white`} style={{ borderBottom: 'none' }}>
                 <strong className="me-auto">
                   {toast.type === 'success' ? '✓ Success' : toast.type === 'error' ? '✕ Error' : '⚠ Warning'}
                 </strong>
@@ -3797,7 +4797,90 @@ const ManageClientPrograms = () => {
                   onClick={() => setToast({ show: false, message: '', type: 'success' })}
                 ></button>
               </div>
-              <div className="toast-body">{toast.message}</div>
+              <div className="toast-body" style={{ color: '#fff', fontSize: '15px' }}>{toast.message}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Unassign Program Confirmation Modal */}
+        {unassignProgramModal.show && (
+          <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1060 }}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content border-0" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                <div className="modal-header border-bottom border-dark position-relative" style={{ background: '#1a1a1a' }}>
+                  <h5 className="modal-title fw-bold" style={{ color: '#ffffff' }}>
+                    <i className="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                    Remove from client?
+                  </h5>
+                  <button 
+                    type="button" 
+                    className="btn-close btn-close-white" 
+                    onClick={() => setUnassignProgramModal({ show: false, assignmentId: null })}
+                  ></button>
+                </div>
+                <div className="modal-body py-4">
+                  <p className="text-white fs-5 mb-0 text-center">Are you sure you want to unassign this program?</p>
+                </div>
+                <div className="modal-footer border-top border-dark d-flex justify-content-center gap-3">
+                  <button 
+                    type="button" 
+                    className="btn btn-dark px-4 py-2"
+                    onClick={() => setUnassignProgramModal({ show: false, assignmentId: null })}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-warning px-4 py-2 fw-bold shadow-sm"
+                    onClick={executeUnassignProgram}
+                  >
+                    Yes, Unassign
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      
+        {/* Delete Program Confirmation Modal */}
+        {deleteProgramModal.show && (
+          <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1060 }}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content border-0" style={{ background: '#1a1a1a', border: '1px solid #3d3d3d', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                <div className="modal-header border-bottom border-dark position-relative" style={{ background: '#1a1a1a' }}>
+                  <h5 className="modal-title fw-bold" style={{ color: '#ffffff' }}>
+                    <i className="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+                    Confirm Delete
+                  </h5>
+                  <button 
+                    type="button" 
+                    className="btn-close btn-close-white" 
+                    onClick={() => setDeleteProgramModal({ show: false, programId: null })}
+                  ></button>
+                </div>
+                <div className="modal-body py-4">
+                  <p className="text-white fs-5 mb-0 text-center">Are you sure you want to delete this program?</p>
+                  <p className="text-muted small text-center mt-2">
+                    Existing clients will still have access to it, but it will be removed permanently from your assignment list.
+                  </p>
+                </div>
+                <div className="modal-footer border-top border-dark d-flex justify-content-center gap-3">
+                  <button 
+                    type="button" 
+                    className="btn btn-dark px-4 py-2"
+                    onClick={() => setDeleteProgramModal({ show: false, programId: null })}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-danger px-4 py-2 fw-bold shadow-sm"
+                    onClick={executeDeleteProgram}
+                  >
+                    Yes, Delete
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

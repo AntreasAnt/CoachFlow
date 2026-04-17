@@ -77,20 +77,18 @@ function MainPage() {
 
   // If user is not logged in, show marketing homepage
   return (
-    <div style={{backgroundColor: 'var(--brand-dark)', minHeight: '100vh'}}>
+    <div style={{backgroundColor: 'var(--brand-dark)', minHeight: '100vh', overflowX: 'hidden'}}>
       {/* Hero Section */}
       <section className="hero py-5" style={{background: 'linear-gradient(135deg, #000502 0%, #0A0D0A 100%)', minHeight: '100vh', display: 'flex', alignItems: 'center'}}>
         <div className="container text-center">
           <span className="badge px-4 py-3 mb-4 d-inline-block" style={{backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-primary)', fontSize: '1.1rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', borderRadius: '50px', border: '2px solid rgba(32, 214, 87, 0.3)', backdropFilter: 'blur(10px)', boxShadow: '0 8px 32px rgba(32, 214, 87, 0.2)'}}>
             100% Free to Start
           </span>
-          <h1 className="display-2 fw-bold mt-3" style={{color: 'var(--brand-white)', lineHeight: '1.2'}}>
-            Train Smarter.<br/>
-            <span style={{color: 'var(--brand-primary)', textShadow: '0 0 40px rgba(32, 214, 87, 0.7)'}}>Achieve More.</span>
+          <h1 className="display-4 display-md-2 fw-bold mt-3 mx-auto" style={{color: 'var(--brand-white)', lineHeight: '1.2', maxWidth: '800px'}}>
+            Train Smarter. <span style={{color: 'var(--brand-primary)', textShadow: '0 0 40px rgba(32, 214, 87, 0.7)'}}>Achieve More.</span>
           </h1>
-          <p className="lead fs-3 mb-5 mt-4 mx-auto" style={{color: 'var(--text-secondary)', maxWidth: '850px', fontWeight: '400'}}>
-            Train solo with powerful FREE tools, or connect with elite trainers.<br/>
-            Build custom programs, track progress, and achieve your goals. All in one place.
+          <p className="lead fs-5 fs-md-3 mb-5 mt-4 mx-auto" style={{color: 'var(--text-secondary)', maxWidth: '850px', fontWeight: '400'}}>
+            Train solo with powerful FREE tools, or connect with elite trainers. Build custom programs, track progress, and achieve your goals. All in one place.
           </p>
           
           <div className="row justify-content-center mb-5 g-3 free-features">
@@ -114,11 +112,12 @@ function MainPage() {
             </div>
           </div>
 
-          <div className="d-flex flex-wrap justify-content-center gap-4 mt-5">
+          <div className="d-flex flex-wrap justify-content-center gap-3 gap-md-4 mt-5">
             <Link
               to="/signup"
-              className="btn btn-lg rounded-pill px-5 py-3 fw-bold"
-              style={{backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none', boxShadow: '0 8px 32px rgba(32, 214, 87, 0.4)', transition: 'all 0.3s', fontSize: '1.2rem'}}
+              onClick={() => window.scrollTo(0, 0)}
+              className="btn btn-lg rounded-pill px-4 px-md-5 py-3 fw-bold w-100 w-sm-auto"
+              style={{backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none', boxShadow: '0 8px 32px rgba(32, 214, 87, 0.4)', transition: 'all 0.3s', fontSize: '1.1rem', maxWidth: '300px'}}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-3px)';
                 e.currentTarget.style.boxShadow = '0 12px 40px rgba(32, 214, 87, 0.5)';
@@ -133,8 +132,9 @@ function MainPage() {
             </Link>
             <Link
               to="/login"
-              className="btn btn-lg rounded-pill px-5 py-3 fw-semibold"
-              style={{backgroundColor: 'transparent', color: 'var(--brand-white)', border: '2px solid var(--brand-primary)', fontSize: '1.2rem', transition: 'all 0.3s'}}
+              onClick={() => window.scrollTo(0, 0)}
+              className="btn btn-lg rounded-pill px-4 px-md-5 py-3 fw-semibold w-100 w-sm-auto"
+              style={{backgroundColor: 'transparent', color: 'var(--brand-white)', border: '2px solid var(--brand-primary)', fontSize: '1.1rem', transition: 'all 0.3s', maxWidth: '300px'}}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = 'rgba(32, 214, 87, 0.1)';
               }}
@@ -147,7 +147,7 @@ function MainPage() {
             </Link>
           </div>
           <p className="mt-4" style={{color: 'var(--brand-light)', fontSize: '1rem'}}>
-            <strong>✨ No credit card • No hidden fees • Cancel anytime</strong>
+            <strong>No credit card • No hidden fees • Cancel anytime</strong>
           </p>
         </div>
       </section>
@@ -156,17 +156,17 @@ function MainPage() {
       <section className="py-5" style={{backgroundColor: 'var(--bg-secondary)'}}>
         <div className="container">
           <div className="text-center mb-5">
-            <h2 className="display-4 fw-bold mb-4" style={{color: 'var(--brand-white)'}}>
+            <h2 className="display-6 display-md-4 fw-bold mb-4" style={{color: 'var(--brand-white)'}}>
               Why Choose <span style={{color: 'var(--brand-primary)'}}>CoachFlow</span>?
             </h2>
-            <p className="lead fs-4" style={{color: 'var(--text-secondary)', maxWidth: '800px', margin: '0 auto'}}>
+            <p className="lead fs-5 fs-md-4" style={{color: 'var(--text-secondary)', maxWidth: '800px', margin: '0 auto'}}>
               Whether you're crushing goals solo or seeking expert guidance, we've got everything you need—completely free.
             </p>
           </div>
 
           <div className="row g-4 mt-5">
             <div className="col-lg-6">
-              <div className="card h-100 rounded-4 p-5" style={{backgroundColor: 'var(--bg-card)', border: '2px solid var(--brand-primary)', boxShadow: 'var(--shadow-xl)'}}>
+              <div className="card h-100 rounded-4 p-4 p-md-5" style={{backgroundColor: 'var(--bg-card)', border: '2px solid var(--brand-primary)', boxShadow: 'var(--shadow-xl)'}}>
                 <div className="text-center mb-4">
                   <div className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
                        style={{width: '100px', height: '100px', backgroundColor: 'rgba(32, 214, 87, 0.2)', border: '3px solid var(--brand-primary)'}}>
@@ -206,7 +206,7 @@ function MainPage() {
                   </li>
                 </ul>
                 <div className="mt-4 text-center">
-                  <Link to="/signup" className="btn btn-lg rounded-pill px-5 py-3 fw-bold" 
+                  <Link to="/signup" onClick={() => window.scrollTo(0, 0)} className="btn btn-lg rounded-pill px-5 py-3 fw-bold" 
                         style={{backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none', width: '100%'}}>
                     Start Training Free <i className="bi bi-arrow-right ms-2"></i>
                   </Link>
@@ -215,7 +215,7 @@ function MainPage() {
             </div>
 
             <div className="col-lg-6">
-              <div className="card h-100 rounded-4 p-5" style={{backgroundColor: 'var(--bg-card)', border: '2px solid var(--brand-light)', boxShadow: 'var(--shadow-xl)'}}>
+              <div className="card h-100 rounded-4 p-4 p-md-5" style={{backgroundColor: 'var(--bg-card)', border: '2px solid var(--brand-light)', boxShadow: 'var(--shadow-xl)'}}>
                 <div className="text-center mb-4">
                   <div className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
                        style={{width: '100px', height: '100px', backgroundColor: 'rgba(227, 255, 236, 0.2)', border: '3px solid var(--brand-light)'}}>
@@ -255,7 +255,7 @@ function MainPage() {
                   </li>
                 </ul>
                 <div className="mt-4 text-center">
-                  <Link to="/signup" className="btn btn-lg rounded-pill px-5 py-3 fw-bold" 
+                  <Link to="/signup" onClick={() => window.scrollTo(0, 0)} className="btn btn-lg rounded-pill px-5 py-3 fw-bold" 
                         style={{backgroundColor: 'var(--brand-light)', color: 'var(--brand-dark)', border: 'none', width: '100%'}}>
                     Start Coaching <i className="bi bi-arrow-right ms-2"></i>
                   </Link>
@@ -270,10 +270,10 @@ function MainPage() {
       <section className="py-5" style={{backgroundColor: 'var(--brand-dark)', paddingTop: '5rem', paddingBottom: '5rem'}}>
         <div className="container">
           <div className="text-center mb-5">
-            <h2 className="display-4 fw-bold mb-4" style={{color: 'var(--brand-white)'}}>
+            <h2 className="display-6 display-md-4 fw-bold mb-4" style={{color: 'var(--brand-white)'}}>
               Getting Started Is <span style={{color: 'var(--brand-primary)'}}>Ridiculously Easy</span>
             </h2>
-            <p className="lead fs-4" style={{color: 'var(--text-secondary)'}}>
+            <p className="lead fs-5 fs-md-4" style={{color: 'var(--text-secondary)'}}>
               From zero to hero in 3 simple steps
             </p>
           </div>
@@ -322,7 +322,7 @@ function MainPage() {
       {/* Social Proof Section */}
       <section className="py-5" style={{background: 'linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%)', paddingTop: '5rem', paddingBottom: '5rem'}}>
         <div className="container text-center">
-          <h2 className="display-4 fw-bold mb-5" style={{color: 'var(--brand-white)'}}>
+          <h2 className="display-6 display-md-4 fw-bold mb-5" style={{color: 'var(--brand-white)'}}>
             Join Thousands Already <span style={{color: 'var(--brand-primary)'}}>Crushing Their Goals</span>
           </h2>
           
@@ -347,15 +347,15 @@ function MainPage() {
             </div>
             <div className="col-md-3">
               <div className="p-4 rounded-4" style={{backgroundColor: 'var(--bg-card)', border: '1px solid var(--brand-primary)'}}>
-                <div className="display-3 fw-bold mb-2" style={{color: 'var(--brand-primary)', textShadow: '0 0 20px rgba(32, 214, 87, 0.5)'}}>$1M+</div>
+                <div className="display-3 fw-bold mb-2" style={{color: 'var(--brand-primary)', textShadow: '0 0 20px rgba(32, 214, 87, 0.5)'}}>€1M+</div>
                 <div className="fs-5" style={{color: 'var(--text-secondary)'}}>Paid to Trainers</div>
               </div>
             </div>
           </div>
 
           <div className="row justify-content-center mt-5">
-            <div className="col-lg-8">
-              <div className="card rounded-4 p-5" style={{backgroundColor: 'var(--bg-card)', border: '2px solid var(--brand-primary)', boxShadow: 'var(--shadow-xl)'}}>
+            <div className="col-lg-8 text-center text-md-start">
+              <div className="card rounded-4 p-4 p-md-5" style={{backgroundColor: 'var(--bg-card)', border: '2px solid var(--brand-primary)', boxShadow: 'var(--shadow-xl)'}}>
                 <div className="mb-4">
                   <i className="bi bi-star-fill" style={{color: '#FFD700', fontSize: '2rem'}}></i>
                   <i className="bi bi-star-fill mx-1" style={{color: '#FFD700', fontSize: '2rem'}}></i>
@@ -365,7 +365,7 @@ function MainPage() {
                 </div>
                 <blockquote className="mb-0">
                   <p className="lead fs-3 mb-4" style={{color: 'var(--brand-white)', fontStyle: 'italic'}}>
-                    "I was paying $300/month for scattered apps. CoachFlow gave me everything FREE, then I found the perfect trainer for $50/month. Game changer!"
+                    "I was paying €300/month for scattered apps. CoachFlow gave me everything FREE, then I found the perfect trainer for €50/month. Game changer!"
                   </p>
                   <footer className="blockquote-footer fs-5" style={{color: 'var(--text-secondary)'}}>
                     <strong style={{color: 'var(--brand-light)'}}>Marcus Rivera</strong>, Competitive Powerlifter
@@ -380,16 +380,17 @@ function MainPage() {
       {/* Final CTA Section */}
       <section className="py-5" style={{backgroundColor: 'var(--brand-dark)', paddingTop: '6rem', paddingBottom: '6rem'}}>
         <div className="container text-center">
-          <h2 className="display-3 fw-bold mb-4" style={{color: 'var(--brand-white)'}}>
+          <h2 className="display-5 display-md-3 fw-bold mb-4" style={{color: 'var(--brand-white)'}}>
             Ready to Transform Your Fitness?
           </h2>
-          <p className="lead fs-3 mb-5" style={{color: 'var(--text-secondary)', maxWidth: '700px', margin: '0 auto'}}>
+          <p className="lead fs-5 fs-md-3 mb-5" style={{color: 'var(--text-secondary)', maxWidth: '700px', margin: '0 auto'}}>
             Stop wasting money on apps you don't need. Start for FREE today.
           </p>
           <Link
             to="/signup"
-            className="btn btn-lg rounded-pill px-5 py-4 fw-bold"
-            style={{backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none', boxShadow: '0 12px 40px rgba(32, 214, 87, 0.5)', transition: 'all 0.3s', fontSize: '1.5rem'}}
+            onClick={() => window.scrollTo(0, 0)}
+            className="btn btn-lg rounded-pill px-4 px-md-5 py-3 py-md-4 fw-bold w-100 mx-auto d-block"
+            style={{maxWidth: '400px', backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none', boxShadow: '0 12px 40px rgba(32, 214, 87, 0.5)', transition: 'all 0.3s', fontSize: '1.2rem'}}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-5px)';
               e.currentTarget.style.boxShadow = '0 16px 50px rgba(32, 214, 87, 0.6)';
@@ -400,7 +401,7 @@ function MainPage() {
             }}
           >
             <i className="bi bi-rocket-takeoff me-3"></i>
-            Join Free—No Credit Card Needed
+            Join Free. No Credit Card Needed
           </Link>
           <p className="mt-4" style={{color: 'var(--brand-light)', fontSize: '1.2rem'}}>
             <strong>Join 5,000+ athletes already training smarter</strong>

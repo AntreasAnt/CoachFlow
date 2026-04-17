@@ -27,6 +27,47 @@ try {
     $conn = $database->connect();
     
     // Get active coaching relationships with program assignment count
+    
+    // Pagination and Search Params
+    $search = $_GET['search'] ?? '';
+    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+    if ($page < 1) $page = 1;
+    if ($limit < 1 || $limit > 50) $limit = 10;
+    $offset = ($page - 1) * $limit;
+
+    $bindParams = [$userId, $userId];
+    $bindTypes = "ii";
+    
+    $whereClause = "WHERE cr.trainer_id = ? AND cr.status = 'active'";
+    
+    if (!empty(trim($search))) {
+        $whereClause .= " AND (u.full_name LIKE ? OR u.username LIKE ? OR u.email LIKE ?)";
+        $searchParam = '%' . trim($search) . '%';
+        array_push($bindParams, $searchParam, $searchParam, $searchParam);
+        $bindTypes .= "sss";
+    }
+
+    // Count Total for Pagination
+    $countQuery = "SELECT COUNT(*) as total
+                   FROM coaching_relationships cr
+                   JOIN user u ON cr.trainee_id = u.userid
+                   $whereClause";
+    
+    $countStmt = $conn->prepare($countQuery);
+    
+    // Dynamically bind params for count
+    $countBindParams = $bindParams;
+    array_shift($countBindParams); // Remove the first $userId since it was for the subquery in main query
+    $countBindTypes = substr($bindTypes, 1);
+    
+    $countStmt->bind_param($countBindTypes, ...$countBindParams);
+    $countStmt->execute();
+    $totalResult = $countStmt->get_result();
+    $totalClients = $totalResult->fetch_assoc()['total'];
+    $totalPages = ceil($totalClients / $limit);
+
+    // Main Query
     $query = "SELECT 
                 cr.id,
                 cr.trainee_id,
@@ -36,16 +77,20 @@ try {
                 u.username,
                 u.email,
                 u.phone,
-                                (SELECT g.image FROM gallery g WHERE g.imageid = u.imageid LIMIT 1) as profile_image,
+                (SELECT g.image FROM gallery g WHERE g.imageid = u.imageid LIMIT 1) as profile_image,
                 (SELECT COUNT(*) FROM program_assignments WHERE trainer_id = ? AND trainee_id = cr.trainee_id) as assigned_programs
               FROM coaching_relationships cr
               JOIN user u ON cr.trainee_id = u.userid
-              WHERE cr.trainer_id = ?
-              AND cr.status = 'active'
-              ORDER BY cr.started_at DESC";
+              $whereClause
+              ORDER BY cr.started_at DESC
+              LIMIT ? OFFSET ?";
     
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("ii", $userId, $userId);
+    
+    array_push($bindParams, $limit, $offset);
+    $bindTypes .= "ii";
+    
+    $stmt->bind_param($bindTypes, ...$bindParams);
     $stmt->execute();
     $result = $stmt->get_result();
     
@@ -104,6 +149,12 @@ try {
     echo json_encode([
         'success' => true,
         'clients' => $clients,
+        'pagination' => [
+            'total_clients' => (int)$totalClients,
+            'total_pages' => (int)$totalPages,
+            'current_page' => (int)$page,
+            'limit' => (int)$limit
+        ],
         'recent_disconnects' => $recentDisconnects
     ]);
 

@@ -9,8 +9,10 @@ const TrainerDashboardHome = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalClients: 0,
+    clientGrowth: 0,
     activePrograms: 0,
     monthlyRevenue: 0,
+    revenueGrowth: 0,
     totalSales: 0,
     pendingRequests: 0,
     unreadMessages: 0
@@ -44,7 +46,7 @@ const TrainerDashboardHome = () => {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'EUR'
     }).format(amount || 0);
   };
 
@@ -74,8 +76,15 @@ const TrainerDashboardHome = () => {
                   <div>
                     <p className="mb-1 small" style={{ color: '#9ca3af' }}>Total Clients</p>
                     <h3 className="mb-0" style={{ color: '#fff' }}>{stats.totalClients}</h3>
-                    <small style={{ color: '#10b981' }}>
-                      <i className="bi bi-arrow-up"></i> 12% this month
+                      <small style={{ color: stats.clientGrowth > 0 ? '#10b981' : (stats.clientGrowth < 0 ? '#ef4444' : '#9ca3af') }}>
+                        {stats.totalClients > 0 ? (
+                          <>
+                            {stats.clientGrowth > 0 && <i className="bi bi-arrow-up"></i>}
+                            {stats.clientGrowth < 0 && <i className="bi bi-arrow-down"></i>}
+                            {stats.clientGrowth === 0 && <i className="bi bi-dash"></i>}
+                            {' '}{Math.abs(stats.clientGrowth)}% this month
+                          </>
+                        ) : "No clients yet"}
                     </small>
                   </div>
                   <div className="trainer-stat-icon" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
@@ -93,8 +102,15 @@ const TrainerDashboardHome = () => {
                   <div>
                     <p className="mb-1 small" style={{ color: '#9ca3af' }}>Monthly Revenue</p>
                     <h3 className="mb-0" style={{ color: '#fff' }}>{formatCurrency(stats.monthlyRevenue)}</h3>
-                    <small style={{ color: '#10b981' }}>
-                      <i className="bi bi-arrow-up"></i> 8% this month
+                      <small style={{ color: stats.revenueGrowth > 0 ? '#10b981' : (stats.revenueGrowth < 0 ? '#ef4444' : '#9ca3af') }}>
+                        {stats.monthlyRevenue > 0 || stats.revenueGrowth !== 0 ? (
+                          <>
+                            {stats.revenueGrowth > 0 && <i className="bi bi-arrow-up"></i>}
+                            {stats.revenueGrowth < 0 && <i className="bi bi-arrow-down"></i>}
+                            {stats.revenueGrowth === 0 && <i className="bi bi-dash"></i>}
+                            {' '}{Math.abs(stats.revenueGrowth)}% this month
+                          </>
+                        ) : "No revenue yet"}
                     </small>
                   </div>
                   <div className="trainer-stat-icon" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>

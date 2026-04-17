@@ -71,6 +71,14 @@ const ClientAnalytics = () => {
     return num.toLocaleString();
   };
 
+  const formatVolume = (vol) => {
+    const num = Number(vol || 0);
+    if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)}k`;
+    }
+    return num.toLocaleString();
+  };
+
   const formatDecimal = (num, decimals = 1) => {
     if (!num) return '0';
     return parseFloat(num).toFixed(decimals);
@@ -167,7 +175,7 @@ const ClientAnalytics = () => {
                   <div className="d-flex justify-content-between align-items-center">
                     <div>
                       <p className="text-muted mb-1 small">Total Volume</p>
-                      <h3 className="mb-0">{formatNumber(analytics.overview.total_volume_kg)} kg</h3>
+                      <h3 className="mb-0">{formatVolume(analytics.overview.total_volume_kg)}&nbsp;kg</h3>
                     </div>
                     <div className="bg-success bg-opacity-10 rounded-circle p-3">
                       <i className="bi bi-graph-up text-success fs-4"></i>
@@ -228,7 +236,7 @@ const ClientAnalytics = () => {
                   </div>
                   <div className="d-flex justify-content-between">
                     <span className="text-muted">Training Time:</span>
-                    <strong>{formatNumber(analytics.overview.total_minutes)} min</strong>
+                    <strong>{formatNumber(analytics.overview.total_minutes)}&nbsp;min</strong>
                   </div>
                 </div>
               </div>
@@ -317,7 +325,7 @@ const ClientAnalytics = () => {
                           </small>
                         </td>
                         <td><strong>{week.total_workouts}</strong></td>
-                        <td><strong>{formatNumber(week.total_volume_kg)} kg</strong></td>
+                        <td><strong>{formatVolume(week.total_volume_kg)}&nbsp;kg</strong></td>
                         <td>{formatNumber(week.total_sets)}</td>
                         <td>{formatNumber(week.total_reps)}</td>
                         <td>
@@ -325,7 +333,7 @@ const ClientAnalytics = () => {
                             {formatDecimal(week.avg_rpe)}
                           </span>
                         </td>
-                        <td>{week.total_duration_minutes || 0} min</td>
+                        <td>{week.total_duration_minutes || 0}&nbsp;min</td>
                         <td>{week.unique_exercises || 0}</td>
                       </tr>
                     ))}
@@ -334,7 +342,7 @@ const ClientAnalytics = () => {
                     <tr className="table-light fw-bold">
                       <td>TOTAL</td>
                       <td>{formatNumber(analytics.overview.total_workouts)}</td>
-                      <td>{formatNumber(analytics.overview.total_volume_kg)} kg</td>
+                      <td>{formatVolume(analytics.overview.total_volume_kg)}&nbsp;kg</td>
                       <td>{formatNumber(analytics.overview.total_sets)}</td>
                       <td>{formatNumber(analytics.overview.total_reps)}</td>
                       <td>
@@ -342,7 +350,7 @@ const ClientAnalytics = () => {
                           {formatDecimal(analytics.overview.avg_rpe)}
                         </span>
                       </td>
-                      <td>{formatNumber(analytics.overview.total_minutes)} min</td>
+                      <td>{formatNumber(analytics.overview.total_minutes)}&nbsp;min</td>
                       <td>{formatNumber(analytics.overview.unique_exercises)}</td>
                     </tr>
                   </tfoot>
@@ -454,7 +462,7 @@ const ClientAnalytics = () => {
                           <strong>{program.program_name}</strong>
                         </td>
                         <td><strong>{program.total_workouts}</strong></td>
-                        <td><strong className="text-primary">{formatNumber(program.total_volume_kg)} kg</strong></td>
+                        <td><strong className="text-primary">{formatVolume(program.total_volume_kg)}&nbsp;kg</strong></td>
                         <td>{formatNumber(program.total_sets)}</td>
                         <td>{formatNumber(program.total_reps)}</td>
                         <td>
@@ -463,7 +471,7 @@ const ClientAnalytics = () => {
                           </span>
                         </td>
                         <td>{program.unique_exercises}</td>
-                        <td>{formatNumber(program.total_minutes)} min</td>
+                        <td>{formatNumber(program.total_minutes)}&nbsp;min</td>
                         <td>
                           <small className="text-muted">
                             {new Date(program.first_workout).toLocaleDateString()} - {new Date(program.last_workout).toLocaleDateString()}
@@ -476,7 +484,7 @@ const ClientAnalytics = () => {
                     <tr className="table-light fw-bold">
                       <td>TOTAL</td>
                       <td>{formatNumber(analytics.overview.total_workouts)}</td>
-                      <td className="text-primary">{formatNumber(analytics.overview.total_volume_kg)} kg</td>
+                      <td className="text-primary">{formatVolume(analytics.overview.total_volume_kg)}&nbsp;kg</td>
                       <td>{formatNumber(analytics.overview.total_sets)}</td>
                       <td>{formatNumber(analytics.overview.total_reps)}</td>
                       <td>
@@ -485,7 +493,7 @@ const ClientAnalytics = () => {
                         </span>
                       </td>
                       <td>{formatNumber(analytics.overview.unique_exercises)}</td>
-                      <td>{formatNumber(analytics.overview.total_minutes)} min</td>
+                      <td>{formatNumber(analytics.overview.total_minutes)}&nbsp;min</td>
                       <td>-</td>
                     </tr>
                   </tfoot>
@@ -503,7 +511,7 @@ const ClientAnalytics = () => {
                         </h6>
                         <div className="d-flex justify-content-between mb-2">
                           <span className="text-muted small">Total Volume:</span>
-                          <strong>{formatNumber(program.total_volume_kg)} kg</strong>
+                          <strong>{formatVolume(program.total_volume_kg)}&nbsp;kg</strong>
                         </div>
                         <div className="d-flex justify-content-between mb-2">
                           <span className="text-muted small">Workouts:</span>
@@ -570,7 +578,7 @@ const ClientAnalytics = () => {
                           </small>
                         </td>
                         <td><strong>{week.total_workouts}</strong></td>
-                        <td><strong>{formatNumber(week.total_volume_kg)} kg</strong></td>
+                        <td><strong>{formatVolume(week.total_volume_kg)}&nbsp;kg</strong></td>
                         <td>{formatNumber(week.total_reps)}</td>
                         <td>
                           <span className={`badge ${week.avg_rpe >= 8 ? 'bg-danger' : week.avg_rpe >= 6 ? 'bg-warning' : 'bg-success'}`}>
@@ -604,10 +612,10 @@ const ClientAnalytics = () => {
                         <strong className="text-truncate" style={{ maxWidth: '70%' }}>
                           {record.exercise_name}
                         </strong>
-                        <span className="badge bg-primary">{formatDecimal(record.estimated_1rm)} kg</span>
+                        <span className="badge bg-primary">{formatDecimal(record.estimated_1rm)}&nbsp;kg</span>
                       </div>
                       <small className="text-muted">
-                        {record.based_on_weight} kg × {record.based_on_reps} reps
+                        {record.based_on_weight}&nbsp;kg × {record.based_on_reps} reps
                       </small>
                     </div>
                   </div>
@@ -642,10 +650,10 @@ const ClientAnalytics = () => {
                       <tr key={index}>
                         <td>{progress.exercise_name}</td>
                         <td>
-                          <strong>{formatDecimal(progress.estimated_1rm)} kg</strong>
+                          <strong>{formatDecimal(progress.estimated_1rm)}&nbsp;kg</strong>
                         </td>
                         <td>
-                          {progress.based_on_weight} kg × {progress.based_on_reps} reps
+                          {progress.based_on_weight}&nbsp;kg × {progress.based_on_reps} reps
                         </td>
                         <td>
                           <small className="text-muted">
@@ -690,7 +698,7 @@ const ClientAnalytics = () => {
                           </small>
                         </td>
                         <td>
-                          <strong>{formatDecimal(measurement.weight_kg)} kg</strong>
+                          <strong>{formatDecimal(measurement.weight_kg)}&nbsp;kg</strong>
                         </td>
                         <td>
                           {measurement.body_fat_percentage
@@ -699,7 +707,7 @@ const ClientAnalytics = () => {
                         </td>
                         <td>
                           {measurement.muscle_mass_kg
-                            ? `${formatDecimal(measurement.muscle_mass_kg)} kg`
+                            ? `${formatDecimal(measurement.muscle_mass_kg)}&nbsp;kg`
                             : '-'}
                         </td>
                       </tr>
@@ -750,7 +758,7 @@ const ClientAnalytics = () => {
                   </div>
                   <div className="d-flex justify-content-between">
                     <span>Avg Workout Duration:</span>
-                    <strong>{formatNumber(analytics.overview.total_minutes / (analytics.overview.total_workouts || 1))} min</strong>
+                    <strong>{formatNumber(analytics.overview.total_minutes / (analytics.overview.total_workouts || 1))}&nbsp;min</strong>
                   </div>
                 </div>
               </div>

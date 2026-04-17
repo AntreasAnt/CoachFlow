@@ -436,7 +436,7 @@ const FindTrainersPage = ({
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="Search by name, specialization, or keywords..."
+                    placeholder="Search by name, username, or specialization..."
                     value={filters.search}
                     onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                     style={{
@@ -676,12 +676,17 @@ const FindTrainersPage = ({
                       <div className="flex-grow-1">
                         <div className="d-flex align-items-start justify-content-between">
                           <div>
-                            <h5 className="mb-1" style={{ color: 'var(--brand-white)', fontWeight: '600' }}>
+                            <h5 className="mb-0" style={{ color: 'var(--brand-white)', fontWeight: '600' }}>
                               {trainer.name}
-                              {trainer.verified && (
+                              {!!trainer.verified && (
                                 <i className="bi bi-patch-check-fill ms-2" style={{ color: 'var(--brand-primary)' }} title="Verified"></i>
                               )}
                             </h5>
+                            {trainer.username && (
+                              <p className="mb-1 mt-1" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                @{trainer.username}
+                              </p>
+                            )}
                             <div className="mb-1">
                               {getRatingStars(trainer.average_rating || 0)}
                               <small className="ms-1" style={{ color: 'var(--text-secondary)' }}>
@@ -967,7 +972,14 @@ const FindTrainersPage = ({
                     >
                       {selectedTrainer.name?.charAt(0) || 'T'}
                     </div>
-                    <h5 style={{ color: 'var(--brand-white)' }}>{selectedTrainer.name}</h5>
+                    <div>
+                      <h5 className="mb-0" style={{ color: 'var(--brand-white)' }}>{selectedTrainer.name}</h5>
+                      {selectedTrainer.username && (
+                        <p className="mb-0 mt-1" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                          @{selectedTrainer.username}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="mb-3">

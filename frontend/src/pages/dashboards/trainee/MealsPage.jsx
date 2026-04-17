@@ -1033,9 +1033,9 @@ const MealsPage = ({ embedded = false }) => {
                                 {foodItems.map((food, foodIndex) => (
                                   <div key={foodIndex} className="mb-1">
                                     <small className="d-block">
-                                      <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{food.food_name}</strong>
-                                      {food.quantity && food.serving_unit && (
-                                        <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}> - {food.quantity} {food.serving_unit}</span>
+                                      <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{food.food_name || food.name}</strong>
+                                      {(food.quantity || food.serving_unit || food.serving_size) && (
+                                        <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}> - {formatServing(food.quantity, food.serving_unit) || `${food.serving_size}g`}</span>
                                       )}
                                     </small>
                                   </div>

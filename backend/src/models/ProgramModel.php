@@ -253,30 +253,65 @@ class ProgramModel
     /**
      * Get trainer's programs
      */
-    public function getTrainerPrograms($trainerId, $includeArchived = false)
+    public function getTrainerPrograms($trainerId, $includeArchived = false, $filters = [])
     {
         try {
+            $baseQuery = " FROM trainer_programs WHERE trainer_id = ? AND is_deleted = 0";
+            
+            $params = [$trainerId];
+            $types = "i";
+
+            if (!$includeArchived) {
+                $baseQuery .= " AND status != 'archived'";
+            }
+
+            if (!empty($filters['search'])) {
+                $searchTerm = "%" . trim($filters['search']) . "%";
+                $baseQuery .= " AND (title LIKE ? OR description LIKE ? OR category LIKE ?)";
+                $params[] = $searchTerm;
+                $params[] = $searchTerm;
+                $params[] = $searchTerm;
+                $types .= "sss";
+            }
+
+            // Count total matching records before pagination
+            $countQuery = "SELECT COUNT(*) as total" . $baseQuery;
+            $countStmt = $this->conn->prepare($countQuery);
+            if (!$countStmt) {
+                throw new Exception("Prepare failed: " . $this->conn->error);
+            }
+            $countStmt->bind_param($types, ...$params);
+            $countStmt->execute();
+            $countResult = $countStmt->get_result()->fetch_assoc();
+            $totalCount = (int) $countResult['total'];
+
             $query = "SELECT 
                         id, title, description, difficulty_level,
                         duration_weeks, category, price, currency,
                         status, is_featured, purchase_count,
                         rating_average, rating_count, view_count,
-                        created_at, updated_at, published_at
-                      FROM trainer_programs
-                      WHERE trainer_id = ? AND is_deleted = 0";
-            
-            if (!$includeArchived) {
-                $query .= " AND status != 'archived'";
-            }
+                        created_at, updated_at, published_at" . $baseQuery;
             
             $query .= " ORDER BY created_at DESC";
+
+            // Pagination
+            $limit = isset($filters['limit']) ? (int) $filters['limit'] : null;
+            $page = isset($filters['page']) ? (int) $filters['page'] : 1;
+            
+            if ($limit && $limit > 0) {
+                $offset = max(0, ($page - 1) * $limit);
+                $query .= " LIMIT ? OFFSET ?";
+                $params[] = $limit;
+                $params[] = $offset;
+                $types .= "ii";
+            }
 
             $stmt = $this->conn->prepare($query);
             if (!$stmt) {
                 throw new Exception("Prepare failed: " . $this->conn->error);
             }
 
-            $stmt->bind_param("i", $trainerId);
+            $stmt->bind_param($types, ...$params);
             $stmt->execute();
             $result = $stmt->get_result();
 
@@ -286,7 +321,13 @@ class ProgramModel
                 $programs[] = $row;
             }
 
-            return $programs;
+            // If we are passing filters, return total count and list for pagination
+            // Need to return array if filters are passed? The frontend expects either $programs array directly currently.
+            // Let's modify GetPrograms.php to cleanly handle this response.
+            return [
+                'programs' => $programs,
+                'total' => $totalCount
+            ];
 
         } catch (Exception $e) {
             error_log("Error in getTrainerPrograms: " . $e->getMessage());

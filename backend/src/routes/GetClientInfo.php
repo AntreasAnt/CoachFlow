@@ -53,7 +53,7 @@ try {
     error_log("GetClientInfo: Looking for relationship - trainer_id=$trainer_id, client_id=$client_id");
     
     // Verify that this client belongs to the trainer
-    $query = "SELECT u.userid, u.username, u.full_name, u.email
+    $query = "SELECT u.userid, u.username, u.full_name, u.email, cr.started_at as joined_date
               FROM coaching_relationships cr
               JOIN user u ON cr.trainee_id = u.userid
               WHERE cr.trainer_id = ? AND cr.trainee_id = ? AND cr.status = 'active'
@@ -109,7 +109,8 @@ try {
             'id' => (int)$client['userid'],
             'username' => $client['username'],
             'full_name' => $client['full_name'],
-            'email' => $client['email']
+            'email' => $client['email'],
+            'joined_date' => $client['joined_date']
         ]
     ]);
     

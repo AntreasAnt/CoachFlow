@@ -239,6 +239,27 @@ class WorkoutController
     }
 
     /**
+     * Edit a custom exercise
+     */
+    public function editCustomExercise($userId, $exerciseData)
+    {
+        try {
+            // Validate input
+            if (!$userId || empty($exerciseData['exerciseId']) || empty($exerciseData['name'])) {
+                throw new Exception('User ID, exercise ID, and exercise name are required');
+            }
+
+            return $this->workoutModel->editCustomExercise($userId, $exerciseData);
+
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
      * Create a custom exercise
      */
     public function createCustomExercise($userId, $exerciseData)
