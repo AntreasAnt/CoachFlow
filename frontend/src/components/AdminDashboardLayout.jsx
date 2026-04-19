@@ -68,6 +68,7 @@ const AdminDashboardLayout = ({ children }) => {
     { path: '/admin/users', icon: 'people', label: 'User Management' },
     { path: '/admin/email-marketing', icon: 'envelope-at', label: 'Email Marketing' },
     { path: '/admin/messages', icon: 'chat-dots', label: 'Messages' },
+    { path: '/admin-profile', icon: 'person-circle', label: 'Profile' },
   ];
 
   return (

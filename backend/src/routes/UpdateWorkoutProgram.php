@@ -96,7 +96,7 @@ try {
     $duration = $data['duration_weeks'] ?? 4;
 
     $programStmt->bind_param(
-        "sssisii",
+        "ssssiii",
         $title,
         $description,
         $difficulty,

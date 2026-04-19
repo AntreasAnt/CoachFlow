@@ -7,6 +7,7 @@ const ActionsModal = ({
   handleDisable,
   handleForceReset,
   handleEnable,
+  isResetting,
 }) => {
   if (!show) return null;
   return (
@@ -32,9 +33,18 @@ const ActionsModal = ({
     <i className="bi bi-check-circle me-2"></i>
     Enable
   </button>
-  <button className="btn btn-sm w-100 py-2" style={{ backgroundColor: '#3b82f6', color: '#fff', border: 'none' }} onClick={handleForceReset}>
-    <i className="bi bi-arrow-clockwise me-2"></i>
-    Force Password Reset
+  <button className="btn btn-sm w-100 py-2" style={{ backgroundColor: '#3b82f6', color: '#fff', border: 'none' }} onClick={handleForceReset} disabled={isResetting}>
+    {isResetting ? (
+      <>
+        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" style={{ width: '1rem', height: '1rem' }}></span>
+        Sending...
+      </>
+    ) : (
+      <>
+        <i className="bi bi-arrow-clockwise me-2"></i>
+        Force Password Reset
+      </>
+    )}
   </button>
 </div>
           </div>

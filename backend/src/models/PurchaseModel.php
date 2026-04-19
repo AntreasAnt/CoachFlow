@@ -248,23 +248,76 @@ class PurchaseModel
         }
     }
 
+    private function buildTraineePurchasesFilters($filters, &$params, &$types) {
+        $whereConditions = "";
+        if (!empty($filters['search'])) {
+            $whereConditions .= " AND (tp.title LIKE ? OR tp.description LIKE ?)";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $types .= 'ss';
+        }
+        if (!empty($filters['category'])) {
+            $whereConditions .= " AND tp.category = ?";
+            $params[] = $filters['category'];
+            $types .= 's';
+        }
+        if (!empty($filters['difficulty_level'])) {
+            $whereConditions .= " AND tp.difficulty_level = ?";
+            $params[] = $filters['difficulty_level'];
+            $types .= 's';
+        }
+        if (!empty($filters['min_duration'])) {
+            $whereConditions .= " AND tp.duration_weeks >= ?";
+            $params[] = $filters['min_duration'];
+            $types .= 'i';
+        }
+        if (!empty($filters['max_duration'])) {
+            $whereConditions .= " AND tp.duration_weeks <= ?";
+            $params[] = $filters['max_duration'];
+            $types .= 'i';
+        }
+        if (!empty($filters['min_price'])) {
+            $whereConditions .= " AND tp.price >= ?";
+            $params[] = $filters['min_price'];
+            $types .= 'd';
+        }
+        if (!empty($filters['max_price'])) {
+            $whereConditions .= " AND tp.price <= ?";
+            $params[] = $filters['max_price'];
+            $types .= 'd';
+        }
+        if (!empty($filters['trainer_name'])) {
+            $whereConditions .= " AND u.full_name LIKE ?";
+            $params[] = '%' . $filters['trainer_name'] . '%';
+            $types .= 's';
+        }
+        return $whereConditions;
+    }
+
     /**
      * Count trainee purchases (non-hidden by default)
      */
-    public function countTraineePurchases($traineeId, $status = 'completed', $isHidden = 0)
+    public function countTraineePurchases($traineeId, $status = 'completed', $isHidden = 0, $filters = [])
     {
         try {
             $isHidden = (int)$isHidden;
             $query = "SELECT COUNT(*) as total
-                      FROM program_purchases
-                      WHERE trainee_id = ? AND status = ? AND is_hidden = ?";
+                      FROM program_purchases pp
+                      JOIN trainer_programs tp ON pp.program_id = tp.id
+                      JOIN user u ON pp.trainer_id = u.userid
+                      WHERE pp.trainee_id = ? AND pp.status = ? AND pp.is_hidden = ?";
+
+            $params = [$traineeId, $status, $isHidden];
+            $types = "isi";
+            $query .= $this->buildTraineePurchasesFilters($filters, $params, $types);
 
             $stmt = $this->conn->prepare($query);
             if (!$stmt) {
                 throw new Exception("Prepare failed: " . $this->conn->error);
             }
 
-            $stmt->bind_param("isi", $traineeId, $status, $isHidden);
+            $stmt->bind_param($types, ...$params);
             $stmt->execute();
             $result = $stmt->get_result();
             $row = $result->fetch_assoc();
@@ -279,7 +332,7 @@ class PurchaseModel
     /**
      * Get trainee's purchased programs with pagination (non-hidden)
      */
-    public function getTraineePurchasesPaged($traineeId, $status = 'completed', $limit = 10, $offset = 0)
+    public function getTraineePurchasesPaged($traineeId, $status = 'completed', $limit = 10, $offset = 0, $filters = [])
     {
         try {
             $limit = max(1, (int)$limit);
@@ -297,21 +350,39 @@ class PurchaseModel
                         tp.difficulty_level,
                         tp.duration_weeks,
                         tp.category,
-                        u.username as trainer_name,
+                        u.full_name as trainer_name,
                         u.userid as trainer_id
                       FROM program_purchases pp
                       JOIN trainer_programs tp ON pp.program_id = tp.id
                       JOIN user u ON pp.trainer_id = u.userid
-                      WHERE pp.trainee_id = ? AND pp.status = ? AND pp.is_hidden = 0
-                      ORDER BY pp.purchased_at DESC
-                      LIMIT ? OFFSET ?";
+                      WHERE pp.trainee_id = ? AND pp.status = ? AND pp.is_hidden = 0";
+
+            $params = [$traineeId, $status];
+            $types = "is";
+            $query .= $this->buildTraineePurchasesFilters($filters, $params, $types);
+
+            $sortBy = $filters['sort_by'] ?? 'newest';
+            if ($sortBy === 'price_high') {
+                $query .= " ORDER BY tp.price DESC";
+            } elseif ($sortBy === 'price_low') {
+                $query .= " ORDER BY tp.price ASC";
+            } elseif ($sortBy === 'popular') {
+                $query .= " ORDER BY tp.purchase_count DESC";
+            } else {
+                $query .= " ORDER BY pp.purchased_at DESC";
+            }
+
+            $query .= " LIMIT ? OFFSET ?";
+            $params[] = $limit;
+            $params[] = $offset;
+            $types .= "ii";
 
             $stmt = $this->conn->prepare($query);
             if (!$stmt) {
                 throw new Exception("Prepare failed: " . $this->conn->error);
             }
 
-            $stmt->bind_param("isii", $traineeId, $status, $limit, $offset);
+            $stmt->bind_param($types, ...$params);
             $stmt->execute();
             $result = $stmt->get_result();
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../services/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc } from 'firebase/firestore';
 import { signInWithBackendSession } from '../services/firebase';
 import { BACKEND_ROUTES_API } from '../config/config';
 
@@ -27,13 +27,27 @@ const TraineeHeader = () => {
   useEffect(() => {
     if (!firebaseUser) return;
     
+    let blockedUsers = [];
+    const userRef = doc(db, 'users', firebaseUser.uid);
+    const unsubUser = onSnapshot(userRef, (userSnap) => {
+      if (userSnap.exists()) {
+        blockedUsers = userSnap.data().blocked || [];
+      }
+    });
+
     const convRef = collection(db, 'conversations');
     const q = query(convRef, where('participants', 'array-contains', firebaseUser.uid));
     
-    const unsub = onSnapshot(q, (snapshot) => {
+    const unsubConv = onSnapshot(q, (snapshot) => {
       let totalUnread = 0;
-      snapshot.forEach((doc) => {
-        const conv = doc.data();
+      snapshot.forEach((docSnap) => {
+        const conv = docSnap.data();
+        const senderStr = String(conv.lastMessageSenderId);
+        
+        if (blockedUsers.includes(senderStr) || blockedUsers.includes(Number(senderStr))) {
+          return;
+        }
+        
         // Check if conversation has unread messages:
         // 1. There is a last message
         // 2. The last message was sent by someone else
@@ -48,7 +62,10 @@ const TraineeHeader = () => {
       setUnreadCount(totalUnread);
     });
     
-    return () => unsub();
+    return () => {
+      unsubUser();
+      unsubConv();
+    };
   }, [firebaseUser]);
 
   return (

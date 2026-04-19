@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminDashboardLayout from '../../../components/AdminDashboardLayout';
 import { BACKEND_ROUTES_API } from '../../../config/config';
+import { db, signInWithBackendSession } from '../../../services/firebase';
+import { collection, query, where, onSnapshot, doc } from 'firebase/firestore';
 
 const AdminDashboardHome = () => {
   const navigate = useNavigate();
@@ -9,7 +11,8 @@ const AdminDashboardHome = () => {
     totalUsers: 0,
     totalTrainers: 0,
     totalTrainees: 0,
-    activeUsers: 0
+    activeUsers: 0,
+    unreadMessages: 0
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,16 +46,77 @@ const AdminDashboardHome = () => {
     fetchStats();
   }, []);
 
-  return (
-    <AdminDashboardLayout>
-      <div className="admin-page">
-        {/* Header */}
-        <div className="admin-page-header">
-          <div>
-            <h2 className="admin-page-title">Admin Dashboard</h2>
-            <p className="admin-page-subtitle">Overview of your platform</p>
+    // Listen for unread messages directly from Firebase Firestore
+    useEffect(() => {
+      let unsubUser = () => {};
+      let unsubConv = () => {};
+      let isMounted = true;
+      
+      const setupFirebaseAndListen = async () => {
+        try {
+          const { user } = await signInWithBackendSession();
+          if (user && isMounted) {
+            let blockedUsers = [];
+            
+            // Listen to user document to keep blocked users up to date
+            const userRef = doc(db, 'users', user.uid);
+            unsubUser = onSnapshot(userRef, (userSnap) => {
+              if (userSnap.exists()) {
+                blockedUsers = userSnap.data().blocked || [];
+              }
+            });
+
+            const convRef = collection(db, 'conversations');
+            const q = query(
+              convRef, 
+              where('participants', 'array-contains', user.uid)
+            );
+            
+            unsubConv = onSnapshot(q, (snap) => {
+              let count = 0;
+              snap.forEach(d => {
+                const cv = d.data();
+                const senderStr = String(cv.lastMessageSenderId);
+                
+                if (blockedUsers.includes(senderStr) || blockedUsers.includes(Number(senderStr))) {
+                  return;
+                }
+
+                const isUnread = cv.lastMessage && 
+                                 cv.lastMessageSenderId && 
+                                 String(cv.lastMessageSenderId) !== String(user.uid) &&
+                                 (!cv.lastMessageReadBy || !cv.lastMessageReadBy.includes(user.uid));
+                if (isUnread) {
+                  count++;
+                }
+              });
+              setStats(prev => ({ ...prev, unreadMessages: count }));
+            });
+          }
+        } catch (e) {
+          console.error("Failed to connect to messages", e);
+        }
+      };
+      
+      setupFirebaseAndListen();
+      
+      return () => {
+        isMounted = false;
+        unsubUser();
+        unsubConv();
+      };
+    }, []);
+
+    return (
+      <AdminDashboardLayout>
+        <div className="admin-page">
+          {/* Header */}
+          <div className="admin-page-header">
+            <div>
+              <h2 className="admin-page-title">Admin Dashboard</h2>
+              <p className="admin-page-subtitle">Overview of your platform</p>
+            </div>
           </div>
-        </div>
 
         {/* Error Message */}
         {error && (
@@ -88,7 +152,7 @@ const AdminDashboardHome = () => {
                       <i className="bi bi-arrow-up"></i> All users
                     </small>
                   </div>
-                  <div className="rounded-circle p-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
+                  <div className="rounded-circle d-flex align-items-center justify-content-center" style={{ width: '64px', height: '64px', backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
                     <i className="bi bi-people fs-4" style={{ color: '#10b981' }}></i>
                   </div>
                 </div>
@@ -107,7 +171,7 @@ const AdminDashboardHome = () => {
                       <i className="bi bi-person-badge"></i> Active trainers
                     </small>
                   </div>
-                  <div className="rounded-circle p-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
+                  <div className="rounded-circle d-flex align-items-center justify-content-center" style={{ width: '64px', height: '64px', backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
                     <i className="bi bi-person-badge fs-4" style={{ color: '#10b981' }}></i>
                   </div>
                 </div>
@@ -126,7 +190,7 @@ const AdminDashboardHome = () => {
                       <i className="bi bi-person"></i> Active trainees
                     </small>
                   </div>
-                  <div className="rounded-circle p-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
+                  <div className="rounded-circle d-flex align-items-center justify-content-center" style={{ width: '64px', height: '64px', backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
                     <i className="bi bi-person fs-4" style={{ color: '#10b981' }}></i>
                   </div>
                 </div>
@@ -145,7 +209,7 @@ const AdminDashboardHome = () => {
                       <i className="bi bi-activity"></i> Last 30 days
                     </small>
                   </div>
-                  <div className="rounded-circle p-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
+                  <div className="rounded-circle d-flex align-items-center justify-content-center" style={{ width: '64px', height: '64px', backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
                     <i className="bi bi-activity fs-4" style={{ color: '#10b981' }}></i>
                   </div>
                 </div>
@@ -176,7 +240,7 @@ const AdminDashboardHome = () => {
                       }}
                     >
                       <div className="d-flex align-items-center">
-                        <div className="rounded-circle p-2 me-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
+                        <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 me-3" style={{ width: '48px', height: '48px', backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
                           <i className="bi bi-people fs-5" style={{ color: '#10b981' }}></i>
                         </div>
                         <div>
@@ -202,7 +266,7 @@ const AdminDashboardHome = () => {
                       }}
                     >
                       <div className="d-flex align-items-center">
-                        <div className="rounded-circle p-2 me-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
+                        <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 me-3" style={{ width: '48px', height: '48px', backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
                           <i className="bi bi-envelope fs-5" style={{ color: '#10b981' }}></i>
                         </div>
                         <div>
@@ -228,11 +292,22 @@ const AdminDashboardHome = () => {
                       }}
                     >
                       <div className="d-flex align-items-center">
-                        <div className="rounded-circle p-2 me-3" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
+                        <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 me-3" style={{ width: '48px', height: '48px', backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
                           <i className="bi bi-chat-dots fs-5" style={{ color: '#10b981' }}></i>
                         </div>
                         <div>
-                          <div className="fw-bold">Messages</div>
+                            <div className="fw-bold d-flex align-items-center">
+                              Messages
+                              {stats.unreadMessages > 0 ? (
+                                <span className="badge rounded-pill ms-2 text-bg-danger" style={{ fontSize: '0.7em' }}>
+                                  {stats.unreadMessages} {stats.unreadMessages === 1 ? 'new person' : 'new people'}
+                                </span>
+                              ) : (
+                                <span className="badge rounded-pill ms-2" style={{ fontSize: '0.7em', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                                  0 new
+                                </span>
+                              )}
+                            </div>
                           <small style={{ color: '#9ca3af' }}>View and manage conversations</small>
                         </div>
                       </div>

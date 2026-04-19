@@ -42,6 +42,7 @@ export async function saveUser({
 
   // Prepare data for API
   const dataToSend = {
+    name: formData.name,
     username: formData.username,
     email: formData.email,
     password: formData.password,
@@ -72,6 +73,7 @@ export async function saveUser({
         ...prev,
         {
           id: data.UserID,
+          full_name: formData.name,
           username: formData.username,
           email: formData.email,
           registrationDate: registrationDate,

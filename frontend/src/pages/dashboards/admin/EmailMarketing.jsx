@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminDashboardLayout from '../../../components/AdminDashboardLayout';
 import { BACKEND_ROUTES_API } from '../../../config/config';
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid, GridToolbar } from '@mui/x-data-grid';
 
 const EmailMarketing = () => {
   const navigate = useNavigate();
@@ -15,6 +15,10 @@ const EmailMarketing = () => {
   const [selectedAudience, setSelectedAudience] = useState(null);
   const [subscribers, setSubscribers] = useState([]);
   const [showSubscribersModal, setShowSubscribersModal] = useState(false);
+  const [subscribersPaginationModel, setSubscribersPaginationModel] = useState({ page: 0, pageSize: 25 });
+  const [subscribersTotal, setSubscribersTotal] = useState(0);
+  const [subscribersSearchQuery, setSubscribersSearchQuery] = useState('');
+  const [selectedSubscribersIds, setSelectedSubscribersIds] = useState([]);
   
   // New Campaign Form
   const [showCampaignModal, setShowCampaignModal] = useState(false);
@@ -40,17 +44,19 @@ const EmailMarketing = () => {
     content: ''
   });
   
-  // Add Subscriber Form
+  // View Subscribers Form
+  const [subscriberSearchQuery, setSubscriberSearchQuery] = useState('');
+
   const [showAddSubscriberModal, setShowAddSubscriberModal] = useState(false);
   const [subscriberForm, setSubscriberForm] = useState({
-    userId: '',
     audienceId: ''
   });
 
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userSearchResults, setUserSearchResults] = useState([]);
   const [isUserSearchLoading, setIsUserSearchLoading] = useState(false);
-  const [selectedUserForSubscriber, setSelectedUserForSubscriber] = useState(null);
+  const [selectedUsersForSubscriber, setSelectedUsersForSubscriber] = useState([]);
+  const [currentAudienceEmails, setCurrentAudienceEmails] = useState([]);
   
   // Create Audience Form
   const [showCreateAudienceModal, setShowCreateAudienceModal] = useState(false);
@@ -68,6 +74,22 @@ const EmailMarketing = () => {
     phone: ''
   });
   
+  // Delete Campaign Modal
+  const [deleteCampaignModal, setDeleteCampaignModal] = useState({ show: false, campaignId: null, campaignName: '' });
+  const [deleteCampaignError, setDeleteCampaignError] = useState(null);
+
+  // Remove Subscriber Modal
+  const [removeSubscriberModal, setRemoveSubscriberModal] = useState({ show: false, audienceId: null, users: [] });
+  const [removeSubscriberError, setRemoveSubscriberError] = useState(null);
+
+  // Send Campaign Modal
+  const [sendCampaignModal, setSendCampaignModal] = useState({ show: false, campaignId: null, campaignName: '' });
+  const [sendCampaignError, setSendCampaignError] = useState(null);
+
+  // Replicate Campaign Modal
+  const [replicateCampaignModal, setReplicateCampaignModal] = useState({ show: false, campaignId: null, campaignName: '' });
+  const [replicateCampaignError, setReplicateCampaignError] = useState(null);
+
   // Campaign Filters and Pagination
   const [campaignFilter, setCampaignFilter] = useState('all'); // all, save, sent
   const [campaignPage, setCampaignPage] = useState(1);
@@ -184,7 +206,7 @@ const EmailMarketing = () => {
       setIsUserSearchLoading(true);
       try {
         const response = await fetch(
-          BACKEND_ROUTES_API + `SearchUsers.php?q=${encodeURIComponent(userSearchQuery.trim())}&limit=10`,
+          BACKEND_ROUTES_API + `SearchUsers.php?q=${encodeURIComponent(userSearchQuery.trim())}&limit=50&page=1`,
           { credentials: 'include', signal: controller.signal }
         );
         const data = await response.json();
@@ -206,6 +228,30 @@ const EmailMarketing = () => {
       clearTimeout(timer);
     };
   }, [showAddSubscriberModal, userSearchQuery]);
+
+  useEffect(() => {
+    if (!showAddSubscriberModal || !subscriberForm.audienceId) {
+      setCurrentAudienceEmails([]);
+      return;
+    }
+    let isCancelled = false;
+    const fetchAudienceMembers = async () => {
+      try {
+        const response = await fetch(BACKEND_ROUTES_API + `GetMailchimpMembers.php?audienceId=${subscriberForm.audienceId}&limit=1000`, {
+          credentials: 'include'
+        });
+        const data = await response.json();
+        if (!isCancelled && data.success) {
+          const emails = (data.members || []).map(member => member.email_address.toLowerCase());
+          setCurrentAudienceEmails(emails);
+        }
+      } catch (e) {
+        console.error('Error fetching subscribers', e);
+      }
+    };
+    fetchAudienceMembers();
+    return () => { isCancelled = true; };
+  }, [showAddSubscriberModal, subscriberForm.audienceId]);
 
   const fetchCampaigns = async () => {
     setIsLoading(true);
@@ -295,12 +341,17 @@ const EmailMarketing = () => {
     setIsLoading(false);
   };
 
-  const sendCampaign = async (campaignId) => {
-    if (!window.confirm('Are you sure you want to send this campaign?')) return;
+  const triggerSendCampaign = (campaignId, campaignName) => {
+    setSendCampaignModal({ show: true, campaignId, campaignName });
+    setSendCampaignError(null);
+  };
 
+  const confirmSendCampaign = async () => {
+    const { campaignId } = sendCampaignModal;
     setIsLoading(true);
-    setError(null);
+    setSendCampaignError(null);
     setSuccess(null);
+    setError(null);
     
     try {
       const response = await fetch(BACKEND_ROUTES_API + 'SendMailchimpCampaign.php', {
@@ -313,12 +364,13 @@ const EmailMarketing = () => {
       
       if (data.success) {
         setSuccess('Campaign sent successfully!');
+        setSendCampaignModal({ show: false, campaignId: null, campaignName: '' });
         await fetchCampaigns(); // Wait for campaigns to refresh
       } else {
-        setError(data.message || 'Failed to send campaign');
+        setSendCampaignError(data.message || 'Failed to send campaign');
       }
     } catch (error) {
-      setError('Error sending campaign');
+      setSendCampaignError('Error sending campaign');
     }
     setIsLoading(false);
   };
@@ -410,12 +462,17 @@ const EmailMarketing = () => {
     setIsLoading(false);
   };
 
-  const deleteCampaign = async (campaignId, campaignName) => {
-    if (!window.confirm(`Are you sure you want to delete "${campaignName}"? This action cannot be undone.`)) return;
+  const triggerDeleteCampaign = (campaignId, campaignName) => {
+    setDeleteCampaignModal({ show: true, campaignId, campaignName });
+    setDeleteCampaignError(null);
+  };
 
+  const confirmDeleteCampaign = async () => {
+    const { campaignId } = deleteCampaignModal;
     setIsLoading(true);
-    setError(null);
+    setDeleteCampaignError(null);
     setSuccess(null);
+    setError(null);
     
     try {
       const response = await fetch(BACKEND_ROUTES_API + 'DeleteMailchimpCampaign.php', {
@@ -428,21 +485,26 @@ const EmailMarketing = () => {
       
       if (data.success) {
         setSuccess('Campaign deleted successfully!');
+        setDeleteCampaignModal({ show: false, campaignId: null, campaignName: '' });
         await fetchCampaigns();
       } else {
-        setError(data.message || 'Failed to delete campaign');
+        setDeleteCampaignError(data.message || 'Failed to delete campaign. Free plans may restrict this action.');
       }
     } catch (error) {
-      setError('Error deleting campaign');
+      setDeleteCampaignError('Error deleting campaign. Please ensure your Mailchimp account allows this action.');
     }
     setIsLoading(false);
   };
 
-  const replicateCampaign = async (campaignId, campaignName) => {
-    if (!window.confirm(`Create a copy of "${campaignName}"?`)) return;
+  const triggerReplicateCampaign = (campaignId, campaignName) => {
+    setReplicateCampaignModal({ show: true, campaignId, campaignName });
+    setReplicateCampaignError(null);
+  };
 
+  const confirmReplicateCampaign = async () => {
+    const { campaignId, campaignName } = replicateCampaignModal;
     setIsLoading(true);
-    setError(null);
+    setReplicateCampaignError(null);
     setSuccess(null);
     
     try {
@@ -456,39 +518,61 @@ const EmailMarketing = () => {
       
       if (data.success) {
         setSuccess('Campaign replicated successfully! You can now edit and send the copy.');
+        setReplicateCampaignModal({ show: false, campaignId: null, campaignName: '' });
         await fetchCampaigns();
       } else {
-        setError(data.message || 'Failed to replicate campaign');
+        setReplicateCampaignError(data.message || 'Failed to replicate campaign');
       }
     } catch (error) {
-      setError('Error replicating campaign');
+      setReplicateCampaignError('Error replicating campaign');
     }
     setIsLoading(false);
   };
 
-  const viewSubscribers = async (audience) => {
-    setSelectedAudience(audience);
-    setShowSubscribersModal(true);
+  const fetchSubscribers = async (audienceId, page = 1, limit = 25, search = '') => {
     setIsLoading(true);
-    
     try {
-      const response = await fetch(BACKEND_ROUTES_API + `GetMailchimpMembers.php?audienceId=${audience.id}`, {
+      const response = await fetch(BACKEND_ROUTES_API + `GetMailchimpMembers.php?audienceId=${audienceId}&page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`, {
         credentials: 'include'
       });
       const data = await response.json();
       
       if (data.success) {
         setSubscribers(data.members || []);
+        if (data.pagination) setSubscribersTotal(data.pagination.total);
       } else {
         setError(data.message || 'Failed to fetch subscribers');
         setSubscribers([]);
+        setSubscribersTotal(0);
       }
     } catch (error) {
       setError('Error fetching subscribers');
       setSubscribers([]);
+      setSubscribersTotal(0);
     }
     setIsLoading(false);
   };
+
+  const viewSubscribers = async (audience) => {
+    setSelectedAudience(audience);
+    setSubscribers([]);
+    setSubscribersTotal(0);
+    setIsLoading(true);
+    setSubscribersPaginationModel({ page: 0, pageSize: 25 });
+    setSubscribersSearchQuery('');
+    setSelectedSubscribersIds([]);
+    setShowSubscribersModal(true);
+  };
+
+  useEffect(() => {
+    if (showSubscribersModal && selectedAudience) {
+      const displayPage = subscribersPaginationModel.page + 1;
+      const timer = setTimeout(() => {
+        fetchSubscribers(selectedAudience.id, displayPage, subscribersPaginationModel.pageSize, subscribersSearchQuery);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [showSubscribersModal, selectedAudience, subscribersPaginationModel.page, subscribersPaginationModel.pageSize, subscribersSearchQuery]);
 
   const handleAddSubscriber = async (e) => {
     e.preventDefault();
@@ -496,38 +580,91 @@ const EmailMarketing = () => {
     setError(null);
     setSuccess(null);
 
-    if (!subscriberForm.audienceId || !subscriberForm.userId) {
-      setError('Please select an audience and a user');
+    if (!subscriberForm.audienceId || selectedUsersForSubscriber.length === 0) {
+      setError('Please select an audience and at least one user');
       setIsLoading(false);
       return;
     }
     
-    try {
-      const response = await fetch(BACKEND_ROUTES_API + 'AddMailchimpSubscriber.php', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(subscriberForm)
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setSuccess('Subscriber added successfully!');
-        setShowAddSubscriberModal(false);
-        setSubscriberForm({ userId: '', audienceId: '' });
-        setSelectedUserForSubscriber(null);
-        setUserSearchQuery('');
-        setUserSearchResults([]);
-        // Refresh audiences to update member count
-        fetchAudiences();
-      } else {
-        setError(data.message || 'Failed to add subscriber');
+    let failMessages = [];
+    
+    await Promise.all(selectedUsersForSubscriber.map(async (user) => {
+      try {
+        const response = await fetch(BACKEND_ROUTES_API + 'AddMailchimpSubscriber.php', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: user.id || user.userid, audienceId: subscriberForm.audienceId })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          failMessages.push(`${user.full_name || user.username}: ${data.message || 'Failed to add subscriber'}`);
+        }
+      } catch (error) {
+        failMessages.push(`${user.full_name || user.username}: ${error.message}`);
       }
-    } catch (error) {
-      setError('Error adding subscriber: ' + error.message);
+    }));
+
+    if (failMessages.length > 0) {
+      setError(`Errors occurred:\n${failMessages.join(' | ')}`);
+      setShowAddSubscriberModal(false);
+    } else {
+      setSuccess('Subscribers added successfully!');
+      setShowAddSubscriberModal(false);
+      setSubscriberForm({ audienceId: '' });
+      setSelectedUsersForSubscriber([]);
+      setUserSearchQuery('');
+      setUserSearchResults([]);
+      fetchAudiences();
+    }
+    setIsLoading(false);
+  };
+
+  const triggerRemoveSubscribers = (audienceId, users) => {
+    setRemoveSubscriberModal({ show: true, audienceId, users });
+    setRemoveSubscriberError(null);
+  };
+
+  const confirmRemoveSubscriber = async () => {
+    const { audienceId, users } = removeSubscriberModal;
+    setIsLoading(true);
+    setRemoveSubscriberError(null);
+    let failMessages = [];
+
+    await Promise.all(users.map(async (u) => {
+      try {
+        const response = await fetch(BACKEND_ROUTES_API + 'RemoveMailchimpSubscriber.php', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ audienceId, email: u.email })
+        });
+        const data = await response.json();
+        
+        if (!data.success) {
+          failMessages.push(`${u.fullName || u.email}: ${data.message || 'Failed to remove subscriber.'}`);
+        }
+      } catch (err) {
+        failMessages.push(`${u.fullName || u.email}: An error occurred while removing the subscriber.`);
+      }
+    }));
+
+    if (failMessages.length > 0) {
+      setRemoveSubscriberError(failMessages.join('\n'));
+    } else {
+      setSuccess('Subscribers removed successfully!');
+      setRemoveSubscriberModal({ show: false, audienceId: null, users: [] });
+      fetchAudiences();
+      
+      // Refresh subscribers list if currently viewing it
+      if (showSubscribersModal && selectedAudience && selectedAudience.id === audienceId) {
+        const displayPage = subscribersPaginationModel.page + 1;
+        fetchSubscribers(selectedAudience.id, displayPage, subscribersPaginationModel.pageSize, subscribersSearchQuery);
+      }
     }
     setIsLoading(false);
   };
@@ -570,9 +707,11 @@ const EmailMarketing = () => {
         fetchAudiences();
       } else {
         setError(data.message || 'Failed to create audience');
+        setShowCreateAudienceModal(false);
       }
     } catch (error) {
       setError('Error creating audience: ' + error.message);
+      setShowCreateAudienceModal(false);
     }
     setIsLoading(false);
   };
@@ -767,6 +906,13 @@ const EmailMarketing = () => {
                     <div className="card h-100" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '12px' }}>
                       <div className="card-body d-flex flex-column">
                         <h5 className="card-title mb-2" style={{ color: '#fff' }}>{campaign.subject || campaign.name || 'Untitled'}</h5>
+                        <div className="mb-2 d-flex align-items-center" style={{ fontSize: '13px', color: '#9ca3af' }}>
+                          <i className="bi bi-people me-2" style={{ color: '#10b981' }}></i>
+                          <span>{campaign.list_name || 'Unknown Audience'}</span>
+                          <span className="ms-2 badge rounded-pill" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', fontSize: '11px' }}>
+                            {campaign.recipients_count || 0} members
+                          </span>
+                        </div>
                         <p className="card-text mb-3" style={{ color: '#9ca3af', fontSize: '14px' }}>
                           <span className={`badge ${campaign.status === 'sent' ? 'bg-success' : campaign.status === 'sending' ? 'bg-info' : 'bg-warning'}`}>
                             {campaign.status === 'save' ? 'Draft' : campaign.status}
@@ -804,7 +950,7 @@ const EmailMarketing = () => {
                             {campaign.status === 'save' && (
                               <button
                                 className="btn btn-sm"
-                                onClick={() => sendCampaign(campaign.id)}
+                                onClick={() => triggerSendCampaign(campaign.id, campaign.settings?.title || campaign.subject || 'campaign')}
                                 style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                               >
                                 <i className="bi bi-send me-2"></i>Send Campaign
@@ -815,7 +961,7 @@ const EmailMarketing = () => {
                             {campaign.status === 'sent' && (
                               <button
                                 className="btn btn-sm"
-                                onClick={() => replicateCampaign(campaign.id, campaign.subject || 'campaign')}
+                                onClick={() => triggerReplicateCampaign(campaign.id, campaign.subject || 'campaign')}
                                 style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                               >
                                 <i className="bi bi-arrow-repeat me-2"></i>Resend (Copy)
@@ -825,7 +971,7 @@ const EmailMarketing = () => {
                             {/* Delete Button - Available for all campaigns */}
                             <button
                               className="btn btn-sm"
-                              onClick={() => deleteCampaign(campaign.id, campaign.subject || 'campaign')}
+                              onClick={() => triggerDeleteCampaign(campaign.id, campaign.settings?.title || campaign.subject || 'campaign')}
                               style={{ backgroundColor: '#2d2d2d', color: '#ef4444', border: '1px solid #ef4444' }}
                             >
                               <i className="bi bi-trash me-2"></i>Delete
@@ -958,8 +1104,8 @@ const EmailMarketing = () => {
                           <button 
                             className="btn btn-sm"
                             onClick={() => {
-                              setSubscriberForm({ userId: '', audienceId: audience.id });
-                              setSelectedUserForSubscriber(null);
+                              setSubscriberForm({ audienceId: audience.id });
+                              setSelectedUsersForSubscriber([]);
                               setUserSearchQuery('');
                               setUserSearchResults([]);
                               setShowAddSubscriberModal(true);
@@ -1411,6 +1557,7 @@ const EmailMarketing = () => {
                       onClick={() => {
                         setShowSubscribersModal(false);
                         setSubscribers([]);
+                        setSelectedSubscribersIds([]);
                         setSelectedAudience(null);
                       }}
                     ></button>
@@ -1427,8 +1574,51 @@ const EmailMarketing = () => {
                         <p style={{ color: '#9ca3af' }}>No subscribers found in this audience.</p>
                       </div>
                     ) : (
-                      <div style={{ height: 500, width: '100%' }}>
+                      <div className="d-flex flex-column" style={{ height: 550, width: '100%' }}>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <h6 className="mb-0 text-white">Manage Subscribers</h6>
+                          {selectedSubscribersIds.length > 0 && (
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() => {
+                                const selectedUsers = subscribers
+                                  .filter((s, idx) => selectedSubscribersIds.includes(s.id || idx))
+                                  .map(s => ({
+                                    email: s.email_address,
+                                    fullName: `${s.merge_fields?.FNAME || ''} ${s.merge_fields?.LNAME || ''}`.trim() || s.email_address
+                                  }));
+                                triggerRemoveSubscribers(selectedAudience.id, selectedUsers);
+                              }}
+                            >
+                              <i className="bi bi-trash me-2"></i>
+                              Remove Selected ({selectedSubscribersIds.length})
+                            </button>
+                          )}
+                        </div>
+                        <div style={{ flexGrow: 1, width: '100%' }}>
                         <DataGrid
+                          slots={{ toolbar: GridToolbar }}
+                          slotProps={{
+                            toolbar: {
+                              showQuickFilter: true,
+                              quickFilterProps: { debounceMs: 500 },
+                            },
+                          }}
+                          paginationMode="server"
+                          filterMode="server"
+                          rowCount={subscribersTotal}
+                          paginationModel={subscribersPaginationModel}
+                          onPaginationModelChange={setSubscribersPaginationModel}
+                          pageSizeOptions={[10, 25, 50, 100]}
+                          onFilterModelChange={(model) => {
+                            setSubscribersSearchQuery(model.quickFilterValues?.join(' ') || '');
+                          }}
+                          disableColumnFilter
+                          checkboxSelection
+                          onRowSelectionModelChange={(newSelection) => {
+                            setSelectedSubscribersIds(newSelection);
+                          }}
+                          rowSelectionModel={selectedSubscribersIds}
                           rows={subscribers.map((sub, idx) => ({
                             id: sub.id || idx,
                             email: sub.email_address,
@@ -1482,7 +1672,6 @@ const EmailMarketing = () => {
                               sortModel: [{ field: 'timestamp', sort: 'desc' }],
                             },
                           }}
-                          pageSizeOptions={[10, 25, 50, 100]}
                           disableRowSelectionOnClick
                           sx={{
                             border: 0,
@@ -1490,6 +1679,12 @@ const EmailMarketing = () => {
                             backgroundColor: "#2d2d2d !important",
                             color: "#fff",
                             "--DataGrid-rowBorderColor": "rgba(16, 185, 129, 0.1) !important",
+                            ".MuiCheckbox-root": {
+                              color: "rgba(16, 185, 129, 0.7) !important",
+                            },
+                            ".Mui-checked": {
+                              color: "#10b981 !important",
+                            },
                             ".MuiDataGrid-main": {
                               maxHeight: "none !important",
                             },
@@ -1550,6 +1745,22 @@ const EmailMarketing = () => {
                             ".MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows": {
                               color: "#9ca3af",
                             },
+                            ".MuiDataGrid-toolbarContainer": {
+                              padding: "0.5rem",
+                              backgroundColor: "#1a1a1a",
+                            },
+                            ".MuiDataGrid-toolbarContainer .MuiButton-root": {
+                              color: "#10b981",
+                            },
+                            ".MuiDataGrid-toolbarContainer .MuiInputBase-root": {
+                              color: "#fff",
+                            },
+                            ".MuiDataGrid-toolbarContainer fieldset": {
+                              borderColor: "rgba(16, 185, 129, 0.4)",
+                            },
+                            ".MuiDataGrid-toolbarContainer .MuiSvgIcon-root": {
+                              fill: "#10b981",
+                            },
                             ".MuiTablePagination-select": {
                               color: "#fff",
                             },
@@ -1585,6 +1796,7 @@ const EmailMarketing = () => {
                             },
                           }}
                         />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1596,6 +1808,7 @@ const EmailMarketing = () => {
                       onClick={() => {
                         setShowSubscribersModal(false);
                         setSubscribers([]);
+                        setSelectedSubscribersIds([]);
                         setSelectedAudience(null);
                       }}
                     >
@@ -1624,8 +1837,8 @@ const EmailMarketing = () => {
                       className="btn-close btn-close-white" 
                       onClick={() => {
                         setShowAddSubscriberModal(false);
-                        setSubscriberForm({ userId: '', audienceId: '' });
-                        setSelectedUserForSubscriber(null);
+                        setSubscriberForm({ audienceId: '' });
+                        setSelectedUsersForSubscriber([]);
                         setUserSearchQuery('');
                         setUserSearchResults([]);
                       }}
@@ -1708,53 +1921,102 @@ const EmailMarketing = () => {
                               No users found
                             </div>
                           ) : (
-                            userSearchResults.map((u) => {
-                              const isSelected = selectedUserForSubscriber?.id === u.id;
-                              return (
-                                <button
-                                  key={u.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedUserForSubscriber(u);
-                                    setSubscriberForm({ ...subscriberForm, userId: u.id });
-                                  }}
+                            userSearchResults
+                              .filter(u => !currentAudienceEmails.includes((u.email || '').toLowerCase()))
+                              .length === 0 ? (
+                                <div
                                   style={{
-                                    width: '100%',
-                                    textAlign: 'left',
-                                    backgroundColor: isSelected ? 'rgba(16, 185, 129, 0.15)' : '#1a1a1a',
-                                    color: '#fff',
-                                    border: 'none',
-                                    borderBottom: '1px solid rgba(16, 185, 129, 0.12)',
+                                    backgroundColor: '#1a1a1a',
+                                    color: '#9ca3af',
                                     padding: '10px 12px'
                                   }}
                                 >
-                                  <div className="d-flex justify-content-between align-items-center">
-                                    <div style={{ fontWeight: 600 }}>
-                                      {u.full_name || u.username || 'User'}
-                                    </div>
-                                    <span
-                                      className="badge"
-                                      style={{
-                                        backgroundColor: 'rgba(156, 163, 175, 0.15)',
-                                        color: '#9ca3af',
-                                        border: '1px solid rgba(156, 163, 175, 0.25)'
-                                      }}
-                                    >
-                                      {u.role || 'user'}
-                                    </span>
-                                  </div>
-                                  <div className="small" style={{ color: '#9ca3af' }}>{u.email || 'No email'}</div>
-                                </button>
-                              );
-                            })
+                                  {userSearchResults.length > 0 ? "All matching users are already in this audience" : "No users found"}
+                                </div>
+                              ) : (
+                                userSearchResults
+                                  .filter(u => !currentAudienceEmails.includes((u.email || '').toLowerCase()))
+                                  .map((u) => {
+                                    const isSelected = selectedUsersForSubscriber.some(usr => (usr.id || usr.userid) === (u.id || u.userid));
+                                    return (
+                                      <button
+                                        key={u.id || u.userid}
+                                        type="button"
+                                        onClick={() => {
+                                          if (isSelected) {
+                                            setSelectedUsersForSubscriber(selectedUsersForSubscriber.filter(usr => (usr.id || usr.userid) !== (u.id || u.userid)));
+                                          } else {
+                                            setSelectedUsersForSubscriber([...selectedUsersForSubscriber, u]);
+                                          }
+                                        }}
+                                        style={{
+                                          width: '100%',
+                                          textAlign: 'left',
+                                          backgroundColor: isSelected ? 'rgba(16, 185, 129, 0.15)' : '#1a1a1a',
+                                          color: '#fff',
+                                          border: 'none',
+                                          borderBottom: '1px solid rgba(16, 185, 129, 0.12)',
+                                          padding: '10px 12px',
+                                          position: 'relative'
+                                        }}
+                                      >
+                                        <div className="d-flex justify-content-between align-items-center">
+                                          <div style={{ fontWeight: 600 }}>
+                                            {u.full_name || u.username || 'User'}
+                                            {isSelected && <i className="bi bi-check-circle-fill ms-2 text-success"></i>}
+                                          </div>
+                                          <span
+                                            className="badge"
+                                            style={{
+                                              backgroundColor: 'rgba(156, 163, 175, 0.15)',
+                                              color: '#9ca3af',
+                                              border: '1px solid rgba(156, 163, 175, 0.25)'
+                                            }}
+                                          >
+                                            {u.role || 'user'}
+                                          </span>
+                                        </div>
+                                        <div className="small" style={{ color: '#9ca3af' }}>{u.email || 'No email'}</div>
+                                      </button>
+                                    );
+                                })
+                              )
                           )}
                         </div>
 
-                        {selectedUserForSubscriber ? (
-                          <div className="small mt-2" style={{ color: '#9ca3af' }}>
-                            Selected: <span style={{ color: '#fff' }}>{selectedUserForSubscriber.email}</span>
+                        {selectedUsersForSubscriber.length > 0 && (
+                          <div className="mt-3">
+                            <label className="form-label" style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                              Selected ({selectedUsersForSubscriber.length}):
+                            </label>
+                            <div className="d-flex flex-wrap gap-2">
+                              {selectedUsersForSubscriber.map(usr => (
+                                <span 
+                                  key={usr.id || usr.userid}
+                                  className="badge d-flex align-items-center" 
+                                  style={{ 
+                                    backgroundColor: 'rgba(16, 185, 129, 0.15)', 
+                                    color: '#10b981', 
+                                    border: '1px solid rgba(16, 185, 129, 0.3)', 
+                                    padding: '6px 10px', 
+                                    fontSize: '0.85rem',
+                                    borderRadius: '20px'
+                                  }}
+                                >
+                                  {usr.full_name || usr.username || usr.email}
+                                  <i 
+                                    className="bi bi-x-circle-fill ms-2" 
+                                    style={{ cursor: 'pointer', fontSize: '1rem', color: '#10b981' }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedUsersForSubscriber(prev => prev.filter(u => (u.id || u.userid) !== (usr.id || usr.userid)));
+                                    }}
+                                  ></i>
+                                </span>
+                              ))}
+                            </div>
                           </div>
-                        ) : null}
+                        )}
                       </div>
                       
                       <div className="d-flex justify-content-end gap-2 mt-4">
@@ -1763,8 +2025,8 @@ const EmailMarketing = () => {
                           className="btn"
                           onClick={() => {
                             setShowAddSubscriberModal(false);
-                            setSubscriberForm({ userId: '', audienceId: '' });
-                            setSelectedUserForSubscriber(null);
+                            setSubscriberForm({ audienceId: '' });
+                            setSelectedUsersForSubscriber([]);
                             setUserSearchQuery('');
                             setUserSearchResults([]);
                           }}
@@ -1775,7 +2037,7 @@ const EmailMarketing = () => {
                         <button
                           type="submit"
                           className="btn"
-                          disabled={isLoading || !subscriberForm.audienceId || !subscriberForm.userId}
+                          disabled={isLoading || !subscriberForm.audienceId || selectedUsersForSubscriber.length === 0}
                           style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                         >
                           {isLoading ? (
@@ -2114,6 +2376,223 @@ const EmailMarketing = () => {
                         </button>
                       </div>
                     </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="modal-backdrop fade show"></div>
+          </>
+        )}
+
+        {/* Delete Campaign Custom Modal */}
+        {deleteCampaignModal.show && (
+          <>
+            <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.7)' }}>
+              <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <div className="modal-header dark-modal-header border-0 pb-3" style={{ backgroundColor: '#1a1a1a', borderBottom: '1px solid rgba(16, 185, 129, 0.2)', borderTopLeftRadius: '0.3rem', borderTopRightRadius: '0.3rem' }}>
+                    <h5 className="modal-title" style={{ color: '#fff' }}>
+                      <i className="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                      Confirm Deletion
+                    </h5>
+                    <button type="button" className="btn-close btn-close-white" onClick={() => setDeleteCampaignModal({ show: false, campaignId: null, campaignName: '' })}></button>
+                  </div>
+                  <div className="modal-body border-0">
+                    {deleteCampaignError && (
+                      <div className="alert alert-danger" role="alert" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>
+                        <i className="bi bi-exclamation-triangle me-2"></i>
+                        {deleteCampaignError}
+                      </div>
+                    )}
+                    <p style={{ color: '#aaa', fontSize: '1.1rem' }}>
+                      Are you sure you want to delete the campaign <strong>"{deleteCampaignModal.campaignName}"</strong>?
+                    </p>
+                    <p style={{ color: '#aaa', fontSize: '0.9rem' }}>
+                      This action cannot be undone. If you are on a free plan, you may encounter restrictions when deleting certain campaigns.
+                    </p>
+                  </div>
+                  <div className="modal-footer border-0 pt-0">
+                    <button type="button" className="btn btn-secondary px-4" onClick={() => setDeleteCampaignModal({ show: false, campaignId: null, campaignName: '' })}>
+                      Cancel
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn btn-danger px-4" 
+                      onClick={confirmDeleteCampaign}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Deleting...
+                        </>
+                      ) : (
+                        'Delete Campaign'
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="modal-backdrop fade show"></div>
+          </>
+        )}
+
+        {/* Send Campaign Custom Modal */}
+        {sendCampaignModal.show && (
+          <>
+            <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.7)' }}>
+              <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <div className="modal-header dark-modal-header border-0 pb-3" style={{ backgroundColor: '#1a1a1a', borderBottom: '1px solid rgba(16, 185, 129, 0.2)', borderTopLeftRadius: '0.3rem', borderTopRightRadius: '0.3rem' }}>
+                    <h5 className="modal-title" style={{ color: '#fff' }}>
+                      <i className="bi bi-send-fill text-success me-2"></i>
+                      Confirm Send
+                    </h5>
+                    <button type="button" className="btn-close btn-close-white" onClick={() => setSendCampaignModal({ show: false, campaignId: null, campaignName: '' })}></button>
+                  </div>
+                  <div className="modal-body border-0">
+                    {sendCampaignError && (
+                      <div className="alert alert-danger" role="alert" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>
+                        <i className="bi bi-exclamation-triangle me-2"></i>
+                        {sendCampaignError}
+                      </div>
+                    )}
+                    <p style={{ color: '#aaa', fontSize: '1.1rem' }}>
+                      Are you sure you want to send the campaign <strong>"{sendCampaignModal.campaignName}"</strong>?
+                    </p>
+                    <p style={{ color: '#aaa', fontSize: '0.9rem' }}>
+                      This action will broadcast the email immediately to all subscribed members in the audience list. This action cannot be undone.
+                    </p>
+                  </div>
+                  <div className="modal-footer border-0 pt-0">
+                    <button type="button" className="btn btn-secondary px-4" onClick={() => setSendCampaignModal({ show: false, campaignId: null, campaignName: '' })}>
+                      Cancel
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn btn-success px-4" 
+                      style={{ backgroundColor: '#10b981', border: 'none' }}
+                      onClick={confirmSendCampaign}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Sending...
+                        </>
+                      ) : (
+                        'Send Campaign'
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="modal-backdrop fade show"></div>
+          </>
+        )}
+
+        {/* Remove Subscriber Custom Modal */}
+        {removeSubscriberModal.show && (
+          <>
+            <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.7)' }}>
+              <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <div className="modal-header dark-modal-header border-0 pb-3" style={{ backgroundColor: '#1a1a1a', borderBottom: '1px solid rgba(16, 185, 129, 0.2)', borderTopLeftRadius: '0.3rem', borderTopRightRadius: '0.3rem' }}>
+                    <h5 className="modal-title" style={{ color: '#fff' }}>
+                      <i className="bi bi-person-dash text-danger me-2"></i>
+                      Remove Subscriber
+                    </h5>
+                    <button type="button" className="btn-close btn-close-white" onClick={() => setRemoveSubscriberModal({ show: false, audienceId: null, email: '', fullName: '' })}></button>
+                  </div>
+                  <div className="modal-body border-0">
+                    {removeSubscriberError && (
+                      <div className="alert alert-danger" role="alert" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>
+                        <i className="bi bi-exclamation-triangle me-2"></i>
+                        {removeSubscriberError}
+                      </div>
+                    )}
+                    <p style={{ color: '#aaa', fontSize: '1.1rem' }}>
+                      Are you sure you want to remove <strong>{removeSubscriberModal.fullName || removeSubscriberModal.email}</strong> from this audience?
+                    </p>
+                    <p style={{ color: '#aaa', fontSize: '0.9rem' }}>
+                      This action will update the Mailchimp list. You can add them back later if needed.
+                    </p>
+                  </div>
+                  <div className="modal-footer border-0 pt-0">
+                    <button type="button" className="btn btn-secondary px-4" onClick={() => setRemoveSubscriberModal({ show: false, audienceId: null, email: '', fullName: '' })}>
+                      Cancel
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn btn-danger px-4" 
+                      onClick={confirmRemoveSubscriber}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Removing...
+                        </>
+                      ) : (
+                        'Remove'
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="modal-backdrop fade show"></div>
+          </>
+        )}
+        {/* Replicate Campaign Custom Modal */}
+        {replicateCampaignModal.show && (
+          <>
+            <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.7)' }}>
+              <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content" style={{ backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <div className="modal-header dark-modal-header border-0 pb-3" style={{ backgroundColor: '#1a1a1a', borderBottom: '1px solid rgba(16, 185, 129, 0.2)', borderTopLeftRadius: '0.3rem', borderTopRightRadius: '0.3rem' }}>
+                    <h5 className="modal-title" style={{ color: '#fff' }}>
+                      <i className="bi bi-files text-success me-2"></i>
+                      Confirm Resend (Copy)
+                    </h5>
+                    <button type="button" className="btn-close btn-close-white" onClick={() => setReplicateCampaignModal({ show: false, campaignId: null, campaignName: '' })}></button>
+                  </div>
+                  <div className="modal-body border-0">
+                    {replicateCampaignError && (
+                      <div className="alert alert-danger" role="alert" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>
+                        <i className="bi bi-exclamation-triangle me-2"></i>
+                        {replicateCampaignError}
+                      </div>
+                    )}
+                    <p style={{ color: '#aaa', fontSize: '1.1rem' }}>
+                      Create a copy of <strong>"{replicateCampaignModal.campaignName}"</strong>?
+                    </p>
+                    <p style={{ color: '#aaa', fontSize: '0.9rem' }}>
+                      This will duplicate the campaign and place it in your Drafts. You can then edit it, change recipients if needed, and send it again.
+                    </p>
+                  </div>
+                  <div className="modal-footer border-0 pt-0">
+                    <button type="button" className="btn btn-secondary px-4" onClick={() => setReplicateCampaignModal({ show: false, campaignId: null, campaignName: '' })}>
+                      Cancel
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn btn-success px-4" 
+                      style={{ backgroundColor: '#10b981', border: 'none' }}
+                      onClick={confirmReplicateCampaign}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Copying...
+                        </>
+                      ) : (
+                        'Create Copy'
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>

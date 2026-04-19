@@ -131,6 +131,7 @@ class UserController extends UserModel
 
             // Assign validated data to the user model
             $this->username = $inputData["username"];
+            $this->full_name = isset($inputData["name"]) ? $inputData["name"] : (isset($inputData["full_name"]) ? $inputData["full_name"] : null);
             $this->email = $inputData["email"];
             $this->password = password_hash($inputData["password"], PASSWORD_DEFAULT);
             $this->UserID = $this->getUserID(); // Generate user ID
@@ -166,13 +167,21 @@ class UserController extends UserModel
                 error_log('Mailchimp signup subscribe error: ' . $e->getMessage());
             }
 
-            // Send Confirmation email
+            // Send appropriate email
             $notificationController = new NotificationController();
-            $emailResult = $notificationController->SignUpVerificationRequest(
-                $this->email,
-                $this->username,
-
-            );
+            if ($this->IsVerified === 1) {
+                // If verified manually (e.g. by admin), just send a welcome email
+                $emailResult = $notificationController->WelcomeNewUserRequest(
+                    $this->email,
+                    $this->username
+                );
+            } else {
+                // Otherwise send the standard sign up verification logic
+                $emailResult = $notificationController->SignUpVerificationRequest(
+                    $this->email,
+                    $this->username
+                );
+            }
 
 
 
@@ -590,6 +599,7 @@ class UserController extends UserModel
 
             $result = $this->saveEditUser([
                 'username' => $inputData['username'],
+                'full_name' => isset($inputData['name']) ? $inputData['name'] : (isset($inputData['full_name']) ? $inputData['full_name'] : null),
                 'email' => $inputData['email'],
                 'role' => $inputData['role'],
                 'userId' => $inputData['userId'],

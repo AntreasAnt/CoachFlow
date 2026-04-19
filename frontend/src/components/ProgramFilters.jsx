@@ -130,18 +130,6 @@ const ProgramFilters = ({ filters, onFilterChange, onClearFilters }) => {
             </div>
           </div>
 
-          {/* Trainer Name */}
-          <div className="col-md-12">
-            <label className="form-label small fw-bold text-white">Trainer Name</label>
-            <input
-              type="text"
-              className="form-control dark-input"
-              placeholder="Search by trainer name..."
-              value={filters.trainer_name || ''}
-              onChange={(e) => onFilterChange({ ...filters, trainer_name: e.target.value })}
-            />
-          </div>
-
           {/* Sort By */}
           <div className="col-md-12">
             <label className="form-label small fw-bold text-white">Sort By</label>

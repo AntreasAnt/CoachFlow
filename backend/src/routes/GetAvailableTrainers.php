@@ -202,8 +202,8 @@ try {
         case 'clients':
             $query .= ", tp.current_clients DESC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
             break;
-        case 'experience':
-            $query .= ", tp.experience_years DESC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
+        case 'reviews':
+            $query .= ", COALESCE(urs.review_count, tp.total_reviews, 0) DESC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
             break;
         case 'newest':
             $query .= ", tp.created_at DESC";

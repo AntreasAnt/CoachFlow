@@ -7,6 +7,7 @@ export function ConversationList() {
     activeConversationId, 
     firebaseUser, 
     allUsers, 
+    blocked,
     setActiveConversationId, 
     messages,
     hasMoreConversations,
@@ -21,7 +22,10 @@ export function ConversationList() {
     allUsers.forEach(u => { 
       // Support both 'userid' and 'id' fields for compatibility
       const userId = u.userId || u.userid || u.id;
-      map[String(userId)] = u.displayName || u.username || u.name || userId;
+      map[String(userId)] = {
+        name: u.displayName || u.username || u.name || userId,
+        username: u.username || ''
+      };
     });
     return map;
   }, [allUsers]);
@@ -54,6 +58,12 @@ export function ConversationList() {
   // Check if conversation has unread messages (Instagram-style)
   const hasUnread = (conversation) => {
     if (!firebaseUser) return false;
+    
+    const senderStr = String(conversation.lastMessageSenderId);
+    if (blocked && (blocked.includes(senderStr) || blocked.includes(Number(senderStr)))) {
+      return false; // don't highlight as unread if user is blocked
+    }
+    
     // Message is unread if:
     // 1. There is a last message
     // 2. The last message was sent by someone else
@@ -98,10 +108,27 @@ export function ConversationList() {
     }
   }, [hasMoreConversations, loadingMoreConversations, loadMoreConversations]);
 
+  const sortedConversations = useMemo(() => {
+    if (!blocked || blocked.length === 0) return conversations;
+    
+    return [...conversations].sort((a, b) => {
+      const aOtherId = (a.participants || []).find(p => p !== firebaseUser?.uid);
+      const bOtherId = (b.participants || []).find(p => p !== firebaseUser?.uid);
+      
+      const aBlocked = aOtherId && (blocked.includes(String(aOtherId)) || blocked.includes(Number(aOtherId)));
+      const bBlocked = bOtherId && (blocked.includes(String(bOtherId)) || blocked.includes(Number(bOtherId)));
+      
+      if (aBlocked && !bBlocked) return 1;
+      if (!aBlocked && bBlocked) return -1;
+      
+      return 0;
+    });
+  }, [conversations, blocked, firebaseUser]);
+
   if (!conversations.length) {
     return (
       <div className="text-center text-white-50 py-5">
-        <i className="bi bi-chat-dots display-4 d-block mb-2" style={{ color: '#10b981' }}></i>
+        <i className="bi bi-chat-dots display-4 d-block mb-2" style={{ color: '#9ca3af' }}></i>
         <p className="mb-0">No conversations yet</p>
         <small>Start a new conversation</small>
       </div>
@@ -110,18 +137,22 @@ export function ConversationList() {
 
   return (
     <div ref={listRef} style={{ overflowY: 'auto', maxHeight: '100%' }}>
-      {conversations.map(c => {
+      {sortedConversations.map(c => {
         const others = (c.participants || []).filter(p => firebaseUser && String(p) !== String(firebaseUser.uid));
         const otherUid = others[0];
-        const displayName = userMap[String(otherUid)] || otherUid || 'User';
+        const mappedUser = userMap[String(otherUid)];
+          const displayName = mappedUser?.name || otherUid || 'User';
+          const displayUsername = mappedUser?.username || '';
         const isActive = c.id === activeConversationId;
         const isUnread = hasUnread(c);
         const timeAgo = getTimeAgo(c.lastMessageAt);
+        const isBlocked = blocked && (blocked.includes(String(otherUid)) || blocked.includes(Number(otherUid)));
         
         return (
           <div
             key={c.id}
-            className={`conversation-item ${isActive ? 'active' : ''} ${isUnread ? 'unread' : ''}`}
+            className={`conversation-item ${isActive ? 'active' : ''} ${isUnread ? 'unread' : ''} ${isBlocked ? 'blocked' : ''}`}
+            style={isBlocked ? { opacity: 0.6, backgroundColor: 'rgba(255, 0, 0, 0.1)' } : {}}
             onClick={() => setActiveConversationId(c.id)}
           >
             <div className="d-flex align-items-center">
@@ -130,15 +161,30 @@ export function ConversationList() {
               </div>
               <div className="flex-fill" style={{ minWidth: 0 }}>
                 <div className="d-flex justify-content-between align-items-start mb-1">
-                  <div className="fw-semibold text-truncate text-white" style={{ maxWidth: '180px' }}>
-                    {displayName}
-                  </div>
-                  {timeAgo && (
-                    <div className="small text-white-50 ms-2" style={{ whiteSpace: 'nowrap', fontSize: '0.75rem' }}>
-                      {timeAgo}
+                    <div className="d-flex flex-column text-truncate" style={{ maxWidth: '180px' }}>
+                      <div className="fw-semibold text-truncate text-white">
+                        {displayName}
+                      </div>
+                      {displayUsername && (
+                        <div 
+                          className="small" 
+                          style={{ 
+                            fontSize: '0.75rem', 
+                            color: '#a3a3a3', 
+                            
+                            marginTop: '-1px'
+                          }}
+                        >
+                          @{displayUsername}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                    {timeAgo && (
+                      <div className="small text-white-50 ms-2 mt-1" style={{ whiteSpace: 'nowrap', fontSize: '0.75rem' }}>
+                        {timeAgo}
+                      </div>
+                    )}
+                  </div>
                 <div className="d-flex align-items-center">
                   <div className={`last-message text-truncate ${isUnread ? 'fw-semibold text-white' : 'text-white-50'}`}>
                     {c.lastMessage || 'Start a conversation'}

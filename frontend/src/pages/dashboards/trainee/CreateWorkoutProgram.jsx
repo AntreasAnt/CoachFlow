@@ -199,6 +199,15 @@ const CreateWorkoutProgram = ({ onSave, onCancel, allExercises, onAddCustomExerc
         .list-group-item-action:hover {
           background: rgba(32, 214, 87, 0.2) !important;
         }
+        .list-group-item {
+          background-color: rgba(30, 35, 30, 0.6) !important;
+          border-color: rgba(32, 214, 87, 0.3) !important;
+          color: rgba(255, 255, 255, 0.9) !important;
+        }
+        .list-group-item:hover {
+          background-color: rgba(35, 40, 35, 0.8) !important;
+          color: rgba(255, 255, 255, 0.9) !important;
+        }
       `}</style>
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -307,23 +316,26 @@ const CreateWorkoutProgram = ({ onSave, onCancel, allExercises, onAddCustomExerc
                     </div>
                     <div className="d-flex gap-2">
                       <button 
-                        className="btn btn-secondary btn-sm"
+                        className="btn btn-sm"
                         onClick={() => duplicateSession(index)}
                         title="Duplicate"
+                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
                       >
                         <i className="bi bi-files"></i>
                       </button>
                       <button 
-                        className="btn btn-primary btn-sm"
+                        className="btn btn-sm"
                         onClick={() => editSession(index)}
                         title="Edit"
+                        style={{ backgroundColor: 'rgba(32, 214, 87, 0.1)', color: 'var(--brand-primary)', border: '1px solid rgba(32, 214, 87, 0.3)' }}
                       >
                         <i className="bi bi-pencil"></i>
                       </button>
                       <button 
-                        className="btn btn-danger btn-sm"
+                        className="btn btn-sm"
                         onClick={() => deleteSession(index)}
                         title="Delete"
+                        style={{ backgroundColor: 'rgba(220, 53, 69, 0.1)', color: '#dc3545', border: '1px solid rgba(220, 53, 69, 0.3)' }}
                       >
                         <i className="bi bi-trash"></i>
                       </button>
@@ -582,8 +594,8 @@ const CreateWorkoutProgram = ({ onSave, onCancel, allExercises, onAddCustomExerc
 
       {/* Exercise Modal */}
       {showExerciseModal && (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered">
+        <div className="modal show d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog w-100 modal-dialog-centered">
             <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '1rem', overflow: 'hidden' }}>
               <div className="modal-header" style={{ background: 'rgba(15, 20, 15, 0.95)', borderBottom: '1px solid rgba(32, 214, 87, 0.2)' }}>
                 <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>Add {selectedExercise?.name}</h5>

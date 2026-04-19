@@ -7,49 +7,36 @@ include_once("../config/Auth.php");
 checkAuth(['admin']);
 
 if (!isset($_SESSION['user_id'])) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'User not authenticated'
-    ]);
+    echo json_encode(['success' => false, 'message' => 'User not authenticated']);
     exit;
 }
 
-// Get audience ID from query string
 if (!isset($_GET['audienceId']) || empty($_GET['audienceId'])) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'Audience ID is required'
-    ]);
+    echo json_encode(['success' => false, 'message' => 'Audience ID is required']);
     exit;
 }
 
 $audienceId = trim($_GET['audienceId']);
+$search = trim(strtolower($_GET['search'] ?? ''));
+$page = max(1, (int)($_GET['page'] ?? 1));
+$limit = max(1, (int)($_GET['limit'] ?? 10));
 
 try {
-    // Get API key from environment variables
     $apiKey = $_ENV['MAILCHIMP_API_KEY'] ?? null;
     
     if (!$apiKey || $apiKey === 'your_mailchimp_api_key_here-us1') {
-        echo json_encode([
-            'success' => false,
-            'message' => 'No Mailchimp API key configured in .env file'
-        ]);
+        echo json_encode(['success' => false, 'message' => 'No Mailchimp API key configured natively']);
         exit;
     }
     
-    // Extract server prefix from API key
     $parts = explode('-', $apiKey);
     if (count($parts) !== 2) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Invalid API key format in .env file'
-        ]);
+        echo json_encode(['success' => false, 'message' => 'Invalid API key format natively']);
         exit;
     }
     
     $serverPrefix = $parts[1];
     
-    // Fetch members from Mailchimp
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, "https://{$serverPrefix}.api.mailchimp.com/3.0/lists/{$audienceId}/members?count=1000&sort_field=timestamp_opt&sort_dir=DESC");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -65,7 +52,6 @@ try {
     if ($httpCode === 200) {
         $data = json_decode($response, true);
         
-        // Format members for frontend
         $members = array_map(function($member) {
             return [
                 'id' => $member['id'],
@@ -77,16 +63,37 @@ try {
             ];
         }, $data['members'] ?? []);
         
+        // Backend filtering for search
+        if ($search !== '') {
+            $members = array_filter($members, function($m) use ($search) {
+                $email = strtolower($m['email_address']);
+                $fName = strtolower($m['merge_fields']['FNAME'] ?? '');
+                $lName = strtolower($m['merge_fields']['LNAME'] ?? '');
+                return str_contains($email, $search) || str_contains($fName, $search) || str_contains($lName, $search);
+            });
+            // Re-index array after filter
+            $members = array_values($members);
+        }
+        
+        $totalItems = count($members);
+        $offset = ($page - 1) * $limit;
+        $paginatedMembers = array_slice($members, $offset, $limit);
+        
         echo json_encode([
             'success' => true,
-            'members' => $members,
-            'total_members' => $data['total_items'] ?? 0
+            'members' => $paginatedMembers,
+            'pagination' => [
+                'total' => $totalItems,
+                'page' => $page,
+                'limit' => $limit,
+                'total_pages' => ceil($totalItems / $limit)
+            ]
         ]);
     } else {
         $error = json_decode($response, true);
         echo json_encode([
             'success' => false,
-            'message' => $error['detail'] ?? 'Failed to fetch audience members from Mailchimp'
+            'message' => $error['detail'] ?? 'Failed to fetch audience members'
         ]);
     }
     

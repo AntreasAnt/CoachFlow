@@ -117,6 +117,63 @@ class MailchimpService
     }
 
     /**
+     * Deletes a member from a Mailchimp audience list.
+     * Uses DELETE /lists/{list_id}/members/{subscriber_hash}
+     */
+    public static function deleteMember(string $audienceId, string $email): array
+    {
+        $apiKey = (string)($_ENV['MAILCHIMP_API_KEY'] ?? '');
+        if (!self::isConfigured()) {
+            return ['success' => false, 'message' => 'Mailchimp not configured'];
+        }
+        if (!function_exists('curl_init')) {
+            return ['success' => false, 'message' => 'cURL not available'];
+        }
+
+        $serverPrefix = self::getServerPrefix($apiKey);
+        if ($serverPrefix === '') {
+            return ['success' => false, 'message' => 'Invalid Mailchimp API key'];
+        }
+
+        $emailNorm = strtolower(trim($email));
+        $subscriberHash = md5($emailNorm);
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, "https://{$serverPrefix}.api.mailchimp.com/3.0/lists/{$audienceId}/members/{$subscriberHash}");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Basic ' . base64_encode('anystring:' . $apiKey)
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+
+        $response = curl_exec($ch);
+        $curlError = curl_error($ch);
+        $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($response === false) {
+            return ['success' => false, 'message' => 'Mailchimp request failed: ' . $curlError];
+        }
+
+        // A successful DELETE usually returns 204 No Content
+        if ($statusCode >= 200 && $statusCode < 300) {
+            return ['success' => true];
+        }
+
+        $data = json_decode($response, true);
+        $detail = (is_array($data) && isset($data['detail'])) ? $data['detail'] : null;
+        
+        // If 404, it might already be deleted
+        if ($statusCode === 404) {
+            return ['success' => true, 'message' => 'Subscriber not found or already removed'];
+        }
+
+        return ['success' => false, 'message' => $detail ?: ('Mailchimp error (HTTP ' . $statusCode . ')')];
+    }
+
+    /**
      * Subscribe a new signup to all default audiences.
      * Returns an array with success and per-audience results.
      */

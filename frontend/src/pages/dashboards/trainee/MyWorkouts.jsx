@@ -116,7 +116,7 @@ const MyWorkouts = ({ embedded = false }) => {
       
       // Clear the location state so it doesn't restart on refresh
       window.history.replaceState({}, document.title);
-      return;
+      // We purposefully DO NOT return here, so that initial data still loads!
     }
 
     if (didInitialLoadRef.current) return;
@@ -552,7 +552,7 @@ const MyWorkouts = ({ embedded = false }) => {
     // Add to workout logs
     const logEntry = {
       exerciseIndex: currentExerciseIndex,
-      exerciseName: activeWorkout.exercises[currentExerciseIndex].name,
+      exerciseName: activeWorkout.exercises[currentExerciseIndex]?.name || activeWorkout.exercises[currentExerciseIndex]?.exercise_name || 'Unknown Exercise',
       setNumber: currentSetIndex + 1,
       weight: parseFloat(currentSetData.weight) || 0,
       reps: parseInt(currentSetData.reps) || 0,
@@ -724,8 +724,10 @@ const MyWorkouts = ({ embedded = false }) => {
 
       if (response.success) {
         fetchWorkoutData(); // Refresh the data
+        loadMyWorkoutPlans({ page: 1, replace: true }); // Refresh the plans list
         setActiveView('plans');
-        alert('Program created successfully!');
+        setSuccessMessage('Program created successfully!');
+        setShowSuccessModal(true);
       } else {
         alert('Failed to create program: ' + (response.message || 'Unknown error'));
       }
@@ -2362,8 +2364,8 @@ const MyWorkouts = ({ embedded = false }) => {
 
   // Modal Components
   const DeleteModal = () => (
-    <div className={`modal fade ${showDeleteModal ? 'show d-block' : ''}`} style={{ backgroundColor: showDeleteModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
-      <div className="modal-dialog">
+    <div className={`modal fade ${showDeleteModal ? 'show d-flex align-items-center justify-content-center' : ''}`} style={{ backgroundColor: showDeleteModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
+      <div className="modal-dialog w-100 m-0">
         <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
           <div className="modal-header dark-modal-header">
             <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>{planToDelete?.isPurchased ? 'Hide' : 'Delete'} Workout Plan</h5>
@@ -2406,8 +2408,8 @@ const MyWorkouts = ({ embedded = false }) => {
   );
 
   const EditModal = () => (
-    <div className={`modal fade ${showEditModal ? 'show d-block' : ''}`} style={{ backgroundColor: showEditModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
-      <div className="modal-dialog modal-lg">
+    <div className={`modal fade ${showEditModal ? 'show d-flex align-items-center justify-content-center' : ''}`} style={{ backgroundColor: showEditModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
+      <div className="modal-dialog w-100 modal-lg m-0">
         <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
           <div className="modal-header dark-modal-header">
             <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>Edit Workout Plan</h5>
@@ -2534,8 +2536,8 @@ const MyWorkouts = ({ embedded = false }) => {
     const stats = calculateStats();
 
     return (
-      <div className={`modal fade ${showWorkoutDetails ? 'show d-block' : ''}`} style={{ backgroundColor: showWorkoutDetails ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
-        <div className="modal-dialog modal-xl">
+      <div className={`modal fade ${showWorkoutDetails ? 'show d-flex align-items-center justify-content-center' : ''}`} style={{ backgroundColor: showWorkoutDetails ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
+        <div className="modal-dialog w-100 modal-xl m-0">
           <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
             <div className="modal-header dark-modal-header">
               <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>
@@ -2771,8 +2773,8 @@ const MyWorkouts = ({ embedded = false }) => {
 
   // Cancel Workout Modal
   const CancelWorkoutModal = () => (
-    <div className={`modal fade ${showCancelWorkoutModal ? 'show d-block' : ''}`} style={{ backgroundColor: showCancelWorkoutModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
-      <div className="modal-dialog">
+    <div className={`modal fade ${showCancelWorkoutModal ? 'show d-flex align-items-center justify-content-center' : ''}`} style={{ backgroundColor: showCancelWorkoutModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
+      <div className="modal-dialog w-100 m-0">
         <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
           <div className="modal-header dark-modal-header">
             <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>Cancel Workout</h5>
@@ -2810,8 +2812,8 @@ const MyWorkouts = ({ embedded = false }) => {
 
   // End Workout Early Modal
   const EndWorkoutModal = () => (
-    <div className={`modal fade ${showEndWorkoutModal ? 'show d-block' : ''}`} style={{ backgroundColor: showEndWorkoutModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
-      <div className="modal-dialog">
+    <div className={`modal fade ${showEndWorkoutModal ? 'show d-flex align-items-center justify-content-center' : ''}`} style={{ backgroundColor: showEndWorkoutModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
+      <div className="modal-dialog w-100 m-0">
         <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
           <div className="modal-header dark-modal-header">
             <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>End Workout Early</h5>
@@ -2852,8 +2854,8 @@ const MyWorkouts = ({ embedded = false }) => {
 
   // Finish Workout Modal
   const FinishWorkoutModal = () => (
-    <div className={`modal fade ${showFinishWorkoutModal ? 'show d-block' : ''}`} style={{ backgroundColor: showFinishWorkoutModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
-      <div className="modal-dialog">
+    <div className={`modal fade ${showFinishWorkoutModal ? 'show d-flex align-items-center justify-content-center' : ''}`} style={{ backgroundColor: showFinishWorkoutModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
+      <div className="modal-dialog w-100 m-0">
         <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
           <div className="modal-header dark-modal-header">
             <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>Finish Workout</h5>
@@ -2900,8 +2902,8 @@ const MyWorkouts = ({ embedded = false }) => {
 
   // Break Over Modal
   const BreakOverModal = () => (
-    <div className={`modal fade ${showBreakOverModal ? 'show d-block' : ''}`} style={{ backgroundColor: showBreakOverModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
-      <div className="modal-dialog">
+    <div className={`modal fade ${showBreakOverModal ? 'show d-flex align-items-center justify-content-center' : ''}`} style={{ backgroundColor: showBreakOverModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
+      <div className="modal-dialog w-100 m-0">
         <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
           <div className="modal-header dark-modal-header">
             <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>
@@ -2938,8 +2940,8 @@ const MyWorkouts = ({ embedded = false }) => {
 
   // Success Modal
   const SuccessModal = () => (
-    <div className={`modal fade ${showSuccessModal ? 'show d-block' : ''}`} style={{ backgroundColor: showSuccessModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
-      <div className="modal-dialog">
+    <div className={`modal fade ${showSuccessModal ? 'show d-flex align-items-center justify-content-center' : ''}`} style={{ backgroundColor: showSuccessModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
+      <div className="modal-dialog w-100 m-0">
         <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
           <div className="modal-header dark-modal-header">
             <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>
@@ -2970,8 +2972,8 @@ const MyWorkouts = ({ embedded = false }) => {
   );
 
   const ExerciseSelectionModal = () => (
-    <div className={`modal fade ${showExerciseModal ? 'show d-block' : ''}`} style={{ backgroundColor: showExerciseModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
-      <div className="modal-dialog">
+    <div className={`modal fade ${showExerciseModal ? 'show d-flex align-items-center justify-content-center' : ''}`} style={{ backgroundColor: showExerciseModal ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
+      <div className="modal-dialog w-100 m-0">
         <div className="modal-content" style={{ background: 'rgba(15, 20, 15, 0.95)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
           <div className="modal-header dark-modal-header">
             <h5 className="modal-title" style={{ color: 'rgba(255,255,255,0.9)' }}>Add Exercise to Plan</h5>

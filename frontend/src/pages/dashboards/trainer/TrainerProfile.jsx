@@ -10,6 +10,7 @@ const TrainerProfile = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const fileInputRef = useRef(null);
   
   const [profile, setProfile] = useState({
@@ -27,7 +28,9 @@ const TrainerProfile = () => {
     twitter: '',
     youtube: '',
     linkedin: '',
-    website: ''
+    website: '',
+    password: '',
+    confirmPassword: ''
   });
 
   const [newSpecialization, setNewSpecialization] = useState('');
@@ -70,6 +73,8 @@ const TrainerProfile = () => {
   const handleResetProfile = async () => {
     try {
       setResetting(true);
+      setErrorMsg('');
+      setProfile(prev => ({...prev, password: '', confirmPassword: ''}));
       await fetchProfile(false);
     } finally {
       setResetting(false);
@@ -77,6 +82,12 @@ const TrainerProfile = () => {
   };
 
   const handleSaveProfile = async () => {
+    setErrorMsg('');
+    if (profile.password && profile.password !== profile.confirmPassword) {
+      setErrorMsg('Passwords do not match');
+      return;
+    }
+
     try {
       setSaving(true);
       
@@ -92,16 +103,20 @@ const TrainerProfile = () => {
         twitter: profile.twitter,
         youtube: profile.youtube,
         linkedin: profile.linkedin,
-        website: profile.website
+        website: profile.website,
+        password: profile.password
       });
 
       if (response.success) {
         setSuccessMessage('Profile updated successfully!');
         setShowSuccessModal(true);
+        setProfile(prev => ({...prev, password: '', confirmPassword: ''}));
+      } else {
+        setErrorMsg(response.message || 'Failed to update profile');
       }
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert('Failed to save profile. Please try again.');
+      setErrorMsg('Failed to save profile. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -182,6 +197,12 @@ const TrainerProfile = () => {
   return (
     <TrainerDashboardLayout>
       <div style={{ backgroundColor: '#1a1a1a', minHeight: '100vh', color: '#fff' }}>
+          {errorMsg && (
+            <div className="alert alert-danger" role="alert">
+              {errorMsg}
+            </div>
+          )}
+
         {/* Header */}
         <div className="mb-4">
           <h2 className="mb-1 fw-bold" style={{ color: '#fff' }}>My Profile</h2>
@@ -421,6 +442,46 @@ const TrainerProfile = () => {
                 </div>
               </div>
             </div>
+
+              {/* Password Section */}
+              <div className="card shadow-sm border-0 mb-4" style={{ backgroundColor: '#1a1a1a', borderRadius: '15px' }}>
+                <div className="card-header border-0 py-3" style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}>
+                  <h5 className="mb-0" style={{ color: '#10b981', fontWeight: 600 }}>
+                    <i className="bi bi-key-fill me-2"></i>
+                    Change Password
+                  </h5>
+                </div>
+                <div className="card-body p-4">
+                  <div className="row g-4">
+                    <div className="col-md-6">
+                      <label className="form-label" style={{ color: '#fff' }}>
+                        New Password
+                      </label>
+                      <input
+                        type="password"
+                        className="form-control"
+                        value={profile.password || ''}
+                        onChange={(e) => setProfile({ ...profile, password: e.target.value })}
+                        placeholder="Leave blank to keep current password"
+                        style={{ backgroundColor: '#2d2d2d', border: '1px solid #404040', color: '#fff' }}
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label" style={{ color: '#fff' }}>
+                        Confirm New Password
+                      </label>
+                      <input
+                        type="password"
+                        className="form-control"
+                        value={profile.confirmPassword || ''}
+                        onChange={(e) => setProfile({ ...profile, confirmPassword: e.target.value })}
+                        placeholder="Confirm new password"
+                        style={{ backgroundColor: '#2d2d2d', border: '1px solid #404040', color: '#fff' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
             {/* Save Button */}
             <div className="d-flex justify-content-end gap-2 mb-4">

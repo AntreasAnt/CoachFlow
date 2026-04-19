@@ -143,7 +143,7 @@ const ProgramView = () => {
           sessionId: session.id,
           exercises: session.exercises.map(ex => ({
             id: ex.exercise_id,
-            name: ex.name,
+            name: ex.name || ex.exercise_name || ex.exerciseName || ex.title || 'Unknown Exercise',
             sets: parseInt(ex.sets) || 3,
             reps: ex.reps || '10',
             rest: parseInt(ex.rest_seconds) || 60,
@@ -349,7 +349,7 @@ const ProgramView = () => {
                           <div className="d-flex flex-wrap gap-2">
                             {session.exercises.map((exercise, exIndex) => (
                               <span key={exIndex} className="badge" style={{ background: 'rgba(32, 214, 87, 0.15)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(32, 214, 87, 0.2)', borderRadius: '0.5rem', padding: '0.35rem 0.75rem' }}>
-                                {exercise.name} • {exercise.sets}x{exercise.reps || exercise.duration} {exercise.rpe ? `• RPE ${exercise.rpe}` : ''}
+                                {exercise.name || exercise.exercise_name || exercise.title || 'Unknown Exercise'} • {exercise.sets}x{exercise.reps || exercise.duration} {exercise.rpe ? `• RPE ${exercise.rpe}` : ''}
                               </span>
                             ))}
                           </div>

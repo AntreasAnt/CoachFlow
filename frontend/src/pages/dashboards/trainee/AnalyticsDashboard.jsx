@@ -576,24 +576,24 @@ const AnalyticsDashboard = () => {
               <div className="col-md-4 mb-3">
                 <div className="card border-0 shadow-sm dark-card">
                   <div className="card-body text-center">
-                    <h6 className="text-white-50 fw-normal">Total Reps</h6>
-                    <h2 className="text-white fw-light">{(overview.total_reps || 0).toLocaleString()}</h2>
+                    <p className="text-white-50 mb-1 small text-truncate">Total Reps</p>
+                    <h3 className="mb-0 text-white">{(overview.total_reps || 0).toLocaleString()}</h3>
                   </div>
                 </div>
               </div>
               <div className="col-md-4 mb-3">
                 <div className="card border-0 shadow-sm dark-card">
                   <div className="card-body text-center">
-                    <h6 className="text-white-50 fw-normal">Total Sets</h6>
-                    <h2 className="text-white fw-light">{(overview.total_sets || 0).toLocaleString()}</h2>
+                    <p className="text-white-50 mb-1 small text-truncate">Total Sets</p>
+                    <h3 className="mb-0 text-white">{(overview.total_sets || 0).toLocaleString()}</h3>
                   </div>
                 </div>
               </div>
               <div className="col-md-4 mb-3">
                 <div className="card border-0 shadow-sm dark-card">
                   <div className="card-body text-center">
-                    <h6 className="text-white-50 fw-normal">Unique Exercises</h6>
-                    <h2 className="text-white fw-light">{overview.unique_exercises || 0}</h2>
+                    <p className="text-white-50 mb-1 small text-truncate">Unique Exercises</p>
+                    <h3 className="mb-0 text-white">{overview.unique_exercises || 0}</h3>
                   </div>
                 </div>
               </div>

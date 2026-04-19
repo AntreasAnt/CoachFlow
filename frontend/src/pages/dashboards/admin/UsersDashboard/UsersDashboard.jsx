@@ -52,6 +52,8 @@ function UsersDashboard() {
   const [saveSuccess, setSaveSuccess] = useState(false); //Save success message
 
   const [resetSuccess, setResetSuccess] = useState(false); //Reset success message
+  
+  const [isResetting, setIsResetting] = useState(false); //Loading indicator for force reset
 
   const [disableSuccess, setDisableSuccess] = useState(false); //Disable success message
   
@@ -140,7 +142,8 @@ const handleRoleSearch = (role) => {
       setError,
       setShowActionsModal,
       setResetSuccess,
-      
+      setSelectedUsers,
+      setIsResetting,
     });
   };
 
@@ -203,9 +206,11 @@ const handleRoleSearch = (role) => {
   //SIGN UP INFO
   // Initialize form state with empty values
   const [formData, setFormData] = useState({
+    name: "",
     username: "",
     email: "",
     password: "",
+    confpassword: "",
     role: "trainee",
   });
 
@@ -245,6 +250,7 @@ const handleRoleSearch = (role) => {
         if (data.success) {
           setUsers(data.user.users.map(user => ({
             id: user.userid,
+            full_name: user.full_name,
             username: user.username,
             email: user.email,
             role: user.role,
@@ -323,6 +329,7 @@ const handleRoleSearch = (role) => {
       const user = users.find((user) => user.id === userId);
       
       const userData = {
+        name: user.full_name || '',
         username: user.username,
         email: user.email,
         role: user.role,
@@ -609,6 +616,7 @@ const handleRoleSearch = (role) => {
           handleDisable={handleDisable}
           handleForceReset={handleForceReset}
           handleEnable={handleEnable}
+          isResetting={isResetting}
         />
 
         {/* Edit Modal */}

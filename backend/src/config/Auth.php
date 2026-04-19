@@ -20,7 +20,6 @@ function checkAuth(array $allowedRoles)
         echo json_encode(['message' => 'You are not authorized to access this resource.']);
         exit();
     }
-    error_log(message: "User Privileges: " . (isset($_SESSION['user_privileges']) ? $_SESSION['user_privileges'] : 'Not Set'));
     if(!in_array($_SESSION['user_privileges'], $allowedRoles)) {
         http_response_code(403);
         echo json_encode(['message' => 'You are not authorized to access this resource.']);

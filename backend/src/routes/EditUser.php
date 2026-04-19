@@ -15,10 +15,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $input = json_decode(file_get_contents('php://input'), true);
 
 $userController = new UserController();
-$result = $userController->saveEditUser($input);
+$result = $userController->editUser($input);
 
-if ($result) {
+if ($result && isset($result['success']) && $result['success'] === true) {
     echo json_encode(['success' => true]);
 } else {
-    echo json_encode(['success' => false, 'message' => 'Failed to update user']);
+    echo json_encode($result);
 }

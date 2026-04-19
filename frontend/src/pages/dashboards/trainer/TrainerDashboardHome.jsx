@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import TrainerDashboardLayout from '../../../components/TrainerDashboardLayout';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import APIClient from '../../../utils/APIClient';
+import { db, signInWithBackendSession } from '../../../services/firebase';
+import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
 
 const TrainerDashboardHome = () => {
   const navigate = useNavigate();
@@ -42,6 +44,69 @@ const TrainerDashboardHome = () => {
       setLoading(false);
     }
   };
+
+  // Listen for unread messages directly from Firebase Firestore
+  useEffect(() => {
+    let unsubUser = () => {};
+    let unsubConv = () => {};
+    let isMounted = true;
+    
+    const setupFirebaseAndListen = async () => {
+      try {
+        const { user } = await signInWithBackendSession();
+        if (user && isMounted) {
+          let blockedUsers = [];
+          
+          // Listen to user document to keep blocked users up to date
+          const userRef = doc(db, 'users', user.uid);
+          unsubUser = onSnapshot(userRef, (userSnap) => {
+            if (userSnap.exists()) {
+              blockedUsers = userSnap.data().blocked || [];
+            }
+          });
+
+          const convRef = collection(db, 'conversations');
+          const q = query(
+            convRef, 
+            where('participants', 'array-contains', user.uid)
+          );
+          
+          unsubConv = onSnapshot(q, (snap) => {
+            let count = 0;
+            let lastUnreadSenderId = null;
+            snap.forEach(d => {
+              const cv = d.data();
+              const senderStr = String(cv.lastMessageSenderId);
+              
+              if (blockedUsers.includes(senderStr) || blockedUsers.includes(Number(senderStr))) {
+                return;
+              }
+
+              const isUnread = cv.lastMessage && 
+                               cv.lastMessageSenderId && 
+                               String(cv.lastMessageSenderId) !== String(user.uid) &&
+                               (!cv.lastMessageReadBy || !cv.lastMessageReadBy.includes(user.uid));
+              if (isUnread) {
+                count++;
+                lastUnreadSenderId = cv.lastMessageSenderId;
+              }
+            });
+            setStats(prev => ({ ...prev, unreadMessages: count, unreadSenderId: lastUnreadSenderId }));
+          });
+        }
+      } catch (e) {
+        console.error("Failed to connect to messages", e);
+      }
+    };
+    
+    setupFirebaseAndListen();
+    
+    return () => {
+      isMounted = false;
+      unsubUser();
+      unsubConv();
+    };
+  }, []);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -199,7 +264,7 @@ const TrainerDashboardHome = () => {
                   <button
                     className="btn"
                     style={{ backgroundColor: '#10b981', color: '#fff' }}
-                    onClick={() => navigate('/messages')}
+                    onClick={() => navigate('/messages', { state: { selectedUserId: stats.unreadSenderId } })}
                   >
                     View
                   </button>
@@ -255,6 +320,22 @@ const TrainerDashboardHome = () => {
               </div>
               <div className="card-body">
                 <div className="d-grid gap-2">
+                    <button
+                      className="btn text-start d-flex justify-content-between align-items-center"
+                      style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
+                      onClick={() => navigate('/messages')}
+                    >
+                      <div>
+                        <i className="bi bi-chat-dots me-2"></i>
+                        Messages
+                      </div>
+                      {stats.unreadMessages > 0 && (
+                        <span className="badge rounded-pill" style={{ backgroundColor: '#ef4444', color: '#fff' }}>
+                          {stats.unreadMessages}
+                        </span>
+                      )}
+                    </button>
+
                   <button
                     className="btn text-start"
                     style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}

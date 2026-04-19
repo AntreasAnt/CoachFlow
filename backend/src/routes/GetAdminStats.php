@@ -46,12 +46,11 @@ try {
     $totalTrainees = $result->fetch_assoc()['count'];
     $stmt->close();
     
-    // For active users, check if updated_at column exists
-    // If not, fallback to email_verified count or total users
+    // For active users, check lastlogin within last 30 days
     $activeUsers = 0;
     try {
         $activeUsersQuery = "SELECT COUNT(*) as count FROM user 
-                            WHERE updated_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+                            WHERE lastlogin >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
         $stmt = $conn->prepare($activeUsersQuery);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -59,24 +58,7 @@ try {
         $activeUsers = $row ? $row['count'] : 0;
         $stmt->close();
     } catch (mysqli_sql_exception $e) {
-        // Column doesn't exist, try alternative method
-        try {
-            $activeUsersQuery = "SELECT COUNT(*) as count FROM user WHERE email_verified = 1";
-            $stmt = $conn->prepare($activeUsersQuery);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $row = $result->fetch_assoc();
-            $activeUsers = $row ? $row['count'] : $totalUsers;
-            $stmt->close();
-        } catch (mysqli_sql_exception $e2) {
-            // If that also fails, just use total users
-            $activeUsers = $totalUsers;
-        }
-    }
-    
-    // If still 0, fall back to total users
-    if ($activeUsers == 0) {
-        $activeUsers = $totalUsers;
+        $activeUsers = 0; // if it fails, fallback to 0 instead of total users so it's not fake
     }
     
     // Return the stats

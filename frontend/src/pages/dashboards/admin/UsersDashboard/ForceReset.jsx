@@ -1,6 +1,7 @@
 import { BACKEND_ROUTES_API } from '../../../../config/config';
 
-export async function forceReset({ selectedUsers, setError, setShowActionsModal,setResetSuccess }) {
+export async function forceReset({ selectedUsers, setError, setShowActionsModal,setResetSuccess, setSelectedUsers, setIsResetting }) {
+  if (setIsResetting) setIsResetting(true);
   try {
     const response = await fetch(`${BACKEND_ROUTES_API}ForceResetPassword.php`, {
       method: "POST",
@@ -15,6 +16,7 @@ export async function forceReset({ selectedUsers, setError, setShowActionsModal,
 
     if (data.success) {
      setResetSuccess(true);
+     if (setSelectedUsers) setSelectedUsers([]);
 
      //close after 3 seconds
         setTimeout(() => {
@@ -30,6 +32,7 @@ export async function forceReset({ selectedUsers, setError, setShowActionsModal,
   setError(error.message || "An error occurred while sending force reset request.");
     setTimeout(()=>{setError(false)}, 8000);
   } finally {
+    if (setIsResetting) setIsResetting(false);
     setShowActionsModal(false);
   }
 }

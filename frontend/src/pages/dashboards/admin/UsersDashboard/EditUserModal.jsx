@@ -49,6 +49,25 @@ export const EditUserModal = ({
                   minWidth: "200px",
                 }}
               >
+                {/* Name Field */}
+                <div className="mb-3">
+                  <label htmlFor="name" className="form-label" style={{ color: '#fff' }}>
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name || ''}
+                    onChange={handleChange}
+                    placeholder="Full Name"
+                    className={`form-control ${
+                      errors.name ? 'is-invalid' : isFieldModified('name') ? 'border-success' : formData.name ? 'is-valid' : ''
+                    }`}
+                    style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#fff' }}
+                  />
+                  {errors.name && <div className="invalid-feedback">{errors.name}</div>}
+                </div>
+
                 {/* Username Field */}
                 <div className="mb-3">
                   <label htmlFor="username" className="form-label" style={{ color: '#fff' }}>
@@ -64,7 +83,7 @@ export const EditUserModal = ({
                       errors.username
                         ? "is-invalid"
                         : isFieldModified("username")
-                        ? "border-success bg-success-subtle"
+                        ? "border-success"
                         : formData.username
                         ? "is-valid"
                         : ""
@@ -91,7 +110,7 @@ export const EditUserModal = ({
                       errors.email
                         ? "is-invalid"
                         : isFieldModified("email")
-                        ? "border-success bg-success-subtle"
+                        ? "border-success"
                         : formData.email
                         ? "is-valid"
                         : ""
@@ -116,7 +135,7 @@ export const EditUserModal = ({
                       errors.role
                         ? "is-invalid"
                         : isFieldModified("role")
-                        ? "border-success bg-success-subtle"
+                        ? "border-success"
                         : formData.role
                         ? "is-valid"
                         : ""

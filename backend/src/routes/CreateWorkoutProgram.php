@@ -83,7 +83,7 @@ try {
     $isPackage = 1;
 
     $programStmt->bind_param(
-        "isssis",
+        "issssi",
         $userId,
         $title,
         $description,

@@ -287,7 +287,7 @@ const MiniTable = ({ title, rows, columns }) => (
         <table
           className="table table-sm table-borderless align-middle mb-0"
           style={{
-            backgroundColor: 'transparent',
+            minWidth: '500px', backgroundColor: 'transparent',
             '--bs-table-bg': 'transparent',
             '--bs-table-striped-bg': 'transparent',
             '--bs-table-active-bg': 'transparent',
@@ -304,7 +304,7 @@ const MiniTable = ({ title, rows, columns }) => (
                   style={{
                     color: '#9ca3af',
                     fontWeight: 800,
-                    backgroundColor: 'transparent',
+                    minWidth: '500px', backgroundColor: 'transparent',
                     borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                   }}
                 >
@@ -454,7 +454,7 @@ const AdminAnalytics = () => {
   return (
     <AdminDashboardLayout>
       <div className="admin-page">
-        <div className="admin-page-header">
+        <div className="admin-page-header align-items-md-start">
           <div>
             <h2 className="admin-page-title">Analytics</h2>
             <p className="admin-page-subtitle">
@@ -541,7 +541,7 @@ const AdminAnalytics = () => {
               style={{
                 color: '#10b981',
                 border: '1px solid rgba(16, 185, 129, 0.3)',
-                backgroundColor: 'transparent',
+                minWidth: '500px', backgroundColor: 'transparent',
                 fontWeight: 700,
               }}
               onClick={() => fetchAnalytics({ start: startDate, end: endDate, days: periodDays })}

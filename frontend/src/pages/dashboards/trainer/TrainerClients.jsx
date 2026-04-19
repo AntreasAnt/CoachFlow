@@ -14,6 +14,7 @@ const TrainerClients = () => {
   const [showClientModal, setShowClientModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [processingRequest, setProcessingRequest] = useState(null);
 
   useEffect(() => {
     fetchClientsData();
@@ -43,6 +44,8 @@ const TrainerClients = () => {
   };
 
   const handleAcceptRequest = async (requestId) => {
+    if (processingRequest) return;
+    setProcessingRequest(requestId);
     try {
       const response = await APIClient.post(`${BACKEND_ROUTES_API}AcceptCoachingRequest.php`, {
         requestId
@@ -55,11 +58,15 @@ const TrainerClients = () => {
       }
     } catch (error) {
       console.error('Error accepting request:', error);
-      alert('Failed to accept request. Please try again.');
+      alert(`Failed to accept request: ${error.message}`);
+    } finally {
+      setProcessingRequest(null);
     }
   };
 
   const handleDeclineRequest = async (requestId) => {
+    if (processingRequest) return;
+    setProcessingRequest(requestId);
     try {
       const response = await APIClient.post(`${BACKEND_ROUTES_API}DeclineCoachingRequest.php`, {
         requestId
@@ -71,7 +78,9 @@ const TrainerClients = () => {
       }
     } catch (error) {
       console.error('Error declining request:', error);
-      alert('Failed to decline request. Please try again.');
+      alert(`Failed to decline request: ${error.message}`);
+    } finally {
+      setProcessingRequest(null);
     }
   };
 
@@ -350,6 +359,7 @@ const TrainerClients = () => {
                           <button
                             className="btn btn-sm btn-success flex-fill"
                             onClick={() => handleAcceptRequest(request.id)}
+                            disabled={processingRequest === request.id}
                           >
                             <i className="bi bi-check-circle me-1"></i>
                             Accept
@@ -367,6 +377,7 @@ const TrainerClients = () => {
                           <button
                             className="btn btn-sm btn-outline-danger"
                             onClick={() => handleDeclineRequest(request.id)}
+                            disabled={processingRequest === request.id}
                           >
                             <i className="bi bi-x-circle"></i>
                           </button>
@@ -522,16 +533,18 @@ const TrainerClients = () => {
                   type="button"
                   className="btn btn-outline-danger"
                   onClick={() => handleDeclineRequest(selectedRequest.id)}
+                  disabled={processingRequest === selectedRequest.id}
                 >
-                  Decline
+                  {processingRequest === selectedRequest.id ? 'Processing...' : 'Decline'}
                 </button>
                 <button
                   type="button"
                   className="btn btn-success"
                   onClick={() => handleAcceptRequest(selectedRequest.id)}
+                  disabled={processingRequest === selectedRequest.id}
                 >
                   <i className="bi bi-check-circle me-2"></i>
-                  Accept Request
+                  {processingRequest === selectedRequest.id ? 'Processing...' : 'Accept Request'}
                 </button>
               </div>
             </div>

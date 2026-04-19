@@ -36,6 +36,7 @@ export async function updateUser({
     // Prepare data for API
     const dataToSend = {
       userId: selectedUserId,
+      name: formData.name,
       username: formData.username,
       email: formData.email,
   role: formData.role
@@ -69,6 +70,7 @@ export async function updateUser({
               user.id === selectedUserId
                 ? {
                     ...user,
+                    full_name: formData.name,
                     username: formData.username,
                     email: formData.email,
                     role: formData.role,

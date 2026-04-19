@@ -205,7 +205,7 @@ const FindTrainersPage = ({
       }
     } catch (err) {
       console.error('Error sending request:', err);
-      setNotification({ show: true, message: 'Failed to send request. Please try again.', type: 'danger' });
+      setNotification({ show: true, message: 'Failed to send request: ${err.message} ', type: 'danger' });
     } finally {
       setSendingRequest(false);
     }
@@ -245,7 +245,7 @@ const FindTrainersPage = ({
       }
     } catch (err) {
       console.error('Error cancelling request:', err);
-      setNotification({ show: true, message: 'Failed to cancel request. Please try again.', type: 'danger' });
+      setNotification({ show: true, message: 'Failed to cancel request: ${err.message}', type: 'danger' });
     } finally {
       setCancellingRequest(null);
     }
@@ -465,7 +465,7 @@ const FindTrainersPage = ({
                   }}
                 >
                   <option value="rating">Highest Rated</option>
-                  <option value="experience">Most Experienced</option>
+                  <option value="reviews">Most Reviewed</option>
                   <option value="clients">Most Popular</option>
                   <option value="newest">Newest</option>
                 </select>

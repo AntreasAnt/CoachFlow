@@ -51,6 +51,39 @@ try {
     
     $serverPrefix = $parts[1];
     
+    // First, fetch the campaign to get its list_id
+    $chCheck = curl_init();
+    curl_setopt($chCheck, CURLOPT_URL, "https://{$serverPrefix}.api.mailchimp.com/3.0/campaigns/{$campaignId}");
+    curl_setopt($chCheck, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($chCheck, CURLOPT_HTTPHEADER, [
+        'Authorization: Bearer ' . $apiKey,
+        'Content-Type: application/json'
+    ]);
+    $campData = json_decode(curl_exec($chCheck), true);
+    curl_close($chCheck);
+    
+    if (isset($campData['recipients']['list_id'])) {
+        // Force refresh the recipients cache in Mailchimp by re-patching the list_id
+        // This fixes the "Your advanced segment is empty. recipients not ready" error
+        // that happens if a campaign was created before users were added to the audience.
+        $patchData = [
+            'recipients' => [
+                'list_id' => $campData['recipients']['list_id']
+            ]
+        ];
+        $chPatch = curl_init();
+        curl_setopt($chPatch, CURLOPT_URL, "https://{$serverPrefix}.api.mailchimp.com/3.0/campaigns/{$campaignId}");
+        curl_setopt($chPatch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($chPatch, CURLOPT_CUSTOMREQUEST, 'PATCH');
+        curl_setopt($chPatch, CURLOPT_POSTFIELDS, json_encode($patchData));
+        curl_setopt($chPatch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $apiKey,
+            'Content-Type: application/json'
+        ]);
+        curl_exec($chPatch);
+        curl_close($chPatch);
+    }
+    
     // Send campaign via Mailchimp
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, "https://{$serverPrefix}.api.mailchimp.com/3.0/campaigns/{$campaignId}/actions/send");

@@ -134,6 +134,60 @@ class MailService
     /**
      * Send password reset email with link
      */
+    public function sendWelcomeEmail($userEmail, $username)
+    {
+        try {
+            $this->mailer->clearAddresses();
+            $this->mailer->addAddress($userEmail);
+            $this->mailer->Subject = "Welcome to " . MailConfig::FROM_NAME . "!";
+
+            $this->mailer->Body = "
+                <div style='
+                    font-family: Arial, sans-serif;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 30px;
+                    background-color: #ffffff;
+                    border-radius: 12px;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                    text-align: center;
+                '>
+                    <h2 style='
+                        color: #333;
+                        margin-bottom: 25px;
+                    '>Welcome to " . MailConfig::FROM_NAME . "!</h2>
+                    
+                    <p style='
+                        font-size: 16px;
+                        color: #666;
+                        line-height: 1.6;
+                        margin-bottom: 30px;
+                    '>Hi " . htmlspecialchars($username) . ",<br><br>
+                    We're excited to have you on board! Your account has been created successfully.</p>
+                    
+                    <hr style='
+                        border: none;
+                        border-top: 1px solid #eee;
+                        margin: 30px 0;
+                    '>
+                    <p style='
+                        font-size: 12px;
+                        color: #999;
+                    '>
+                        Best regards,<br>
+                        The " . MailConfig::FROM_NAME . " Team
+                    </p>
+                </div>
+            ";
+
+            return $this->mailer->send();
+        } catch (Exception $e) {
+            error_log("Failed to send welcome email to {$userEmail}. Error: " . $this->mailer->ErrorInfo);
+            return false;
+        }
+    }
+
+
     public function sendPasswordResetEmail($userEmail, $resetToken)
     {
         try {

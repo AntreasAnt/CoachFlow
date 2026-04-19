@@ -10,6 +10,17 @@ const UserProgramView = () => {
   const [program, setProgram] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [expandedSessions, setExpandedSessions] = useState(new Set());
+
+  const toggleSession = (id) => {
+    setExpandedSessions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
+      return newSet;
+    });
+  };
+
   
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [ratingValue, setRatingValue] = useState(0);
@@ -86,13 +97,13 @@ const UserProgramView = () => {
             order_index: ex.exercise_order
           })),
           startTime: new Date(),
-          completedSets: session.exercises.map(ex => Array(parseInt(ex.sets) || 3).fill({
+          completedSets: session.exercises.map(ex => Array.from({ length: parseInt(ex.sets) || 3 }, () => ({
             weight: 0,
             reps: 0,
             rpe: 0,
             notes: '',
             completed: false
-          }))
+          })))
         }
       }
     });
@@ -229,9 +240,17 @@ const UserProgramView = () => {
               </div>
             ) : (
               <div className="list-group list-group-flush">
-                {program.sessions.map((session, index) => (
+                {program.sessions.map((session, index) => {
+                  const isExpanded = expandedSessions.has(session.id);
+                  return (
                   <div key={session.id} className="list-group-item border-0 px-0" style={{ background: 'transparent' }}>
-                    <div className="d-flex justify-content-between align-items-start mb-3 p-3" style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', borderRadius: '0.75rem', transition: 'all 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(30, 35, 30, 0.7)'} onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(30, 35, 30, 0.5)'}>
+                    <div 
+                      className="d-flex justify-content-between align-items-start mb-3 p-3" 
+                      style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', borderRadius: '0.75rem', transition: 'all 0.2s', cursor: 'pointer' }} 
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(30, 35, 30, 0.7)'} 
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(30, 35, 30, 0.5)'}
+                      onClick={() => toggleSession(session.id)}
+                    >
                       <div className="flex-grow-1 me-3">
                         <div className="d-flex align-items-center mb-2">
                           <span className="badge me-2" style={{ background: 'rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}>
@@ -244,7 +263,8 @@ const UserProgramView = () => {
                         )}
                         <div className="d-flex align-items-center small" style={{ color: 'rgba(255,255,255,0.6)' }}>
                           <i className="bi bi-list-task me-1"></i>
-                          <span>{session.exercise_count} exercises</span>
+                          <span>{session.exercise_count || session.exercises?.length || 0} exercises</span>
+                          <i className={`bi ${isExpanded ? 'bi-chevron-up' : 'bi-chevron-down'} ms-2`}></i>
                         </div>
                       </div>
                       <button 
@@ -252,22 +272,25 @@ const UserProgramView = () => {
                         style={{ background: 'rgba(32, 214, 87, 0.2)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)', padding: '0.5rem 1rem', borderRadius: '0.5rem', transition: 'all 0.2s' }}
                         onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(32, 214, 87, 0.3)'}
                         onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(32, 214, 87, 0.2)'}
-                        onClick={() => startSession(session)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startSession(session);
+                        }}
                       >
                         <i className="bi bi-play-circle me-2"></i>
                         Start Session
                       </button>
                     </div>
                     
-                    {/* Show exercises preview */}
-                    {session.exercises && session.exercises.length > 0 && (
+                    {/* Show exercises preview - Expanding Section */}
+                    {isExpanded && session.exercises && session.exercises.length > 0 && (
                       <div className="px-3 pb-3">
                         <div style={{ borderTop: '1px solid rgba(32, 214, 87, 0.2)', paddingTop: '1rem' }}>
                           <small className="d-block mb-2" style={{ color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', fontSize: '0.75rem' }}>Exercises:</small>
                           <div className="d-flex flex-wrap gap-2">
                             {session.exercises.map((exercise, exIndex) => (
                               <span key={exIndex} className="badge" style={{ background: 'rgba(32, 214, 87, 0.15)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(32, 214, 87, 0.2)', borderRadius: '0.5rem', padding: '0.35rem 0.75rem' }}>
-                                {exercise.name} • {exercise.sets}x{exercise.reps || exercise.duration}
+                                {exercise.name} • {exercise.sets}x{exercise.reps || exercise.duration} {exercise.rpe ? `• RPE ${exercise.rpe}` : ''}
                               </span>
                             ))}
                           </div>
@@ -275,7 +298,7 @@ const UserProgramView = () => {
                       </div>
                     )}
                   </div>
-                ))}
+                )})}
               </div>
             )}
           </div>

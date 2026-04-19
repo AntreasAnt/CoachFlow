@@ -17,6 +17,21 @@ class NotificationController extends NotificationModel
 
 
     // Method to handle the signup verification request
+    public function WelcomeNewUserRequest($userEmail, $username)
+    {
+        try {
+            parent::__construct();
+            $this->mailService = new MailService();
+            $emailSent = $this->mailService->sendWelcomeEmail($userEmail, $username);
+            if (!$emailSent) { throw new \Exception("Failed to send welcome email"); }
+            return ["success" => true, "message" => "Welcome email sent successfully"];
+        } catch (\Exception $e) {
+            error_log("WelcomeNewUserRequest error: " . $e->getMessage());
+            return ["success" => false, "message" => "Failed to send email"];
+        }
+    }
+
+
     public function SignUpVerificationRequest($userEmail, $username)
     {
         try {

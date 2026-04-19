@@ -38,6 +38,8 @@ import Coach from "./pages/dashboards/trainee/Coach";
 import MyCoach from "./pages/dashboards/trainee/MyCoach";
 import TrainerProfileView from "./pages/dashboards/trainee/TrainerProfile";
 
+import AdminProfile from "./pages/dashboards/admin/AdminProfile";
+
 import AdminUserDashboard from "./pages/dashboards/admin/UsersDashboard/UsersDashboard";
 import EmailMarketing from "./pages/dashboards/admin/EmailMarketing";
 import AdminMessages from "./pages/dashboards/admin/AdminMessages";
@@ -94,6 +96,14 @@ function App() {
         />
         
         {/* Protected Dashboard Routes */}
+        <Route 
+          path="/admin-profile" 
+          element={
+            <AuthRoot allowedPrivileges={['admin', 'manager']}>
+              <AdminProfile />
+            </AuthRoot>
+          } 
+        />
         <Route 
           path="/admin-dashboard" 
           element={

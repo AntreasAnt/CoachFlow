@@ -31,96 +31,31 @@ try {
     
     $chatUsers = [];
     
-    // If user is a trainer, get their active clients
-    if ($userRole === 'trainer') {
-        $query = "SELECT 
-                    u.userid as userId,
-                    u.username as displayName,
-                    u.email,
-                    u.full_name,
-                    u.role
-                  FROM coaching_relationships cr
-                  JOIN user u ON cr.trainee_id = u.userid
-                  WHERE cr.trainer_id = ? 
-                  AND cr.status = 'active'
-                  AND u.isdeleted = 0 
-                  AND u.isdisabled = 0
-                  ORDER BY u.username ASC";
-        
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param('i', $currentUserId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        while ($row = $result->fetch_assoc()) {
-            $chatUsers[] = [
-                'userId' => (int)$row['userId'],
-                'displayName' => $row['full_name'] ?: $row['displayName'],
-                'email' => $row['email'],
-                'role' => $row['role'],
-                'unreadCount' => 0 // Can be enhanced later
-            ];
-        }
-        
-        $stmt->close();
-    } elseif ($userRole === 'trainee') {
-        // For trainees, get their active trainer
-        $query = "SELECT 
-                    u.userid as userId,
-                    u.username as displayName,
-                    u.email,
-                    u.full_name,
-                    u.role
-                  FROM coaching_relationships cr
-                  JOIN user u ON cr.trainer_id = u.userid
-                  WHERE cr.trainee_id = ? 
-                  AND cr.status = 'active'
-                  AND u.isdeleted = 0 
-                  AND u.isdisabled = 0
-                  ORDER BY u.username ASC";
-        
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param('i', $currentUserId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        while ($row = $result->fetch_assoc()) {
-            $chatUsers[] = [
-                'userId' => (int)$row['userId'],
-                'displayName' => $row['full_name'] ?: $row['displayName'],
-                'email' => $row['email'],
-                'role' => $row['role'],
-                'unreadCount' => 0
-            ];
-        }
-        
-        $stmt->close();
-    } else {
-        // For non-trainers, get all users (existing logic)
-        $query = "SELECT userid as userId, username as displayName, email, role 
-                  FROM user 
-                  WHERE userid != ? 
-                  AND isdeleted = 0 
-                  AND isdisabled = 0 
-                  ORDER BY username ASC";
-        
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param('i', $currentUserId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        while ($row = $result->fetch_assoc()) {
-            $chatUsers[] = [
-                'userId' => (int)$row['userId'],
-                'displayName' => $row['displayName'],
-                'email' => $row['email'],
-                'role' => $row['role'],
-                'unreadCount' => 0
-            ];
-        }
-        
-        $stmt->close();
+    // Fetch all users systematically to resolve names in conversations globally
+    // since this endpoint is only used by ChatProvider for `userMap` (ID -> Name resolution)
+    // and not for showing a scrollable list of people to message.
+    $query = "SELECT userid as userId, username as displayName, full_name, email, role 
+              FROM user 
+              WHERE isdeleted = 0 
+              AND isdisabled = 0 
+              ORDER BY username ASC";
+    
+    $stmt = $conn->prepare($query);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    while ($row = $result->fetch_assoc()) {
+        $chatUsers[] = [
+            'userId' => (int)$row['userId'],
+            'displayName' => !empty($row['full_name']) ? $row['full_name'] : $row['displayName'],
+            'username' => $row['displayName'], // The SQL query aliases 'username' as 'displayName'. So this holds the actual handle.
+            'email' => $row['email'],
+            'role' => $row['role'],
+            'unreadCount' => 0
+        ];
     }
+    
+    $stmt->close();
     
     $db->close();
     

@@ -22,6 +22,7 @@ class UserModel
     // User properties matching database columns
     public $UserID;
     public $username;
+    public $full_name;
     public $email;
     public $password;
     public $registrationDate = null;
@@ -42,8 +43,8 @@ class UserModel
     {
         // SQL query to insert new user with only required fields
                 $query = "INSERT INTO {$this->table} 
-        (userid, email, password, username, registrationdate, role, isverified) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)";
+        (userid, email, password, username, full_name, registrationdate, role, isverified) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         // Prepare statement
         $stmt = $this->conn->prepare($query);
@@ -54,30 +55,12 @@ class UserModel
 
         // Bind parameters - use 's' for string since ENUM is treated as string
         $stmt->bind_param(
-            "sssssss",
+            "ssssssss",
             $this->UserID,
             $this->email,
             $this->password,
             $this->username,
-            $this->registrationDate,
-            $this->UserPrivileges,
-            $this->IsVerified
-        );
-
-        // Prepare statement
-        $stmt = $this->conn->prepare($query);
-
-        if (!$stmt) {
-            die("Prepare failed: " . $this->conn->error);
-        }
-
-        // Bind user data to query parameters
-        $stmt->bind_param(
-            "sssssss",
-            $this->UserID,
-            $this->email,
-            $this->password,
-            $this->username,
+            $this->full_name,
             $this->registrationDate,
             $this->UserPrivileges,
             $this->IsVerified
@@ -312,6 +295,7 @@ class UserModel
                 u.userid, 
                 u.email, 
                 u.username, 
+                u.full_name,
                 u.registrationdate, 
                 u.lastlogin, 
                 u.role, 
@@ -368,14 +352,15 @@ class UserModel
     {
         try {
             // SQL query to update user data
-            $query = "UPDATE user SET username = ?, email = ?, role = ? WHERE userid = ?";
+            $query = "UPDATE user SET username = ?, full_name = ?, email = ?, role = ? WHERE userid = ?";
             $stmt = $this->conn->prepare($query);
 
 
             // Bind parameters to query
             $stmt->bind_param(
-                "ssss",
+                "sssss",
                 $data['username'],
+                $data['full_name'],
                 $data['email'],
                 $data['role'],
                 $data['userId']

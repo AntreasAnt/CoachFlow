@@ -337,6 +337,8 @@ const EditUserProgram = () => {
 
 return (
     <TraineeDashboard>
+      <div className="container-fluid px-2 px-md-4 py-4" style={{ paddingBottom: '100px', overflowX: 'hidden' }}>
+        <div className="container-fluid px-2 px-md-4 py-3" style={{ overflowX: 'hidden', paddingBottom: '0', backgroundColor: 'transparent', minHeight: 'auto' }}>
       <>
       <style>{`
         .form-control::placeholder,
@@ -735,14 +737,14 @@ return (
       </div>
 
       {/* Save Program Button */}
-      <div className="d-flex gap-2 justify-content-end">
+      <div className="d-flex gap-2 justify-content-end mb-5 pb-5">
         <button 
           className="btn btn-lg btn-success"
           onClick={handleUpdateProgram}
           disabled={!programPackage.title || workoutSessions.length === 0}
         >
           <i className="bi bi-save me-2"></i>
-          Save Program
+          Update Program
         </button>
       </div>
 
@@ -840,6 +842,8 @@ return (
           </div>
         </div>
       )}
+        </div>
+      </div>
     </TraineeDashboard>
   );
 };

@@ -138,7 +138,7 @@ const TrainerClientsManagement = () => {
           type: 'success'
         });
         closeRequestActionModal();
-        fetchData();
+        fetchInitialData(); fetchActiveClients(1, debouncedClientSearch);
       } else {
         setNotification({ show: true, message: response.message || `Failed to ${action} request`, type: 'danger' });
         setRequestActionModal((prev) => ({ ...prev, submitting: false }));
@@ -171,7 +171,7 @@ const TrainerClientsManagement = () => {
       if (response.success) {
         setShowAssignProgramModal(false);
         alert('Program assigned successfully!');
-        fetchData();
+        fetchInitialData(); fetchActiveClients(1, debouncedClientSearch);
       } else {
         alert(response.message || 'Failed to assign program');
       }
@@ -212,7 +212,7 @@ const TrainerClientsManagement = () => {
       if (result.success) {
         setShowDisconnectModal(false);
         setNotification({ show: true, message: 'Successfully ended coaching relationship', type: 'success' });
-        fetchData(); // Refresh client list
+        fetchInitialData(); fetchActiveClients(1, debouncedClientSearch); // Refresh client list
       } else {
         setNotification({ show: true, message: result.message || 'Failed to disconnect', type: 'danger' });
       }

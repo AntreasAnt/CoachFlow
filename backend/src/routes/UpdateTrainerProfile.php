@@ -38,6 +38,19 @@ try {
 
     error_log("UpdateTrainerProfile - Updating profile for user: $userId");
 
+    $password = $input['password'] ?? '';
+
+    if (!empty($password)) {
+        $database = new Database();
+        $conn = $database->connect();
+        $passQuery = "UPDATE user SET password = ? WHERE userid = ?";
+        $passStmt = $conn->prepare($passQuery);
+        $hashed = password_hash($password, PASSWORD_DEFAULT);
+        $passStmt->bind_param('si', $hashed, $userId);
+        $passStmt->execute();
+    }
+
+
     $database = new Database();
     $conn = $database->connect();
 

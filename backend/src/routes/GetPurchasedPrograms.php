@@ -30,6 +30,19 @@ try {
     $pageParam = $_GET['page'] ?? null;
     $limitParam = $_GET['limit'] ?? null;
 
+    // Filters for "My Programs" tab
+    $filters = [
+        'search' => $_GET['search'] ?? null,
+        'category' => $_GET['category'] ?? null,
+        'difficulty_level' => $_GET['difficulty_level'] ?? null,
+        'min_duration' => $_GET['min_duration'] ?? null,
+        'max_duration' => $_GET['max_duration'] ?? null,
+        'min_price' => $_GET['min_price'] ?? null,
+        'max_price' => $_GET['max_price'] ?? null,
+        'trainer_name' => $_GET['trainer_name'] ?? null,
+        'sort_by' => $_GET['sort_by'] ?? 'newest'
+    ];
+
     $hiddenPurchases = $purchaseModel->getTraineeHiddenPurchases($userId);
 
     if ($pageParam !== null || $limitParam !== null) {
@@ -37,8 +50,8 @@ try {
         $limit = $limitParam !== null ? max(1, min(50, (int)$limitParam)) : 10;
         $offset = ($page - 1) * $limit;
 
-        $total = $purchaseModel->countTraineePurchases($userId, 'completed', 0);
-        $purchases = $purchaseModel->getTraineePurchasesPaged($userId, 'completed', $limit, $offset);
+        $total = $purchaseModel->countTraineePurchases($userId, 'completed', 0, $filters);
+        $purchases = $purchaseModel->getTraineePurchasesPaged($userId, 'completed', $limit, $offset, $filters);
 
         $totalPages = (int)ceil($total / $limit);
         $pagination = [

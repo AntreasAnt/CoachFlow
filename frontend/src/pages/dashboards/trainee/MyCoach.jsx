@@ -369,7 +369,7 @@ const MyCoach = () => {
   };
 
   const handleMessageTrainer = () => {
-    navigate('/messages', { state: { selectedUserId: coach.trainer_id } });
+    navigate('/trainee-dashboard/messages', { state: { selectedUserId: coach.trainer_id } });
   };
 
   const handleDisconnect = async () => {

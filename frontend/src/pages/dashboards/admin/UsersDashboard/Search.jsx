@@ -28,31 +28,33 @@ export const Search = ({ onSearch }) => {
         style={{ 
           backgroundColor: '#2d2d2d', 
           borderColor: 'rgba(16, 185, 129, 0.2)', 
-          color: '#fff',
-          '::placeholder': { color: '#9ca3af' }
+          color: '#fff'
         }}
       />
-      {/* Full button for screens sm and up */}
       {query && (
-      <button 
-        type="button" 
-        className="btn btn-sm ms-2"
-        onClick={handleClear}
-        style={{ backgroundColor: '#6b7280', color: '#fff', border: 'none' }}
-      >
-        <i className="bi bi-x-circle me-1"></i>
-        Clear
-      </button>
-      )}
-      {/* For extra-small screens, show a simple 'x' icon */}
-      {query && (
-              <button 
-              type="button" 
-              className="btn btn-sm d-block d-sm-none"
-              onClick={handleClear}
-              style={{ backgroundColor: '#6b7280', color: '#fff', border: 'none' }}
-            >
-          <i className="bi bi-x"></i>
+        <button 
+          type="button" 
+          className="btn d-flex align-items-center justify-content-center"
+          onClick={handleClear}
+          style={{ 
+            backgroundColor: '#1a1a1a', 
+            color: '#ef4444', 
+            borderColor: 'rgba(16, 185, 129, 0.2)', 
+            fontSize: '0.875rem',
+            padding: '0.375rem 0.75rem',
+            transition: 'all 0.2s ease-in-out'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+            e.currentTarget.style.color = '#ef4444';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#1a1a1a';
+            e.currentTarget.style.color = '#ef4444';
+          }}
+        >
+          <i className="bi bi-x-circle me-0 me-sm-1"></i>
+          <span className="d-none d-sm-inline">Clear</span>
         </button>
       )}
     </div>

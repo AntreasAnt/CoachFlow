@@ -137,6 +137,12 @@ export const UsersTable = ({
     },
     { field: "id", headerName: "ID", width: 70 },
     {
+      field: "full_name",
+      headerName: "Name",
+      width: 200,
+      renderCell: (params) => params.row.full_name || params.row.name || '—',
+    },
+    {
       field: "username",
   headerName: "Username",
       width: 220,
@@ -248,6 +254,13 @@ export const UsersTable = ({
           "--DataGrid-rowBorderColor": "rgba(16, 185, 129, 0.1) !important",
           ".MuiDataGrid-main": {
             maxHeight: "none !important",
+          },
+          ".MuiDataGrid-overlayWrapper": {
+            backgroundColor: "#2d2d2d !important",
+          },
+          ".MuiDataGrid-overlay": {
+            backgroundColor: "#2d2d2d !important",
+            color: "#9ca3af !important",
           },
           ".MuiDataGrid-cell": {
             borderColor: "rgba(16, 185, 129, 0.1)",
