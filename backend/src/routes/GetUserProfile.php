@@ -46,7 +46,7 @@ if ($user) {
     $latestWaist = null;
     $latestHips = null;
     try {
-        $weightStmt = $userModel->conn->prepare("SELECT * FROM body_measurements WHERE user_id = ? ORDER BY measurement_date DESC LIMIT 1");
+        $weightStmt = $userModel->conn->prepare("SELECT * FROM body_measurements WHERE user_id = ? ORDER BY measurement_date DESC, id DESC LIMIT 1");
         if ($weightStmt) {
             $weightStmt->bind_param("i", $targetUserId);
             $weightStmt->execute();

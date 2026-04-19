@@ -104,6 +104,7 @@ const ProgramMarketplace = () => {
   const [programs, setPrograms] = useState([]);
   const [purchasedPrograms, setPurchasedPrograms] = useState([]);
   const [hiddenPrograms, setHiddenPrograms] = useState([]);
+  const [allPurchasedIds, setAllPurchasedIds] = useState([]); // For marketplace exclusion
   const [purchasedLoaded, setPurchasedLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('marketplace');
@@ -131,7 +132,7 @@ const ProgramMarketplace = () => {
 
   useEffect(() => {
     initializeStripe();
-    fetchPurchasedPrograms();
+    fetchAllPurchasedIds();
     
     // Check if there's a programId in URL params to show details
     const programId = searchParams.get('programId');
@@ -142,13 +143,15 @@ const ProgramMarketplace = () => {
 
   useEffect(() => {
     if (activeTab === 'marketplace') {
-      // Avoid rendering the marketplace list before we know what the user already bought.
-      // This prevents a visible "teleport" where purchased items briefly show then disappear.
       if (purchasedLoaded) {
         fetchPrograms();
       }
+    } else if (activeTab === 'purchased') {
+      if (purchasedLoaded) {
+        fetchPurchasedProgramsFiltered();
+      }
     }
-  }, [filters, currentPage, activeTab, purchasedPrograms, purchasedLoaded]);
+  }, [filters, currentPage, activeTab, purchasedLoaded]);
 
   const initializeStripe = async () => {
     try {
@@ -195,9 +198,8 @@ const ProgramMarketplace = () => {
       
       if (data.success) {
         // Filter out programs that are already purchased
-        const purchasedProgramIds = purchasedPrograms.map(p => p.program_id);
         const filteredPrograms = (data.programs || []).filter(
-          program => !purchasedProgramIds.includes(program.id)
+          program => !allPurchasedIds.includes(program.id)
         );
         
         setPrograms(filteredPrograms);
@@ -211,9 +213,38 @@ const ProgramMarketplace = () => {
     }
   };
 
-  const fetchPurchasedPrograms = async () => {
+  const fetchAllPurchasedIds = async () => {
     try {
       const data = await APIClient.get(`${BACKEND_ROUTES_API}GetPurchasedPrograms.php`);
+      if (data.success) {
+        setAllPurchasedIds((data.purchases || []).map(p => p.program_id) || []);
+      }
+    } catch (error) {
+      console.error('Error fetching all purchased ids:', error);
+    } finally {
+      setPurchasedLoaded(true);
+    }
+  };
+
+  const fetchPurchasedProgramsFiltered = async () => {
+    try {
+      setLoading(true);
+      const offset = (currentPage - 1) * programsPerPage;
+      
+      const queryParams = new URLSearchParams({
+        limit: programsPerPage,
+        page: currentPage,
+        ...filters
+      });
+
+      // Remove empty filter values
+      Object.keys(filters).forEach(key => {
+        if (!filters[key]) {
+          queryParams.delete(key);
+        }
+      });
+
+      const data = await APIClient.get(`${BACKEND_ROUTES_API}GetPurchasedPrograms.php?${queryParams.toString()}`);
       
       console.log('Purchased programs response:', data);
       
@@ -221,13 +252,15 @@ const ProgramMarketplace = () => {
         console.log('Setting purchased programs:', data.purchases);
         setPurchasedPrograms(data.purchases || []);
         setHiddenPrograms(data.hiddenPurchases || []);
+        setTotalPrograms(data.purchasesPagination?.total || 0);
+        setTotalPages(data.purchasesPagination?.total_pages || 1);
       } else {
         console.error('Failed to fetch purchased programs:', data.message);
       }
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching purchased programs:', error);
-    } finally {
-      setPurchasedLoaded(true);
+      setLoading(false);
     }
   };
 
@@ -238,7 +271,8 @@ const ProgramMarketplace = () => {
       });
 
       if (response.success) {
-        await fetchPurchasedPrograms();
+        await fetchAllPurchasedIds();
+        await fetchPurchasedProgramsFiltered();
       } else {
         alert('Error: ' + (response.message || 'Failed to restore program'));
       }
@@ -287,7 +321,8 @@ const ProgramMarketplace = () => {
         setClientSecret('');
         setPaymentIntentId('');
         setShowSuccessModal(true);
-        await fetchPurchasedPrograms();
+        await fetchAllPurchasedIds();
+        await fetchPurchasedProgramsFiltered();
       } else {
         alert('Payment succeeded but failed to complete purchase: ' + (response.message || 'Unknown error'));
       }
@@ -309,17 +344,37 @@ const ProgramMarketplace = () => {
     setActiveTab('purchased'); // Switch to My Programs tab
   };
 
-  const renderProgramCard = (program, isPurchased = false) => (
+
+  const getRatingStars = (rating) => {
+    const numRating = parseFloat(rating) || 0;
+    if (numRating === 0) return <span className="text-white-50 small">No reviews</span>;
+    const stars = [];
+    const fullStars = Math.floor(numRating);
+    const hasHalfStar = numRating % 1 >= 0.5;
+    
+    for (let i = 0; i < fullStars; i++) {
+        stars.push(<i key={`full-${i}`} className="bi bi-star-fill text-warning me-1"></i>);
+    }
+    if (hasHalfStar) {
+        stars.push(<i key="half" className="bi bi-star-half text-warning me-1"></i>);
+    }
+    for (let i = stars.length; i < 5; i++) {
+        stars.push(<i key={`empty-${i}`} className="bi bi-star text-white-50 me-1"></i>);
+    }
+    return (
+        <span className="text-nowrap d-inline-flex align-items-center">
+            {stars}
+            <span className="text-white ms-1">({numRating.toFixed(1)})</span>
+        </span>
+    );
+  };
+
+  const renderProgramCard =  (program, isPurchased = false) => (
     <div key={program.id || program.program_id} className="col-lg-3 col-md-4 col-sm-6 mb-4">
       <div className="card border-0 shadow-sm h-100 dark-card">
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-start mb-3">
             <h6 className="card-title mb-0 text-white">{program.title}</h6>
-            {!isPurchased && program.is_featured && (
-              <span className="badge bg-warning text-dark">
-                <i className="bi bi-star-fill"></i>
-              </span>
-            )}
           </div>
           
           <p className="text-white-50 small" style={{ minHeight: '60px' }}>
@@ -341,14 +396,10 @@ const ProgramMarketplace = () => {
           {!isPurchased && (
             <div className="mb-2">
               <small className="text-white-50 d-block">By {program.trainer_name || 'Coach'}</small>
-              <small className="text-white-50">
-                {program.purchase_count || 0} purchases
-                {program.rating_average > 0 && (
-                  <span className="ms-2">
-                    <i className="bi bi-star-fill text-warning"></i> {program.rating_average}
-                  </span>
-                )}
-              </small>
+              <div className="d-flex flex-column text-white-50 small mt-1 gap-1">
+                <span>{program.purchase_count || 0} purchases</span>
+                <div>{getRatingStars(program.rating_average)}</div>
+              </div>
             </div>
           )}
 
@@ -480,13 +531,12 @@ const ProgramMarketplace = () => {
               onClick={() => setActiveTab('purchased')}
             >
               <i className="bi bi-bag-check me-2"></i>
-              My Programs ({purchasedPrograms.length})
+              My Programs
             </button>
           </li>
         </ul>
 
-        {activeTab === 'marketplace' && (
-          <div className="row">
+        <div className="row">
             {/* Filters Sidebar */}
             <div className="col-lg-3 mb-4">
               <ProgramFilters 
@@ -514,6 +564,8 @@ const ProgramMarketplace = () => {
 
             {/* Programs Grid */}
             <div className="col-lg-9">
+            {activeTab === 'marketplace' && (
+              <>
               {/* Results Summary */}
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <div>
@@ -610,13 +662,17 @@ const ProgramMarketplace = () => {
                   )}
                 </>
               )}
-            </div>
-          </div>
-        )}
+            </>
+          )}
 
         {activeTab === 'purchased' && (
-          <>
-            {purchasedPrograms.length === 0 && hiddenPrograms.length === 0 ? (
+              loading ? (
+                <div className="text-center py-5">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              ) : purchasedPrograms.length === 0 && hiddenPrograms.length === 0 && currentPage === 1 && !Object.values(filters).some(x => x !== '' && x !== 'popular') ? (
               <div className="text-center py-5">
                 <i className="bi bi-bag-x text-white-50" style={{ fontSize: '3rem' }}></i>
                 <p className="text-white-50 mt-3">
@@ -634,10 +690,42 @@ const ProgramMarketplace = () => {
               </div>
             ) : (
               <>
-                {purchasedPrograms.length > 0 && (
+                {purchasedPrograms.length > 0 ? (
                   <div className="row">
                     {purchasedPrograms.map(program => renderProgramCard(program, true))}
                   </div>
+                ) : (
+                  <div className="text-center py-5">
+                    <i className="bi bi-inbox text-white-50" style={{ fontSize: '3rem' }}></i>
+                    <p className="text-white-50 mt-3">No purchased programs matching your filters.</p>
+                  </div>
+                )}
+
+                {totalPages > 1 && (
+                  <nav className="mt-4">
+                    <ul className="pagination justify-content-center">
+                      <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                        <button className="page-link bg-dark text-white border-secondary" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}>
+                          &laquo;
+                        </button>
+                      </li>
+                      {[...Array(totalPages)].map((_, i) => (
+                        <li key={i + 1} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
+                          <button 
+                            className={`page-link ${currentPage === i + 1 ? 'bg-success border-success text-white' : 'bg-dark text-white border-secondary'}`}
+                            onClick={() => setCurrentPage(i + 1)}
+                          >
+                            {i + 1}
+                          </button>
+                        </li>
+                      ))}
+                      <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                        <button className="page-link bg-dark text-white border-secondary" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}>
+                          &raquo;
+                        </button>
+                      </li>
+                    </ul>
+                  </nav>
                 )}
 
                 {hiddenPrograms.length > 0 && (
@@ -686,9 +774,10 @@ const ProgramMarketplace = () => {
                   </div>
                 )}
               </>
-            )}
-          </>
-        )}
+            )
+          )}
+          </div>
+        </div>
 
         {renderCheckoutModal()}
         {renderSuccessModal()}

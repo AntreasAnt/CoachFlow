@@ -57,7 +57,8 @@ const ProfilePage = () => {
   });
   
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState(profileData);
+    const [editData, setEditData] = useState({ ...profileData, password: '', confirmPassword: '' });
+
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const fileInputRef = useRef(null);
@@ -87,6 +88,9 @@ const ProfilePage = () => {
       addField('weight', 'Weight', profileData.weight);
       addField('body_fat', 'Body Fat %', profileData.body_fat);
       addField('muscle_mass', 'Muscle Mass (kg)', profileData.muscle_mass);
+      addField('chest', 'Chest (cm)', profileData.chest);
+      addField('waist', 'Waist (cm)', profileData.waist);
+      addField('hips', 'Hips (cm)', profileData.hips);
       addField('fitness_goals', 'Fitness goals', profileData.fitness_goals);
       addField('experience_level', 'Experience level', profileData.experience_level);
     }
@@ -179,7 +183,7 @@ const ProfilePage = () => {
             <>
               <div className="d-flex align-items-center justify-content-between mb-2">
                 <h6 className="fw-semibold mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>
-                  <i className="bi bi-clipboard-check me-2 text-success"></i>Profile completion
+                  Profile completion
                 </h6>
                 <span className="fw-bold" style={{ color: '#10b981' }}>{completionPercent}%</span>
               </div>
@@ -332,7 +336,7 @@ const ProfilePage = () => {
 
   // Update editData when profileData changes
   useEffect(() => {
-    setEditData(profileData);
+    setEditData({ ...profileData, password: '', confirmPassword: '' });
   }, [profileData]);
 
   if (loading) {
@@ -368,11 +372,16 @@ const ProfilePage = () => {
   };
 
   const handleCancelEdit = () => {
-    setEditData(profileData);
+    setEditData({ ...profileData, password: '', confirmPassword: '' });
     setIsEditing(false);
   };
 
   const handleSaveProfile = async () => {
+      if (editData.password && editData.password !== editData.confirmPassword) {
+        alert('Passwords do not match');
+        return;
+      }
+
     try {
       const response = await fetch(BACKEND_ROUTES_API + "UpdateUserProfile.php", {
         method: 'POST',
@@ -536,7 +545,7 @@ const ProfilePage = () => {
                             className="btn btn-outline-light rounded-pill px-4"
                             onClick={() => {
                               setIsEditing(false);
-                              setEditData(profileData);
+                              setEditData({ ...profileData, password: '', confirmPassword: '' });
                             }}
                           >
                             <i className="bi bi-x-lg me-1"></i>Cancel
@@ -689,7 +698,7 @@ const ProfilePage = () => {
             <div className="profile-card border-0 rounded-4 mb-4">
               <div className="card-header bg-white border-0 p-4">
                 <h5 className="card-title mb-0 fw-semibold">
-                  <i className="bi bi-person me-2 text-primary"></i>Personal Information
+                  Personal Information
                 </h5>
               </div>
               <div className="card-body p-4">
@@ -858,7 +867,7 @@ const ProfilePage = () => {
               <div className="profile-card border-0 rounded-4 mb-4">
                 <div className="card-header bg-white border-0 p-4">
                   <h5 className="card-title mb-0 fw-semibold">
-                    <i className="bi bi-heart-pulse me-2 text-danger"></i>Fitness Profile
+                    Fitness Profile
                   </h5>
                 </div>
                 <div className="card-body p-4">
@@ -928,7 +937,10 @@ const ProfilePage = () => {
                       )}
                     </div>
                     <div className="col-md-4">
-                      <label className="form-label fw-medium text-white-50 small">Chest (cm)</label>
+                      <label className="form-label fw-medium text-white-50 small d-flex align-items-center">
+                        Chest (cm)
+                        <i className="bi bi-exclamation-circle ms-1" style={{ cursor: 'help' }} title="Measure around the fullest part of your chest, keeping the tape horizontal."></i>
+                      </label>
                       {isEditing ? (
                         <input
                           type="number"
@@ -942,7 +954,10 @@ const ProfilePage = () => {
                       )}
                     </div>
                     <div className="col-md-4">
-                      <label className="form-label fw-medium text-white-50 small">Waist (cm)</label>
+                      <label className="form-label fw-medium text-white-50 small d-flex align-items-center">
+                        Waist (cm)
+                        <i className="bi bi-exclamation-circle ms-1" style={{ cursor: 'help' }} title="Measure around your natural waistline, typically just above your belly button."></i>
+                      </label>
                       {isEditing ? (
                         <input
                           type="number"
@@ -956,7 +971,10 @@ const ProfilePage = () => {
                       )}
                     </div>
                     <div className="col-md-4">
-                      <label className="form-label fw-medium text-white-50 small">Hips (cm)</label>
+                      <label className="form-label fw-medium text-white-50 small d-flex align-items-center">
+                        Hips (cm)
+                        <i className="bi bi-exclamation-circle ms-1" style={{ cursor: 'help' }} title="Measure around the fullest part of your hips and buttocks."></i>
+                      </label>
                       {isEditing ? (
                         <input
                           type="number"
@@ -1013,6 +1031,41 @@ const ProfilePage = () => {
                       ) : (
                         <p className="mb-0 text-white fw-medium">{profileData.medical_notes || 'None specified'}</p>
                       )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Change Password (Visible during Edit) */}
+            {isOwnProfile && isEditing && (
+              <div className="profile-card border-0 rounded-4 mb-4">
+                <div className="card-header bg-white border-0 p-4">
+                  <h5 className="card-title mb-0 fw-semibold">
+                    <i className="bi bi-key-fill me-2 text-primary"></i>Change Password
+                  </h5>
+                </div>
+                <div className="card-body p-4">
+                  <div className="row g-4">
+                    <div className="col-md-6">
+                      <label className="form-label fw-medium text-white-50 small">New Password</label>
+                      <input
+                        type="password"
+                        className="form-control modern-input"
+                        value={editData.password || ''}
+                        onChange={(e) => setEditData({...editData, password: e.target.value})}
+                        placeholder="Leave blank to keep password"
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label fw-medium text-white-50 small">Confirm Password</label>
+                      <input
+                        type="password"
+                        className="form-control modern-input"
+                        value={editData.confirmPassword || ''}
+                        onChange={(e) => setEditData({...editData, confirmPassword: e.target.value})}
+                        placeholder="Confirm password"
+                      />
                     </div>
                   </div>
                 </div>
@@ -1139,10 +1192,10 @@ const ProfilePage = () => {
         {isOwnProfile && isEditing && (
           <div className="row mt-4 mb-2">
             <div className="col-12">
-              <div className="d-flex flex-column-reverse flex-sm-row justify-content-sm-end gap-3">
+              <div className="d-flex justify-content-end gap-3">
                 <button 
-                  className="btn btn-outline-light rounded-pill px-4 py-3 py-sm-2 w-100"
-                  style={{ maxWidth: '400px', margin: '0 auto' }}
+                  className="btn rounded-pill px-4"
+                  style={{ backgroundColor: 'transparent', color: '#9ca3af', border: '1px solid rgba(156, 163, 175, 0.3)' }}
                   onClick={() => {
                     handleCancelEdit();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1151,14 +1204,12 @@ const ProfilePage = () => {
                   <i className="bi bi-x-lg me-2"></i>Cancel
                 </button>
                 <button 
-                  className="btn rounded-pill px-5 py-3 py-sm-2 shadow w-100"
+                  className="btn rounded-pill px-4"
                   style={{
                     backgroundColor: 'var(--brand-primary)',
                     color: 'var(--brand-dark)',
                     border: 'none',
-                    fontWeight: '600',
-                    maxWidth: '400px',
-                    margin: '0 auto'
+                    fontWeight: '600'
                   }}
                   onClick={handleSaveProfile}
                 >

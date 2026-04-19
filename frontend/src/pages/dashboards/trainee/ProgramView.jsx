@@ -15,6 +15,17 @@ const ProgramView = () => {
   const [isTrainerAssigned, setIsTrainerAssigned] = useState(false);
   const [completedSessions, setCompletedSessions] = useState(new Set());
   const [sessionCompletionCounts, setSessionCompletionCounts] = useState({});
+  const [expandedSessions, setExpandedSessions] = useState(new Set());
+
+  const toggleSession = (id) => {
+    setExpandedSessions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
+      return newSet;
+    });
+  };
+
 
   useEffect(() => {
     // Check if this is a trainer-assigned program from navigation state
@@ -140,13 +151,13 @@ const ProgramView = () => {
             order_index: ex.order_index
           })),
           startTime: new Date(),
-          completedSets: session.exercises.map(ex => Array(parseInt(ex.sets) || 3).fill({
+          completedSets: session.exercises.map(ex => Array.from({ length: parseInt(ex.sets) || 3 }, () => ({
             weight: 0,
             reps: 0,
             rpe: 0,
             notes: '',
             completed: false
-          }))
+          })))
         }
       }
     });
@@ -265,75 +276,88 @@ const ProgramView = () => {
           </h4>
           
           {program.sessions && program.sessions.length > 0 ? (
-            <div className="row">
-              {program.sessions.map((session, index) => {
+            <div className="list-group list-group-flush">
+              {[...program.sessions].sort((a, b) => {
+                const aDone = isSessionCompleted(a);
+                const bDone = isSessionCompleted(b);
+                if (aDone && !bDone) return 1;
+                if (!aDone && bDone) return -1;
+                return (parseInt(a.id || 0) - parseInt(b.id || 0)) || 0;
+              }).map((session, index) => {
                 const completed = isSessionCompleted(session);
                 const completionCount = getSessionCompletionCount(session);
+                const isExpanded = expandedSessions.has(session.id);
                 return (
-                <div key={session.id} className="col-lg-6 mb-3">
-                  <div className="card h-100" style={{ background: completed ? 'rgba(32, 214, 87, 0.1)' : 'rgba(15, 20, 15, 0.7)', border: completed ? '1px solid rgba(32, 214, 87, 0.4)' : '1px solid rgba(32, 214, 87, 0.2)', borderRadius: '1rem', transition: 'all 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = completed ? 'rgba(32, 214, 87, 0.15)' : 'rgba(20, 25, 20, 0.8)'} onMouseLeave={(e) => e.currentTarget.style.background = completed ? 'rgba(32, 214, 87, 0.1)' : 'rgba(15, 20, 15, 0.7)'}>
-                    <div className="card-body p-4">
-                      <div className="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                          <div className="d-flex align-items-center gap-2 mb-2">
-                            <span className="badge" style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.9)', padding: '0.35rem 0.7rem', borderRadius: '0.4rem', fontSize: '0.8rem', fontWeight: '500' }}>SESSION {index + 1}</span>
-                            {completed && (
-                              <span className="badge" style={{ background: 'rgba(32, 214, 87, 0.3)', color: 'rgba(32, 214, 87, 0.95)', padding: '0.35rem 0.7rem', borderRadius: '0.4rem', fontSize: '0.75rem' }}>
-                                <i className="bi bi-check-circle-fill me-1"></i>
-                                Done{completionCount > 1 ? ` (${completionCount}x)` : ''}
-                              </span>
-                            )}
-                          </div>
-                          <h5 className="card-title mb-2" style={{ color: 'rgba(255,255,255,0.95)', fontWeight: '600' }}>{session.session_name || session.name}</h5>
-                          {(session.session_description || session.description) && (
-                            <p className="small mb-0" style={{ color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>{session.session_description || session.description}</p>
+                  <div key={session.id} className="list-group-item border-0 px-0" style={{ background: 'transparent' }}>
+                    <div 
+                      className="d-flex justify-content-between align-items-start mb-3 p-3" 
+                      style={{ 
+                        background: completed ? 'rgba(32, 214, 87, 0.1)' : 'rgba(30, 35, 30, 0.5)', 
+                        border: completed ? '1px solid rgba(32, 214, 87, 0.4)' : '1px solid rgba(32, 214, 87, 0.2)', 
+                        borderRadius: '0.75rem', 
+                        transition: 'all 0.2s', 
+                        cursor: 'pointer' 
+                      }} 
+                      onMouseEnter={(e) => e.currentTarget.style.background = completed ? 'rgba(32, 214, 87, 0.15)' : 'rgba(30, 35, 30, 0.7)'} 
+                      onMouseLeave={(e) => e.currentTarget.style.background = completed ? 'rgba(32, 214, 87, 0.1)' : 'rgba(30, 35, 30, 0.5)'}
+                      onClick={() => toggleSession(session.id)}
+                    >
+                      <div className="flex-grow-1 me-3">
+                        <div className="d-flex align-items-center mb-2">
+                          <span className="badge me-2" style={{ background: 'rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}>
+                            Week {session.week_number || 1} • Day {session.day_number || index + 1}
+                          </span>
+                          {completed && (
+                            <span className="badge me-2" style={{ background: 'rgba(32, 214, 87, 0.3)', color: 'rgba(32, 214, 87, 0.95)', borderRadius: '0.5rem' }}>
+                              <i className="bi bi-check-circle-fill me-1"></i>
+                              Done{completionCount > 1 ? ` (${completionCount}x)` : ''}
+                            </span>
                           )}
+                          <h6 className="mb-0" style={{ color: 'rgba(255,255,255,0.95)', fontWeight: '600' }}>{session.session_name || session.name}</h6>
+                        </div>
+                        {(session.session_description || session.description) && (
+                          <p className="small mb-2" style={{ color: 'rgba(255,255,255,0.7)' }}>{session.session_description || session.description}</p>
+                        )}
+                        <div className="d-flex align-items-center small" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                          <i className="bi bi-list-task me-1"></i>
+                          <span>{session.exercises?.length || 0} exercises</span>
+                          <i className={`bi ${isExpanded ? 'bi-chevron-up' : 'bi-chevron-down'} ms-2`}></i>
                         </div>
                       </div>
-
-                      <div className="mb-3">
-                        <small className="fw-bold d-block mb-2" style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem' }}>Exercises:</small>
-                        <ul className="list-unstyled mt-2 mb-0" style={{ paddingLeft: '0.5rem' }}>
-                          {session.exercises?.slice(0, 3).map((ex, idx) => (
-                            <li key={idx} className="small mb-1" style={{ color: 'rgba(255,255,255,0.75)' }}>
-                              <i className="bi bi-circle-fill me-2" style={{ fontSize: '0.3rem', color: 'rgba(32, 214, 87, 0.7)' }}></i>
-                              {ex.name} - {ex.sets} sets x {ex.reps} reps
-                            </li>
-                          ))}
-                          {session.exercises?.length > 3 && (
-                            <li className="small" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                              <i className="bi bi-three-dots me-2"></i>
-                              +{session.exercises.length - 3} more exercises
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-
                       <div className="d-flex gap-2">
                         <button 
-                          className="btn flex-fill"
-                          style={{ background: 'rgba(32, 214, 87, 0.2)', border: '1px solid rgba(32, 214, 87, 0.4)', color: 'rgba(32, 214, 87, 0.95)', borderRadius: '0.5rem', fontWeight: '500', padding: '0.6rem' }}
-                          onClick={() => startSession(session)}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(32, 214, 87, 0.3)'; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(32, 214, 87, 0.2)'; }}
+                          className="btn"
+                          style={{ background: 'rgba(32, 214, 87, 0.2)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)', padding: '0.5rem 1rem', borderRadius: '0.5rem', transition: 'all 0.2s' }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(32, 214, 87, 0.3)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(32, 214, 87, 0.2)'}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startSession(session);
+                          }}
                         >
                           <i className={`bi ${completed ? 'bi-arrow-repeat' : 'bi-play-circle'} me-2`}></i>
                           {completed ? 'Do Again' : 'Start Session'}
                         </button>
-                        <button 
-                          className="btn"
-                          style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.3)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem', padding: '0.6rem 1rem' }}
-                          onClick={() => setSelectedSession(session)}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(30, 35, 30, 0.7)'; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(30, 35, 30, 0.5)'; }}
-                        >
-                          <i className="bi bi-eye"></i>
-                        </button>
                       </div>
                     </div>
+                    
+                    {/* Show exercises preview - Expanding Section */}
+                    {isExpanded && session.exercises && session.exercises.length > 0 && (
+                      <div className="px-3 pb-3">
+                        <div style={{ borderTop: '1px solid rgba(32, 214, 87, 0.2)', paddingTop: '1rem' }}>
+                          <small className="d-block mb-2" style={{ color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', fontSize: '0.75rem' }}>Exercises:</small>
+                          <div className="d-flex flex-wrap gap-2">
+                            {session.exercises.map((exercise, exIndex) => (
+                              <span key={exIndex} className="badge" style={{ background: 'rgba(32, 214, 87, 0.15)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(32, 214, 87, 0.2)', borderRadius: '0.5rem', padding: '0.35rem 0.75rem' }}>
+                                {exercise.name} • {exercise.sets}x{exercise.reps || exercise.duration} {exercise.rpe ? `• RPE ${exercise.rpe}` : ''}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-                )
+                );
               })}
             </div>
           ) : (

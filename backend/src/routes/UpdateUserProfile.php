@@ -148,7 +148,7 @@ try {
 
                 $syncStmt = $userModel->conn->prepare(
                     "INSERT INTO body_measurements (user_id, measurement_date, weight_kg, body_fat_percentage, muscle_mass_kg, chest_cm, waist_cm, hips_cm)
-                     VALUES (?, CURDATE(), COALESCE(?, (SELECT weight_kg FROM body_measurements bm2 WHERE bm2.user_id = ? ORDER BY measurement_date DESC LIMIT 1)), ?, ?, ?, ?, ?)
+                     VALUES (?, CURDATE(), COALESCE(?, (SELECT weight_kg FROM body_measurements bm2 WHERE bm2.user_id = ? ORDER BY measurement_date DESC, id DESC LIMIT 1)), ?, ?, ?, ?, ?)
                      ON DUPLICATE KEY UPDATE 
                         weight_kg = COALESCE(VALUES(weight_kg), weight_kg),
                         body_fat_percentage = COALESCE(VALUES(body_fat_percentage), body_fat_percentage),
@@ -160,8 +160,12 @@ try {
 
                 if ($syncStmt) {
                     $syncStmt->bind_param("ididdddd", $userId, $weightValue, $userId, $bfValue, $mmValue, $cValue, $wValue, $hValue);
-                    $syncStmt->execute();
+                    if (!$syncStmt->execute()) {
+                        error_log("Body sync execute failed: " . $syncStmt->error);
+                    }
                     $syncStmt->close();
+                } else {
+                    error_log("Body sync prepare failed: " . $userModel->conn->error);
                 }
             } catch (Exception $e) {
                 error_log("UpdateUserProfile body comp sync failed: " . $e->getMessage());
@@ -171,21 +175,31 @@ try {
         // Fetch updated user data
         $updatedUser = $userModel->getprofileById($userId);
 
-        // Prefer latest logged body measurement for response consistency
         $latestLoggedWeight = null;
+        $latestBf = null;
+        $latestMm = null;
+        $latestChest = null;
+        $latestWaist = null;
+        $latestHips = null;
+        
         try {
-            $weightStmt = $userModel->conn->prepare("SELECT weight_kg FROM body_measurements WHERE user_id = ? ORDER BY measurement_date DESC LIMIT 1");
+            $weightStmt = $userModel->conn->prepare("SELECT weight_kg, body_fat_percentage, muscle_mass_kg, chest_cm, waist_cm, hips_cm FROM body_measurements WHERE user_id = ? ORDER BY measurement_date DESC, id DESC LIMIT 1");
             if ($weightStmt) {
                 $weightStmt->bind_param("i", $userId);
                 $weightStmt->execute();
                 $weightResult = $weightStmt->get_result()->fetch_assoc();
-                if ($weightResult && isset($weightResult['weight_kg'])) {
-                    $latestLoggedWeight = (float)$weightResult['weight_kg'];
+                if ($weightResult) {
+                    $latestLoggedWeight = isset($weightResult['weight_kg']) ? (float)$weightResult['weight_kg'] : null;
+                    $latestBf = isset($weightResult['body_fat_percentage']) ? (float)$weightResult['body_fat_percentage'] : null;
+                    $latestMm = isset($weightResult['muscle_mass_kg']) ? (float)$weightResult['muscle_mass_kg'] : null;
+                    $latestChest = isset($weightResult['chest_cm']) ? (float)$weightResult['chest_cm'] : null;
+                    $latestWaist = isset($weightResult['waist_cm']) ? (float)$weightResult['waist_cm'] : null;
+                    $latestHips = isset($weightResult['hips_cm']) ? (float)$weightResult['hips_cm'] : null;
                 }
                 $weightStmt->close();
             }
         } catch (Exception $e) {
-            error_log("UpdateUserProfile latest weight lookup failed: " . $e->getMessage());
+            error_log("UpdateUserProfile latest measurements lookup failed: " . $e->getMessage());
         }
         
         // Format the response to match GetUserProfile.php format
@@ -202,6 +216,11 @@ try {
             // Physical info
             'height' => $updatedUser['height'],
             'weight' => $latestLoggedWeight !== null ? $latestLoggedWeight : $updatedUser['weight'],
+            'body_fat' => $latestBf,
+            'muscle_mass' => $latestMm,
+            'chest' => $latestChest,
+            'waist' => $latestWaist,
+            'hips' => $latestHips,
             'age' => $updatedUser['age'],
             'sex' => $updatedUser['sex'],
             
