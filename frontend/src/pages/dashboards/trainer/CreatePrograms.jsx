@@ -622,7 +622,7 @@ const CreatePrograms = () => {
                   </div>
                   
                   <div className="d-flex justify-content-between align-items-center">
-                    <span className="h5 mb-0" style={{ color: '#10b981' }}>${program.price}</span>
+                    <span className="h5 mb-0" style={{ color: '#10b981' }}>€{program.price}</span>
                     <div className="btn-group btn-group-sm">
                       <button 
                         className="btn btn-sm"
@@ -752,24 +752,24 @@ const CreatePrograms = () => {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Short Description</label>
+                <label className="form-label">Short Description (Visible on Marketplace)</label>
                 <input 
                   type="text" 
                   className="form-control"
                   value={programPackage.description}
                   onChange={(e) => setProgramPackage(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Brief program description..."
+                  placeholder="Brief program description to attract buyers..."
                 />
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Full Description</label>
+                <label className="form-label">Program Guide & Full Description</label>
                 <textarea 
                   className="form-control"
                   rows="4"
                   value={programPackage.long_description}
                   onChange={(e) => setProgramPackage(prev => ({ ...prev, long_description: e.target.value }))}
-                  placeholder="Detailed program description, benefits, what's included..."
+                  placeholder="Detailed description, tips for success, usage instructions, benefits..."
                 />
               </div>
 

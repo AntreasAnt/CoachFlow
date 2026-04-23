@@ -502,7 +502,7 @@ const ProfilePage = () => {
       console.error('Error uploading photo:', error);
       const toast = document.createElement('div');
       toast.className = 'toast-notification error';
-      toast.innerHTML = `<i class="bi bi-exclamation-circle me-2"></i>${error.message || 'Failed to upload photo'}`;
+      toast.innerHTML = `<i class="bi bi-exclamation-circle me-2"></i>€{error.message || 'Failed to upload photo'}`;
       document.body.appendChild(toast);
       setTimeout(() => toast.remove(), 3000);
     } finally {

@@ -177,7 +177,7 @@ const ManagerDashboard = () => {
                             </div>
                           </td>
                           <td>32</td>
-                          <td>$4,280</td>
+                          <td>€4,280</td>
                           <td>
                             <div className="d-flex align-items-center">
                               <span className="me-2">95%</span>
@@ -198,7 +198,7 @@ const ManagerDashboard = () => {
                             </div>
                           </td>
                           <td>28</td>
-                          <td>$3,850</td>
+                          <td>€3,850</td>
                           <td>
                             <div className="d-flex align-items-center">
                               <span className="me-2">92%</span>
@@ -219,7 +219,7 @@ const ManagerDashboard = () => {
                             </div>
                           </td>
                           <td>25</td>
-                          <td>$3,200</td>
+                          <td>€3,200</td>
                           <td>
                             <div className="d-flex align-items-center">
                               <span className="me-2">88%</span>

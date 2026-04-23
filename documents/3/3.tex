@@ -1,0 +1,471 @@
+%!TEX TS-program = xelatex
+\documentclass[12pt,a4paper]{report}
+
+% --- Packages for Greek Language Support ---
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{greek}
+\setotherlanguage{english}
+
+% Standard fonts
+\newfontfamily\greekfont[Script=Greek]{Times New Roman}
+\newfontfamily\greekfontsf[Script=Greek]{Arial}
+\newfontfamily\greekfonttt[Script=Greek]{Courier New}
+
+% --- General Packages ---
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage[table]{xcolor}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, calc, fit}
+\usepackage{float}
+\usepackage{placeins}
+
+% Custom Styling
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.8em}
+
+% Table styling for the "Analytical Design" section
+% NOTE: Do not force a fixed text color here; header rows set their own colors.
+\newcolumntype{L}{>{\raggedright\arraybackslash\bfseries}m{4cm}}
+\newcolumntype{R}{>{\raggedright\arraybackslash}X}
+
+\tikzset{
+    box/.style={draw, rounded corners=4pt, align=center, minimum width=2.9cm, minimum height=1cm, fill=gray!8},
+    ext/.style={draw, rounded corners=4pt, align=center, minimum width=2.9cm, minimum height=1cm, fill=blue!8},
+    arr/.style={-{Stealth[length=2.4mm]}, line width=0.8pt},
+    lane/.style={draw, rounded corners=3pt, minimum width=2.2cm, minimum height=0.9cm, fill=gray!6, align=center},
+    flowstep/.style={draw, rounded corners=2pt, minimum width=2.8cm, minimum height=0.7cm, fill=white, align=center, font=\footnotesize}
+}
+
+% --- DOCUMENT START ---
+\begin{document}
+
+% ==========================================
+% TITLE PAGE
+% ==========================================
+\begin{titlepage}
+    \centering
+    
+    % University Logo
+    \includegraphics[width=0.4\textwidth]{tepak-logo} % Using the actual logo in the folder
+    \vspace{0.5cm}
+    
+    % University Info
+    {\LARGE \textbf{Τεχνολογικό Πανεπιστήμιο Κύπρου}} \\[0.4cm]
+    {\large \textbf{Τμήμα Μηχανικών Ηλεκτρονικών Υπολογιστών}} \\
+    {\large \textbf{και Πληροφορικής}}
+    
+    \vspace{1.5cm}
+    
+    % Document Title
+    \rule{\linewidth}{0.5mm} \\[0.4cm]
+    {\huge \textbf{Έγγραφο Σχεδιασμού Πτυχιακής Εργασίας}}
+    \rule{\linewidth}{0.5mm} \\[1cm]
+    
+    % Project Subject
+    {\Large \textbf{Θέμα:}} \\[0.3cm]
+    {\Large \textit{«CoachFlow: Διαδικτυακό Σύστημα Διαχείρισης}} \\
+    {\Large \textit{Προπονητών και Πελατών»}}
+    
+    \vspace{1.5cm}
+    
+    % Supervisor Info
+    {\large \textbf{Επιβλέπουσα Καθηγήτρια:}} \\
+    {\large Ελίζα Αγγελίδου Λοΐζου}
+    
+    \vfill
+    
+    % Student Info (Bottom Right)
+    \begin{flushright}
+        \large
+        \textbf{Φοιτητής:} \\
+        Αντωνίου Ανδρέας \\
+        \textbf{ΑΦΤ:} 24892
+    \end{flushright}
+\end{titlepage}
+
+% ==========================================
+% TABLE OF CONTENTS
+% ==========================================
+\tableofcontents
+\newpage
+
+% ==========================================
+% SECTION 1: ΕΙΣΑΓΩΓΗ
+% ==========================================
+\section{Εισαγωγή}
+
+\subsection{Σκοπός}
+Ο σκοπός αυτού του εγγράφου είναι να παρέχει μια σαφή και αναλυτική επισκόπηση της αρχιτεκτονικής σχεδίασης και των διαδικασιών της πλατφόρμας “CoachFlow”.
+
+\subsection{Έκταση}
+Το έγγραφο καλύπτει την υλοποιημένη αρχιτεκτονική του CoachFlow, διαχωρισμό React Frontend και PHP REST API, session-based authentication με CSRF, ροές αγοράς/ανάθεσης προγραμμάτων, διατροφή με USDA integration, real-time messaging με Firebase Firestore, και υποσυστήματα διαχείρισης (Trainer/Admin).
+
+\subsection{Ορισμοί}
+\textbf{React SPA (Single Page Application)} \\
+Το Frontend σύστημα που τρέχει αποκλειστικά στον Web Browser του χρήστη και φορτώνει τα components χωρίς να χρειάζεται να ανανεωθεί ολόκληρη η σελίδα.
+
+\textbf{RESTful API} \\
+Η αρχιτεκτονική που χρησιμοποιεί το Backend (PHP) για να εκθέτει endpoints (\textenglish{URLs}) τα οποία καταναλώνονται από το Frontend μέσω \textenglish{GET, POST, PUT, DELETE requests}.
+
+\textbf{JSON} \\
+Η μορφή μεταφοράς δεδομένων (payloads) ανάμεσα στο React Web App και τον PHP Web Server μας. 
+
+\textbf{Session-based Authentication} \\
+Η βασική υλοποίηση εξουσιοδότησης στο backend γίνεται μέσω PHP sessions (cookie με \textenglish{credentials: include}) και όχι μέσω bearer JWT για τα business endpoints.
+
+\textbf{Firestore Messaging} \\
+Το chat υλοποιείται σε Firebase Firestore (conversations/messages) με custom token που εκδίδεται από το backend μετά από επιτυχημένο session authorization.
+
+\newpage
+
+% ==========================================
+% SECTION 2: ΑΡΧΙΤΕΚΤΟΝΙΚΗ ΣΧΕΔΙΑΣΗ
+% ==========================================
+\section{Αρχιτεκτονική Σχεδίαση}
+
+Η εφαρμογή ακολουθεί αρχιτεκτονική πελάτη-εξυπηρετητή (\textenglish{Client-Server Architecture}). 
+
+\subsection{Component Architecture Diagram}
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=1.9cm]
+    \node[box] (react) {React SPA\\(Vite)};
+    \node[box, right=3.2cm of react, text width=3.9cm] (api) {PHP REST API\\Controllers / Models};
+    \node[box, below=2.0cm of api, text width=3.7cm] (db) {MySQL\\trainers-all-in-one};
+    \node[ext, above=2.0cm of api, text width=3.4cm] (stripe) {Stripe API};
+    \node[ext, right=3.4cm of api, text width=3.8cm] (firebase) {Firebase\\Firestore/Storage};
+    \node[ext, below=2.0cm of react, text width=3.2cm] (usda) {USDA API};
+    \node[ext, above=2.0cm of react, text width=3.4cm] (mailchimp) {Mailchimp API};
+
+    \draw[arr] (react) -- node[midway, above, fill=white, inner sep=1pt, font=\scriptsize] {HTTP/JSON + Session Cookie} (api);
+    \draw[arr] (api) -- node[midway, right, fill=white, inner sep=1pt, font=\scriptsize] {SQL Queries} (db);
+    \draw[arr] (api) -- node[midway, right, fill=white, inner sep=1pt, font=\scriptsize] {Payment Intents/Webhooks} (stripe);
+    \draw[arr] (react) -- (firebase);
+    \draw[arr] (api) -- node[midway, above, fill=white, inner sep=1pt, font=\scriptsize] {Custom Token} (firebase);
+    \draw[arr] (api) -- node[midway, left, fill=white, inner sep=1pt, font=\scriptsize] {Food Search Cache/Fetch} (usda);
+    \draw[arr] (api) -- node[midway, left, fill=white, inner sep=1pt, font=\scriptsize] {Campaigns/Audiences} (mailchimp);
+\end{tikzpicture}
+\caption{CoachFlow Component Architecture (Implemented)}
+\end{figure}
+
+\subsection{Πλοήγηση Συστήματος (Navigation Flow)}
+Όταν ο χρήστης εισέρχεται στην εφαρμογή φορτώνεται το \textenglish{index.html} και το \textenglish{App.jsx}. Η βιβλιοθήκη \textenglish{React Router DOM} διαχειρίζεται τα URLs εσωτερικά και προβάλλει τα αντίστοιχα Pages ανάλογα με τα δικαιώματα (Protected Routes).
+
+\subsection{Authentication Flow}
+Η ταυτοποίηση υλοποιείται με \textbf{PHP sessions} στο backend και ρόλους χρηστών στη MySQL. Το Firebase χρησιμοποιείται για messaging (custom token), όχι ως κύριος μηχανισμός login για business endpoints.
+Το παρακάτω διάγραμμα δείχνει αποκλειστικά τη ροή εγγραφής/σύνδεσης και όχι το marketplace. Τα βέλη δείχνουν τη σειρά των αιτημάτων και των απαντήσεων μεταξύ User, Frontend, Backend και MySQL.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+    \node[lane] (u) at (0,0) {User};
+    \node[lane] (f) at (4,0) {React Frontend};
+    \node[lane] (b) at (8,0) {PHP Backend};
+    \node[lane] (m) at (12,0) {MySQL};
+
+    \draw[dashed] (u.south) -- ++(0,-5.8);
+    \draw[dashed] (f.south) -- ++(0,-5.8);
+    \draw[dashed] (b.south) -- ++(0,-5.8);
+    \draw[dashed] (m.south) -- ++(0,-5.8);
+
+    \node[flowstep] at (2,-1.0) {Submit SignUp/Login Form};
+    \draw[arr] (u) -- ++(0,-1.0) -- (f);
+
+    \node[flowstep] at (6,-2.0) {POST SignUp.php / Login.php};
+    \draw[arr] (f) -- ++(0,-2.0) -- (b);
+
+    \node[flowstep] at (10,-3.0) {Validate Credentials / Role};
+    \draw[arr] (b) -- ++(0,-3.0) -- (m);
+    \draw[arr] (m) -- ++(0,-3.5) -| (b);
+
+    \node[flowstep] at (6,-4.4) {Create Session + CSRF};
+    \draw[arr] (b) -- ++(0,-4.4) -- (f);
+
+    \node[flowstep] at (2,-5.4) {Redirect by Role Dashboard};
+    \draw[arr] (f) -- ++(0,-5.4) -- (u);
+\end{tikzpicture}
+\caption{Sequence Diagram: Authentication Flow with Session-based Authorization}
+\end{figure}
+
+\subsection{Program Assignment Flow}
+Η πλατφόρμα υποστηρίζει δύο πρώτης κλάσης ροές για τα προγράμματα:
+\begin{itemize}[label=•]
+    \item \textbf{Marketplace Flow:} Trainer δημοσιεύει πρόγραμμα (\textenglish{trainer\_programs.status = published}), Trainee αγοράζει μέσω Stripe, και αποκτά πρόσβαση μετά από επιβεβαίωση πληρωμής.
+    \item \textbf{Direct Assignment Flow:} Trainer αναθέτει υπάρχον πρόγραμμα απευθείας σε Trainee (program reuse), χωρίς υποχρεωτικό βήμα αγοράς.
+\end{itemize}
+
+Το παρακάτω διάγραμμα δείχνει τη ροή της \textbf{direct assignment}. Η ροή του marketplace συνδέεται με τη διάθεση του προγράμματος και την πληρωμή μέσω Stripe, και για αυτό καλύπτεται και από το επόμενο payment flow. Δεν είναι το διάγραμμα της αυθεντικοποίησης που εμφανίζεται πιο πάνω. Η MySQL δεν επικοινωνεί απευθείας με τον trainer· επιστρέφει το αποτέλεσμα στο backend, και το backend ενημερώνει το frontend.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+    \node[lane] (t) at (0,0) {Trainer};
+    \node[lane] (f) at (4,0) {React Frontend};
+    \node[lane] (b) at (8,0) {PHP Backend};
+    \node[lane] (m) at (12,0) {MySQL};
+
+    \draw[dashed] (t.south) -- ++(0,-5.3);
+    \draw[dashed] (f.south) -- ++(0,-5.3);
+    \draw[dashed] (b.south) -- ++(0,-5.3);
+    \draw[dashed] (m.south) -- ++(0,-5.3);
+
+    \node[flowstep] at (2,-1.0) {Select Existing Program};
+    \draw[arr] (t) -- ++(0,-1.0) -- (f);
+
+    \node[flowstep] at (6,-2.0) {POST AssignProgramToClient.php};
+    \draw[arr] (f) -- ++(0,-2.0) -- (b);
+
+    \node[flowstep] at (10,-3.0) {Insert program\_assignments};
+    \draw[arr] (b) -- ++(0,-3.0) -- (m);
+
+    \node[flowstep] at (10.8,-4.0) {Backend creates/binds workout plan};
+    \draw[arr] (m) -- ++(0,-4.0) -| (b);
+
+    \node[flowstep] at (2,-5.0) {Trainee Sees Assigned Program};
+    \draw[arr] (b) -- ++(0,-5.0) -| (f);
+\end{tikzpicture}
+\caption{Sequence Diagram: Program Reuse and Direct Assignment to Trainee}
+\end{figure}
+
+\subsection{Payment / Stripe Confirmation Flow}
+Για αγορά προγράμματος, το frontend χρησιμοποιεί Stripe Elements και ζητά Payment Intent από το backend. Η καταγραφή ολοκλήρωσης γίνεται τόσο από frontend completion endpoint όσο και από \textbf{Stripe webhook} (source of truth για async επιβεβαιώσεις/refunds).
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+    \node[lane] (tr) at (0,0) {Trainee};
+    \node[lane] (fe) at (3.5,0) {Frontend};
+    \node[lane] (be) at (7,0) {Backend};
+    \node[lane] (st) at (10.5,0) {Stripe};
+    \node[lane] (db) at (14,0) {MySQL};
+
+    \foreach \x in {tr,fe,be,st,db} {\draw[dashed] (\x.south) -- ++(0,-7.3);} 
+
+    \draw[arr] (tr) -- ++(0,-1.0) -- (fe);
+    \node[flowstep] at (1.8,-1.0) {Choose Program};
+
+    \draw[arr] (fe) -- ++(0,-2.0) -- (be);
+    \node[flowstep] at (5.2,-2.0) {CreatePaymentIntent};
+
+    \draw[arr] (be) -- ++(0,-3.0) -- (st);
+    \node[flowstep] at (8.8,-3.0) {PaymentIntent};
+
+    \draw[arr] (st) -- ++(0,-3.6) -| (fe);
+    \node[flowstep] at (7.0,-3.8) {client\_secret};
+
+    \draw[arr] (fe) -- ++(0,-4.3) -- (st);
+    \node[flowstep] at (6.3,-4.3) {Confirm Payment (Elements)};
+
+    \draw[arr] (st) -- ++(0,-5.1) -| (be);
+    \node[flowstep] at (9.0,-5.1) {Webhook Event};
+
+    \draw[arr] (be) -- ++(0,-5.9) -- (db);
+    \node[flowstep] at (9.4,-5.9) {Update Purchase Status};
+
+    \draw[arr] (db) -- ++(0,-6.7) -| (be);
+    \node[flowstep] at (10.3,-6.7) {DB Update OK};
+
+    \draw[arr] (be) -- ++(0,-7.2) -| (fe);
+    \node[flowstep] at (6.5,-7.2) {Return Completion Status};
+\end{tikzpicture}
+\caption{Sequence Diagram: Stripe Payment + Webhook Synchronization}
+\end{figure}
+
+\subsection{Messaging Architecture (Firestore)}
+Το chat είναι real-time και βασίζεται σε Firestore. Ο χρήστης λαμβάνει custom Firebase token από το backend endpoint \textenglish{GetFirebaseCustomToken.php}, και στη συνέχεια η frontend εφαρμογή συνδέεται σε conversation documents/messages με rules based authorization.
+
+\subsection{Ρόλοι Συστήματος}
+Οι βασικοί ρόλοι είναι Guest, Trainee, Trainer, Admin. Ο ρόλος \textenglish{manager} αντιμετωπίζεται λειτουργικά ως παραλλαγή admin με περιορισμένα δικαιώματα, χωρίς ξεχωριστό ανεξάρτητο υποσύστημα στο παρόν design document.
+
+\newpage
+
+% ==========================================
+% SECTION 3: ΑΝΑΛΥΤΙΚΗ ΣΧΕΔΙΑΣΗ
+% ==========================================
+\section{Σχεδίαση Βάσης Δεδομένων}
+
+\subsection{Κύριες Οντότητες}
+\begin{itemize}[label=•]
+    \item \textbf{Users \/ Profiles:} \textenglish{user}, \textenglish{trainer\_profiles}
+    \item \textbf{Coach Lifecycle:} \textenglish{coaching\_requests}, \textenglish{coaching\_relationships}
+    \item \textbf{Programs (Marketplace):} \textenglish{trainer\_programs}, \textenglish{trainer\_program\_sessions}, \textenglish{trainer\_program\_exercises}
+    \item \textbf{Programs (Direct Assignment/Client):} \textenglish{program\_assignments}, \textenglish{user\_workout\_plans}, \textenglish{program\_workout\_sessions}, \textenglish{program\_session\_exercises}
+    \item \textbf{Workouts Logging:} \textenglish{workout\_sessions}, \textenglish{workout\_exercise\_logs}, \textenglish{exercises}
+    \item \textbf{Nutrition:} \textenglish{meal\_logs}, \textenglish{foods}, \textenglish{usda\_foods}, \textenglish{custom\_foods}, \textenglish{trainer\_custom\_foods}, \textenglish{user\_nutrition\_goals}, \textenglish{nutrition\_goals}
+    \item \textbf{Payments:} \textenglish{program\_purchases}, \textenglish{program\_reviews}, \textenglish{reviews}
+    \item \textbf{Progress/Analytics:} \textenglish{body\_measurements}, \textenglish{exercise\_1rm\_tracking}, \textenglish{weekly\_volume\_summary}, \textenglish{personal\_records}, \textenglish{user\_streaks}, \textenglish{user\_achievements}, \textenglish{training\_periods}
+    \item \textbf{Verification/Recovery:} \textenglish{signupverification}, \textenglish{resetpasstoken}
+\end{itemize}
+
+\subsection{Κύριες Σχέσεις}
+\begin{itemize}[label=•]
+    \item Ένας Trainer μπορεί να έχει πολλούς Trainees μέσω \textenglish{coaching\_relationships}.
+    \item Ένα \textenglish{trainer\_program} έχει πολλαπλά sessions και exercises.
+    \item Ένας Trainee μπορεί να αποκτήσει πρόγραμμα είτε μέσω αγοράς είτε μέσω άμεσης ανάθεσης.
+    \item Κάθε ολοκληρωμένη προπόνηση αποθηκεύεται σε \textenglish{workout\_sessions}, με granular logs ανά exercise/set.
+    \item Η διατροφή συνδυάζει local foods + USDA cache + trainer custom foods.
+\end{itemize}
+
+\subsection{Lifecycle Statuses}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.4}
+\begin{tabularx}{\textwidth}{|l|X|} % Using 'l' for fit and 'X' for wrap
+\hline
+\rowcolor{blue!80} 
+\textcolor{white}{\textbf{Οντότητα}} & \textcolor{white}{\textbf{Καταστάσεις Κύκλου Ζωής}} \\ \hline
+\textenglish{\path{trainer_programs.status}} & \textenglish{draft -> published -> archived} \\ \hline
+\textenglish{\path{program_purchases.status}} & \textenglish{pending -> completed -> refunded} \\ \hline
+\textenglish{\path{coaching_requests.status}} & \textenglish{pending -> accepted / declined} \\ \hline
+\textenglish{\path{coaching_relationships.status}} & \textenglish{active -> disconnected} \\ \hline
+\textenglish{\path{training_periods.status}} & \textenglish{active -> completed} \\ \hline
+\end{tabularx}
+\caption{Status lifecycle βασικών business οντοτήτων.}
+\end{table}
+\FloatBarrier
+
+\newpage
+
+% ==========================================
+% SECTION 4: ΑΝΑΛΥΤΙΚΗ ΣΧΕΔΙΑΣΗ ΡΟΩΝ
+% ==========================================
+\section{Αναλυτική Σχεδίαση Ροών}
+
+\subsection{Διαχείριση Χρηστών (Authentication)}
+
+\textbf{Περιγραφή:} Επιτρέπει στον χρήστη (Guest/Trainee/Trainer/Admin) να κάνει εγγραφή και είσοδο με session-based authorization στο backend.
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.5}
+\begin{tabularx}{\textwidth}{|L|R|}
+\hline
+\rowcolor{blue!80} \textcolor{white}{\textbf{Ιδιότητα}} & \textcolor{white}{\textbf{Τιμή}} \\ \hline
+1. Αρχική Συνθήκη   & Ο χρήστης επιλέγει Sign Up ή Login. \\ \hline
+2. Δράση            & Το Frontend στέλνει \textenglish{POST} request σε \textenglish{SignUp.php} ή \textenglish{Login.php}. \\ \hline
+3. Έλεγχος Backend  & Το backend ελέγχει στοιχεία στη MySQL, δημιουργεί session και CSRF token. \\ \hline
+4. Συνθήκη Τερματισμού & Ο ρόλος χρήστη αναγνωρίζεται (\textenglish{trainee/trainer/admin}) και επιτρέπεται πρόσβαση. \\ \hline
+5. Αποτέλεσμα        & Redirect στο κατάλληλο dashboard και authorized API χρήση με session cookie. \\ \hline
+\end{tabularx}
+\caption{Αναλυτική διαδικασία διαχείρισης χρηστών.}
+\end{table}
+\FloatBarrier
+
+\subsection{Ροή Marketplace Αγοράς Προγράμματος}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.5}
+\begin{tabularx}{\textwidth}{|L|R|}
+\hline
+\rowcolor{blue!80} \textcolor{white}{\textbf{Ιδιότητα}} & \textcolor{white}{\textbf{Τιμή}} \\ \hline
+1. Αρχική Συνθήκη & Ο Trainee επιλέγει published πρόγραμμα στο marketplace. \\ \hline
+2. Δράση & Το Frontend ζητά \textenglish{CreatePaymentIntent.php}. \\ \hline
+3. Έλεγχος Backend & Τιμή/currency διαβάζονται από DB, δημιουργείται Stripe PaymentIntent. \\ \hline
+4. Συνθήκη Τερματισμού & Webhook ή completion endpoint μαρκάρει αγορά ως \textenglish{completed}. \\ \hline
+5. Αποτέλεσμα & Ο Trainee αποκτά πρόσβαση στο αγορασμένο πρόγραμμα. \\ \hline
+\end{tabularx}
+\caption{Αναλυτική διαδικασία αγοράς προγράμματος (Stripe + Webhook).}
+\end{table}
+\FloatBarrier
+
+\subsection{Ροή Άμεσης Ανάθεσης (Program Reuse)}
+
+\textbf{Περιγραφή:} Επιτρέπει στον Trainer να αναθέσει υπάρχον πρόγραμμα που έχει ήδη δημιουργήσει σε άλλον Trainee.
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.5}
+\begin{tabularx}{\textwidth}{|L|R|}
+\hline
+\rowcolor{blue!80} \textcolor{white}{\textbf{Ιδιότητα}} & \textcolor{white}{\textbf{Τιμή}} \\ \hline
+1. Αρχική Συνθήκη   & Ο Trainer επιλέγει Trainee από το My Clients. \\ \hline
+2. Δράση            & Επιλέγει υπάρχον πρόγραμμα και στέλνει ανάθεση. \\ \hline
+3. Έλεγχος Backend  & Validate session/role και insert σε \textenglish{program\_assignments}. \\ \hline
+4. Συνθήκη Τερματισμού & Δημιουργία σύνδεσης προγράμματος στον Trainee με sessions/exercises. \\ \hline
+5. Αποτέλεσμα        & Το πρόγραμμα εμφανίζεται άμεσα στον Trainee προς εκτέλεση. \\ \hline
+\end{tabularx}
+\caption{Αναλυτική διαδικασία ανάθεσης υπάρχοντος προγράμματος.}
+\end{table}
+\FloatBarrier
+
+\subsection{Workouts + Nutrition + Analytics Flow}
+\textbf{Περιγραφή:} Ο Trainee εκτελεί προπόνηση, καταγράφει διατροφή, και λαμβάνει ενημερωμένα analytics/history με date filters.
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.5}
+\begin{tabularx}{\textwidth}{|L|R|}
+\hline
+\rowcolor{blue!80} \textcolor{white}{\textbf{Ιδιότητα}} & \textcolor{white}{\textbf{Τιμή}} \\ \hline
+1. Αρχική Συνθήκη & Ο Trainee ανοίγει My Workouts / Meal Logging. \\ \hline
+2. Δράση & Καταγράφει sets/reps/weights και foods (USDA search + logs). \\ \hline
+3. Έλεγχος Backend & Αποθήκευση σε \textenglish{workout\_sessions, workout\_exercise\_logs, meal\_logs}. \\ \hline
+4. Συνθήκη Τερματισμού & Analytics endpoints επιστρέφουν history με date range filtering. \\ \hline
+5. Αποτέλεσμα & Ο χρήστης βλέπει ενημερωμένα charts προόδου, nutrition summaries και history. \\ \hline
+\end{tabularx}
+\caption{Ενοποιημένη ροή καταγραφής και analytics.}
+\end{table}
+\FloatBarrier
+
+\newpage
+
+% ==========================================
+% SECTION 5: ΑΣΦΑΛΕΙΑ
+% ==========================================
+\section{Ασφάλεια Συστήματος}
+
+\subsection{Session \/ Role-based Authorization}
+Το backend επιτρέπει πρόσβαση μόνο σε authenticated sessions. Οι protected endpoints ελέγχουν role privileges (trainee, trainer, admin, manager) πριν την επιχειρησιακή λογική.
+
+\subsection{CSRF Protection}
+Το σύστημα δημιουργεί CSRF token στο session και το συγχρονίζει με cookie (\textenglish{XSRF-TOKEN}). Τα state-changing requests ελέγχονται με CSRF header για αποτροπή cross-site request forgery.
+
+\subsection{CORS και Cookie Policy}
+Χρησιμοποιείται ελεγχόμενο CORS policy για επιτρεπόμενα origins, ενώ τα session cookies είναι \textenglish{HttpOnly} και \textenglish{SameSite} για καλύτερη προστασία.
+
+\subsection{Password / Recovery Security}
+Οι κωδικοί αποθηκεύονται hashed στη MySQL. Τα flows email verification και reset password χρησιμοποιούν time-bound tokens.
+
+\subsection{Payment Security}
+Η τιμή αγοράς δεν εμπιστεύεται frontend payload. Το backend διαβάζει τιμή από DB και δημιουργεί PaymentIntent. Επιπλέον, τα webhook events του Stripe ελέγχονται με signature verification πριν ενημερωθεί η κατάσταση αγοράς.
+
+\newpage
+
+% ==========================================
+% SECTION 6: DEPLOYMENT (SHORT)
+% ==========================================
+\section{Deployment Σχεδίαση (Cloud-agnostic)}
+
+\subsection{Τοπολογία Υψηλού Επιπέδου}
+\begin{itemize}[label=•]
+    \item Frontend SPA served μέσω static hosting/CDN.
+    \item PHP API σε application server layer.
+    \item Managed MySQL-compatible database.
+    \item Εξωτερικές υπηρεσίες: Stripe, Firebase, USDA, Mailchimp.
+\end{itemize}
+
+\subsection{Περιβαλλοντικές Μεταβλητές και Secrets}
+Όλα τα API keys και credentials (DB, Stripe, Firebase service account, Mailchimp, SMTP) διατηρούνται σε environment variables και δεν εκτίθενται στο frontend bundle.
+
+\subsection{Backup / Recovery (Brief)}
+Προτείνεται τακτικό DB backup policy και test restore διαδικασίες για λειτουργική συνέχεια. Το design document κρατά συνοπτική αναφορά χωρίς επιχειρησιακές SLA λεπτομέρειες.
+
+\newpage
+
+% ==========================================
+% SECTION 7: ΣΥΜΠΕΡΑΣΜΑ
+% ==========================================
+\section{Συμπέρασμα}
+Η σχεδίαση του CoachFlow υλοποιεί πλήρως decoupled web αρχιτεκτονική με σαφή separation concerns μεταξύ Frontend, Backend και Database. Υποστηρίζει ολοκληρωμένο lifecycle για Trainee/Trainer/Admin (και manager ως admin variant), ασφαλείς πληρωμές, real-time messaging, και επεκτάσιμες ροές προγραμμάτων (marketplace + direct assignment), καλύπτοντας τις βασικές ανάγκες της πλατφόρμας.
+
+\end{document}

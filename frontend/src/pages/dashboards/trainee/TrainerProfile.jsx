@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ViewReviewsModal from '../../../components/ViewReviewsModal';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import TraineeDashboard from '../../../components/TraineeDashboard';
@@ -7,6 +8,7 @@ const TrainerProfile = () => {
   const { trainerId } = useParams();
   const navigate = useNavigate();
   const [trainer, setTrainer] = useState(null);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -229,7 +231,12 @@ const TrainerProfile = () => {
                     )}
                     
                     {reviews.length > 0 && (
-                      <div className="d-flex align-items-center mb-3">
+                      <div 
+                        className="d-flex align-items-center mb-3"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => setShowReviewsModal(true)}
+                        title="View All Reviews"
+                      >
                         <i className="bi bi-star-fill text-warning me-2"></i>
                         <span className="fw-bold me-2">
                           {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
@@ -411,6 +418,15 @@ const TrainerProfile = () => {
               </div>
             </div>
           </div>
+        )}
+
+        {trainer && (
+          <ViewReviewsModal
+            show={showReviewsModal}
+            onHide={() => setShowReviewsModal(false)}
+            trainerId={trainer.userid}
+            trainerName={trainer.full_name || trainer.username}
+          />
         )}
       </div>
     </TraineeDashboard>

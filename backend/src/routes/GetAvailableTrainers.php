@@ -11,8 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit();
 }
 
-// Check authentication
-checkAuth(['trainee', 'trainer']);
+// Check authentication - marketplace is for trainees only
+checkAuth(['trainee']);
 
 try {
     $userId = $_SESSION['user_id'] ?? null;
@@ -90,7 +90,6 @@ try {
     $query = "SELECT 
                 u.userid as id,
                 u.full_name as name,
-                u.email,
                 u.username,
                 COALESCE(tp.bio, u.bio) as bio,
                 COALESCE(tp.specializations, u.specializations) as specializations,
@@ -100,8 +99,8 @@ try {
                 tp.availability_status,
                 tp.max_clients,
                 tp.current_clients,
-                COALESCE(urs.average_rating, tp.average_rating, 0) as average_rating,
-                COALESCE(urs.review_count, tp.total_reviews, 0) as total_reviews,
+                COALESCE(urs.average_rating, 0) as average_rating,
+                COALESCE(urs.review_count, 0) as total_reviews,
                 COALESCE(tp.profile_image, (SELECT g.image FROM gallery g WHERE g.imageid = u.imageid LIMIT 1)) as profile_image,
                 tp.verified,
                 tp.created_at as member_since,
@@ -143,7 +142,7 @@ try {
     
     // Add rating filter
     if ($minRating > 0) {
-        $query .= " AND COALESCE(urs.average_rating, tp.average_rating, 0) >= ?";
+        $query .= " AND COALESCE(urs.average_rating, 0) >= ?";
         $params[] = $minRating;
         $types .= "d";
     }
@@ -194,23 +193,23 @@ try {
     // Add sorting
     switch ($sortBy) {
         case 'price_asc':
-            $query .= ", tp.hourly_rate ASC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
+            $query .= ", tp.hourly_rate ASC, COALESCE(urs.average_rating, 0) DESC";
             break;
         case 'price_desc':
-            $query .= ", tp.hourly_rate DESC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
+            $query .= ", tp.hourly_rate DESC, COALESCE(urs.average_rating, 0) DESC";
             break;
         case 'clients':
-            $query .= ", tp.current_clients DESC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
+            $query .= ", tp.current_clients DESC, COALESCE(urs.average_rating, 0) DESC";
             break;
         case 'reviews':
-            $query .= ", COALESCE(urs.review_count, tp.total_reviews, 0) DESC, COALESCE(urs.average_rating, tp.average_rating, 0) DESC";
+            $query .= ", COALESCE(urs.review_count, 0) DESC, COALESCE(urs.average_rating, 0) DESC";
             break;
         case 'newest':
             $query .= ", tp.created_at DESC";
             break;
         case 'rating':
         default:
-            $query .= ", COALESCE(urs.average_rating, tp.average_rating, 0) DESC, COALESCE(urs.review_count, tp.total_reviews, 0) DESC";
+            $query .= ", COALESCE(urs.average_rating, 0) DESC, COALESCE(urs.review_count, 0) DESC";
             break;
     }
     
@@ -280,7 +279,7 @@ try {
     }
 
     if ($minRating > 0) {
-        $countQuery .= " AND COALESCE(urs.average_rating, tp.average_rating, 0) >= ?";
+        $countQuery .= " AND COALESCE(urs.average_rating, 0) >= ?";
         $countParams[] = $minRating;
         $countTypes .= 'd';
     }

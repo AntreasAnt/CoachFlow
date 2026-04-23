@@ -105,7 +105,7 @@ const ProgramFilters = ({ filters, onFilterChange, onClearFilters }) => {
 
           {/* Price Range */}
           <div className="col-md-12">
-            <label className="form-label small fw-bold text-white">Price Range ($)</label>
+            <label className="form-label small fw-bold text-white">Price Range (€)</label>
             <div className="row g-2">
               <div className="col-6">
                 <input

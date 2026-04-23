@@ -14,6 +14,20 @@ try {
     $user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : $_SESSION['user_id'];
     $include_reviewer_info = isset($_GET['include_reviewer_info']) && $_GET['include_reviewer_info'] === 'true';
     
+    // Pagination parameters
+    $page = isset($_GET['page']) && (int)$_GET['page'] > 0 ? (int)$_GET['page'] : 1;
+    $limit = isset($_GET['limit']) && (int)$_GET['limit'] > 0 ? (int)$_GET['limit'] : 10;
+    $offset = ($page - 1) * $limit;
+    
+    // Get total count for pagination
+    $countQuery = "SELECT COUNT(*) as total FROM reviews r WHERE r.reviewee_id = ?";
+    $countStmt = $conn->prepare($countQuery);
+    $countStmt->bind_param("i", $user_id);
+    $countStmt->execute();
+    $totalResult = $countStmt->get_result()->fetch_assoc();
+    $total_reviews = $totalResult['total'];
+    $countStmt->close();
+    
     // Get reviews for this user
     $query = "SELECT 
                 r.id,
@@ -37,10 +51,10 @@ try {
         $query .= " LEFT JOIN user u ON r.reviewer_id = u.userid";
     }
     
-    $query .= " WHERE r.reviewee_id = ? ORDER BY r.updated_at DESC";
+    $query .= " WHERE r.reviewee_id = ? ORDER BY r.updated_at DESC LIMIT ? OFFSET ?";
     
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("i", $user_id);
+    $stmt->bind_param("iii", $user_id, $limit, $offset);
     $stmt->execute();
     $result = $stmt->get_result();
     
@@ -83,7 +97,12 @@ try {
         'user_id' => $user_id,
         'stats' => $stats,
         'reviews' => $reviews,
-        'total_reviews' => count($reviews)
+        'total_reviews' => $total_reviews,
+        'pagination' => [
+            'current_page' => $page,
+            'limit' => $limit,
+            'total_pages' => ceil($total_reviews / $limit)
+        ]
     ]);
     
     $stmt->close();

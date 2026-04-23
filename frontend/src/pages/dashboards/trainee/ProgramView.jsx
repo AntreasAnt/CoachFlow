@@ -60,10 +60,17 @@ const ProgramView = () => {
               counts[sessionId] = (counts[sessionId] || 0) + 1;
             }
           }
-          // Also check by plan name
+          // Also check by plan name and strip " (ended early)" if present
           if (planName) {
-            completed.add(planName);
-            counts[planName] = (counts[planName] || 0) + 1;
+            const cleanPlanName = planName.replace(' (ended early)', '').trim();
+            completed.add(cleanPlanName);
+            counts[cleanPlanName] = (counts[cleanPlanName] || 0) + 1;
+            
+            // Only add the original name if it's different to prevent double counting
+            if (cleanPlanName !== planName) {
+              completed.add(planName);
+              counts[planName] = (counts[planName] || 0) + 1;
+            }
           }
         });
         

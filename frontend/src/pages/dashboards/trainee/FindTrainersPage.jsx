@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import TraineeDashboard from '../../../components/TraineeDashboard';
 import { BACKEND_ROUTES_API } from '../../../config/config';
+import ViewReviewsModal from '../../../components/ViewReviewsModal';
 import APIClient from '../../../utils/APIClient';
 
 const EMPTY_CONNECTION_LOCK = {
@@ -19,6 +20,8 @@ const FindTrainersPage = ({
   showMyCoachShortcut = true,
   initialConnectionView = 'all',
 }) => {
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [selectedTrainerForReviews, setSelectedTrainerForReviews] = useState(null);
   const PAGE_SIZE = 12;
 
   const navigate = useNavigate();
@@ -687,7 +690,16 @@ const FindTrainersPage = ({
                                 @{trainer.username}
                               </p>
                             )}
-                            <div className="mb-1">
+                            <div 
+                              className="mb-1"
+                              style={{ cursor: 'pointer' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedTrainerForReviews(trainer);
+                                setShowReviewsModal(true);
+                              }}
+                              title="View Reviews"
+                            >
                               {getRatingStars(trainer.average_rating || 0)}
                               <small className="ms-1" style={{ color: 'var(--text-secondary)' }}>
                                 ({trainer.total_reviews || 0})
@@ -1112,6 +1124,15 @@ const FindTrainersPage = ({
             </div>
           </div>
         </div>
+      )}
+
+      {selectedTrainerForReviews && (
+        <ViewReviewsModal
+          show={showReviewsModal}
+          onHide={() => setShowReviewsModal(false)}
+          trainerId={selectedTrainerForReviews.id}
+          trainerName={selectedTrainerForReviews.name || selectedTrainerForReviews.username}
+        />
       )}
     </>
   );

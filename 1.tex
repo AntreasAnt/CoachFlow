@@ -1,0 +1,208 @@
+%!TEX TS-program = xelatex
+\documentclass[12pt,a4paper]{report}
+
+% --- Packages for Greek Language Support ---
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{greek}
+\setotherlanguage{english}
+
+% Set a font that supports Greek (Common on Windows/Mac/Linux)
+\newfontfamily\greekfont[Script=Greek]{Times New Roman}
+\newfontfamily\greekfontsf[Script=Greek]{Arial}
+\newfontfamily\greekfonttt[Script=Greek]{Courier New}
+
+% --- General Packages ---
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{xcolor}
+
+% Custom Styling
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1em}
+
+% --- DOCUMENT START ---
+\begin{document}
+
+% ==========================================
+% TITLE PAGE
+% ==========================================
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+    % \includegraphics[width=0.5\textwidth]{cut_logo_placeholder} % Replace with actual logo path
+    
+    \vspace{1cm}
+    {\LARGE \textbf{Τεχνολογικό Πανεπιστήμιο Κύπρου}} \\
+    \vspace{0.5cm}
+    {\large \underline{\textbf{Τμήμα Μηχανικών Ηλεκτρονικών Υπολογιστών}}} \\
+    {\large \underline{\textbf{και Πληροφορικής}}}
+    
+    \vspace{2cm}
+    {\Large \textbf{Έγγραφο προδιαγραφών πτυχιακής εργασίας}}
+    
+    \vspace{2cm}
+    {\large \textbf{Επιβλέπουσα Καθηγήτρια: Ελίζα Αγγελίδου Λοΐζου.}}
+    
+    \vspace{1cm}
+    {\large \textbf{\underline{Θέμα}: «CoachFlow: Διαδικτυακό Σύστημα Διαχείρισης Προπονητών και Πελατών».}}
+    
+    \vfill
+    \begin{flushright}
+        \textbf{Αντωνίου Ανδρέας} \\
+        \textbf{ΑΦΤ: [Συμπλήρωσε ΑΦΤ]}
+    \end{flushright}
+\end{titlepage}
+
+% ==========================================
+% TABLE OF CONTENTS
+% ==========================================
+\tableofcontents
+\newpage
+
+% ==========================================
+% SECTION 1: ΕΙΣΑΓΩΓΗ
+% ==========================================
+\section{Εισαγωγή}
+
+\subsection{Σκοπός}
+Ο σκοπός αυτού του εγγράφου προδιαγραφών είναι να παρουσιάσει αναλυτικότερα την λειτουργικότητα της πλατφόρμας “CoachFlow”. Το CoachFlow είναι ένα σύγχρονο διαδικτυακό σύστημα που γεφυρώνει προπονητές (coaches) και πελάτες (clients), προσφέροντας εργαλεία για την δημιουργία και παρακολούθηση προγραμμάτων γυμναστικής (workouts), πλάνων διατροφής (nutrition), διαχείριση αγορών και επικοινωνία.
+
+\subsection{Έκταση}
+Το έγγραφο καθορίζει τις κύριες λειτουργίες του συστήματος με βάση τις απαιτήσεις των χρηστών (προπονητών και απλών χρηστών) και την αρχιτεκτονική του λογισμικού όπως αυτή έχει σχεδιαστεί και αναπτυχθεί.
+
+\subsection{Ορισμοί}
+\begin{description}
+    \item[\underline{React.js, Vite, Material-UI, Bootstrap}] \hfill \\
+    Οι κύριες τεχνολογίες που θα χρησιμοποιηθούν για την ανάπτυξη της διεπαφής χρήστη (Frontend). Η χρήση React επιτρέπει τη συντήρηση ενός δυναμικού και γρήγορου Single Page Application (SPA).
+    
+    \item[\underline{PHP, Composer, REST API}] \hfill \\
+    Τεχνολογίες του Backend. Το backend διαχειρίζεται τα αιτήματα των χρηστών, επικοινωνεί με τη βάση δεδομένων και τα εξωτερικά APIs.
+    
+    \item[\underline{MySQL \& Firebase}] \hfill \\
+    Η σχεσιακή Βάση Δεδομένων MySQL χρησιμοποιείται για την αποθήκευση των περισσότερων δεδομένων (χρήστες, προγράμματα, αγορές). Το Firebase χρησιμοποιείται για την λειτουργία ταυτοποίησης (Authentication) και συγχρονισμό δεδομένων σε πραγματικό χρόνο όπου απαιτείται.
+    
+    \item[\underline{Stripe API}] \hfill \\
+    Η υπηρεσία που ενσωματώνεται στο σύστημα για την επεξεργασία και ασφάλεια των ηλεκτρονικών πληρωμών (συνδρομές/πακέτα προπονητών).
+\end{description}
+
+\subsection{Αναφορές}
+
+\subsubsection{Τεχνικές Ιστοσελίδες :}
+\begin{itemize}[label=•]
+    \item \url{https://react.dev/} (React Documentation)
+    \item \url{https://mui.com/} (Material-UI)
+    \item \url{https://www.php.net/} (PHP Documentation)
+    \item \url{https://stripe.com/docs/} (Stripe API)
+    \item \url{https://firebase.google.com/} (Firebase Setup \& Auth)
+\end{itemize}
+
+\subsection{Επισκόπηση}
+\begin{itemize}
+    \item Στην ενότητα 2 θα γίνει παρουσίαση της αρχιτεκτονικής του συστήματος, των λειτουργιών εγγραφής/είσοδου (Authentication) και της ροής δεδομένων.
+    \item Στην ενότητα 3 θα παρουσιαστούν οι κύριες οντότητες της βάσης δεδομένων (ER Diagram).
+    \item Στην ενότητα 4 θα αναλυθεί η λειτουργία των πληρωμών (\textenglish{Purchases \& Subscriptions}).
+    \item Στην ενότητα 5 θα παρουσιαστεί η ασφάλεια και η διαχείριση συνεδριών (Sessions/Tokens).
+\end{itemize}
+
+\newpage
+
+% ==========================================
+% SECTION 2: ΡΟΗ ΔΕΔΟΜΕΝΩΝ ΚΑΙ ΑΡΧΙΤΕΚΤΟΝΙΚΗ
+% ==========================================
+\section{Ροή Δεδομένων και Λειτουργίες (Features)}
+
+\subsection{Μοντέλα Χρηστών (User Roles)}
+Το σύστημα υποστηρίζει κυρίως τρείς (3) ρόλους:
+\begin{enumerate}
+    \item \textbf{Πελάτης (Client):} Μπορεί να δει το προφίλ των προπονητών, να ενοικιάσει/αγοράσει ένα πακέτο γυμναστικής (Hire a coach), να παρακολουθεί το πλάνο διατροφής και τις ασκήσεις του, και να επικοινωνεί μέσω μηνυμάτων (Messages) με τον προπονητή του.
+    \item \textbf{Προπονητής (Coach):} Μπορεί να διαχειρίζεται το προφίλ του, να αναθέτει προγράμματα στους πελάτες του (Workout \& Nutrition plans), να παρακολουθεί την πρόοδο τους και να δέχεται πληρωμές.
+    \item \textbf{Διαχειριστής (Admin):} Έχει γενική εποπτεία της πλατφόρμας, των χρηστών και των συναλλαγών (Analytics, System health).
+\end{enumerate}
+
+\subsection{Διαγράμματα Χρήσης (Use Cases)}
+\subsubsection{Διαδικασία Εγγραφής και Εισόδου :}
+
+\begin{center}
+    \textit{[Image Placeholder: Use Case Diagram for Login/Register]}
+\end{center}
+
+Η ταυτοποίηση χρηστών (Authentication) πραγματοποιείται με τη βοήθεια του Firebase Auth, παρέχοντας ένα ασφαλές και κρυπτογραφημένο περιβάλλον. Αφού ο χρήστης ταυτοποιηθεί με επιτυχία στο Firebase, το σύστημα επικοινωνεί με το PHP backend του ελέγχοντας τα στοιχεία από τη MySQL βάση δεδομένων και επιστρέφει το αντίστοιχο προφίλ μαζί με το ρόλο του (Authority/Role).
+
+\subsection{Αρχιτεκτονική Εφαρμογής (Class/Component Diagram)}
+\subsubsection{Διαχωρισμός Frontend \& Backend :}
+
+\begin{center}
+    \textit{[Image Placeholder: Architecture Diagram SPA \& REST API]}
+\end{center}
+
+Το σύστημα αποτελείται από 2 βασικά υποσυστήματα. Το \textbf{Frontend Application} το οποίο καταναλώνει πόρους μέσω \textbf{REST API}, και το \textbf{Backend PHP Server} που λειτουργεί ως πάροχος αυτών των υπηρεσιών χρησιμοποιώντας αρχιτεκτονική Model-View-Controller (MVC) σε επίπεδο endpoints:
+\begin{itemize}
+    \item \textbf{Controllers:} Ελέγχουν την είσοδο του χρήστη και την επιχειρηματική λογική (π.χ. \textenglish{CoachController, WorkoutController, NutritionController}).
+    \item \textbf{Models:} Διαχειρίζονται τα queries στην βάση δεδομένων (\textenglish{CoachModel, ProgressModel, PurchaseModel}).
+    \item \textbf{Database (MySQL):} Ο χώρος μόνιμης αποθήκευσης των δεδομένων της εφαρμογής.
+\end{itemize}
+
+\newpage
+
+% ==========================================
+% SECTION 3: ΒΑΣΗ ΔΕΔΟΜΕΝΩΝ (ERD)
+% ==========================================
+\section{Entity - Relationship Configuration}
+\subsection{Στοιχεία Βάσης Δεδομένων}
+
+\begin{center}
+    \textit{[Image Placeholder: Database Schema Tables: users, coaches, workouts, messages, purchases]}
+\end{center}
+
+Οι κύριοι πίνακες του συστήματος και οι σχέσεις τους έχουν σχεδιαστεί ώστε να καλύπτουν πλήρως τις ανάγκες διαχείρισης:
+\begin{itemize}
+    \item \textbf{Πίνακας Users \& Coaches:} Αποθηκεύει στοιχεία προφίλ, επαφών και το ρόλο του χρήστη. Ένας χρήστης συνδέεται με έναν ή περισσότερους προπονητές (σχέση N προς M ή 1 προς N μέσω ενδιάμεσου πίνακα).
+    \item \textbf{Πίνακας Workouts \& Nutrition:} Συνδέονται άμεσα με το ID του χρήστη (Foreign Key: User\_ID) στον οποίο έχουν ανατεθεί, καθώς και με το ID του προπονητή που τα δημιούργησε.
+    \item \textbf{Πίνακας Progress/Analytics:} Κρατάει ιστορικό σωματικών μετρήσεων του χρήστη ανά ημερομηνία, προσφέροντας data για τα διαγράμματα στο Frontend.
+\end{itemize}
+
+* Στις ευαίσθητες πληροφορίες όπως κωδικοί πρόσβασης χρησιμοποιούνται κρυπτογραφημένα tokens (JWT / Hash) σε συνδυασμό με το Firebase και δεν αποθηκεύονται σε απλή μορφή κειμένου.
+
+\newpage
+
+% ==========================================
+% SECTION 4: ΣΥΝΑΛΛΑΓΕΣ & ΑΠΟΘΗΚΕΥΣΗ (Stripe & Uploads)
+% ==========================================
+\section{Συναλλαγές και Αποθήκευση Δεδομένων}
+
+\subsection{Ενσωμάτωση Πληρωμών (Stripe API)}
+Για την ενοικίαση υπηρεσιών (Hire a coach), το CoachFlow ενσωματώνει το \textbf{Stripe}. 
+Όταν ο πελάτης προχωρά σε αγορά, το σύστημα επικοινωνεί μέσω του backend \textenglish{(CreatePaymentIntent.php)} με την πλατφόρμα της Stripe, και επιστρέφει στο Frontend το κατάλληλο \textenglish{client\_secret} για να ολοκληρωθεί η συναλλαγή με ασφάλεια, χωρίς οι πιστωτικές κάρτες να αποθηκεύονται στη δική μας βάση δεδομένων.
+
+\subsection{Αποθήκευση Αρχείων (Media Storage)}
+Εικόνες προφίλ των χρηστών, φωτογραφίες προόδου (Progress Photos) και βίντεο/gifs ασκήσεων ενδέχεται να αποθηκεύονται είτε στον φάκελο του server (\textenglish{/frontend/public/assets}) για τα στατικά εικονίδια, είτε σε υπηρεσίες φιλοξενίας όπως το Firebase Storage. Το μέγεθος των αρχείων κατά το ανέβασμα ελέγχεται αυστηρά για να αποφευχθεί η υπερφόρτωση δεδομένων.
+
+\newpage
+
+% ==========================================
+% SECTION 5: ΑΣΦΑΛΕΙΑ ΚΑΙ SESSIONS
+% ==========================================
+\section{Ασφάλεια \& Μεταβλητές Sessions (Tokens)}
+Το σύστημα δεν χρησιμοποιεί παραδοσιακά PHP sessions (όπως το \textenglish{\$\_SESSION}) αλλά υιοθετεί την χρήση των \textbf{Authentication Tokens} (JWT/Firebase Auth Tokens), λόγω της αποσυνδεδεμένης φύσης (Decoupled) React και PHP.
+
+\begin{itemize}[label=•]
+    \item Ο χρήστης κατά το login λαμβάνει ένα κρυπτογραφημένο Auth Token.
+    \item Κάθε φορά που το Frontend αιτείται δεδομένα από το Backend (\textenglish{Fetch API / Axios}), στέλνει αυτό το token στα Headers (\textenglish{Authorization: Bearer <token>}).
+    \item Το αρχείο \textenglish{Auth.php} του backend ελέγχει και επαληθεύει εάν το Token είναι έγκυρο. Αν όχι, επιστρέφει \textenglish{HTTP 401 Unauthorized}.
+\end{itemize}
+
+Οι πληροφορίες που περνούν με ασφάλεια στο Frontend State (React Context) είναι:
+\begin{itemize}[label=•]
+    \item \textenglish{User\_ID (UUID)}
+    \item \textenglish{User\_Name}
+    \item \textenglish{User\_Email}
+    \item \textenglish{User\_Role (Client / Coach)}
+\end{itemize}
+
+\end{document}

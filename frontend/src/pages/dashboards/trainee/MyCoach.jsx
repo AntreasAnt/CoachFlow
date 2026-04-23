@@ -3,10 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import TraineeDashboard from '../../../components/TraineeDashboard';
 import FindTrainersPage from './FindTrainersPage';
+import ViewReviewsModal from '../../../components/ViewReviewsModal';
 import '../../../styles/CoachPage.css';
 
 const MyCoach = () => {
   const [coach, setCoach] = useState(null);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [lastRelationship, setLastRelationship] = useState(null);
   const [dismissedCoachDisconnectId, setDismissedCoachDisconnectId] = useState(() => {
     if (typeof window === 'undefined') return null;
@@ -591,7 +593,12 @@ const MyCoach = () => {
                     {coach.specializations || 'Personal Trainer'}
                   </p>
                   {coach.average_rating > 0 && (
-                    <div className="d-flex align-items-center justify-content-center">
+                    <div 
+                      className="d-flex align-items-center justify-content-center" 
+                      onClick={() => setShowReviewsModal(true)} 
+                      style={{ cursor: 'pointer' }}
+                      title="View Reviews"
+                    >
                       <i className="bi bi-star-fill me-1" style={{ color: '#ffc107' }}></i>
                       <span className="fw-bold" style={{ color: 'rgba(255,255,255,0.95)' }}>{coach.average_rating.toFixed(1)}</span>
                       <span className="ms-1" style={{ color: 'rgba(255,255,255,0.6)' }}>({coach.review_count} reviews)</span>
@@ -1005,6 +1012,13 @@ const MyCoach = () => {
             </div>
           </div>
         )}
+
+        <ViewReviewsModal 
+          show={showReviewsModal} 
+          onHide={() => setShowReviewsModal(false)} 
+          trainerId={coach.trainer_id} 
+          trainerName={coach.name || coach.username} 
+        />
       </div>
     </TraineeDashboard>
   );

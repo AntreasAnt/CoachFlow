@@ -467,7 +467,7 @@ try {
 
         $revenueTotalByCurrency = rows(
             $conn,
-            "SELECT currency, ROUND(SUM(amount), 2) AS revenue
+            "SELECT 'eur' AS currency, ROUND(SUM(amount), 2) AS revenue
              FROM program_purchases
              WHERE status = 'completed'
              GROUP BY currency
@@ -477,7 +477,7 @@ try {
         $revenue30dByCurrency = $purchaseDateExpr !== 'NULL'
             ? rows(
                 $conn,
-                "SELECT currency, ROUND(SUM(amount), 2) AS revenue
+                                "SELECT 'eur' AS currency, ROUND(SUM(amount), 2) AS revenue
                  FROM program_purchases
                  WHERE status = 'completed'
                    AND DATE({$purchaseDateExpr}) >= ?
@@ -505,7 +505,7 @@ try {
                 $revenuePeriodByCurrency = $purchaseDateExpr !== 'NULL'
                         ? rows(
                                 $conn,
-                                "SELECT currency, ROUND(SUM(amount), 2) AS revenue
+                                "SELECT 'eur' AS currency, ROUND(SUM(amount), 2) AS revenue
                                  FROM program_purchases
                                  WHERE status = 'completed'
                                      AND DATE({$purchaseDateExpr}) BETWEEN ? AND ?

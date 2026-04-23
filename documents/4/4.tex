@@ -1,0 +1,807 @@
+%!TEX TS-program = xelatex
+\documentclass[12pt,a4paper]{report}
+
+% --- Packages for Greek Language Support ---
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{greek}
+\setotherlanguage{english}
+
+% Standard fonts
+\newfontfamily\greekfont[Script=Greek]{Times New Roman}
+\newfontfamily\greekfontsf[Script=Greek]{Arial}
+\newfontfamily\greekfonttt[Script=Greek]{Courier New}
+
+% --- General Packages ---
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{listings}
+
+% Custom colours for code listings
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+% JavaScript / JSX language definition for listings
+\lstdefinelanguage{JavaScript}{
+  keywords={typeof, new, true, false, catch, function, return, null,
+            switch, var, if, in, while, do, else, case, break, class,
+            export, import, const, let, async, await, from, of, default,
+            extends, static, super, throw, try, this},
+  keywordstyle=\color{magenta},
+  ndkeywords={boolean, implements},
+  ndkeywordstyle=\color{blue},
+  sensitive=true,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{codegreen},
+  stringstyle=\color{codepurple},
+  morestring=[b]',
+  morestring=[b]"
+}
+
+\lstset{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    language=PHP
+}
+
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.8em}
+
+\begin{document}
+
+% ==========================================
+% TITLE PAGE
+% ==========================================
+\begin{titlepage}
+    \centering
+
+    \includegraphics[width=0.4\textwidth]{tepak-logo}
+    \vspace{0.5cm}
+
+    {\LARGE \textbf{Τεχνολογικό Πανεπιστήμιο Κύπρου}} \\[0.4cm]
+    {\large \textbf{Τμήμα Μηχανικών Ηλεκτρονικών Υπολογιστών}} \\
+    {\large \textbf{και Πληροφορικής}}
+
+    \vspace{1.5cm}
+
+    \rule{\linewidth}{0.5mm} \\[0.4cm]
+    {\huge \textbf{Έγγραφο Υλοποίησης Πτυχιακής Εργασίας}}
+    \rule{\linewidth}{0.5mm} \\[1cm]
+
+    {\Large \textbf{Θέμα:}} \\[0.3cm]
+    {\Large \textit{«CoachFlow: Διαδικτυακό Σύστημα Διαχείρισης}} \\
+    {\Large \textit{Προπονητών και Πελατών»}}
+
+    \vspace{1.5cm}
+
+    {\large \textbf{Επιβλέπουσα Καθηγήτρια:}} \\
+    {\large Ελίζα Αγγελίδου Λοΐζου}
+
+    \vfill
+
+    \begin{flushright}
+        \large
+        \textbf{Φοιτητής:} \\
+        Αντωνίου Ανδρέας \\
+        \textbf{ΑΦΤ:} 24892
+    \end{flushright}
+\end{titlepage}
+
+% ==========================================
+% TABLE OF CONTENTS
+% ==========================================
+\tableofcontents
+\newpage
+
+% ==========================================
+% SECTION 1: ΕΙΣΑΓΩΓΗ
+% ==========================================
+\section{Εισαγωγή}
+
+\subsection{Σκοπός}
+Ο σκοπός αυτού του εγγράφου υλοποίησης είναι να παρέχει ένα αναλυτικό εγχειρίδιο προγραμματισμού και να αναδείξει πρακτικά αποσπάσματα πραγματικού κώδικα σχετικά με την πλατφόρμα \textenglish{CoachFlow}. Το έγγραφο τεκμηριώνει τεχνικές αποφάσεις, πραγματικά παραδείγματα κώδικα \textenglish{Backend (PHP MVC)} και \textenglish{Frontend (React)}, δυσκολίες που ξεπεράστηκαν κατά τη διάρκεια της ανάπτυξης, και τον τρόπο εγκατάστασης και λειτουργίας του συστήματος.
+
+\subsection{Εμβέλεια}
+Η εμβέλεια αυτού του εγγράφου φτάνει μέχρι τη λεπτομερή επεξήγηση συγκεκριμένων τμημάτων κώδικα, όπως \textenglish{Controllers}, \textenglish{Models}, \textenglish{Routes}, \textenglish{Frontend components} και \textenglish{API integrations}, των δυσκολιών που ξεπεράστηκαν, του \textenglish{deployment} σε τοπικό και παραγωγικό περιβάλλον, και των βασικών περιπτώσεων ελέγχου.
+
+\subsection{Ορισμοί}
+
+\textbf{API (Application Programming Interface)} \\
+Διασύνδεση προγραμματισμού εφαρμογών που επιτρέπει στο \textenglish{React Frontend} να ανταλλάσσει δεδομένα με το \textenglish{PHP Backend} με χρήση \textenglish{JSON}.
+
+\textbf{Firebase Custom Tokens} \\
+Ειδικά διαμορφωμένα ασφαλή \textenglish{tokens} που παράγονται δυναμικά από τον \textenglish{PHP Server} χρησιμοποιώντας το \textenglish{Firebase Admin SDK (kreait/firebase-php)}. Επιστρέφονται στο \textenglish{React} ώστε να πιστοποιηθεί η ταυτότητα του χρήστη και να αποκτήσει πρόσβαση στις υπηρεσίες \textenglish{Firebase} (κυρίως \textenglish{Firestore} για \textenglish{real-time messaging}).
+
+\textbf{MVC (Model-View-Controller)} \\
+Αρχιτεκτονικό πρότυπο στο οποίο βασίζεται το \textenglish{PHP Backend}. Τα \textenglish{Models} διαχειρίζονται τα \textenglish{SQL queries}, οι \textenglish{Controllers} περιέχουν την επιχειρησιακή λογική, και τα \textenglish{Route} αρχεία (\textenglish{.php endpoints}) αποτελούν την είσοδο του \textenglish{REST API}.
+
+\textbf{CSP (Content Security Policy)} \\
+Μηχανισμός ασφάλειας που περιορίζει τις πηγές από τις οποίες ο \textenglish{browser} επιτρέπεται να φορτώσει πόρους, αποτρέποντας επιθέσεις τύπου \textenglish{XSS (Cross-Site Scripting)}.
+
+\textbf{CSRF (Cross-Site Request Forgery)} \\
+Τύπος επίθεσης όπου ένας κακόβουλος ιστότοπος εξαπατά τον \textenglish{browser} να στείλει αίτημα σε άλλον ιστότοπο για λογαριασμό του συνδεδεμένου χρήστη. Αντιμετωπίζεται με \textenglish{synchronised token pattern (XSRF-TOKEN)}.
+
+\subsection{Επισκόπηση}
+\begin{itemize}
+    \item Στην Ενότητα 2 παρουσιάζεται το πλήρες \textenglish{tech stack} με πραγματικές εκδόσεις πακέτων.
+    \item Στην Ενότητα 3 αναφέρονται οι δυσκολίες που αντιμετωπίστηκαν και οι λύσεις που δόθηκαν.
+    \item Στην Ενότητα 4 δίνονται αντιπροσωπευτικά παραδείγματα κώδικα \textenglish{Backend (PHP MVC)}.
+    \item Στην Ενότητα 5 δίνονται αντιπροσωπευτικά παραδείγματα κώδικα \textenglish{Frontend (React)}.
+    \item Στην Ενότητα 6 περιγράφεται η διαδικασία \textenglish{Deployment} σε τοπικό και παραγωγικό περιβάλλον.
+    \item Στην Ενότητα 7 αναλύονται βασικές περιπτώσεις ελέγχου (\textenglish{Test Cases}).
+\end{itemize}
+
+\newpage
+
+% ==========================================
+% SECTION 2: ΠΕΡΙΓΡΑΦΗ ΕΡΓΑΛΕΙΩΝ
+% ==========================================
+\section{Περιγραφή Εργαλείων}
+Για την υλοποίηση του \textenglish{CoachFlow} επιλέχθηκε ένας πλήρως διαχωρισμένος (\textenglish{Decoupled}) \textenglish{Tech Stack}:
+
+\subsection{Frontend}
+Υλοποιήθηκε αποκλειστικά με \textenglish{React.js 19.1.1}, χτισμένο μέσω του \textenglish{Vite 7.1.2} για ταχύτατο \textenglish{Development} και \textenglish{Build}. Η οπτική διεπαφή αναπτύχθηκε κυρίως με \textenglish{Material-UI (MUI) 6.1.6} και \textenglish{Bootstrap 5.3.8}, ενώ η πλοήγηση διαχειρίζεται μέσω \textenglish{React Router DOM 7.9.1}. Τα γραφήματα \textenglish{Analytics} υλοποιήθηκαν με \textenglish{Recharts 3.7.0}, τα \textenglish{Data Grids} του \textenglish{Admin} panel με \textenglish{MUI X Data Grid 7.22.2}, και η εξαγωγή \textenglish{PDF} με \textenglish{jsPDF 2.5.1} και \textenglish{jspdf-autotable 3.8.0}. Τα \textenglish{stylesheets} αναπτύχθηκαν σε \textenglish{SCSS} μέσω \textenglish{Sass 1.92.1}. Για μοναδικά αναγνωριστικά (π.χ. \textenglish{Firestore} συνομιλίες) χρησιμοποιήθηκε η βιβλιοθήκη \textenglish{uuid 9.0.1}.
+
+\subsection{Backend}
+Ο \textenglish{PHP Server} κατασκευάστηκε σε αρχιτεκτονική \textenglish{MVC (Model-View-Controller)}, με \textbf{146 ξεχωριστά \textenglish{Route} αρχεία} που αντιστοιχούν σε \textenglish{REST API endpoints}. Χρησιμοποιήθηκε \textenglish{Composer} για τη διαχείριση των εξής πακέτων:
+\begin{itemize}[label=•]
+    \item \textenglish{phpmailer/phpmailer 6.9:} Αποστολή \textenglish{transactional emails} μέσω \textenglish{Gmail SMTP}.
+    \item \textenglish{vlucas/phpdotenv 5.6:} Φόρτωση μεταβλητών περιβάλλοντος από \textenglish{.env} αρχείο.
+    \item \textenglish{kreait/firebase-php 7.24:} \textenglish{Firebase Admin SDK} για έκδοση \textenglish{Custom Tokens} (μηνύματα \textenglish{Firestore}).
+    \item \textenglish{stripe/stripe-php 19.1:} Ενσωμάτωση \textenglish{Stripe API} για \textenglish{PaymentIntents} και επεξεργασία \textenglish{Webhooks}.
+\end{itemize}
+
+\subsection{Βάση Δεδομένων}
+Επιλέχθηκε η \textenglish{MySQL} λόγω της σχεσιακής αξιοπιστίας της σε μοντέλα όπου ο \textenglish{Trainer} διαχειρίζεται πολλούς \textenglish{Clients} μέσω \textenglish{Foreign Keys}. Η βάση δεδομένων ονομάζεται \textenglish{trainers-all-in-one} και περιέχει πίνακες για χρήστες, σχέσεις προπόνησης, προγράμματα \textenglish{(marketplace \& assignments)}, αγορές, καταγραφές διατροφής/προπόνησης, πρόοδο, \textenglish{analytics} και \textenglish{authentication}. Η πρόσβαση γίνεται μέσω \textenglish{MySQLi} με \textenglish{prepared statements} για αποτροπή \textenglish{SQL Injection}.
+
+\subsection{Εξωτερικές Υπηρεσίες}
+\begin{itemize}[label=•]
+    \item \textbf{Firebase 11.0.0:} \textenglish{Firestore} για \textenglish{real-time messaging}, \textenglish{Firebase Storage} για αποθήκευση αρχείων, και \textenglish{Firebase Auth} με \textenglish{custom tokens} που εκδίδονται από τον \textenglish{PHP Server}.
+    \item \textbf{Stripe:} \textenglish{Stripe Elements} (\textenglish{@stripe/react-stripe-js 5.4.1}) για ασφαλή εισαγωγή καρτών, και \textenglish{PaymentIntents} με \textenglish{Webhooks} στο \textenglish{backend} για ασύγχρονη επιβεβαίωση πληρωμών.
+    \item \textbf{USDA FoodData Central API:} Αναζήτηση τροφών και θρεπτικών στοιχείων για το \textenglish{Nutrition module}, υλοποιημένο μέσω \textenglish{USDAService.php} με τοπική αποθήκευση αποτελεσμάτων (\textenglish{caching}) στον πίνακα \textenglish{usda\_foods}.
+    \item \textbf{Mailchimp API:} Διαχείριση \textenglish{email marketing} (δημιουργία/αποστολή καμπανιών, \textenglish{audiences}) από τον \textenglish{Admin dashboard} μέσω \textenglish{MailchimpService.php}.
+    \item \textbf{Gmail SMTP / PHPMailer:} \textenglish{Transactional emails} (επιβεβαίωση \textenglish{email}, \textenglish{reset password}, ειδοποιήσεις) μέσω \textenglish{MailService.php}.
+\end{itemize}
+
+\newpage
+
+% ==========================================
+% SECTION 3: ΔΥΣΚΟΛΙΕΣ
+% ==========================================
+\section{Δυσκολίες που αντιμετωπίστηκαν}
+Κατά τη διάρκεια της υλοποίησης παρουσιάστηκαν σημαντικές τεχνικές προκλήσεις:
+
+\begin{itemize}
+    \item \textbf{CORS \& Security Headers:} Επειδή το \textenglish{React SPA} (Vite, \textenglish{port} 5173) και το \textenglish{PHP API} (Apache/XAMPP, \textenglish{port} 80) τρέχουν σε διαφορετικά \textenglish{origins}, ο \textenglish{browser} απέκλειε τα \textenglish{cookie-based API requests}. Η λύση υλοποιήθηκε στο \textenglish{cors.php}: ρυθμίστηκαν δυναμικά επιτρεπόμενα \textenglish{origins} μέσω \textenglish{AppConfig} (υποστήριξη πολλαπλών \textenglish{URLs} από το \textenglish{.env}), ενεργοποιήθηκε \textenglish{Access-Control-Allow-Credentials}, ορίστηκε αναλυτική \textenglish{Content Security Policy (CSP)}, και προστέθηκαν επιπλέον κεφαλίδες ασφαλείας (\textenglish{X-Frame-Options: DENY}, \textenglish{X-XSS-Protection}, \textenglish{X-Content-Type-Options: nosniff}, \textenglish{Referrer-Policy}).
+
+    \item \textbf{Υβριδικό Authentication (Sessions \& Firebase):} Το σύστημα χρησιμοποιεί \textenglish{PHP sessions} για την εξουσιοδότηση των \textenglish{business endpoints}, αλλά το \textenglish{real-time chat} απαιτεί σύνδεση στο \textenglish{Firebase}. Για να γεφυρωθεί αυτό το κενό, υλοποιήθηκε το \textenglish{GetFirebaseCustomToken.php}: ο \textenglish{PHP Server} χρησιμοποιεί το \textenglish{kreait/firebase-php SDK} με \textenglish{service account JSON} για έκδοση \textenglish{custom token}. Το \textenglish{React} το χρησιμοποιεί για \textenglish{signInWithCustomToken()} στο \textenglish{Firebase Auth}, αποκτώντας πρόσβαση στο \textenglish{Firestore} χωρίς δεύτερο σύστημα \textenglish{login}.
+
+    \item \textbf{Stripe Webhooks \& PaymentIntents:} Η ενσωμάτωση αξιόπιστων πληρωμών απαιτούσε χειρισμό ασύγχρονων σημάτων από τη \textenglish{Stripe}. Η τιμή αγοράς δεν εμπιστεύεται ποτέ το \textenglish{frontend payload}, το \textenglish{backend} διαβάζει την τιμή από τη βάση δεδομένων και δημιουργεί το \textenglish{PaymentIntent}. Ο τελικός έλεγχος γίνεται μέσω \textenglish{Stripe Webhook (StripeWebhook.php)} με \textenglish{signature verification}, ώστε να αποφευχθεί χειραγώγηση της τιμής από τον \textenglish{client}.
+
+    \item \textbf{Ενσωμάτωση USDA API \& Caching:} Το \textenglish{USDA FoodData Central API} επιστρέφει μεγάλες ποσότητες δεδομένων θρεπτικής αξίας ανά τρόφιμο. Η υλοποίηση του \textenglish{USDAService.php} επιλέγει μόνο τα απαραίτητα πεδία (θερμίδες, πρωτεΐνες, υδατάνθρακες, λίπη) και τα αποθηκεύει στον πίνακα \textenglish{usda\_foods} για αποφυγή επαναλαμβανόμενων \textenglish{API calls}, μείωση \textenglish{latency} και αποφυγή υπέρβασης ορίου κλήσεων (\textenglish{rate limit}).
+
+    \item \textbf{Σύνθετη Διαχείριση Προγραμμάτων (Marketplace vs Direct Assignment):} Το σύστημα υποστηρίζει δύο ξεχωριστές ροές απόκτησης προγράμματος, αγορά μέσω \textenglish{Stripe} (πίνακας \textenglish{program\_purchases}) και άμεση ανάθεση από \textenglish{Trainer} (πίνακας \textenglish{program\_assignments}). Η πολυπλοκότητα εντοπίστηκε στο γεγονός ότι ο \textenglish{Trainee} πρέπει να βλέπει και τα δύο είδη στην ίδια βιβλιοθήκη (\textenglish{My Workouts}), απαιτώντας συνδυαστικό \textenglish{SQL query (UNION/JOIN)} με ξεχωριστούς κανόνες ορατότητας (\textenglish{is\_hidden flag} για αγορές, πάντα ορατό για αναθέσεις).
+
+    \item \textbf{Real-time Chat \& Firestore Security Rules:} Η υλοποίηση του \textenglish{chat} μέσω \textenglish{Firestore} απαιτούσε σωστό σχεδιασμό \textenglish{security rules} ώστε ένας χρήστης να διαβάζει και να γράφει μόνο στις δικές του συνομιλίες. Η λύση συνδύασε \textenglish{custom token claims} (ρόλος χρήστη στο \textenglish{JWT}) με κανόνες \textenglish{Firestore} που ελέγχουν ότι το \textenglish{request.auth.uid} ανήκει στους \textenglish{participants} της εκάστοτε συνομιλίας.
+
+    \item \textbf{Σύνδεση Trainer-Trainee \& Κοινή Διαχείριση Πλάνων/Γευμάτων:} Μια από τις πιο σύνθετες προκλήσεις ήταν η υλοποίηση της σχέσης \textenglish{Trainer-Trainee} με ταυτόχρονη υποστήριξη δύο ανεξάρτητων ρόλων στα ίδια δεδομένα. Ο \textenglish{Trainer} πρέπει να μπορεί να αναθέτει προγράμματα προπόνησης (\textenglish{workout plans}) και πλάνα διατροφής (\textenglish{meal plans}) απευθείας στον \textenglish{Trainee} μέσω της σχέσης \textenglish{coaching\_relationship}. Παράλληλα, ο \textenglish{Trainee} διατηρεί τη δυνατότητα να δημιουργεί δικά του προσωπικά προγράμματα και να βλέπει ταυτόχρονα τόσο τα δικά του όσο και αυτά που του έχει αναθέσει ο \textenglish{Trainer} στην ίδια οθόνη. Αυτό απαιτούσε ξεχωριστούς πίνακες (\textenglish{user\_workout\_plans} για προσωπικά, \textenglish{program\_assignments} για αναθέσεις \textenglish{Trainer}) και συνδυαστικά \textenglish{SQL queries} που ενοποιούν τα αποτελέσματα με σωστό διαχωρισμό προέλευσης, ώστε ο \textenglish{Trainee} να γνωρίζει ποιο πρόγραμμα είναι δικό του και ποιο του αντιστοιχεί από τον \textenglish{Trainer}.
+
+    \item \textbf{Πρόσβαση Trainer στα Analytics του Trainee:} Ένα επιπλέον επίπεδο πολυπλοκότητας εντοπίστηκε στο γεγονός ότι ο \textenglish{Trainer} χρειάζεται πρόσβαση στα \textenglish{analytics} και το ιστορικό προόδου των \textenglish{Trainees} του (βάρος, μετρήσεις σώματος, \textenglish{training volume}, ιστορικό προπονήσεων), ενώ ο κάθε \textenglish{Trainee} πρέπει να βλέπει μόνο τα δικά του δεδομένα. Η λύση βασίστηκε σε \textenglish{role-aware endpoints} (π.χ. \textenglish{GetClientAnalytics.php}) που επαληθεύουν πρώτα ότι υπάρχει ενεργή σχέση συνεργασίας (\textenglish{coaching\_relationships.status = active}) μεταξύ του \textenglish{Trainer} και του ζητούμενου \textenglish{Trainee}, πριν επιστρέψουν τα δεδομένα από τους πίνακες \textenglish{body\_measurements}, \textenglish{workout\_sessions} και \textenglish{weekly\_volume\_summary}. Έτσι αποφεύγεται οποιαδήποτε μη εξουσιοδοτημένη πρόσβαση σε δεδομένα τρίτων.
+\end{itemize}
+
+\newpage
+
+% ==========================================
+% SECTION 4: ΠΑΡΑΔΕΙΓΜΑΤΑ ΚΩΔΙΚΑ (BACKEND)
+% ==========================================
+\section{Παραδείγματα κώδικα (Backend MVC)}
+
+\subsection{Εκκίνηση Εφαρμογής (bootstrap.php)}
+Το \textenglish{bootstrap.php} φορτώνεται σε κάθε \textenglish{request} και είναι υπεύθυνο για τρεις βασικές λειτουργίες: (α) φόρτωση \textenglish{environment variables} μέσω \textenglish{phpdotenv}, (β) εκκίνηση της \textenglish{PHP session} με \textenglish{HttpOnly cookie} διάρκειας 24 ωρών και \textenglish{SameSite=Lax} για αποτροπή \textenglish{CSRF}, και (γ) δημιουργία και αποστολή \textenglish{CSRF token} ως \textenglish{cookie XSRF-TOKEN} (αναγνώσιμο από \textenglish{JavaScript}).
+\begin{lstlisting}[language=PHP]
+<?php
+// load all the packages we installed with composer
+require_once __DIR__ . '/../vendor/autoload.php';
+
+// read the .env file so we can use our secret keys
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->load();
+
+// only start the session if it isnt already running
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    // keep the session alive for a whole day (86400 seconds)
+    ini_set('session.cookie_lifetime', 86400);
+    ini_set('session.gc_maxlifetime', 86400);
+    session_set_cookie_params([
+        'lifetime' => 86400,
+        'path'     => '/',
+        'httponly' => true,   // javascript cant see our cookie for xss attacks
+        'samesite' => 'Lax'   // stops other websites from using our cookies for csrf attacks
+    ]);
+    session_start();
+}
+
+// if we dont have a csrf token yet, make a random one
+if (empty($_SESSION['csrf'])) {
+    $_SESSION['csrf'] = bin2hex(random_bytes(32));
+}
+
+// put the csrf token in a cookie so the frontend can read it
+setcookie('XSRF-TOKEN', $_SESSION['csrf'], [
+    'expires'  => 0,        // cookie dies when browser closes
+    'path'     => '/',
+    'httponly' => false,    // has to be false so javascript can actually read it
+    'samesite' => 'Lax'
+]);
+\end{lstlisting}
+
+\subsection{Ρύθμιση CORS \& Security Headers (cors.php)}
+Το \textenglish{cors.php} ρυθμίζει τα επιτρεπόμενα \textenglish{origins} δυναμικά μέσω \textenglish{AppConfig}, ενεργοποιεί τα \textenglish{credentials} για αποστολή \textenglish{session cookie}, ορίζει αναλυτική \textenglish{Content Security Policy (CSP)}, και επιστρέφει \textenglish{HTTP 200} για \textenglish{OPTIONS preflight requests} του \textenglish{browser}.
+\begin{lstlisting}[language=PHP]
+<?php
+// start the session and load env variables
+require_once(__DIR__ . '/../bootstrap.php');
+// get our app settings like allowed URLs
+require_once(__DIR__ . '/AppConfig.php');
+
+// get the list of websites that are allowed to talk to us
+$allowedOrigins = AppConfig::getAllowedOrigins();
+// see where the request is coming from
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+// if the request comes from a website we trust, let it through
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: " . $origin);
+} else {
+    // otherwise just allow the first one on our list as fallback
+    header("Access-Control-Allow-Origin: " . $allowedOrigins[0]);
+}
+
+// tell the browser which request types we accept
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+// tell the browser which headers it can send us
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token");
+// this is needed so cookies get sent along with the request
+header("Access-Control-Allow-Credentials: true");
+// we always respond with json
+header("Content-Type: application/json; charset=UTF-8");
+
+// dont let other sites put us inside an iframe (clickjacking protection)
+header("X-Frame-Options: DENY");
+// turn on the browsers built-in xss filter
+header("X-XSS-Protection: 1; mode=block");
+// stop browsers from guessing the file type
+header("X-Content-Type-Options: nosniff");
+header("Referrer-Policy: strict-origin-when-cross-origin");
+
+// browsers send an OPTIONS request first to check if its safe, just say yes and stop
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    header("HTTP/1.1 200 OK");
+    exit();
+}
+\end{lstlisting}
+
+\subsection{Εξουσιοδότηση Ρόλων (Auth.php)}
+Η συνάρτηση \textenglish{checkAuth()} ελέγχει αν υπάρχει ενεργή \textenglish{PHP session} (\textenglish{logged\_in === true}) και αν ο ρόλος του χρήστη (\textenglish{user\_privileges}) ανήκει στους επιτρεπόμενους ρόλους που δηλώνει ο κάθε \textenglish{endpoint}. Σε αποτυχία επιστρέφει \textenglish{HTTP 401} (μη συνδεδεμένος) ή \textenglish{HTTP 403} (ανεπαρκή δικαιώματα).
+\begin{lstlisting}[language=PHP]
+<?php
+// this function runs at the top of every protected page
+// you pass it a list of roles that are allowed, like ['trainer', 'admin']
+function checkAuth(array $allowedRoles)
+{
+    // if the user is not logged in at all, kick them out with a 401
+    if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+        http_response_code(401);
+        echo json_encode(['message' => 'You are not authorized to access this resource.']);
+        exit();
+    }
+    // if they are logged in but their role is not on the allowed list, also kick them out
+    // a trainee trying to access a trainer page gets a 403 here
+    if (!in_array($_SESSION['user_privileges'], $allowedRoles)) {
+        http_response_code(403);
+        echo json_encode(['message' => 'You are not authorized to access this resource.']);
+        exit();
+    }
+    // if we get here the user is fine, just continue normally
+}
+\end{lstlisting}
+
+\subsection{Σύνδεση με τη Βάση Δεδομένων (Database.php)}
+Η κλάση δημιουργεί το αντικείμενο \textenglish{mysqli} και συνδέεται στον \textenglish{MySQL server}, διαβάζοντας παραμέτρους από \textenglish{Environment Variables} (με \textenglish{fallback} τιμές για τοπική ανάπτυξη). Χρησιμοποιεί \textenglish{lazy initialization}: η σύνδεση δημιουργείται μόνο στην πρώτη κλήση της \textenglish{connect()}.
+\begin{lstlisting}[language=PHP]
+<?php
+class Database {
+    // all the info we need to connect to mysql
+    private $host, $dbName, $username, $password, $port, $socket;
+    // we store the connection here so we dont open it more than once
+    private $conn;
+
+    public function __construct() {
+        // read from the .env file, if something is missing use a default value
+        $this->host     = $_ENV['DB_HOST'] ?? 'localhost';
+        $this->dbName   = $_ENV['DB_NAME'] ?? 'trainers-all-in-one';
+        $this->username = $_ENV['DB_USER'] ?? 'root';
+        $this->password = $_ENV['DB_PASS'] ?? '';
+        $this->port     = $_ENV['DB_PORT'] ?? 3306;
+        // on mac with xampp the socket file lives here
+        $this->socket   = $_ENV['DB_SOCKET']
+                          ?? '/Applications/XAMPP/xamppfiles/var/mysql/mysql.sock';
+    }
+
+    public function connect() {
+        // only connect if we havent connected yet, no point opening it twice
+        if ($this->conn === null) {
+            // make mysqli throw exceptions instead of silent failures
+            mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+            try {
+                $this->conn = new \mysqli(
+                    $this->host, $this->username, $this->password,
+                    '', $this->port, $this->socket
+                );
+                // pick the right database
+                if (!$this->conn->select_db($this->dbName)) {
+                    throw new \Exception("Database does not exist");
+                }
+                // use utf8mb4 so emojis and greek characters dont break
+                $this->conn->set_charset('utf8mb4');
+            } catch (\Exception $e) { /* something went wrong, handle it */ }
+        }
+        // give back the connection so models can use it
+        return $this->conn;
+    }
+}
+\end{lstlisting}
+
+\subsection{Παράδειγμα Μοντέλου (UserModel.php)}
+Τα \textenglish{Models} αναλαμβάνουν τις εντολές \textenglish{SQL} χρησιμοποιώντας \textenglish{prepared statements} για αποτροπή \textenglish{SQL Injection}. Το παρακάτω απόσπασμα δείχνει την αποθήκευση νέου χρήστη με \textenglish{bind\_param} για ασφαλή παρεμβολή παραμέτρων.
+\begin{lstlisting}[language=PHP]
+<?php
+class UserModel {
+    public $conn;
+    // the actual table name in the database
+    private $table = 'user';
+    // these match the columns in the user table
+    public $UserID, $username, $email, $password;
+    public $UserPrivileges, $IsVerified;
+
+    public function __construct() {
+        // open the database connection as soon as we create a UserModel
+        $this->conn = (new Database())->connect();
+    }
+
+    public function saveUser() {
+        // the question marks are placeholders, we fill them in safely below
+        // this way hackers cant do sql injection by typing weird stuff in the form
+        $query = "INSERT INTO {$this->table}
+                  (userid, email, password, username, role, isverified)
+                  VALUES (?, ?, ?, ?, ?, ?)";
+        $stmt = $this->conn->prepare($query);
+        // if prepare failed something is very wrong, just stop
+        if (!$stmt) { return false; }
+
+        // plug in the real values, all strings so we use "ssssss"
+        $stmt->bind_param("ssssss",
+            $this->UserID,
+            $this->email,
+            $this->password,   // this is already hashed with password_hash(), not plain text
+            $this->username,
+            $this->UserPrivileges,
+            $this->IsVerified
+        );
+
+        // run it and return true if it worked
+        if ($stmt->execute()) { $stmt->close(); return true; }
+        // if it failed write the error to the log so we can check later
+        error_log("Execute failed: " . $stmt->error);
+        $stmt->close();
+        return false;
+    }
+}
+\end{lstlisting}
+
+\subsection{Παράδειγμα Controller (CoachController.php)}
+Ο \textenglish{Controller} χειρίζεται τη λογική ομαδοποίησης δεδομένων. Στο παρακάτω απόσπασμα λαμβάνεται ο τρέχων προπονητής ενός \textenglish{Trainee}, τα μηνύματά του, και η λίστα διαθέσιμων προπονητών, αξιοποιώντας έτοιμες κλήσεις του \textenglish{CoachModel} και επιστρέφοντας ένα δομημένο \textenglish{JSON} αντικείμενο.
+\begin{lstlisting}[language=PHP]
+<?php
+// bring in the model that talks to the database
+require_once '../models/CoachModel.php';
+// bring in the auth checker
+require_once '../config/Auth.php';
+
+class CoachController {
+    // we keep one CoachModel and reuse it
+    private $coachModel;
+
+    public function __construct() {
+        $this->coachModel = new CoachModel();
+    }
+
+    // builds up all the coach data we need for the frontend in one go
+    public function getCoachData($userId) {
+        try {
+            // cant do anything without knowing who the user is
+            if (!$userId) throw new Exception('User ID is required');
+
+            // start with an empty response, we fill it in below
+            $response = [
+                'success'          => true,
+                'currentCoach'     => null,
+                'messages'         => [],
+                'availableCoaches' => []
+            ];
+
+            // check if this user already has a coach assigned
+            $currentCoach = $this->coachModel->getCurrentCoach($userId);
+            if ($currentCoach) {
+                // they have a coach, put it in the response
+                $response['currentCoach'] = $currentCoach;
+                // also grab their conversation with that coach
+                $response['messages'] = $this->coachModel->getMessages(
+                    $userId, $currentCoach['id']
+                );
+            }
+            // always show the full list of available coaches too
+            $response['availableCoaches'] =
+                $this->coachModel->getAvailableCoaches();
+            return $response;
+
+        } catch (Exception $e) {
+            // something broke, tell the frontend what happened
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+}
+\end{lstlisting}
+
+\subsection{Παράδειγμα Route (Login.php)}
+Κάθε \textenglish{API endpoint} αντιστοιχεί σε ένα ξεχωριστό \textenglish{.php} αρχείο στον φάκελο \textenglish{routes/}. Το \textenglish{Login.php} δέχεται \textenglish{POST} αίτημα, φορτώνει το \textenglish{cors.php} (που αρχικοποιεί \textenglish{session} και \textenglish{CSRF}), αποκωδικοποιεί τα δεδομένα \textenglish{JSON}, δημιουργεί τον \textenglish{UserController}, και επιστρέφει \textenglish{JSON} απάντηση.
+\begin{lstlisting}[language=PHP]
+<?php
+// this sets up cors, starts the session and generates the csrf token
+require_once __DIR__ . "/../config/cors.php";
+// bring in the controller that handles login logic
+include_once("../controllers/UserController.php");
+
+// only run if the request is a POST, ignore everything else
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // read the json the frontend sent us and turn it into a php array
+    $inputData = json_decode(file_get_contents("php://input"), true);
+    $userController = new UserController();
+    // pass the data to the controller and get back the result
+    $response = $userController->login($inputData);
+    // send the result back to the frontend as json
+    echo json_encode($response);
+}
+\end{lstlisting}
+
+\subsection{Έκδοση Firebase Custom Token (GetFirebaseCustomToken.php)}
+Το \textenglish{endpoint} εκδίδει \textenglish{Firebase Custom Token} για τον τρέχοντα \textenglish{session} χρήστη, χρησιμοποιώντας το \textenglish{kreait/firebase-php SDK} με \textenglish{service account JSON}. Ελέγχεται πρώτα η εξουσιοδότηση μέσω \textenglish{checkAuth}, και το \textenglish{token} εκδίδεται με \textenglish{user\_id} ως \textenglish{UID} και ρόλο χρήστη ως \textenglish{custom claim}.
+\begin{lstlisting}[language=PHP]
+<?php
+// setup cors and session first
+include_once("../config/cors.php");
+include_once("../config/Auth.php");
+// only logged in users can get a firebase token, guests cant
+checkAuth(['trainee', 'trainer', 'admin']);
+
+// load composer packages including the firebase sdk
+require_once __DIR__ . '/../../vendor/autoload.php';
+
+// grab the user id from the session, firebase needs it as a string
+$uid = (string)$_SESSION['user_id'];
+// this is the secret file that proves we are allowed to use firebase
+$serviceAccountPath = __DIR__ . '/../config/firebase-service-account.json';
+
+use Kreait\Firebase\Factory;
+
+try {
+    // connect to firebase using our service account
+    $factory = (new Factory())->withServiceAccount($serviceAccountPath);
+    $auth = $factory->createAuth();
+
+    // add the user role as extra info inside the token
+    // firestore security rules can read this later
+    $claims = [];
+    if (isset($_SESSION['privileges'])) {
+        $claims['role'] = $_SESSION['privileges'];
+    }
+
+    // make the token for this specific user
+    $customToken = $auth->createCustomToken($uid, $claims);
+    // send it back to the frontend
+    echo json_encode([
+        'success' => true,
+        'token'   => $customToken->toString(),
+        'claims'  => $claims,
+    ]);
+} catch (Throwable $e) {
+    // something went wrong with firebase, tell the frontend
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+}
+\end{lstlisting}
+
+\newpage
+
+% ==========================================
+% SECTION 5: ΠΑΡΑΔΕΙΓΜΑΤΑ ΚΩΔΙΚΑ (FRONTEND)
+% ==========================================
+\section{Παραδείγματα κώδικα (Frontend React)}
+
+\subsection{CSRF-Protected Fetch Wrapper (APIClient.js)}
+Η κλάση \textenglish{APIClient} αποτελεί τον κεντρικό μηχανισμό επικοινωνίας του \textenglish{Frontend} με το \textenglish{REST API}. Διαβάζει αυτόματα το \textenglish{XSRF-TOKEN cookie} (που έχει αποσταλεί από το \textenglish{bootstrap.php}) και το προσθέτει ως \textenglish{header X-CSRF-Token} σε κάθε \textenglish{state-changing request (POST/PUT/DELETE)}. Περνά πάντα \textenglish{credentials: 'include'} για την αποστολή του \textenglish{session cookie} σε \textenglish{cross-origin requests}.
+\begin{lstlisting}[language=JavaScript]
+class APIClient {
+  // every request goes through here so we never forget the csrf token
+  static async fetch(url, options = {}) {
+    // grab the csrf token the backend put in our cookies
+    const csrfToken = this.getCookie('XSRF-TOKEN');
+
+    // GET and HEAD requests dont change anything so they dont need the token
+    // POST, PUT, DELETE do change stuff so they need it
+    if (options.method && !['GET', 'HEAD'].includes(options.method.toUpperCase())) {
+      options.headers = {
+        ...options.headers,
+        'X-CSRF-Token': csrfToken || ''
+      };
+    }
+
+    // always send the session cookie so the backend knows who we are
+    options.credentials = 'include';
+    return fetch(url, options);
+  }
+
+  // helper to find a cookie by name from the browser
+  static getCookie(name) {
+    return document.cookie
+      .split('; ')
+      .find(row => row.startsWith(name + '='))
+      ?.split('=')[1];
+  }
+
+  // shortcut for sending a POST request with json data
+  static async post(url, data, options = {}) {
+    const response = await this.fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+      // turn the javascript object into a json string
+      body: JSON.stringify(data),
+      ...options
+    });
+    // if the server returned an error code throw so the caller can handle it
+    if (!response.ok)
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    // parse the json the server sent back and return it
+    return response.json();
+  }
+}
+
+export default APIClient;
+\end{lstlisting}
+
+\subsection{Firebase Αρχικοποίηση \& Custom Token Sign-In (firebase.js)}
+Το \textenglish{firebase.js} αρχικοποιεί την εφαρμογή \textenglish{Firebase} με \textenglish{environment variables} του \textenglish{Vite}, εξάγει τα \textenglish{Firestore}, \textenglish{Storage} και \textenglish{Auth} αντικείμενα, και παρέχει τη συνάρτηση \textenglish{signInWithBackendSession()} που λαμβάνει \textenglish{custom token} από το \textenglish{backend endpoint} και κάνει \textenglish{signInWithCustomToken()} στο \textenglish{Firebase Auth}.
+\begin{lstlisting}[language=JavaScript]
+// firebase sdk imports
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
+import { getAuth, signInWithCustomToken } from 'firebase/auth';
+
+// all the keys come from the .env file, never hardcode them here
+const firebaseConfig = {
+  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId:             import.meta.env.VITE_FIREBASE_APP_ID,
+};
+
+// dont create a second firebase app if one already exists (hot reload problem)
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+
+// export these so any file in the project can import and use them
+export const db      = getFirestore(app); // the chat database
+export const storage = getStorage(app);   // for uploaded files
+export const auth    = getAuth(app);      // for logging into firebase
+
+// this is how we sign into firebase without a second login screen
+// we ask our own backend for a token and use that to get into firebase
+export async function signInWithBackendSession() {
+  const endpoint = import.meta.env.VITE_API_BASE_URL
+    + '/backend/src/routes/GetFirebaseCustomToken.php';
+  try {
+    // ask the backend for the token, send cookies so it knows who we are
+    const res  = await fetch(endpoint, { credentials: 'include' });
+    const data = await res.json();
+    // if the backend said no, return an error and dont crash
+    if (!res.ok || !data.success)
+      return { user: null, error: data?.error || 'token_fetch_failed' };
+    // use the token to sign into firebase
+    const userCred = await signInWithCustomToken(auth, data.token);
+    // return the firebase user so the rest of the app can use it
+    return { user: userCred.user, claims: data.claims, error: null };
+  } catch (e) {
+    // network problems or firebase being down
+    return { user: null, error: 'network_error', detail: String(e) };
+  }
+}
+\end{lstlisting}
+
+\subsection{Real-time Chat Component (ChatWindow.jsx)}
+Το \textenglish{ChatWindow} είναι ένα \textenglish{React} component που λαμβάνει δεδομένα (\textenglish{messages}, \textenglish{firebaseUser}, \textenglish{conversations}) από το \textenglish{ChatProvider context}. Χρησιμοποιεί \textenglish{useEffect} για αυτόματη κύλιση στο τελευταίο μήνυμα και σήμανση μηνυμάτων ως αναγνωσμένα, και \textenglish{useMemo} για αποτελεσματική αναγνώριση του άλλου συμμετέχοντα χωρίς περιττούς επανυπολογισμούς.
+\begin{lstlisting}[language=JavaScript]
+import React, { useRef, useEffect, useMemo } from 'react';
+// get all the chat state from the context provider
+import { useChat } from '../../context/ChatProvider';
+
+export function ChatWindow() {
+  // pull out everything we need from the chat context
+  const {
+    messages, firebaseUser, activeConversationId,
+    conversations, allUsers, markAsRead
+  } = useChat();
+  // this ref points to an invisible div at the bottom so we can scroll to it
+  const bottomRef = useRef(null);
+
+  // find the full conversation object for the one the user has open
+  // useMemo so we dont recalculate this every single render
+  const activeConversation = useMemo(
+    () => conversations.find(c => c.id === activeConversationId),
+    [conversations, activeConversationId]
+  );
+
+  // figure out who the other person in this chat is (not us)
+  const otherParticipantUid = useMemo(() => {
+    const participants = activeConversation?.participants || [];
+    // find the uid that isnt ours
+    return participants.find(p => String(p) !== String(firebaseUser?.uid));
+  }, [activeConversation, firebaseUser]);
+
+  // turn the other persons uid into a readable name
+  const otherDisplayName = useMemo(() => {
+    if (!otherParticipantUid) return 'Conversation';
+    const match = allUsers.find(u =>
+      String(u.userId || u.id) === String(otherParticipantUid)
+    );
+    // try different field names because different endpoints return different shapes
+    return match?.displayName || match?.username || otherParticipantUid;
+  }, [otherParticipantUid, allUsers]);
+
+  // whenever new messages come in, mark the ones we havent read yet
+  useEffect(() => {
+    if (messages.length > 0 && firebaseUser) {
+      messages.forEach(msg => {
+        if (!msg.readBy?.includes(firebaseUser.uid)) markAsRead?.(msg.id);
+      });
+    }
+  }, [messages, firebaseUser, markAsRead]);
+
+  // every time messages change, scroll down so the latest one is visible
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // if no conversation is selected just show a placeholder
+  if (!activeConversationId)
+    return <div>Select or start a conversation.</div>;
+
+  return (
+    <div className="d-flex flex-column h-100">
+      {/* name of the person we are talking to */}
+      <div className="chat-header">{otherDisplayName}</div>
+      <div className="chat-messages">
+        {messages.map(msg => (
+          // our messages go on the right, theirs go on the left
+          <div key={msg.id} className={
+            String(msg.senderId) === String(firebaseUser?.uid)
+              ? 'msg-own' : 'msg-other'
+          }>
+            {msg.text}
+          </div>
+        ))}
+        {/* invisible div we scroll to so the latest message is always in view */}
+        <div ref={bottomRef} />
+      </div>
+    </div>
+  );
+}
+\end{lstlisting}
+
+\newpage
+
+% ==========================================
+% SECTION 6: DEPLOYMENT
+% ==========================================
+\section{Deployment Σχεδίαση}
+
+\subsection{Τοπικό Περιβάλλον Ανάπτυξης (XAMPP)}
+Για την τοπική ανάπτυξη χρησιμοποιήθηκε το \textenglish{XAMPP (Apache + MySQL + PHP 8.x)} σε \textenglish{macOS}. Η δομή εγκατάστασης ήταν:
+\begin{itemize}[label=•]
+    \item Το \textenglish{backend} τοποθετήθηκε στον \textenglish{Apache Document Root} (\textenglish{htdocs/CoachFlow/backend/}) και εξυπηρετείται στο \textenglish{http://localhost/CoachFlow}.
+    \item Ο \textenglish{MySQL socket} ρυθμίστηκε μέσω \textenglish{DB\_SOCKET} στο \textenglish{.env} (\textenglish{/Applications/XAMPP/xamppfiles/var/mysql/mysql.sock}).
+    \item Το \textenglish{frontend} εκτελείται ανεξάρτητα μέσω \textenglish{npm run dev} (Vite, \textenglish{port} 5173).
+    \item Το \textenglish{VITE\_API\_BASE\_URL} ρυθμίστηκε σε \textenglish{http://localhost/CoachFlow}.
+    \item Τα \textenglish{Composer dependencies} εγκαταστάθηκαν με \textenglish{composer install} στον φάκελο \textenglish{backend/}.
+    \item Τα \textenglish{npm dependencies} εγκαταστάθηκαν με \textenglish{npm install} στον φάκελο \textenglish{frontend/}.
+\end{itemize}
+
+\subsection{Παραγωγικό Περιβάλλον (Hostinger)}
+Για το \textenglish{production deployment} χρησιμοποιείται \textenglish{Hostinger} με \textenglish{PHP 8.x} και \textenglish{MySQL}:
+\begin{itemize}[label=•]
+    \item Το \textenglish{React SPA} γίνεται \textenglish{build} με \textenglish{npm run build}, παράγοντας στατικά αρχεία στον \textenglish{frontend/dist/} φάκελο, τα οποία ανεβαίνουν στον \textenglish{web server}.
+    \item Το \textenglish{PHP backend} ανεβαίνει μαζί με τα \textenglish{vendor/} \textenglish{Composer dependencies}.
+    \item Τα \textenglish{.env} αρχεία ΔΕΝ ανεβαίνουν (\textenglish{.gitignore}) και ρυθμίζονται απευθείας μέσω \textenglish{hosting panel}.
+    \item Το \textenglish{HTTPS} είναι υποχρεωτικό για το \textenglish{Stripe API} και τα \textenglish{secure cookies}.
+    \item Ο \textenglish{Stripe Webhook} (\textenglish{StripeWebhook.php}) καταχωρείται στο \textenglish{Stripe Dashboard} με \textenglish{webhook signing secret} για \textenglish{signature verification}.
+    \item Τα \textenglish{session cookie params} τίθενται σε \textenglish{secure: true} σε \textenglish{production} (\textenglish{APP\_ENV=production}).
+\end{itemize}
+
+\subsection{Μεταβλητές Περιβάλλοντος (.env)}
+Όλα τα κλειδιά και \textenglish{credentials} αποθηκεύονται σε \textenglish{environment variables} και δεν εκτίθενται ποτέ στο \textenglish{frontend bundle}. Οι βασικές \textenglish{backend} μεταβλητές είναι:
+\begin{itemize}[label=•]
+    \item \textenglish{DB\_HOST, DB\_NAME, DB\_USER, DB\_PASS, DB\_PORT, DB\_SOCKET:} Παράμετροι σύνδεσης \textenglish{MySQL}.
+    \item \textenglish{STRIPE\_SECRET\_KEY:} Για \textenglish{server-side PaymentIntents} και επαλήθευση \textenglish{webhooks}.
+    \item \textenglish{MAILCHIMP\_API\_KEY, MAILCHIMP\_DEFAULT\_AUDIENCE\_ID:} Για το \textenglish{email marketing dashboard}.
+    \item \textenglish{USDA\_API\_KEY:} Για κλήσεις στο \textenglish{FoodData Central API}.
+    \item \textenglish{FRONTEND\_URL:} Επιτρεπόμενα \textenglish{origins} για \textenglish{CORS} (πολλαπλά \textenglish{URLs} διαχωρισμένα με κόμμα).
+    \item \textenglish{APP\_ENV:} Καθορίζει αν το σύστημα τρέχει σε \textenglish{development} ή \textenglish{production} λειτουργία.
+\end{itemize}
+Τα αντίστοιχα \textenglish{frontend} \textenglish{environment variables} (\textenglish{VITE\_*}) ρυθμίζουν το \textenglish{API base URL}, τα \textenglish{Firebase credentials} και το \textenglish{Stripe publishable key}.
+
+\newpage
+
+% ==========================================
+% SECTION 7: TEST CASES
+% ==========================================
+\section{Περιπτώσεις Ελέγχου (Test Cases)}
+Για την επιβεβαίωση της αξιόπιστης λειτουργίας (\textenglish{QA/Integration Testing}) αξιολογήθηκαν συστηματικά τα εξής:
+
+\begin{itemize}
+    \item \textbf{TC01 --- Εγγραφή \& Επιβεβαίωση Email:} Νέος χρήστης εγγράφεται με \textenglish{username/email/password} και ρόλο (\textenglish{trainee/trainer}). Το \textenglish{SignUp.php} αποθηκεύει τον χρήστη με \textenglish{isverified=0} και αποστέλλει \textenglish{verification email} μέσω \textenglish{PHPMailer/Gmail SMTP}. Ο χρήστης κάνει κλικ στο \textenglish{link} επιβεβαίωσης και ο λογαριασμός ενεργοποιείται (\textenglish{isverified=1}). \textbf{Αποτέλεσμα:} Επιτυχές.
+
+    \item \textbf{TC02 --- Σύνδεση \& Δημιουργία Session:} Εγγεγραμμένος και επιβεβαιωμένος χρήστης κάνει \textenglish{login} μέσω \textenglish{Login.php}. Ελέγχθηκε ότι δημιουργείται \textenglish{PHP Session} με \textenglish{logged\_in=true}, \textenglish{user\_id} και \textenglish{user\_privileges}, και ότι αποστέλλεται το \textenglish{XSRF-TOKEN cookie} αναγνώσιμο από το \textenglish{JavaScript}. \textbf{Αποτέλεσμα:} Επιτυχές.
+
+    \item \textbf{TC03 --- Προστασία API (Unauthorized Access):} Κλήση προστατευμένου \textenglish{endpoint} (π.χ. \textenglish{GetTrainerClients.php}) χωρίς ενεργό \textenglish{session} ή με λάθος \textenglish{role} (π.χ. \textenglish{trainee} αντί \textenglish{trainer}). Αναμένεται \textenglish{HTTP 401/403}. \textbf{Αποτέλεσμα:} Επιτυχές --- Το \textenglish{Auth.php} απέρριψε την κλήση ελέγχοντας τα \textenglish{privileges}.
+
+    \item \textbf{TC04 --- Αγορά Προγράμματος μέσω Stripe:} \textenglish{Trainee} επιλέγει \textenglish{published} πρόγραμμα και εισάγει \textenglish{Stripe test card (4242 4242 4242 4242)}. Ελέγχθηκε η δημιουργία \textenglish{PaymentIntent} στο \textenglish{backend} με τιμή από τη βάση, η σωστή εμφάνιση \textenglish{Stripe Elements}, η καταγραφή αγοράς ως \textenglish{pending}, και η μετάβαση σε \textenglish{completed} μέσω \textenglish{Webhook (signature verified)}. \textbf{Αποτέλεσμα:} Επιτυχές.
+
+    \item \textbf{TC05 --- Ανάθεση Προγράμματος (Direct Assignment):} \textenglish{Trainer} επιλέγει \textenglish{Trainee} από το \textenglish{My Clients} και αναθέτει υπάρχον πρόγραμμα. Ελέγχθηκε ότι καταγράφεται ορθά στον πίνακα \textenglish{program\_assignments} με τις σωστές συνδέσεις \textenglish{Foreign Keys}, και ότι ο \textenglish{Trainee} βλέπει το πρόγραμμα αμέσως στο \textenglish{My Workouts}. \textbf{Αποτέλεσμα:} Επιτυχές.
+
+    \item \textbf{TC06 --- CSRF Προστασία:} Αποστολή \textenglish{POST request} σε \textenglish{state-changing endpoint} χωρίς \textenglish{X-CSRF-Token header} ή με λανθασμένο \textenglish{token}. Αναμένεται απόρριψη του αιτήματος. \textbf{Αποτέλεσμα:} Επιτυχές. Το \textenglish{verify\_csrf.php} απέρριψε το αίτημα ελέγχοντας ότι το \textenglish{header token} ταιριάζει με το \textenglish{session token}.
+
+    \item \textbf{TC07 --- Real-time Chat (Firebase Firestore):} \textenglish{Trainee} και \textenglish{Trainer} ανοίγουν ταυτόχρονα το \textenglish{Messages} tab. Ελέγχθηκε η έκδοση \textenglish{Custom Token} από το \textenglish{backend}, η επιτυχής σύνδεση μέσω \textenglish{signInWithCustomToken()}, η \textenglish{real-time} εμφάνιση μηνυμάτων και στις δύο πλευρές, και η σωστή σήμανση μηνυμάτων ως αναγνωσμένων. \textbf{Αποτέλεσμα:} Επιτυχές.
+
+    \item \textbf{TC08 --- Αναζήτηση USDA \& Καταγραφή Διατροφής:} \textenglish{Trainee} αναζητά τρόφιμο στο \textenglish{Nutrition} module. Ελέγχθηκε ότι το \textenglish{USDAService.php} καλεί το \textenglish{USDA FoodData Central API}, επιστρέφει σωστά \textenglish{macros} (θερμίδες, πρωτεΐνες, λίπη, υδατάνθρακες), αποθηκεύει στον πίνακα \textenglish{usda\_foods} για \textenglish{caching}, και ότι η καταγραφή γεύματος αποθηκεύεται στον πίνακα \textenglish{food\_logs}. \textbf{Αποτέλεσμα:} Επιτυχές.
+
+    \item \textbf{TC09 --- Διαχείριση Χρηστών (Admin):} \textenglish{Admin} απενεργοποιεί λογαριασμό χρήστη μέσω \textenglish{UserDisable.php}. Ελέγχθηκε ότι το \textenglish{endpoint} απαιτεί \textenglish{admin role}, ότι ο χρήστης αποθηκεύεται με \textenglish{disabled=1}, και ότι ο απενεργοποιημένος χρήστης αδυνατεί να κάνει \textenglish{login}. Επίσης ελέγχθηκε η επαναφορά (\textenglish{UserEnable.php}) και το \textenglish{force reset password (ForceResetPassword.php)}. \textbf{Αποτέλεσμα:} Επιτυχές.
+
+    \item \textbf{TC10 --- Reset Password (Email Flow):} Χρήστης ζητά επαναφορά κωδικού μέσω \textenglish{email}. Ελέγχθηκε ότι αποστέλλεται \textenglish{email} με μοναδικό \textenglish{token} (αποθηκευμένο στον πίνακα \textenglish{resetpasstoken}), ότι το \textenglish{token} λήγει μετά από καθορισμένο χρόνο, και ότι ο νέος κωδικός αποθηκεύεται με \textenglish{password\_hash()} χωρίς να επιτρέπεται χρήση ληγμένου \textenglish{token}. \textbf{Αποτέλεσμα:} Επιτυχές.
+\end{itemize}
+
+\end{document}

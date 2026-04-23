@@ -21,8 +21,18 @@ const formatMaybeNumber = (value) => {
 const formatCurrencyBreakdown = (items) => {
   if (!Array.isArray(items) || items.length === 0) return '—';
   return items
-    .map((row) => `${row.currency} ${Number(row.revenue || 0).toLocaleString()}`)
+    .map((row) => `€ ${Number(row.revenue || 0).toLocaleString()}`)
     .join(' • ');
+};
+
+const formatEuroAmount = (value, row) => {
+  if (!value) return '—';
+  const amount = Number(value);
+  if (Number.isNaN(amount)) return String(value);
+  if (Number(row?.currency_count) === 1) {
+    return `€ ${amount.toFixed(2)}`;
+  }
+  return `€ ${amount.toFixed(2)} (multi)`;
 };
 
 const normalizeSeries = (rawRows, startDate, endDate, valueKey = 'count') => {
@@ -287,7 +297,8 @@ const MiniTable = ({ title, rows, columns }) => (
         <table
           className="table table-sm table-borderless align-middle mb-0"
           style={{
-            minWidth: '500px', backgroundColor: 'transparent',
+            minWidth: '100%',
+            backgroundColor: 'transparent',
             '--bs-table-bg': 'transparent',
             '--bs-table-striped-bg': 'transparent',
             '--bs-table-active-bg': 'transparent',
@@ -304,8 +315,10 @@ const MiniTable = ({ title, rows, columns }) => (
                   style={{
                     color: '#9ca3af',
                     fontWeight: 800,
-                    minWidth: '500px', backgroundColor: 'transparent',
+                    backgroundColor: 'transparent',
                     borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                    padding: '0.35rem 0.5rem',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {col.label}
@@ -318,7 +331,17 @@ const MiniTable = ({ title, rows, columns }) => (
               rows.map((row, idx) => (
                 <tr key={idx}>
                   {columns.map((col) => (
-                    <td key={col.key} style={{ color: '#fff' }}>{col.format ? col.format(row[col.key], row) : formatMaybeNumber(row[col.key])}</td>
+                    <td
+                      key={col.key}
+                      style={{
+                        color: '#fff',
+                        padding: '0.4rem 0.5rem',
+                        verticalAlign: 'middle',
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {col.format ? col.format(row[col.key], row) : formatMaybeNumber(row[col.key])}
+                    </td>
                   ))}
                 </tr>
               ))
@@ -541,7 +564,7 @@ const AdminAnalytics = () => {
               style={{
                 color: '#10b981',
                 border: '1px solid rgba(16, 185, 129, 0.3)',
-                minWidth: '500px', backgroundColor: 'transparent',
+                backgroundColor: 'transparent',
                 fontWeight: 700,
               }}
               onClick={() => fetchAnalytics({ start: startDate, end: endDate, days: periodDays })}
@@ -868,13 +891,7 @@ const AdminAnalytics = () => {
                         {
                           key: 'revenue_total',
                           label: 'Revenue',
-                          format: (v, row) => {
-                            if (!v) return '—';
-                            const n = Number(v);
-                            if (Number.isNaN(n)) return String(v);
-                            if (Number(row?.currency_count) === 1 && row?.currency) return `${row.currency} ${n.toFixed(2)}`;
-                            return `${n.toFixed(2)} (multi)`;
-                          },
+                            format: (v, row) => formatEuroAmount(v, row),
                         },
                       ]}
                     />
@@ -889,13 +906,7 @@ const AdminAnalytics = () => {
                         {
                           key: 'revenue_total',
                           label: 'Revenue',
-                          format: (v, row) => {
-                            if (!v) return '—';
-                            const n = Number(v);
-                            if (Number.isNaN(n)) return String(v);
-                            if (Number(row?.currency_count) === 1 && row?.currency) return `${row.currency} ${n.toFixed(2)}`;
-                            return `${n.toFixed(2)} (multi)`;
-                          },
+                            format: (v, row) => formatEuroAmount(v, row),
                         },
                       ]}
                     />
@@ -961,13 +972,7 @@ const AdminAnalytics = () => {
                         {
                           key: 'spent_total',
                           label: 'Spent',
-                          format: (v, row) => {
-                            if (!v) return '—';
-                            const n = Number(v);
-                            if (Number.isNaN(n)) return String(v);
-                            if (Number(row?.currency_count) === 1 && row?.currency) return `${row.currency} ${n.toFixed(2)}`;
-                            return `${n.toFixed(2)} (multi)`;
-                          },
+                            format: (v, row) => formatEuroAmount(v, row),
                         },
                       ]}
                     />

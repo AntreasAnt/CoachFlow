@@ -50,7 +50,7 @@ const CheckoutForm = ({ clientSecret, onSuccess, onCancel, programTitle, amount 
         <div className="alert" style={{ backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}>
           <strong className="text-white">{programTitle}</strong>
           <br />
-          <span className="h4 text-success">${amount}</span>
+          <span className="h4 text-success">€{amount}</span>
         </div>
       </div>
 
@@ -418,7 +418,7 @@ const ProgramMarketplace = () => {
             </div>
           ) : (
             <div className="d-flex justify-content-between align-items-center">
-              <span className="fw-bold text-success">${parseFloat(program.price).toFixed(2)}</span>
+              <span className="fw-bold text-success">€{parseFloat(program.price).toFixed(2)}</span>
               <button 
                 className="btn btn-success btn-sm"
                 onClick={() => handleBuyProgram(program)}

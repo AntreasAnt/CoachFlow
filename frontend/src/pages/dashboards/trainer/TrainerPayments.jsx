@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import TrainerDashboardLayout from '../../../components/TrainerDashboardLayout';
 import { BACKEND_ROUTES_API } from '../../../config/config';
 import APIClient from '../../../utils/APIClient';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const TrainerPayments = () => {
   const [loading, setLoading] = useState(true);
@@ -20,6 +21,20 @@ const TrainerPayments = () => {
   useEffect(() => {
     fetchPaymentData();
   }, []);
+
+  const chartData = useMemo(() => {
+    if (!sales || sales.length === 0) return [];
+    const grouped = sales.reduce((acc, sale) => {
+      const date = new Date(sale.purchased_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      if (!acc[date]) acc[date] = 0;
+      acc[date] += parseFloat(sale.amount) || 0;
+      return acc;
+    }, {});
+    
+    return Object.entries(grouped)
+      .map(([date, amount]) => ({ date, amount }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+  }, [sales]);
 
   const fetchPaymentData = async () => {
     try {
@@ -134,7 +149,7 @@ const TrainerPayments = () => {
                     <h3 className="mb-0" style={{ color: '#fff' }}>{formatCurrency(earnings.total)}</h3>
                   </div>
                   <div className="rounded-circle d-flex justify-content-center align-items-center" style={{ width: '48px', height: '48px', backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
-                    <i className="bi bi-currency-dollar fs-4" style={{ color: '#10b981' }}></i>
+                    <i className="bi bi-currency-euro fs-4" style={{ color: '#10b981' }}></i>
                   </div>
                 </div>
               </div>
@@ -281,10 +296,34 @@ const TrainerPayments = () => {
                   <h5 className="mb-0 fw-semibold" style={{ color: '#fff' }}>Earnings Chart</h5>
                 </div>
                 <div className="card-body">
-                  <div className="text-center py-5" style={{ color: '#9ca3af' }}>
-                    <i className="bi bi-graph-up fs-1 mb-3 d-block" style={{ color: '#10b981' }}></i>
-                    <p style={{ color: '#9ca3af' }}>Earnings chart will be displayed here</p>
-                  </div>
+                  {chartData && chartData.length > 0 ? (
+                    <div style={{ height: '300px', width: '100%' }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                              <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <XAxis dataKey="date" stroke="#9ca3af" />
+                          <YAxis stroke="#9ca3af" />
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px' }}
+                            itemStyle={{ color: '#10b981' }}
+                            formatter={(value) => [`€${value.toFixed(2)}`, 'Sales']}
+                          />
+                          <Area type="monotone" dataKey="amount" stroke="#10b981" fillOpacity={1} fill="url(#colorAmount)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="text-center py-5" style={{ color: '#9ca3af' }}>
+                      <i className="bi bi-graph-up fs-1 mb-3 d-block" style={{ color: '#10b981' }}></i>
+                      <p style={{ color: '#9ca3af' }}>Not enough sales data to display the chart.</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -479,7 +518,7 @@ const TrainerPayments = () => {
                   <h6 className="mb-3" style={{ color: '#fff' }}>Payment Information</h6>
                   <p style={{ color: '#9ca3af' }}>
                     Payments are processed through Stripe. You'll receive earnings directly to your connected bank account
-                    according to your payout schedule. Platform fee: 10% + Stripe fees (2.9% + $0.30).
+                    according to your payout schedule. Platform fee: 10% + Stripe fees (2.9% + €0.30).
                   </p>
                 </div>
               </div>

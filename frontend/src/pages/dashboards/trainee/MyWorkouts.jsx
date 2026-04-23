@@ -507,13 +507,15 @@ const MyWorkouts = ({ embedded = false }) => {
       const workoutData = {
         ...fullPlan,
         startTime: new Date(),
-        completedSets: (fullPlan.exercises || []).map(ex => Array(ex.sets).fill({
-          weight: 0,
-          reps: 0,
-          rpe: 0,
-          notes: '',
-          completed: false
-        }))
+        completedSets: (fullPlan.exercises || []).map(ex => 
+          Array.from({ length: parseInt(ex.sets) || 3 }, () => ({
+            weight: 0,
+            reps: 0,
+            rpe: 0,
+            notes: '',
+            completed: false
+          }))
+        )
       };
 
       console.log('Active workout data structure:', workoutData);
@@ -538,14 +540,21 @@ const MyWorkouts = ({ embedded = false }) => {
       return;
     }
 
+    // Create completely isolated deep copies for state safety
     const updatedWorkout = { ...activeWorkout };
-    updatedWorkout.completedSets[currentExerciseIndex][currentSetIndex] = {
-      ...currentSetData,
-      weight: parseFloat(currentSetData.weight) || 0,
-      reps: parseInt(currentSetData.reps) || 0,
-      rpe: parseInt(currentSetData.rpe) || 0,
-      completed: true
-    };
+    updatedWorkout.completedSets = activeWorkout.completedSets.map((exSets, exIdx) => {
+      if (exIdx !== currentExerciseIndex) return exSets;
+      return exSets.map((set, setIdx) => {
+        if (setIdx !== currentSetIndex) return set;
+        return {
+          ...currentSetData,
+          weight: parseFloat(currentSetData.weight) || 0,
+          reps: parseInt(currentSetData.reps) || 0,
+          rpe: parseInt(currentSetData.rpe) || 0,
+          completed: true
+        };
+      });
+    });
 
     setActiveWorkout(updatedWorkout);
 
@@ -560,39 +569,62 @@ const MyWorkouts = ({ embedded = false }) => {
       notes: currentSetData.notes
     };
 
-    setWorkoutLogs(prev => [...prev, logEntry]);
+    setWorkoutLogs(prev => {
+      const existingIndex = prev.findIndex(log => log.exerciseIndex === currentExerciseIndex && log.setNumber === currentSetIndex + 1);
+      if (existingIndex >= 0) {
+         const newLogs = [...prev];
+         newLogs[existingIndex] = logEntry;
+         return newLogs;
+      }
+      return [...prev, logEntry];
+    });
 
-    // Reset current set data
-    setCurrentSetData({ weight: '', reps: '', rpe: '', notes: '' });
-
-    // Check if this is the last set of the last exercise
+    // Reset current set data or load next if available
     const currentExercise = activeWorkout.exercises[currentExerciseIndex];
-    const isLastSet = currentSetIndex >= currentExercise.sets - 1;
-    const isLastExercise = currentExerciseIndex >= activeWorkout.exercises.length - 1;
+    const totalSets = parseInt(currentExercise.sets) || 3;
 
     console.log('Exercise progress:', {
       currentExerciseIndex,
       currentSetIndex,
       totalExercises: activeWorkout.exercises.length,
-      setsInCurrentExercise: currentExercise.sets,
-      isLastSet,
-      isLastExercise
+      setsInCurrentExercise: totalSets
     });
 
-    if (isLastSet && isLastExercise) {
-      // This is the last set of the last exercise - auto finish workout
-      console.log('Auto-finishing workout');
-      setTimeout(() => {
-        setShowFinishWorkoutModal(true);
-      }, 1000); // Small delay to show completion
-    } else if (isLastSet) {
-      // Move to next exercise
-      console.log('Moving to next exercise');
-      nextExercise();
+    // Find next uncompleted set in current exercise
+    let nextUncompletedSetIndex = -1;
+    for (let i = 0; i < totalSets; i++) {
+      if (!updatedWorkout.completedSets[currentExerciseIndex][i].completed) {
+        nextUncompletedSetIndex = i;
+        break;
+      }
+    }
+
+    if (nextUncompletedSetIndex !== -1) {
+      // Move to next uncompleted set
+      console.log('Moving to next uncompleted set:', nextUncompletedSetIndex);
+      setCurrentSetIndex(nextUncompletedSetIndex);
+      
+      const setData = updatedWorkout.completedSets[currentExerciseIndex][nextUncompletedSetIndex];
+      setCurrentSetData({
+         weight: setData?.completed ? setData.weight : '',
+         reps: setData?.completed ? setData.reps : '',
+         rpe: setData?.completed ? setData.rpe || '' : '',
+         notes: setData?.completed ? setData.notes || '' : ''
+      });
     } else {
-      // Move to next set in current exercise
-      console.log('Moving to next set');
-      setCurrentSetIndex(currentSetIndex + 1);
+      // All sets completed in this exercise
+      if (currentExerciseIndex >= activeWorkout.exercises.length - 1) {
+        // This is the last exercise - auto finish workout
+        console.log('Auto-finishing workout');
+        setCurrentSetData({ weight: '', reps: '', rpe: '', notes: '' });
+        setTimeout(() => {
+          setShowFinishWorkoutModal(true);
+        }, 1000); // Small delay to show completion
+      } else {
+        // Move to next exercise
+        console.log('Moving to next exercise');
+        nextExercise();
+      }
     }
 
     // Start break timer
@@ -600,14 +632,15 @@ const MyWorkouts = ({ embedded = false }) => {
   };
 
   const nextExercise = () => {
-    if (currentExerciseIndex < activeWorkout.exercises.length - 1) {
-      setCurrentExerciseIndex(currentExerciseIndex + 1);
-      setCurrentSetIndex(0);
-      setCurrentSetData({ weight: '', reps: '', rpe: '', notes: '' });
-    } else {
-      // This shouldn't happen now since we handle completion in completeSet
-      console.log('Reached end of exercises in nextExercise - this should not happen');
-    }
+    setCurrentExerciseIndex(prevIndex => {
+      if (prevIndex < activeWorkout.exercises.length - 1) {
+        // Find the next exercise that has sets
+        return prevIndex + 1;
+      }
+      return prevIndex;
+    });
+    setCurrentSetIndex(0);
+    setCurrentSetData({ weight: '', reps: '', rpe: '', notes: '' });
   };
 
   const openExerciseModal = (exercise) => {
@@ -831,8 +864,9 @@ const MyWorkouts = ({ embedded = false }) => {
     
     const requestData = {
       workoutPlanId: workoutPlanId,
-      planName: activeWorkout.name + ' (Ended Early)',
-      duration: duration
+      planName: activeWorkout.name,
+      duration: duration,
+      isEndedEarly: true
     };
 
     console.log('Request data for SaveWorkoutSession (early end):', requestData);
@@ -1608,7 +1642,7 @@ const MyWorkouts = ({ embedded = false }) => {
                     </div>
                     <div className="d-flex justify-content-between align-items-center mb-3">
                       <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)', padding: '0.5rem 1rem' }}>{plan.category}</span>
-                      <span className="fw-bold" style={{ color: 'var(--brand-primary)', fontSize: '1.25rem' }}>${plan.price}</span>
+                      <span className="fw-bold" style={{ color: 'var(--brand-primary)', fontSize: '1.25rem' }}>€{plan.price}</span>
                     </div>
                     <button 
                       className="btn rounded-pill w-100"
@@ -1978,7 +2012,7 @@ const MyWorkouts = ({ embedded = false }) => {
                           <h6 className="card-title mb-2" style={{ color: 'rgba(255,255,255,0.9)' }}>{plan.title}</h6>
                           <p className="small mb-2" style={{ color: 'rgba(255,255,255,0.7)' }}>{plan.category} • {plan.difficulty_level}</p>
                           <div className="d-flex justify-content-between align-items-center">
-                            <span className="fw-bold text-success">${plan.price}</span>
+                            <span className="fw-bold text-success">€{plan.price}</span>
                             <button className="btn btn-outline-primary btn-sm">
                               Purchase
                             </button>
@@ -2047,7 +2081,7 @@ const MyWorkouts = ({ embedded = false }) => {
   const renderLogView = () => (
     <div>
       {/* Workout Timer - Top Left Corner */}
-      <div className="position-fixed" style={{ top: '80px', left: '20px', zIndex: 1000 }}>
+      <div className="position-fixed" style={{ top: '80px', left: '20px', zIndex: 1050 }}>
         <div className="card" style={{ background: 'rgba(15, 20, 15, 0.9)', border: '1px solid rgba(32, 214, 87, 0.3)', borderRadius: '0.75rem', backdropFilter: 'blur(10px)' }}>
           <div className="card-body p-2">
             <div className="d-flex align-items-center">
@@ -2058,11 +2092,11 @@ const MyWorkouts = ({ embedded = false }) => {
         </div>
       </div>
 
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Active Workout: {activeWorkout?.name}</h4>
-        <div className="d-flex gap-2">
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+        <h4 className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Active Workout:<br className="d-block d-md-none" /> {activeWorkout?.name}</h4>
+        <div className="d-flex flex-wrap gap-2">
           <button 
-            className="btn btn-outline-danger"
+            className="btn btn-outline-danger flex-grow-1 flex-md-grow-0"
             onClick={() => setShowCancelWorkoutModal(true)}
             title="Cancel workout without saving progress"
           >
@@ -2070,7 +2104,7 @@ const MyWorkouts = ({ embedded = false }) => {
             Cancel Workout
           </button>
           <button 
-            className="btn btn-outline-warning"
+            className="btn btn-outline-warning flex-grow-1 flex-md-grow-0"
             onClick={() => setShowEndWorkoutModal(true)}
             title="End workout early but save current progress"
           >
@@ -2099,7 +2133,7 @@ const MyWorkouts = ({ embedded = false }) => {
                 {/* Exercise Logging Form */}
                 <div className="mb-4">
                   <div className="row">
-                    <div className="col-md-3 mb-3">
+                    <div className="col-6 col-sm-6 col-md-3 mb-3">
                       <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Weight (kg)</label>
                       <input 
                         type="number" 
@@ -2107,23 +2141,35 @@ const MyWorkouts = ({ embedded = false }) => {
                         style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}
                         placeholder="0" 
                         step="0.5"
+                        min="0"
+                        onKeyDown={(e) => {
+                          if (['e', 'E', '+', '-'].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
                         value={currentSetData.weight}
                         onChange={(e) => setCurrentSetData(prev => ({ ...prev, weight: e.target.value }))}
                       />
                     </div>
-                    <div className="col-md-3 mb-3">
+                    <div className="col-6 col-sm-6 col-md-3 mb-3">
                       <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Reps</label>
                       <input 
                         type="number" 
                         className="form-control" 
                         style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}
                         placeholder="0"
+                        min="0"
+                        onKeyDown={(e) => {
+                          if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
                         value={currentSetData.reps}
                         onChange={(e) => setCurrentSetData(prev => ({ ...prev, reps: e.target.value }))}
                       />
                     </div>
-                    <div className="col-md-3 mb-3">
-                      <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>RPE (1-10)</label>
+                    <div className="col-6 col-sm-6 col-md-3 mb-3">
+                      <label className="form-label border-0" style={{ color: 'rgba(255,255,255,0.9)' }}>RPE (1-10)</label>
                       <input 
                         type="number" 
                         className="form-control" 
@@ -2131,12 +2177,17 @@ const MyWorkouts = ({ embedded = false }) => {
                         placeholder="5" 
                         min="1" 
                         max="10"
+                        onKeyDown={(e) => {
+                          if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
                         value={currentSetData.rpe}
                         onChange={(e) => setCurrentSetData(prev => ({ ...prev, rpe: e.target.value }))}
                       />
                     </div>
-                    <div className="col-md-3 mb-3">
-                      <label className="form-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Notes</label>
+                    <div className="col-6 col-sm-6 col-md-3 mb-3">
+                      <label className="form-label border-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Notes</label>
                       <input 
                         type="text" 
                         className="form-control" 
@@ -2148,10 +2199,10 @@ const MyWorkouts = ({ embedded = false }) => {
                     </div>
                   </div>
                   
-                  <div className="d-flex gap-2 mb-4">
+                  <div className="d-flex flex-wrap gap-2 mb-4">
                     <button 
-                      className="btn btn-success"
-                      style={{ borderRadius: '0.5rem' }}
+                      className="btn btn-success flex-grow-1 flex-md-grow-0"
+                      style={{ borderRadius: '0.5rem', fontWeight: '500' }}
                       onClick={completeSet}
                       disabled={!currentSetData.reps}
                     >
@@ -2159,8 +2210,8 @@ const MyWorkouts = ({ embedded = false }) => {
                       Complete Set
                     </button>
                     <button 
-                      className="btn btn-outline-secondary"
-                      style={{ borderRadius: '0.5rem' }}
+                      className="btn btn-outline-secondary flex-grow-1 flex-md-grow-0"
+                      style={{ borderRadius: '0.5rem', fontWeight: '500' }}
                       onClick={() => {
                         setCurrentSetIndex(currentSetIndex + 1);
                         setCurrentSetData({ weight: '', reps: '', rpe: '', notes: '' });
@@ -2171,8 +2222,8 @@ const MyWorkouts = ({ embedded = false }) => {
                       Skip Set
                     </button>
                     <button 
-                      className="btn btn-outline-primary"
-                      style={{ borderRadius: '0.5rem' }}
+                      className="btn btn-outline-primary flex-grow-1 flex-md-grow-0"
+                      style={{ borderRadius: '0.5rem', fontWeight: '500' }}
                       onClick={nextExercise}
                     >
                       <i className="bi bi-arrow-right me-2"></i>
@@ -2183,74 +2234,79 @@ const MyWorkouts = ({ embedded = false }) => {
                   {/* Break Timer Controls */}
                   <div className="card border-0" style={{ background: 'rgba(30, 35, 30, 0.3)', border: '1px solid rgba(32, 214, 87, 0.2)', borderRadius: '0.75rem' }}>
                     <div className="card-body p-3">
-                      <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h6 className="mb-0" style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.95rem', fontWeight: '600' }}>Rest Timer</h6>
-                        <div className="form-check form-switch">
+                      <div className="d-flex flex-wrap flex-md-row justify-content-between align-items-center gap-3 mb-3">
+                        <h6 className="mb-0" style={{ color: 'rgba(255,255,255,0.9)', fontSize: '1rem', fontWeight: '600' }}>Rest Timer</h6>
+                        <div className="form-check form-switch d-flex align-items-center gap-2 m-0 mt-md-0 mt-sm-0">
                           <input 
-                            className="form-check-input" 
+                            className="form-check-input m-0" 
                             type="checkbox" 
+                            id="timerModeSwitch"
+                            style={{ cursor: 'pointer', transform: 'scale(1.2)' }}
                             checked={isTimerMode}
                             onChange={(e) => {
                               setIsTimerMode(e.target.checked);
                               resetBreakTimer();
                             }}
                           />
-                          <label className="form-check-label small" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                          <label className="form-check-label mb-0" htmlFor="timerModeSwitch" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', cursor: 'pointer' }}>
                             {isTimerMode ? 'Countdown' : 'Stopwatch'}
                           </label>
                         </div>
                       </div>
                       
-                      <div className="row align-items-center">
-                        <div className="col-md-4">
-                          {isTimerMode && (
-                            <div>
-                              <label className="form-label small" style={{ color: 'rgba(255,255,255,0.9)' }}>Rest Time (seconds)</label>
-                              <input 
-                                type="number" 
-                                className="form-control form-control-sm"
-                                style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}
-                                value={breakTimerSetting}
-                                onChange={(e) => {
-                                  setBreakTimerSetting(parseInt(e.target.value) || 60);
-                                  if (!isBreakTimerRunning) {
-                                    setBreakTimer(parseInt(e.target.value) || 60);
-                                  }
-                                }}
-                                min="10"
-                                max="600"
-                              />
-                            </div>
-                          )}
-                        </div>
-                        <div className="col-md-4 text-center">
-                          <div className="fs-3 fw-bold" style={{ color: 'rgba(32, 214, 87, 0.9)' }}>
+                      <div className="d-flex flex-column flex-md-row align-items-center gap-3">
+                        {isTimerMode && (
+                          <div className="w-100 w-md-auto" style={{ flex: '1' }}>
+                            <label className="form-label small mb-1" style={{ color: 'rgba(255,255,255,0.9)' }}>Rest Time (seconds)</label>
+                            <input 
+                              type="number" 
+                              className="form-control form-control-sm"
+                              style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}
+                              value={breakTimerSetting}
+                              onKeyDown={(e) => {
+                                if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                                  e.preventDefault();
+                                }
+                              }}
+                              onChange={(e) => {
+                                setBreakTimerSetting(parseInt(e.target.value) || 60);
+                                if (!isBreakTimerRunning) {
+                                  setBreakTimer(parseInt(e.target.value) || 60);
+                                }
+                              }}
+                              min="10"
+                              max="600"
+                            />
+                          </div>
+                        )}
+                        
+                        <div className="text-center w-100 w-md-auto" style={{ flex: '1' }}>
+                          <div className="fs-2 fw-bold" style={{ color: 'rgba(32, 214, 87, 0.9)', lineHeight: '1.2' }}>
                             {formatTime(breakTimer)}
                           </div>
                         </div>
-                        <div className="col-md-4">
-                          <div className="d-flex gap-1">
-                            <button 
-                              className={`btn btn-sm ${isBreakTimerRunning ? 'btn-warning' : 'btn-success'}`}
-                              style={{ borderRadius: '0.5rem', fontSize: '0.875rem' }}
-                              onClick={() => {
-                                if (isBreakTimerRunning) {
-                                  setIsBreakTimerRunning(false);
-                                } else {
-                                  startBreakTimer();
-                                }
-                              }}
-                            >
-                              {isBreakTimerRunning ? 'Pause' : 'Start'}
-                            </button>
-                            <button 
-                              className="btn btn-sm btn-outline-secondary"
-                              style={{ borderRadius: '0.5rem', fontSize: '0.875rem' }}
-                              onClick={resetBreakTimer}
-                            >
-                              Reset
-                            </button>
-                          </div>
+
+                        <div className="w-100 w-md-auto d-flex justify-content-center justify-content-md-end gap-2" style={{ flex: '1' }}>
+                          <button 
+                            className={`btn ${isBreakTimerRunning ? 'btn-warning' : 'btn-success'} flex-grow-1 flex-md-grow-0`}
+                            style={{ borderRadius: '0.5rem', fontWeight: '500', padding: '0.5rem 1rem' }}
+                            onClick={() => {
+                              if (isBreakTimerRunning) {
+                                setIsBreakTimerRunning(false);
+                              } else {
+                                startBreakTimer();
+                              }
+                            }}
+                          >
+                            {isBreakTimerRunning ? 'Pause' : 'Start'}
+                          </button>
+                          <button 
+                            className="btn btn-outline-secondary flex-grow-1 flex-md-grow-0"
+                            style={{ borderRadius: '0.5rem', fontWeight: '500', padding: '0.5rem 1rem' }}
+                            onClick={resetBreakTimer}
+                          >
+                            Reset
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -2276,7 +2332,30 @@ const MyWorkouts = ({ embedded = false }) => {
                         {Array.from({ length: activeWorkout.exercises[currentExerciseIndex]?.sets || 0 }, (_, i) => {
                           const setData = activeWorkout.completedSets?.[currentExerciseIndex]?.[i];
                           return (
-                            <tr key={i} style={{ borderBottom: '1px solid rgba(32, 214, 87, 0.1)' }}>
+                            <tr 
+                              key={i} 
+                              style={{ 
+                                borderBottom: '1px solid rgba(32, 214, 87, 0.1)',
+                                cursor: 'pointer',
+                                background: i === currentSetIndex ? 'rgba(32, 214, 87, 0.15)' : 'transparent',
+                                transition: 'background 0.2s'
+                              }}
+                              onClick={() => {
+                                setCurrentSetIndex(i);
+                                setCurrentSetData({
+                                  weight: setData?.completed ? setData.weight : '',
+                                  reps: setData?.completed ? setData.reps : '',
+                                  rpe: setData?.completed ? setData.rpe || '' : '',
+                                  notes: setData?.completed ? setData.notes || '' : ''
+                                });
+                              }}
+                              onMouseEnter={(e) => {
+                                if (i !== currentSetIndex) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                              }}
+                              onMouseLeave={(e) => {
+                                if (i !== currentSetIndex) e.currentTarget.style.background = 'transparent';
+                              }}
+                            >
                               <td style={{ color: 'rgba(255,255,255,0.9)', paddingTop: '0.75rem', paddingBottom: '0.75rem' }}>{i + 1}</td>
                               <td style={{ color: 'rgba(255,255,255,0.9)', paddingTop: '0.75rem', paddingBottom: '0.75rem' }}>{setData?.completed ? setData.weight : '-'}</td>
                               <td style={{ color: 'rgba(255,255,255,0.9)', paddingTop: '0.75rem', paddingBottom: '0.75rem' }}>{setData?.completed ? setData.reps : '-'}</td>
@@ -2302,7 +2381,7 @@ const MyWorkouts = ({ embedded = false }) => {
             </div>
           </div>
 
-          <div className="col-lg-4">
+          <div className="col-lg-4 mt-4 mt-lg-0">
             <div className="card sticky-top" style={{ background: 'rgba(15, 20, 15, 0.7)', border: '1px solid rgba(32, 214, 87, 0.2)', borderRadius: '1rem' }}>
               <div className="card-header" style={{ background: 'rgba(32, 214, 87, 0.1)', borderBottom: '1px solid rgba(32, 214, 87, 0.2)', borderRadius: '1rem 1rem 0 0' }}>
                 <h6 className="mb-0" style={{ color: 'rgba(255,255,255,0.9)' }}>Workout Summary</h6>
@@ -2334,7 +2413,23 @@ const MyWorkouts = ({ embedded = false }) => {
                       key={index} 
                       className={`p-2 rounded mb-2 cursor-pointer ${index === currentExerciseIndex ? 'bg-primary text-white' : ''}`}
                       style={index !== currentExerciseIndex ? { background: 'rgba(30, 35, 30, 0.4)', border: '1px solid rgba(32, 214, 87, 0.15)' } : {}}
-                      onClick={() => setCurrentExerciseIndex(index)}
+                      onClick={() => {
+                        setCurrentExerciseIndex(index);
+                        
+                        // Check if there's a currently active set we should switch to
+                        // typically the first uncompleted set for this exercise
+                        const uncompletedSetIndex = activeWorkout.completedSets?.[index]?.findIndex(set => !set.completed);
+                        const nextSetIndex = uncompletedSetIndex !== -1 ? uncompletedSetIndex : (activeWorkout.exercises[index]?.sets - 1 || 0);
+                        
+                        setCurrentSetIndex(nextSetIndex);
+                        const setData = activeWorkout.completedSets?.[index]?.[nextSetIndex];
+                        setCurrentSetData({
+                          weight: setData?.completed ? setData.weight : '',
+                          reps: setData?.completed ? setData.reps : '',
+                          rpe: setData?.completed ? setData.rpe || '' : '',
+                          notes: setData?.completed ? setData.notes || '' : ''
+                        });
+                      }}
                     >
                       <small className="fw-bold d-block" style={index !== currentExerciseIndex ? { color: 'rgba(255,255,255,0.9)' } : {}}>{exercise.name}</small>
                       <small className="opacity-75" style={index !== currentExerciseIndex ? { color: 'rgba(255,255,255,0.7)' } : {}}>{exercise.sets} sets x {exercise.reps}</small>

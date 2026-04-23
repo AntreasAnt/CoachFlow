@@ -179,7 +179,7 @@ const TrainerDashboardHome = () => {
                     </small>
                   </div>
                   <div className="trainer-stat-icon" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}>
-                    <i className="bi bi-currency-dollar fs-4" style={{ color: '#10b981' }}></i>
+                    <i className="bi bi-currency-euro fs-4" style={{ color: '#10b981' }}></i>
                   </div>
                 </div>
               </div>

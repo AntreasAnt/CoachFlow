@@ -11,6 +11,8 @@ const UserProgramView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedSessions, setExpandedSessions] = useState(new Set());
+  const [completedSessions, setCompletedSessions] = useState(new Set());
+  const [sessionCompletionCounts, setSessionCompletionCounts] = useState({});
 
   const toggleSession = (id) => {
     setExpandedSessions(prev => {
@@ -54,7 +56,60 @@ const UserProgramView = () => {
 
   useEffect(() => {
     fetchProgramDetails();
+    fetchWorkoutHistory();
   }, [programId]);
+
+  const fetchWorkoutHistory = async () => {
+    try {
+      const response = await fetch(`${BACKEND_ROUTES_API}GetRecentWorkouts.php?page=1&pageSize=100`, {
+        credentials: 'include'
+      });
+      const data = await response.json();
+      if (data.success && data.sessions) {
+        const completed = new Set();
+        const counts = {};
+        
+        data.sessions.forEach(workout => {
+          const planName = (workout.plan_name || '').toString().toLowerCase().trim();
+          const workoutPlanId = (workout.workout_plan_id || '').toString().toLowerCase().trim();
+          
+          if (workoutPlanId.includes(`program_${programId}`)) {
+            const match = workoutPlanId.match(/session_(\d+)/);
+            if (match) {
+              const sessionId = parseInt(match[1]);
+              completed.add(sessionId);
+              counts[sessionId] = (counts[sessionId] || 0) + 1;
+            }
+          }
+          if (planName) {
+            const cleanPlanName = planName.replace(' (ended early)', '').trim();
+            completed.add(cleanPlanName);
+            counts[cleanPlanName] = (counts[cleanPlanName] || 0) + 1;
+            
+            if (cleanPlanName !== planName) {
+              completed.add(planName);
+              counts[planName] = (counts[planName] || 0) + 1;
+            }
+          }
+        });
+        
+        setCompletedSessions(completed);
+        setSessionCompletionCounts(counts);
+      }
+    } catch (error) {
+      console.error('Error fetching workout history:', error);
+    }
+  };
+
+  const isSessionCompleted = (session) => {
+    const sessionName = (session.session_name || session.name || '').toLowerCase().trim();
+    return completedSessions.has(session.id) || completedSessions.has(sessionName);
+  };
+
+  const getSessionCompletionCount = (session) => {
+    const sessionName = (session.session_name || session.name || '').toLowerCase().trim();
+    return sessionCompletionCounts[session.id] || sessionCompletionCounts[sessionName] || 0;
+  };
 
   const fetchProgramDetails = async () => {
     try {
@@ -240,15 +295,29 @@ const UserProgramView = () => {
               </div>
             ) : (
               <div className="list-group list-group-flush">
-                {program.sessions.map((session, index) => {
+                {[...program.sessions].sort((a, b) => {
+                  const aDone = isSessionCompleted(a);
+                  const bDone = isSessionCompleted(b);
+                  if (aDone && !bDone) return 1;
+                  if (!aDone && bDone) return -1;
+                  return (parseInt(a.id || 0) - parseInt(b.id || 0)) || 0;
+                }).map((session, index) => {
+                  const completed = isSessionCompleted(session);
+                  const completionCount = getSessionCompletionCount(session);
                   const isExpanded = expandedSessions.has(session.id);
                   return (
                   <div key={session.id} className="list-group-item border-0 px-0" style={{ background: 'transparent' }}>
                     <div 
                       className="d-flex justify-content-between align-items-start mb-3 p-3" 
-                      style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.2)', borderRadius: '0.75rem', transition: 'all 0.2s', cursor: 'pointer' }} 
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(30, 35, 30, 0.7)'} 
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(30, 35, 30, 0.5)'}
+                      style={{ 
+                        background: completed ? 'rgba(32, 214, 87, 0.1)' : 'rgba(30, 35, 30, 0.5)', 
+                        border: completed ? '1px solid rgba(32, 214, 87, 0.4)' : '1px solid rgba(32, 214, 87, 0.2)', 
+                        borderRadius: '0.75rem', 
+                        transition: 'all 0.2s', 
+                        cursor: 'pointer' 
+                      }} 
+                      onMouseEnter={(e) => e.currentTarget.style.background = completed ? 'rgba(32, 214, 87, 0.15)' : 'rgba(30, 35, 30, 0.7)'} 
+                      onMouseLeave={(e) => e.currentTarget.style.background = completed ? 'rgba(32, 214, 87, 0.1)' : 'rgba(30, 35, 30, 0.5)'}
                       onClick={() => toggleSession(session.id)}
                     >
                       <div className="flex-grow-1 me-3">
@@ -256,6 +325,12 @@ const UserProgramView = () => {
                           <span className="badge me-2" style={{ background: 'rgba(32, 214, 87, 0.2)', color: 'rgba(255,255,255,0.9)', borderRadius: '0.5rem' }}>
                             Week {session.week_number} • Day {session.day_number}
                           </span>
+                          {completed && (
+                            <span className="badge me-2" style={{ background: 'rgba(32, 214, 87, 0.3)', color: 'rgba(32, 214, 87, 0.95)', borderRadius: '0.5rem' }}>
+                              <i className="bi bi-check-circle-fill me-1"></i>
+                              Done{completionCount > 1 ? ` (${completionCount}x)` : ''}
+                            </span>
+                          )}
                           <h6 className="mb-0" style={{ color: 'rgba(255,255,255,0.95)', fontWeight: '600' }}>{session.session_name}</h6>
                         </div>
                         {session.session_description && (
@@ -277,8 +352,8 @@ const UserProgramView = () => {
                           startSession(session);
                         }}
                       >
-                        <i className="bi bi-play-circle me-2"></i>
-                        Start Session
+                        <i className={`bi ${completed ? 'bi-arrow-repeat' : 'bi-play-circle'} me-2`}></i>
+                        {completed ? 'Do Again' : 'Start Session'}
                       </button>
                     </div>
                     

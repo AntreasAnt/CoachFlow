@@ -1,0 +1,555 @@
+%!TEX TS-program = xelatex
+\documentclass[12pt,a4paper]{report}
+
+% --- Packages for Greek Language Support ---
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{greek}
+\setotherlanguage{english}
+
+% Standard fonts
+\newfontfamily\greekfont[Script=Greek]{Times New Roman}
+\newfontfamily\greekfontsf[Script=Greek]{Arial}
+\newfontfamily\greekfonttt[Script=Greek]{Courier New}
+
+% --- General Packages ---
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{float}
+
+% Custom Styling
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.8em}
+
+% --- DOCUMENT START ---
+\begin{document}
+
+% ==========================================
+% TITLE PAGE
+% ==========================================
+\begin{titlepage}
+    \centering
+    
+    % University Logo
+    \includegraphics[width=0.4\textwidth]{tepak-logo} % Using the actual logo in the folder
+    \vspace{0.5cm}
+    
+    % University Info
+    {\LARGE \textbf{Τεχνολογικό Πανεπιστήμιο Κύπρου}} \\[0.4cm]
+    {\large \textbf{Τμήμα Μηχανικών Ηλεκτρονικών Υπολογιστών}} \\
+    {\large \textbf{και Πληροφορικής}}
+    
+    \vspace{1.5cm}
+    
+    % Document Title
+    \rule{\linewidth}{0.5mm} \\[0.4cm]
+    {\huge \textbf{Έγγραφο Απαιτήσεων Πτυχιακής Εργασίας}}
+    \rule{\linewidth}{0.5mm} \\[1cm]
+    
+    % Project Subject
+    {\Large \textbf{Θέμα:}} \\[0.3cm]
+    {\Large \textit{«CoachFlow: Διαδικτυακό Σύστημα Διαχείρισης}} \\
+    {\Large \textit{Προπονητών και Πελατών»}}
+    
+    \vspace{1.5cm}
+    
+    % Supervisor Info
+    {\large \textbf{Επιβλέπουσα Καθηγήτρια:}} \\
+    {\large Ελίζα Αγγελίδου Λοΐζου}
+    
+    \vfill
+    
+    % Student Info (Bottom Right)
+    \begin{flushright}
+        \large
+        \textbf{Φοιτητής:} \\
+        Αντωνίου Ανδρέας \\
+        \textbf{ΑΦΤ:} 24892
+    \end{flushright}
+\end{titlepage}
+
+% ==========================================
+% TABLE OF CONTENTS
+% ==========================================
+\tableofcontents
+\newpage
+
+% ==========================================
+% SECTION 1: ΕΙΣΑΓΩΓΗ
+% ==========================================
+\section{Εισαγωγή}
+
+\subsection{Σκοπός}
+Ο σκοπός αυτού του εγγράφου απαιτήσεων είναι να μας βοηθήσει να κατανοήσουμε το πρόβλημα, διάφορους περιορισμούς, τις ανάγκες και τις απαιτήσεις του “CoachFlow: Διαδικτυακού Συστήματος Διαχείρισης Προπονητών και Πελατών”.
+
+\subsection{Πεδίο εφαρμογής}
+Στόχος είναι να δημιουργηθεί ένα web application το οποίο θα γεφυρώνει προπονητές (Trainers) και αθλούμενους χρήστες (Trainees). Θα παρέχει λειτουργικότητες όπως δημιουργία λογαριασμού, ανάθεση και παρακολούθηση προγραμμάτων γυμναστικής και πλάνων διατροφής, αποθήκευση μετρήσεων και γραφημάτων προόδου, δυνατότητα άμεσης επικοινωνίας (chat) και ασφαλείς συναλλαγές (πληρωμές).
+
+\subsection{Ορισμοί}
+\textbf{React.js, Vite, Material-UI, Bootstrap} \\
+Οι κύριες τεχνολογίες που θα χρησιμοποιηθούν για την ανάπτυξη της διεπαφής χρήστη (Frontend). Η χρήση React επιτρέπει τη συντήρηση ενός δυναμικού Single Page Application (SPA).
+
+\textbf{PHP, REST API, Composer} \\
+Οι τεχνολογίες του Backend, οι οποίες διαχειρίζονται τα αιτήματα των χρηστών, τις συναλλαγές και την επιστροφή δεδομένων με μορφή JSON (API).
+
+\textbf{MySQL} \\
+Η MySQL χρησιμοποιείται για την αποθήκευση δεδομένων χρηστών, προγραμμάτων άθλησης, καταγραφών προπόνησης/διατροφής, αγορών και στατιστικών/προόδου.
+
+\textbf{Firebase (Firestore/Storage)} \\
+Το Firebase χρησιμοποιείται κυρίως για τη λειτουργία real-time μηνυμάτων (Chat) μέσω Firestore, αφού ο χρήστης συνδεθεί στο Firebase με custom token που εκδίδεται από το backend (PHP session).
+
+\textbf{Stripe API} \\
+Η υπηρεσία ενσωμάτωσης για την ασφαλή επεξεργασία των ηλεκτρονικών πληρωμών κατά τη μίσθωση / αγορά συνδρομής σε προπονητή-γυμναστή.
+
+\textbf{USDA FoodData Central API} \\
+Εξωτερικό API που παρέχει αναζήτηση τροφών και θρεπτικών στοιχείων, και χρησιμοποιείται από το Nutrition module για εύρεση τροφών και υπολογισμό macros.
+
+\textbf{Mailchimp API} \\
+Υπηρεσία email marketing/audiences που επιτρέπει στον Admin να δημιουργεί, να διαχειρίζεται και να αποστέλλει καμπάνιες μέσα από το CoachFlow dashboard.
+
+\textbf{Gmail SMTP \& PHPMailer} \\
+Μηχανισμός αποστολής transactional emails (email verification, reset password, ειδοποιήσεις) μέσω SMTP (Gmail) από το backend, χρησιμοποιώντας τη βιβλιοθήκη PHPMailer.
+
+\subsection{Αναφορές}
+\subsubsection{Τεχνικές Ιστοσελίδες :}
+\begin{itemize}[label=•]
+    \item \url{https://react.dev/} (React Documentation)
+    \item \url{https://mui.com/} (Material-UI Framework)
+    \item \url{https://www.php.net/} (PHP Documentation)
+    \item \url{https://stripe.com/docs/} (Stripe API)
+    \item \url{https://firebase.google.com/} (Firebase Services)
+    \item \url{https://fdc.nal.usda.gov/api-guide.html} (USDA FoodData Central API)
+    \item \url{https://mailchimp.com/developer/} (Mailchimp Developer Docs)
+    \item \url{https://github.com/PHPMailer/PHPMailer} (PHPMailer)
+\end{itemize}
+
+\subsection{Επισκόπηση}
+\begin{itemize}
+    \item Στην ενότητα “Γενική Περιγραφή”, αναλύονται οι λειτουργίες και οι περιορισμοί του λογισμικού που θα αναπτυχθεί.
+    \item Στην ενότητα “Ειδικές Απαιτήσεις” παρουσιάζουμε μια βαθύτερη ανάλυση των απαιτήσεων ανά υποσύστημα.
+    \item Στην ενότητα “Χαρακτηριστικά Λογισμικού”, περιγράφονται αναλυτικά τα βασικά Endpoints και τα Use Cases.
+    \item Στην ενότητα “Παράρτημα” βλέπουμε οθόνες διεπαφής χρήστη (UI Mockups / Screenshots).
+\end{itemize}
+
+\newpage
+
+% ==========================================
+% SECTION 2: ΓΕΝΙΚΗ ΠΕΡΙΓΡΑΦΗ
+% ==========================================
+\section{Γενική Περιγραφή}
+
+\subsection{Γενική προοπτική}
+Η πλατφόρμα θα αναπτυχθεί με στόχο τη δημιουργία:
+\begin{itemize}
+    \item Κυρίως μενού επιλογών για την ευκολότερη πλοήγηση των χρηστών.
+    \item Λειτουργιών για:
+    \begin{itemize}
+        \item Εγγραφή/είσοδο χρηστών μέσω backend endpoints (\textenglish{SignUp.php / Login.php}) και session-based authorization.
+        \item Πλοήγηση στην αγορά (Marketplace) προπονητών με σκοπό την αγορά πακέτων.
+        \item Σύνδεση με ασφαλείς πληρωμές Stripe (Hire a coach).
+        \item Δυνατότητα Ανάθεσης προγραμμάτων γυμναστικής (Workouts) από τον προπονητή στον μαθητή.
+        \item Δυνατότητα αναζήτησης τροφών μέσω USDA και καταγραφής γευμάτων (Nutrition Tracker).
+        \item Αποθήκευση μετρήσεων και γραφική απεικόνιση του ιστορικού προόδου.
+        \item Άμεση επικοινωνία (Chat) μέσω μηνυμάτων σε real-time (Firebase Firestore).
+    \end{itemize}
+    \item Βάσης δεδομένων (MySQL) για την ασφαλή αποθήκευση πληροφοριών.
+    \item Πλήρως Responsive Σχεδιασμό για εύκολη πρόσβαση από κινητά (Mobile) και σταθερούς Η/Υ (Desktop).
+\end{itemize}
+
+\subsection{Διεπαφές συστήματος}
+Το σύστημα υιοθετεί SPA (Single Page Application) αρχιτεκτονική (Frontend: React) που επικοινωνεί με REST API (Backend: PHP). 
+
+\subsection{Διεπαφές χρήστη}
+Οι χρήστες χωρίζονται σε:
+\begin{itemize}[label=•]
+    \item \textbf{Guest (Επισκέπτης):} Μπορεί μόνο να εγγραφεί/συνδεθεί ή να επαναφέρει κωδικό πρόσβασης.
+    \item \textbf{Trainee (Αθλούμενος):} Πρόσβαση σε marketplace, αγορές, logging (workouts/foods/weight), analytics/history, και επικοινωνία με trainer.
+    \item \textbf{Trainer (Προπονητής):} Διαχείριση προφίλ, δημιουργία/διάθεση προγραμμάτων, διαχείριση trainees, και επικοινωνία.
+    \item \textbf{Admin (Διαχειριστής):} Platform analytics, user management, email marketing (Mailchimp), και messaging.
+\end{itemize}
+\textit{Σημείωση:} Η πρόσβαση στο marketplace απαιτεί authenticated Trainee (οι Guests δεν μπορούν να το χρησιμοποιήσουν).
+
+\subsection{Διεπαφές λογισμικού}
+Για την ανάπτυξη θα χρησιμοποιηθεί Visual Studio Code, XAMPP και Node.js περιβάλλον για το build του Vite/React. Ο PHP Server θα απαιτεί \textenglish{Composer} για τη διαχείριση βιβλιοθηκών (Firebase, Stripe, PHPMailer).
+
+\subsection{Διεπαφές επικοινωνίας}
+Τα requests στο Backend γίνονται μέσω HTTP/HTTPS πρωτοκόλλου (Axios/Fetch API) ανταλλάσσοντας JSON δεδομένα και χρησιμοποιώντας \textbf{PHP sessions} (cookies με \textenglish{credentials: include}). Για προστασία από CSRF, το frontend στέλνει επιπλέον header (\textenglish{X-CSRF-Token}) που αντιστοιχεί σε cookie \textenglish{XSRF-TOKEN}.
+
+\subsection{Ασφάλεια \& Λειτουργίες βάσης δεδομένων}
+Το σύστημα υποστηρίζει ασφαλή μεταφορά δεδομένων μέσω HTTPS (σε production) και αποθηκεύει κωδικούς πρόσβασης μόνο σε hashed μορφή. Η εξουσιοδότηση στο API γίνεται με session-based έλεγχο ρόλων και CSRF token. Η διαχείριση της βάσης δεδομένων απαιτεί backup (SQL Dumps) μέσω phpMyAdmin ή Server Automations.
+
+\subsection{Χαρακτηριστικά χρήστη}
+Η ιστοσελίδα απευθύνεται σε χρήστες με βασικές γνώσεις χρήσης Internet. Οι Προπονητές χρειάζονται εξοικείωση με την προσθήκη δραστηριοτήτων, γραφημάτων και έγκρισης/απόρριψης μαθητών.
+
+\subsection{Περιορισμοί}
+\begin{itemize}
+    \item Ο Web Browser πρέπει να υποστηρίζει JavaScript ES6+.
+    \item Ο Web Server πρέπει να υποστηρίζει PHP 8+ και SSL (HTTPS) για το Stripe.
+    \item Το User Interface πρέπει να είναι απλό, Material Design, και Responsive.
+\end{itemize}
+
+\newpage
+
+% ==========================================
+% SECTION 3: ΕΙΔΙΚΕΣ ΑΠΑΙΤΗΣΕΙΣ
+% ==========================================
+\section{Ειδικές Απαιτήσεις}
+
+\subsection{Απαιτήσεις εξωτερικής διεπαφής}
+\subsubsection{Διεπαφές χρήστη}
+Ο χρήστης με την εισαγωγή του στην σελίδα θα βλέπει την αρχική σελίδα (Landing View), καθώς και το Toolbar πλοήγησης (Navigation Bar) της πλατφόρμας.
+
+\paragraph{3.1.1.1 Καρτέλα - Dashboards / Home}
+\textbf{Trainee / Trainer / Admin:} Η αρχική σελίδα όπου ο χρήστης βλέπει σύνοψη (overview) του λογαριασμού του, ημερήσια ανασκόπηση (day summary), εκκρεμή προγράμματα, ειδοποιήσεις και βασικά στατιστικά.
+
+\paragraph{3.1.1.2 Καρτέλα - Marketplace / Find a Trainer}
+\textbf{Trainee:} Εδώ ο Trainee αναζητά επαγγελματίες trainers, βλέπει το προφίλ/ειδίκευση/βαθμολογία, και μπορεί να στείλει αίτημα συνεργασίας (\textenglish{Send Coaching Request}) και να αγοράσει προγράμματα.
+\textit{Σημείωση:} Οι Guests δεν έχουν πρόσβαση στο marketplace.
+
+\paragraph{3.1.1.3 Καρτέλα - Workouts \& Nutrition}
+\textbf{Trainee:} Εκτέλεση προπόνησης (start workout), καταγραφή σετ/κιλών/επαναλήψεων, \textenglish{skip} ασκήσεων/σετ, και καταγραφή διατροφής (log food). Αναζήτηση τροφών μέσω USDA. \\
+\textbf{Trainer:} Δημιουργία/επεξεργασία προγραμμάτων και ανάθεση τους σε trainees, καθώς και ορισμός/ανάθεση στόχων και πλάνων διατροφής (USDA-based ή fully custom).
+
+\paragraph{3.1.1.4 Καρτέλα - Progress \& Analytics}
+\textbf{Trainee / Trainer / Admin:} Η σελίδα όπου ο χρήστης θα βλέπει analytics και history. Ο Trainee βλέπει προσωπικά γραφήματα προόδου (βάρος, μετρήσεις, training volume). Ο Trainer βλέπει analytics για τους trainees του. Ο Admin βλέπει platform analytics.
+
+\paragraph{3.1.1.5 Καρτέλα - Messages}
+\textbf{Trainee / Trainer / Admin:} Σύστημα εσωτερικής αποστολής μηνυμάτων σε real-time μέσω Firebase Firestore.
+
+\paragraph{3.1.1.6 Καρτέλα - Sign In / Sign Up}
+Σελίδα εγγραφής/εισόδου που επικοινωνεί με backend endpoints (\textenglish{SignUp.php / Login.php}). Η πρόσβαση στο REST API γίνεται με session cookie (\textenglish{credentials: include}) και CSRF token header.
+
+\subsubsection{Διεπαφές λογισμικού}
+Το σύστημα επικοινωνεί Backend (PHP) με Frontend (React) μέσω RESTful API. Σε κάθε protected endpoint γίνεται \textbf{authorization check} με βάση το session (\textenglish{logged\_in, user\_privileges}). Υπάρχει μηχανισμός CSRF (cookie \textenglish{XSRF-TOKEN} + header \textenglish{X-CSRF-Token}) που χρησιμοποιείται σε επιλεγμένα state-changing endpoints.
+
+\subsection{Απαιτήσεις απόδοσης}
+Το σύστημα φιλοδοξεί να εξυπηρετεί ταυτόχρονα αρκετούς trainers/trainees. Η αρχιτεκτονική SPA (React) μειώνει τον φόρτο δικτύου επειδή αποστέλλονται μόνο JSON δεδομένα αντί για ολόκληρες HTML σελίδες έπειτα από την αρχική φόρτωση. 
+
+\subsection{Περιορισμοί σχεδιασμού}
+Το σύστημα πρέπει να είναι απλό, εύχρηστο και αδιάληπτα προσβάσιμο (High Availability).
+
+\subsubsection{Ασφάλεια}
+Δεν επιτρέπεται πρόσβαση στα protected δεδομένα (profile, workouts, nutrition, purchases) χωρίς έγκυρο session. Η εφαρμογή χρησιμοποιεί CSRF token, περιορισμούς CORS και hashed passwords. Τα Stripe PaymentIntents δημιουργούνται από το backend με τιμές από τη βάση δεδομένων.
+
+\newpage
+
+% ==========================================
+% SECTION 4: ΧΑΡΑΚΤΗΡΙΣΤΙΚΑ ΛΟΓΙΣΜΙΚΟΥ
+% ==========================================
+\section{Χαρακτηριστικά Λογισμικού (Use Cases)}
+
+\subsection{Εγγραφή, Επιβεβαίωση Email \& Σύνδεση}
+\textbf{Input:} Username, Email, Password και επιλογή ρόλου (\textenglish{trainer/trainee}) από το frontend. \\
+\textbf{Process:} Το frontend καλεί \textenglish{SignUp.php} για δημιουργία χρήστη στο \textenglish{user} table και αποστολή email verification (Gmail SMTP μέσω PHPMailer). Ο χρήστης πρέπει να επιβεβαιώσει το email του (\textenglish{isverified = 1}) πριν μπορέσει να συνδεθεί. Έπειτα κάνει login μέσω \textenglish{Login.php}, όπου δημιουργείται PHP session (\textenglish{user\_id, username, user\_privileges, logged\_in}). \\
+\textbf{Output:} Επιτυχής εγγραφή/verification και ενεργή συνεδρία (session) για πρόσβαση στα protected endpoints.
+
+\subsection{Reset Password (Email Flow)}
+\textbf{Input:} Email χρήστη και token/reset code που αποστέλλεται μέσω email. \\
+\textbf{Process:} Ο χρήστης ξεκινά διαδικασία reset, λαμβάνει token στο email (Gmail SMTP) και ολοκληρώνει την αλλαγή κωδικού μέσω ειδικού endpoint επαλήθευσης token και endpoint αλλαγής κωδικού. \\
+\textbf{Output:} Επιτυχής αλλαγή κωδικού και δυνατότητα σύνδεσης με νέο κωδικό.
+
+\subsection{Εξουσιοδότηση (Sessions \& CSRF)}
+\textbf{Input:} Session cookie (\textenglish{credentials: include}) και header \textenglish{X-CSRF-Token}. \\
+\textbf{Process:} Σε κάθε protected endpoint γίνεται έλεγχος \textenglish{logged\_in} και ρόλου (\textenglish{user\_privileges}). Το CSRF token συγχρονίζεται μέσω cookie \textenglish{XSRF-TOKEN} και μπορεί να επαληθευτεί από το backend σε συγκεκριμένα endpoints που το απαιτούν. \\
+\textbf{Output:} \textenglish{HTTP 401/403} σε μη εξουσιοδοτημένη πρόσβαση, ή επιστροφή JSON δεδομένων.
+
+\subsection{Marketplace \& Σύνδεση με Trainer}
+\textbf{Input:} Αναζήτηση trainer (filters/specializations), προβολή προφίλ, αίτημα σύνδεσης. \\
+\textbf{Process:} Ο Trainee καλεί endpoints όπως \textenglish{GetAvailableTrainers.php} και \textenglish{SendCoachingRequest.php}. Ο Trainer αποδέχεται/απορρίπτει μέσω \textenglish{AcceptCoachingRequest.php / DeclineCoachingRequest.php}. Η σχέση αποθηκεύεται στους πίνακες \textenglish{coaching\_requests} και \textenglish{coaching\_relationships}. \\
+\textbf{Output:} Ενεργή σχέση συνεργασίας (\textenglish{active}) ή εκκρεμές αίτημα (\textenglish{pending}).
+
+\subsection{Αγορά Προγράμματος (Stripe Integration)}
+\textbf{Input:} Ο Trainee επιλέγει ένα published πρόγραμμα και εισάγει στοιχεία κάρτας μέσω \textenglish{Stripe Elements}. \\
+\textbf{Process:} Το frontend καλεί \textenglish{CreatePaymentIntent.php}. Το backend ανακτά την επίσημη τιμή/νόμισμα από τη βάση (\textenglish{trainer\_programs}), δημιουργεί \textenglish{PaymentIntent} και καταχωρεί \textenglish{program\_purchases} ως \textenglish{pending/processing}. Η ολοκλήρωση γίνεται μέσω webhook (\textenglish{StripeWebhook.php}) που μαρκάρει την αγορά ως \textenglish{completed} και παρέχει πρόσβαση. \\
+\textbf{Output:} Πρόσβαση στο αγορασμένο πρόγραμμα και εμφάνιση στη βιβλιοθήκη του Trainee.
+
+\subsection{Δημιουργία \& Δημοσίευση Προγραμμάτων (Trainer)}
+\textbf{Input:} Δημιουργία custom workout program προς πώληση (τίτλος, περιγραφή, τιμή, sessions/exercises) και δημοσίευση. \\
+\textbf{Process:} Ο Trainer δημιουργεί/ενημερώνει προγράμματα μέσω endpoints όπως \textenglish{CreateProgram.php / UpdateProgram.php}. Μετά τη δημοσίευση (status \textenglish{published}), το πρόγραμμα εμφανίζεται στο marketplace. Η ``διαγραφή'' προγράμματος γίνεται με αρχειοθέτηση (status \textenglish{archived}) μέσω \textenglish{DeleteProgram.php} ώστε να μη χάνουν πρόσβαση οι ήδη αγοραστές. \\
+\textbf{Output:} Published/archived πρόγραμμα, διαθέσιμο προς αγορά ή κρυμμένο από marketplace.
+
+\subsection{Ανάθεση Υπάρχοντος Προγράμματος σε Άλλο Trainee (Program Reuse)}
+\textbf{Input:} Επιλογή ενός υπάρχοντος προγράμματος που ο Trainer δημιούργησε και ανάθεση σε άλλον trainee. \\
+\textbf{Process:} Ο Trainer μπορεί να επαναχρησιμοποιήσει/αναθέσει υπάρχοντα προγράμματα (που δημιούργησε προηγουμένως) σε άλλους trainees μέσω \textenglish{AssignProgram.php}, αντί να δημιουργεί πάντα νέα. Το πρόγραμμα αποθηκεύεται ως assignment στον πίνακα \textenglish{program\_assignments} με την αναφορά του trainer, του trainee και του program. \\
+\textbf{Output:} Ο trainee βλέπει ένα assigned program με το ίδιο περιεχόμενο (exercises/nutrition) που ο trainer είχε δημιουργήσει για κάποιον άλλο.
+
+\subsection{Διαχείριση Αγορών (Hide/Restore \& Ratings)}
+\textbf{Input:} Hide/restore αγορασμένου προγράμματος, αξιολόγηση (1--5). \\
+\textbf{Process:} Το hide γίνεται με soft-delete (flag \textenglish{program\_purchases.is\_hidden=1}) μέσω \textenglish{DeletePurchase.php} και μπορεί να γίνει restore από \textenglish{RestorePurchase.php}. Οι αξιολογήσεις προγραμμάτων γίνονται με \textenglish{RateProgram.php}. \textit{Ως υλοποίηση}, η αξιολόγηση επιτρέπεται όταν ο Trainee έχει αγοράσει το πρόγραμμα ή όταν του έχει ανατεθεί μέσω \textenglish{program\_assignments}. \\
+\textbf{Output:} Ενημερωμένη βιβλιοθήκη αγορών και ενημερωμένο rating. Αν ένας Trainer ``διαγράψει'' ένα πρόγραμμα, αυτό αρχειοθετείται (status \textenglish{archived}) και αφαιρείται από το marketplace, αλλά παραμένει διαθέσιμο στους ήδη αγοραστές.
+
+\subsection{Αξιολόγηση Trainer (1--5)}
+\textbf{Input:} Rating (1--5) και προαιρετικό κείμενο αξιολόγησης. \\
+\textbf{Process:} Ο Trainee μπορεί να αξιολογήσει έναν Trainer μόνο εφόσον υπάρχει \textbf{ενεργή} σχέση συνεργασίας (\textenglish{coaching\_relationships.status='active'}) μέσω endpoint \textenglish{SubmitReview.php}. Μετά το disconnect, η αξιολόγηση δεν είναι διαθέσιμη. \\
+\textbf{Output:} Εγγραφή/ενημέρωση αξιολόγησης στον πίνακα \textenglish{reviews}.
+
+\subsection{Workouts: Plans \& Sessions (Logging \& History)}
+\textbf{Input:} Δημιουργία/επεξεργασία προσωπικών workout plans, έναρξη συνεδρίας, logging σετ/κιλών/επαναλήψεων, και \textenglish{skip}. \\
+\textbf{Process:} Τα προσωπικά plans αποθηκεύονται σε \textenglish{user\_workout\_plans} και τα exercises σε \textenglish{workout\_plan\_exercises}. Η εκτέλεση συνεδρίας αποθηκεύεται σε \textenglish{workout\_sessions} και \textenglish{workout\_exercise\_logs}. Η διαγραφή προσωπικού plan είναι \textbf{μόνιμη} (δεν υπάρχει hide/restore option όπως στις αγορές) και δεν μπορεί να ανακτηθεί από τον χρήστη. \textit{Σημείωση:} Μόνο τα αγορασμένα plans μπορούν να κρυθούν και να επανακτηθούν. \\
+\textbf{Output:} Ιστορικό προπόνησης και ενημερωμένα analytics.
+
+\subsection{Nutrition: USDA Search, Logging \& Goals}
+\textbf{Input:} Αναζήτηση τροφών, καταγραφή γευμάτων/τροφών, στόχοι διατροφής. \\
+\textbf{Process:} Η αναζήτηση γίνεται με USDA FoodData Central (π.χ. μέσω \textenglish{SearchFoods.php} και \textenglish{USDAService}). Το logging αποθηκεύεται σε tables όπως \textenglish{food\_logs/meal\_logs} και παράγονται daily summaries. Ο Trainee μπορεί να έχει δικούς του στόχους, αλλά όταν υπάρχει ενεργή σχέση με Trainer, οι trainer-assigned goals θεωρούνται κύριοι. \\
+\textbf{Output:} Ιστορικό διατροφής, summaries και στόχοι.
+
+\subsection{Progress \& Analytics (Date Filters)}
+\textbf{Input:} Log βάρους/μετρήσεων και επιλογή date range για analytics. \\
+\textbf{Process:} Η πρόοδος αποθηκεύεται σε \textenglish{body\_measurements} και σχετικά summary tables. Το frontend ανακτά analytics/history από endpoints όπως \textenglish{GetUserAnalytics.php} με δυνατότητα φιλτραρίσματος ημερομηνιών. \\
+\textbf{Output:} Γραφήματα/πίνακες προόδου και ιστορικό.
+
+\subsection{Trainer: Overview Dashboard}
+\textbf{Input:} Ο Trainer ανοίγει το Overview (αρχική σελίδα του dashboard). \\
+\textbf{Process:} Το frontend ζητά summary stats μέσω endpoint όπως \textenglish{GetTrainerOverview.php}. Τα stats δείχνουν:
+\begin{itemize}[label=•]
+    \item \textbf{Total Clients:} Σύνολο ενεργών trainees που έχουν ενεργή σχέση συνεργασίας με τον trainer, με %-change από τον προηγούμενο μήνα.
+    \item \textbf{Monthly Revenue:} Συνολικές πωλήσεις του μήνα σε ευρώ (€), με %-change από τον προηγούμενο μήνα.
+    \item \textbf{Active Programs:} Αριθμός δημοσιευμένων (published) προγραμμάτων.
+    \item \textbf{Total Sales:} Σύνολο αγορών που έχουν γίνει για τα προγράμματα του trainer.
+    \item \textbf{Recent Activity:} Λίστα πρόσφατων αγορών (π.χ. ``New Program Purchase - 1 Week on Repeat purchased 18 hour(s) ago'').
+    \item \textbf{Top Selling Programs:} Ranking των bestseller προγραμμάτων με αριθμό πωλήσεων και τιμή.
+    \item \textbf{Quick Actions:} Πλευρικό πάνελ με ταχύ πρόσβαση σε: Messages, Create New Program, View Clients, View Earnings, Edit Profile.
+\end{itemize}  
+\textbf{Output:} Dashboard με real-time summary και γρήγορη πρόσβαση σε κύριες λειτουργίες.
+
+\subsection{Chat (Firebase Firestore)}
+\textbf{Input:} Επιλογή συνομιλίας και αποστολή μηνύματος. \\
+\textbf{Process:} Το frontend ζητά custom token από \textenglish{GetFirebaseCustomToken.php} (απαιτεί ενεργό PHP session) και συνδέεται στο Firebase. Οι συνομιλίες/μηνύματα αποθηκεύονται στο Firestore (\textenglish{conversations/.../messages}) και ενημερώνονται σε real-time. \\
+\textbf{Output:} Real-time ενημέρωση inbox, unread counts και history συνομιλιών.
+
+\subsection{Admin: User Management}
+\textbf{Input:} Αναζήτηση/προβολή χρηστών και ενέργειες (add/edit/delete, disable/enable, force reset). \\
+\textbf{Process:} Ο Admin εκτελεί τις ενέργειες μέσω endpoints όπως \textenglish{FetchUsers.php, AddUser.php, EditUser.php, DeleteUser.php, UserDisable.php, UserEnable.php, ForceResetPassword.php}. Η πρόσβαση ελέγχεται από role checks. \\
+\textbf{Output:} Ενημερωμένοι χρήστες/καταστάσεις λογαριασμών και audit-friendly συμπεριφορά (soft delete/disable όπου εφαρμόζεται).
+
+\subsection{Admin: Email Marketing (Mailchimp Dashboard)}
+\textbf{Input:} Δημιουργία καμπάνιας (subject/from/reply-to/content), επιλογή audience και διαχείριση subscribers. \\
+\textbf{Process:} Ο Admin διαχειρίζεται audiences/campaigns μέσω CoachFlow χρησιμοποιώντας endpoints όπως \textenglish{GetMailchimpCampaigns.php, CreateMailchimpCampaign.php, UpdateMailchimpCampaign.php, SendMailchimpCampaign.php, AddMailchimpSubscriber.php, RemoveMailchimpSubscriber.php}. \\
+\textbf{Output:} Καμπάνιες αποθηκευμένες/αποσταλμένες στο Mailchimp και ενημερωμένη λίστα subscribers.
+
+\newpage
+
+% ==========================================
+% SECTION 5: ΠΑΡΑΡΤΗΜΑ - ΠΡΑΓΜΑΤΙΚΑ SCREENSHOTS
+% ==========================================
+\section{Παράρτημα - Πραγματικά Screenshots Εφαρμογής}
+Η ενότητα αυτή περιλαμβάνει πραγματικά screenshots από το τελικό σύστημα CoachFlow (όχι wireframes), ομαδοποιημένα ανά ρόλο χρήστη.
+
+\subsection{Guest Screens}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/guests/landingpage.png}}
+    \caption{Guest: Landing Page}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/guests/login.png}}
+    \caption{Guest: Login Screen}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/guests/signup.png}}
+    \caption{Guest: Sign Up Screen}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/guests/forgetpassword.png}}
+    \caption{Guest: Forgot Password Screen}
+\end{figure}
+
+\clearpage
+\subsection{Trainee Screens}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainee/navigation.png}}
+    \caption{Trainee: Navigation Layout}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainee/first-page.png}}
+    \caption{Trainee: Home / First Page}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainee/profile.png}}
+    \caption{Trainee: Profile Screen}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainee/find-coach.png}}
+    \caption{Trainee: Find Coach Marketplace}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainee/my-trainer.png}}
+    \caption{Trainee: My Trainer Relationship Screen}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainee/messages.png}}
+    \caption{Trainee: Messages Screen}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainee/buy-programs.png}}
+    \caption{Trainee: Buy Programs Screen}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainee/my-workouts.png}}
+    \caption{Trainee: My Workouts Screen}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainee/workout-screen.png}}
+    \caption{Trainee: Workout Session Screen}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainee/workout-pages.png}}
+    \caption{Trainee: Workout Pages / Plan Details}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainee/meal-page.png}}
+    \caption{Trainee: Meal Logging Screen}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainee/analytics.png}}
+    \caption{Trainee: Analytics Screen}
+\end{figure}
+
+\clearpage
+\subsection{Trainer Screens}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainer/dashboard.png}}
+    \caption{Trainer: Dashboard Overview}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainer/profile.png}}
+    \caption{Trainer: Profile Screen}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainer/programs.png}}
+    \caption{Trainer: Programs Management}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainer/create-programs.png}}
+    \caption{Trainer: Create Programs Form}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainer/select a program to assign.png}}
+    \caption{Trainer: Select Program to Assign}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainer/my-clients.png}}
+    \caption{Trainer: Clients Screen}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainer/create custom program for client.png}}
+    \caption{Trainer: Create Custom Program for Client}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainer/nutrition goals for client.png}}
+    \caption{Trainer: Nutrition Goals for Client}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainer/Manage Programs & Nutrition for client.png}}
+    \caption{Trainer: Manage Programs and Nutrition for Client}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainer/my-message.png}}
+    \caption{Trainer: Messages Screen}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainer/client-analytics.png}}
+    \caption{Trainer: Client Analytics}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/trainer/payments.png}}
+    \caption{Trainer: Payments Screen}
+\end{figure}
+
+\clearpage
+\subsection{Admin Screens}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/admin/dashboard.png}}
+    \caption{Admin: Dashboard Overview}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/admin/profile.png}}
+    \caption{Admin: Profile Screen}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/admin/user-management.png}}
+    \caption{Admin: User Management}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/admin/analytics.png}}
+    \caption{Admin: Analytics Screen}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/admin/email-marketing.png}}
+    \caption{Admin: Email Marketing Dashboard}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{\detokenize{system-images/admin/messaging.png}}
+    \caption{Admin: Messaging Screen}
+\end{figure}
+
+\end{document}
