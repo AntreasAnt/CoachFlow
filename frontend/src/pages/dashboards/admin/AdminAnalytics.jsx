@@ -365,6 +365,9 @@ const AdminAnalytics = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
+  const [topCoachesByRating, setTopCoachesByRating] = useState([]);
+  const [topCoachesByReviews, setTopCoachesByReviews] = useState([]);
+  const [loadingCoachRatings, setLoadingCoachRatings] = useState(true);
 
   const buildQuery = ({ start, end, days }) => {
     const params = new URLSearchParams();
@@ -414,6 +417,30 @@ const AdminAnalytics = () => {
     setStartDate(start);
     setEndDate(end);
     fetchAnalytics({ start, end, days: periodDays });
+  }, []);
+
+  useEffect(() => {
+    const fetchCoachRatings = async () => {
+      try {
+        const [byRating, byReviews] = await Promise.all([
+          fetch(`${BACKEND_ROUTES_API}GetTrainersWithRatings.php?sort_by=rating&limit=10`, {
+            credentials: 'include',
+            headers: { 'Accept': 'application/json' }
+          }).then(r => r.json()),
+          fetch(`${BACKEND_ROUTES_API}GetTrainersWithRatings.php?sort_by=reviews&limit=10`, {
+            credentials: 'include',
+            headers: { 'Accept': 'application/json' }
+          }).then(r => r.json()),
+        ]);
+        if (byRating.success) setTopCoachesByRating(byRating.trainers || []);
+        if (byReviews.success) setTopCoachesByReviews(byReviews.trainers || []);
+      } catch (e) {
+        console.error('Failed to fetch coach ratings:', e);
+      } finally {
+        setLoadingCoachRatings(false);
+      }
+    };
+    fetchCoachRatings();
   }, []);
 
   const overview = analytics?.overview || {};
@@ -954,6 +981,50 @@ const AdminAnalytics = () => {
                     />
                   </div>
                 </div>
+
+                <SectionHeader title="Ratings & Reviews" subtitle="Best coaches by community feedback" />
+                {loadingCoachRatings ? (
+                  <div className="text-center py-3">
+                    <div className="spinner-border spinner-border-sm" style={{ color: '#10b981' }} role="status"></div>
+                  </div>
+                ) : (
+                  <div className="row g-3">
+                    <div className="col-12 col-xl-6">
+                      <MiniTable
+                        title="🏆 Best coaches by rating"
+                        rows={topCoachesByRating.map((c, idx) => ({
+                          rank: `${['🥇','🥈','🥉'][idx] || `#${idx+1}`}`,
+                          name: c.full_name || c.username || '—',
+                          rating: Number(c.average_rating || 0).toFixed(1),
+                          reviews: Number(c.review_count || 0),
+                        }))}
+                        columns={[
+                          { key: 'rank', label: '#' },
+                          { key: 'name', label: 'Coach' },
+                          { key: 'rating', label: '★ Rating', format: (v) => `${v} / 5.0` },
+                          { key: 'reviews', label: 'Reviews' },
+                        ]}
+                      />
+                    </div>
+                    <div className="col-12 col-xl-6">
+                      <MiniTable
+                        title="💬 Most reviewed coaches"
+                        rows={topCoachesByReviews.map((c, idx) => ({
+                          rank: `${['🥇','🥈','🥉'][idx] || `#${idx+1}`}`,
+                          name: c.full_name || c.username || '—',
+                          reviews: Number(c.review_count || 0),
+                          rating: Number(c.average_rating || 0).toFixed(1),
+                        }))}
+                        columns={[
+                          { key: 'rank', label: '#' },
+                          { key: 'name', label: 'Coach' },
+                          { key: 'reviews', label: 'Reviews' },
+                          { key: 'rating', label: '★ Rating', format: (v) => `${v} / 5.0` },
+                        ]}
+                      />
+                    </div>
+                  </div>
+                )}
               </>
             )}
 

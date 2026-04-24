@@ -16,6 +16,8 @@ const AdminDashboardHome = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [topCoaches, setTopCoaches] = useState([]);
+  const [loadingCoaches, setLoadingCoaches] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -44,6 +46,27 @@ const AdminDashboardHome = () => {
     };
 
     fetchStats();
+  }, []);
+
+  useEffect(() => {
+    const fetchTopCoaches = async () => {
+      try {
+        const response = await fetch(BACKEND_ROUTES_API + 'GetTrainersWithRatings.php?sort_by=rating&limit=5', {
+          method: 'GET',
+          credentials: 'include',
+          headers: { 'Accept': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.success) {
+          setTopCoaches(data.trainers || []);
+        }
+      } catch (err) {
+        console.error('Error fetching top coaches:', err);
+      } finally {
+        setLoadingCoaches(false);
+      }
+    };
+    fetchTopCoaches();
   }, []);
 
     // Listen for unread messages directly from Firebase Firestore
@@ -314,6 +337,70 @@ const AdminDashboardHome = () => {
                     </button>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Best Coaches by Rating */}
+        <div className="row mt-4">
+          <div className="col-12">
+            <div className="card border-0 shadow-sm" style={{ borderRadius: '12px', backgroundColor: '#2d2d2d', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <div className="card-body p-4">
+                <h5 className="mb-4" style={{ color: '#fff' }}>
+                  <i className="bi bi-trophy-fill me-2" style={{ color: '#fbbf24' }}></i>
+                  Best Coaches by Rating
+                </h5>
+                {loadingCoaches ? (
+                  <div className="text-center py-3">
+                    <div className="spinner-border spinner-border-sm" style={{ color: '#10b981' }} role="status"></div>
+                  </div>
+                ) : topCoaches.length === 0 ? (
+                  <p style={{ color: '#9ca3af' }} className="mb-0">No coaches with ratings yet.</p>
+                ) : (
+                  <div className="d-flex flex-column gap-3">
+                    {topCoaches.map((coach, idx) => {
+                      const rating = Number(coach.average_rating || 0);
+                      const reviewCount = Number(coach.review_count || 0);
+                      const filledStars = Math.round(rating);
+                      const stars = '★'.repeat(filledStars) + '☆'.repeat(5 - filledStars);
+                      const medals = ['🥇', '🥈', '🥉'];
+                      const medal = medals[idx] || `#${idx + 1}`;
+                      return (
+                        <div
+                          key={coach.userid}
+                          className="d-flex align-items-center gap-3 p-3 rounded"
+                          style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(16, 185, 129, 0.15)' }}
+                        >
+                          <div style={{ fontSize: '1.5rem', width: '2rem', textAlign: 'center', flexShrink: 0 }}>
+                            {medal}
+                          </div>
+                          <div
+                            className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                            style={{ width: '44px', height: '44px', backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981', fontWeight: '700', fontSize: '1.1rem', overflow: 'hidden' }}
+                          >
+                            {coach.image ? (
+                              <img src={coach.image} alt={coach.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              (coach.full_name || coach.username || 'T').charAt(0).toUpperCase()
+                            )}
+                          </div>
+                          <div className="flex-grow-1">
+                            <div className="fw-bold" style={{ color: '#fff' }}>
+                              {coach.full_name || coach.username || 'Unknown Trainer'}
+                            </div>
+                            <div style={{ color: '#9ca3af', fontSize: '0.82rem' }}>@{coach.username}</div>
+                          </div>
+                          <div className="text-end flex-shrink-0">
+                            <div style={{ color: '#fbbf24', letterSpacing: '1px', fontSize: '0.95rem' }}>{stars}</div>
+                            <div style={{ color: '#10b981', fontWeight: '700', fontSize: '1rem' }}>{rating.toFixed(1)}</div>
+                            <div style={{ color: '#9ca3af', fontSize: '0.75rem' }}>{reviewCount} {reviewCount === 1 ? 'review' : 'reviews'}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           </div>

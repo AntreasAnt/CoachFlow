@@ -87,7 +87,7 @@ try {
     $offset = $_GET['offset'] ?? 0;
     
     // Build query
-    $query = "SELECT 
+    $query = "SELECT
                 u.userid as id,
                 u.full_name as name,
                 u.username,
@@ -104,8 +104,14 @@ try {
                 COALESCE(tp.profile_image, (SELECT g.image FROM gallery g WHERE g.imageid = u.imageid LIMIT 1)) as profile_image,
                 tp.verified,
                 tp.created_at as member_since,
+                u.instagram,
+                u.facebook,
+                u.twitter,
+                u.youtube,
+                u.linkedin,
+                u.website,
                 creq.id as request_id,
-                CASE 
+                CASE
                     WHEN cr.id IS NOT NULL THEN 'active'
                     WHEN creq.id IS NOT NULL THEN 'pending'
                     ELSE 'none'

@@ -22,6 +22,8 @@ const FindTrainersPage = ({
 }) => {
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [selectedTrainerForReviews, setSelectedTrainerForReviews] = useState(null);
+  const [showTrainerInfoModal, setShowTrainerInfoModal] = useState(false);
+  const [selectedTrainerInfo, setSelectedTrainerInfo] = useState(null);
   const PAGE_SIZE = 12;
 
   const navigate = useNavigate();
@@ -642,14 +644,16 @@ const FindTrainersPage = ({
             <div className="row">
             {visibleTrainers.map((trainer) => (
               <div key={trainer.id} className="col-lg-4 col-md-6 mb-4">
-                <div 
+                <div
                   className="card border-0 rounded-4 h-100"
                   style={{
                     backgroundColor: 'rgba(15, 20, 15, 0.6)',
                     border: '1px solid rgba(74, 74, 90, 0.3)',
                     boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer'
                   }}
+                  onClick={() => { setSelectedTrainerInfo(trainer); setShowTrainerInfoModal(true); }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-8px)';
                     e.currentTarget.style.borderColor = 'var(--brand-primary)';
@@ -740,20 +744,20 @@ const FindTrainersPage = ({
                     )}
 
                     {/* Actions */}
-                    <div className="d-flex gap-2">
+                    <div className="d-flex gap-2" onClick={(e) => e.stopPropagation()}>
                       {trainer.connection_status === 'active' ? (
                         <button className="btn rounded-pill flex-fill" disabled style={{ backgroundColor: 'rgba(32, 214, 87, 0.3)', color: 'var(--brand-white)', border: 'none' }}>
                           <i className="bi bi-check-circle me-2"></i>
                           Connected
                         </button>
                       ) : trainer.connection_status === 'pending' ? (
-                        <button 
+                        <button
                           className="btn rounded-pill flex-fill"
                           onClick={() => handleCancelRequest(trainer)}
                           disabled={Boolean(cancellingRequest)}
-                          style={{ 
-                            backgroundColor: 'rgba(220, 53, 69, 0.2)', 
-                            color: '#dc3545', 
+                          style={{
+                            backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                            color: '#dc3545',
                             border: '1px solid rgba(220, 53, 69, 0.5)',
                             fontWeight: '600'
                           }}
@@ -785,7 +789,7 @@ const FindTrainersPage = ({
                           {getLockedActionMeta(trainer).label}
                         </button>
                       ) : (
-                        <button 
+                        <button
                           className="btn rounded-pill flex-fill"
                           onClick={() => handleRequestConnection(trainer)}
                           disabled={!trainer.accepting_clients}
@@ -800,7 +804,7 @@ const FindTrainersPage = ({
                           Request Connection
                         </button>
                       )}
-                      <button 
+                      <button
                         className="btn rounded-pill"
                         onClick={() => handleHideTrainer(trainer.id)}
                         title="Hide trainer"
@@ -812,6 +816,19 @@ const FindTrainersPage = ({
                         }}
                       >
                         <i className="bi bi-eye-slash"></i>
+                      </button>
+                      <button
+                        className="btn rounded-pill"
+                        onClick={() => { setSelectedTrainerInfo(trainer); setShowTrainerInfoModal(true); }}
+                        title="View full profile"
+                        style={{
+                          backgroundColor: 'transparent',
+                          color: 'var(--brand-primary)',
+                          border: '1px solid rgba(32, 214, 87, 0.35)',
+                          fontWeight: '600'
+                        }}
+                      >
+                        <i className="bi bi-person-lines-fill"></i>
                       </button>
                     </div>
                   </div>
@@ -1133,6 +1150,292 @@ const FindTrainersPage = ({
           trainerId={selectedTrainerForReviews.id}
           trainerName={selectedTrainerForReviews.name || selectedTrainerForReviews.username}
         />
+      )}
+
+      {/* Trainer Full Profile Modal */}
+      {showTrainerInfoModal && selectedTrainerInfo && (
+        <div
+          className="modal fade show d-block"
+          style={{ backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 1070 }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowTrainerInfoModal(false); }}
+        >
+          <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div
+              className="modal-content"
+              style={{
+                background: '#0f140f',
+                border: '1px solid rgba(32, 214, 87, 0.3)',
+                borderRadius: '1rem',
+                color: '#fff'
+              }}
+            >
+              {/* Header */}
+              <div
+                className="modal-header border-0 pb-0"
+                style={{ background: 'transparent' }}
+              >
+                <h5 className="modal-title text-white">Trainer Profile</h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => setShowTrainerInfoModal(false)}
+                ></button>
+              </div>
+
+              <div className="modal-body pt-2 pb-4">
+                {/* Avatar + Name Row */}
+                <div className="d-flex align-items-center gap-3 mb-4">
+                  <div
+                    className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                    style={{
+                      width: '80px',
+                      height: '80px',
+                      fontSize: '2rem',
+                      backgroundColor: 'var(--brand-primary)',
+                      color: 'var(--brand-dark)',
+                      fontWeight: '700',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    {selectedTrainerInfo.profile_image ? (
+                      <img
+                        src={selectedTrainerInfo.profile_image}
+                        alt={selectedTrainerInfo.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      selectedTrainerInfo.name?.charAt(0) || 'T'
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="mb-0 fw-bold" style={{ color: 'var(--brand-white)' }}>
+                      {selectedTrainerInfo.name}
+                      {!!selectedTrainerInfo.verified && (
+                        <i
+                          className="bi bi-patch-check-fill ms-2"
+                          style={{ color: 'var(--brand-primary)', fontSize: '1.1rem' }}
+                          title="Verified"
+                        ></i>
+                      )}
+                    </h4>
+                    {selectedTrainerInfo.username && (
+                      <p className="mb-1" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                        @{selectedTrainerInfo.username}
+                      </p>
+                    )}
+                    {/* Rating */}
+                    <div
+                      className="d-flex align-items-center gap-2"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => {
+                        setShowTrainerInfoModal(false);
+                        setSelectedTrainerForReviews(selectedTrainerInfo);
+                        setShowReviewsModal(true);
+                      }}
+                      title="View Reviews"
+                    >
+                      <span style={{ color: '#ffc107' }}>
+                        {getRatingStars(selectedTrainerInfo.average_rating || 0)}
+                      </span>
+                      <small style={{ color: 'var(--text-secondary)' }}>
+                        {Number(selectedTrainerInfo.average_rating || 0).toFixed(1)} ({selectedTrainerInfo.total_reviews || 0} reviews)
+                      </small>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Status badges */}
+                <div className="d-flex flex-wrap gap-2 mb-3">
+                  {selectedTrainerInfo.accepting_clients ? (
+                    <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.2)', color: 'var(--brand-primary)', border: '1px solid rgba(32, 214, 87, 0.3)' }}>
+                      <i className="bi bi-check-circle me-1"></i> Accepting Clients
+                    </span>
+                  ) : (
+                    <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(74, 74, 90, 0.3)', color: 'var(--text-secondary)' }}>
+                      <i className="bi bi-slash-circle me-1"></i> Fully Booked
+                    </span>
+                  )}
+                  {selectedTrainerInfo.availability_status && (
+                    <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(32, 214, 87, 0.1)', color: 'var(--brand-light)', border: '1px solid rgba(32, 214, 87, 0.2)' }}>
+                      {selectedTrainerInfo.availability_status.charAt(0).toUpperCase() + selectedTrainerInfo.availability_status.slice(1)}
+                    </span>
+                  )}
+                  {selectedTrainerInfo.member_since && (
+                    <span className="badge rounded-pill" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <i className="bi bi-calendar3 me-1"></i> Member since {new Date(selectedTrainerInfo.member_since).getFullYear()}
+                    </span>
+                  )}
+                </div>
+
+                <hr style={{ borderColor: 'rgba(32, 214, 87, 0.15)' }} />
+
+                {/* Bio */}
+                {selectedTrainerInfo.bio && (
+                  <div className="mb-3">
+                    <p className="mb-1 fw-semibold" style={{ color: 'var(--brand-primary)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Bio</p>
+                    <p className="mb-0 small" style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>{selectedTrainerInfo.bio}</p>
+                  </div>
+                )}
+
+                {/* Stats row — no hourly rate */}
+                <div className="row g-2 mb-4">
+                  <div className="col-4">
+                    <div className="rounded-3 p-3 text-center" style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.1)' }}>
+                      <div className="fw-bold" style={{ color: 'var(--brand-primary)', fontSize: '1.4rem' }}>
+                        {selectedTrainerInfo.experience_years > 0 ? selectedTrainerInfo.experience_years : '—'}
+                      </div>
+                      <div className="small" style={{ color: 'var(--text-secondary)' }}>Yrs Experience</div>
+                    </div>
+                  </div>
+                  <div className="col-4">
+                    <div className="rounded-3 p-3 text-center" style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.1)' }}>
+                      <div className="fw-bold" style={{ color: 'var(--brand-primary)', fontSize: '1.4rem' }}>
+                        {selectedTrainerInfo.current_clients ?? '—'}
+                      </div>
+                      <div className="small" style={{ color: 'var(--text-secondary)' }}>Clients</div>
+                    </div>
+                  </div>
+                  <div className="col-4">
+                    <div className="rounded-3 p-3 text-center" style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.1)' }}>
+                      <div className="fw-bold" style={{ color: 'var(--brand-primary)', fontSize: '1.4rem' }}>
+                        {Number(selectedTrainerInfo.average_rating || 0).toFixed(1)}
+                      </div>
+                      <div className="small" style={{ color: 'var(--text-secondary)' }}>Avg Rating</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Specializations */}
+                {(() => {
+                  const raw = selectedTrainerInfo.specializations;
+                  const list = Array.isArray(raw)
+                    ? raw.filter(s => typeof s === 'string' && s.trim())
+                    : typeof raw === 'string' && raw.trim()
+                      ? raw.split(',').map(s => s.trim()).filter(Boolean)
+                      : [];
+                  return (
+                    <div className="mb-3">
+                      <p className="mb-2 fw-semibold" style={{ color: 'var(--brand-primary)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <i className="bi bi-lightning-fill me-1"></i>Specializations
+                      </p>
+                      {list.length > 0 ? (
+                        <div className="d-flex flex-wrap gap-2">
+                          {list.map((spec, idx) => (
+                            <span key={idx} className="badge rounded-pill"
+                              style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-light)', border: '1px solid rgba(32, 214, 87, 0.2)', fontSize: '0.8rem', padding: '0.4em 0.9em' }}>
+                              {spec}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="small mb-0" style={{ color: 'var(--text-secondary)' }}>No specializations listed</p>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Certifications */}
+                {(() => {
+                  const raw = selectedTrainerInfo.certifications;
+                  const list = Array.isArray(raw)
+                    ? raw.filter(c => typeof c === 'string' && c.trim())
+                    : typeof raw === 'string' && raw.trim()
+                      ? raw.split(',').map(c => c.trim()).filter(Boolean)
+                      : [];
+                  return (
+                    <div className="mb-3">
+                      <p className="mb-2 fw-semibold" style={{ color: 'var(--brand-primary)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <i className="bi bi-award-fill me-1"></i>Certifications
+                      </p>
+                      {list.length > 0 ? (
+                        <div className="d-flex flex-wrap gap-2">
+                          {list.map((cert, idx) => (
+                            <span key={idx} className="badge rounded-pill"
+                              style={{ backgroundColor: 'rgba(255, 193, 7, 0.12)', color: '#ffc107', border: '1px solid rgba(255, 193, 7, 0.3)', fontSize: '0.8rem', padding: '0.4em 0.9em' }}>
+                              <i className="bi bi-award me-1"></i>{cert}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="small mb-0" style={{ color: 'var(--text-secondary)' }}>No certifications listed</p>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Social Media Links */}
+                {(() => {
+                  const socials = [
+                    { key: 'instagram', icon: 'bi-instagram', color: '#e1306c', label: 'Instagram' },
+                    { key: 'facebook',  icon: 'bi-facebook',  color: '#1877f2', label: 'Facebook' },
+                    { key: 'twitter',   icon: 'bi-twitter-x', color: '#ffffff', label: 'Twitter / X' },
+                    { key: 'youtube',   icon: 'bi-youtube',   color: '#ff0000', label: 'YouTube' },
+                    { key: 'linkedin',  icon: 'bi-linkedin',  color: '#0a66c2', label: 'LinkedIn' },
+                    { key: 'website',   icon: 'bi-globe',     color: '#10b981', label: 'Website' },
+                  ].filter(s => selectedTrainerInfo[s.key] && selectedTrainerInfo[s.key].trim());
+
+                  if (socials.length === 0) return null;
+                  return (
+                    <div className="mb-2">
+                      <p className="mb-2 fw-semibold" style={{ color: 'var(--brand-primary)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <i className="bi bi-share-fill me-1"></i>Social & Links
+                      </p>
+                      <div className="d-flex flex-wrap gap-2">
+                        {socials.map(s => (
+                          <a
+                            key={s.key}
+                            href={selectedTrainerInfo[s.key]}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-sm rounded-pill d-flex align-items-center gap-1"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: s.color, fontWeight: '600', fontSize: '0.8rem', textDecoration: 'none' }}
+                          >
+                            <i className={`bi ${s.icon}`}></i>
+                            <span>{s.label}</span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Footer actions */}
+              <div className="modal-footer border-0 pt-0">
+                <button
+                  type="button"
+                  className="btn rounded-pill px-4"
+                  onClick={() => setShowTrainerInfoModal(false)}
+                  style={{ backgroundColor: 'transparent', color: 'var(--text-secondary)', border: '1px solid rgba(74, 74, 90, 0.3)' }}
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  className="btn rounded-pill px-4"
+                  onClick={() => {
+                    setShowTrainerInfoModal(false);
+                    setSelectedTrainerForReviews(selectedTrainerInfo);
+                    setShowReviewsModal(true);
+                  }}
+                  style={{ backgroundColor: 'rgba(32, 214, 87, 0.15)', color: 'var(--brand-white)', border: '1px solid rgba(32, 214, 87, 0.3)' }}
+                >
+                  <i className="bi bi-star me-2"></i>View Reviews
+                </button>
+                {!isRequestLocked(selectedTrainerInfo) && selectedTrainerInfo.connection_status !== 'active' && selectedTrainerInfo.connection_status !== 'pending' && (
+                  <button
+                    type="button"
+                    className="btn rounded-pill px-4"
+                    onClick={() => { setShowTrainerInfoModal(false); handleRequestConnection(selectedTrainerInfo); }}
+                    style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-dark)', border: 'none', fontWeight: '600' }}
+                  >
+                    <i className="bi bi-person-plus me-2"></i>Request Connection
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

@@ -61,7 +61,7 @@ const ViewReviewsModal = ({ show, onHide, trainerId, trainerName }) => {
                 {reviews.map((r, i) => (
                   <div key={i} className="mb-3 p-3 rounded" style={{ background: 'rgba(30, 35, 30, 0.5)', border: '1px solid rgba(32, 214, 87, 0.1)' }}>
                     <div className="d-flex justify-content-between align-items-center mb-1">
-                      <strong className="text-white">{r.reviewer_name || r.reviewer_username || 'Anonymous'}</strong>
+                      <strong className="text-white">{(() => { const n = r.reviewer_name || r.reviewer_username || 'Anonymous'; return n.length > 5 ? n.slice(0, 5) + '...' : n; })()}</strong>
                       {getRatingStars(r.rating)}
                     </div>
                     <small className="opacity-75 d-block mb-2">{new Date(r.updated_at || r.created_at).toLocaleDateString()}</small>
