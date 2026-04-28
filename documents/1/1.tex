@@ -22,6 +22,7 @@
 \usepackage{xcolor}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, positioning, calc, shapes.geometric}
+\usepackage{float}
 
 % Custom Styling
 \hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
@@ -42,7 +43,7 @@
     \draw[line width=0.9pt] (-0.24,-0.10) -- (0.24,-0.10);
     \draw[line width=0.9pt] (0,-0.42) -- (-0.20,-0.76);
     \draw[line width=0.9pt] (0,-0.42) -- (0.20,-0.76);
-    \node[below=2mm] at (0,-0.98) {\small #3};
+        \node[below=2mm] at (0,-1.25) {\small #3};
   \end{scope}
 }
 
@@ -201,7 +202,280 @@
 
 \subsection{Διαγράμματα Χρήσης (Use Cases)}
 \subsubsection{Διαγράμματα Χρήσης (Use Case Diagrams)}
-\input{use_case_overview}
+\noindent 1. Account Access
+% 1. Account Access (TikZ)
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[font=\small]
+        % System boundary
+        \node[system, minimum width=12.8cm, minimum height=7.8cm] (sys) {};
+        \node[anchor=west, font=\bfseries] at ($(sys.north west)+(0.35,-0.35)$) {CoachFlow - Account Access};
+
+        % Actors
+        \actor{-7.25}{ 2.75}{Guest}{guest}
+        \actor{-7.25}{ 0.85}{Trainee}{trainee}
+        \actor{-7.25}{-1.05}{Trainer}{trainer}
+        \actor{-7.25}{-2.95}{Admin}{admin}
+
+        % Use cases
+        \node[usecase, minimum width=5.0cm] (register) at (1.85, 2.05) {Register (Sign Up)};
+        \node[usecase, minimum width=4.6cm] (reset)    at (1.85, 0.75) {Reset Password};
+        \node[usecase, minimum width=3.2cm] (login)    at (1.85,-0.45) {Login};
+        \node[usecase, minimum width=3.2cm] (logout)   at (1.85,-1.75) {Logout};
+        \node[usecase, minimum width=4.6cm] (profile)  at (1.85,-3.05) {Manage Profile};
+
+        % Links
+        \draw[link] (guest)   -- (register.west);
+        \draw[link] (guest)   -- (reset.west);
+        \draw[link] (guest)   -- (login.west);
+
+        \draw[link] (trainee) -- (logout.west);
+        \draw[link] (trainee) -- (profile.west);
+
+        \draw[link] (trainer) -- (logout.west);
+        \draw[link] (trainer) -- (profile.west);
+
+        \draw[link] (admin)   -- (profile.west);
+    \end{tikzpicture}
+
+    \vspace{3mm}
+    \textit{Guest users can only sign up / login / reset password. All other actions require authentication.}
+\end{figure}
+\clearpage
+
+\noindent 2. Trainee-Trainer Interaction
+% 2. Trainee-Trainer Interaction (TikZ)
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[font=\small]
+        % System boundary
+        \node[system, minimum width=12.8cm, minimum height=7.8cm] (sys) {};
+        \node[anchor=west, font=\bfseries] at ($(sys.north west)+(0.35,-0.35)$) {CoachFlow - Trainee / Trainer Interaction};
+
+        % Actors
+        \actor{-7.25}{ 1.35}{Trainee}{trainee}
+        \actor{-7.25}{-1.65}{Trainer}{trainer}
+
+        % Use cases
+        \node[usecase, minimum width=5.4cm] (browse)   at (2.15, 2.10) {Browse \& View Trainers};
+        \node[usecase, minimum width=6.4cm] (request)  at (2.15, 0.95) {Send Coaching Request (Connect)};
+        \node[usecase, minimum width=4.8cm] (messages) at (2.15,-0.20) {Send / Read Messages};
+        \node[usecase, minimum width=3.6cm] (rate)     at (2.15,-1.35) {Rate Trainer};
+        \node[usecase, minimum width=5.4cm] (disconnect) at (2.15,-2.50) {Disconnect Relationship};
+        \node[usecase, minimum width=5.8cm] (manage)   at (2.15,-3.65) {Manage Requests (accept/decline)};
+
+        % Links
+        \draw[link] (trainee) -- (browse.west);
+        \draw[link] (trainee) -- (request.west);
+        \draw[link] (trainee) -- (messages.west);
+        \draw[link] (trainee) -- (rate.west);
+        \draw[link] (trainee) -- (disconnect.west);
+
+        \draw[link] (trainer) -- (messages.west);
+        \draw[link] (trainer) -- (disconnect.west);
+        \draw[link] (trainer) -- (manage.west);
+    \end{tikzpicture}
+
+    \vspace{3mm}
+    \textit{Only authenticated trainees can browse trainers, hire, and message. Guests have no access to these actions.}
+\end{figure}
+\clearpage
+
+\noindent 3. Training Flow
+% 3. Training Flow (TikZ)
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[font=\small]
+        % System boundary
+        \node[system, minimum width=12.8cm, minimum height=7.6cm] (sys) {};
+        \node[anchor=west, font=\bfseries] at ($(sys.north west)+(0.35,-0.35)$) {CoachFlow - Training Flow};
+
+        % Actors
+        \actor{-7.25}{ 1.15}{Trainee}{trainee}
+        \actor{-7.25}{-1.60}{Trainer}{trainer}
+
+        % Use cases
+        \node[usecase, minimum width=6.2cm] (create)  at (2.20, 1.95) {Create / Edit Workout Plan};
+        \node[usecase, minimum width=5.8cm] (assign)  at (2.20, 0.80) {Assign Program to Trainee};
+        \node[usecase, minimum width=5.0cm] (start)   at (2.20,-0.35) {Start Workout Session};
+        \node[usecase, minimum width=5.2cm] (log)     at (2.20,-1.50) {Log Sets / Reps / Weights};
+        \node[usecase, minimum width=4.6cm] (skip)    at (2.20,-2.65) {Skip Exercise / Set};
+        \node[usecase, minimum width=5.8cm] (history) at (2.20,-3.80) {Workout History \& Progress};
+
+        % Links
+        \draw[link] (trainer) -- (create.west);
+        \draw[link] (trainer) -- (assign.west);
+        \draw[link] (trainer) -- (history.west);
+
+        \draw[link] (trainee) -- (start.west);
+        \draw[link] (trainee) -- (log.west);
+        \draw[link] (trainee) -- (skip.west);
+        \draw[link] (trainee) -- (history.west);
+
+        % Cross-role access
+        \draw[link] (trainee) -- (assign.west);
+        \draw[link] (trainer) -- (log.west);
+    \end{tikzpicture}
+
+    \vspace{3mm}
+    \textit{Core training flow: trainers build/assign plans and trainees execute sessions with detailed logging and history.}
+\end{figure}
+\clearpage
+
+\noindent 4. Payments
+% 4. Payments (TikZ)
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[font=\small]
+        % System boundary
+        \node[system, minimum width=12.8cm, minimum height=7.8cm] (sys) {};
+        \node[anchor=west, font=\bfseries] at ($(sys.north west)+(0.35,-0.35)$) {CoachFlow - Payments};
+
+        % Actors
+        \actor{-7.25}{ 1.05}{Trainee}{trainee}
+        \actor{-7.25}{-1.80}{Trainer}{trainer}
+        \actor{ 7.25}{-0.20}{Stripe API}{stripe}
+
+        % Use cases
+        \node[usecase, minimum width=5.4cm] (browse)  at (1.90, 1.95) {Browse Programs / Plans};
+        \node[usecase, minimum width=5.0cm] (intent)  at (1.90, 0.75) {Create Payment Intent};
+        \node[usecase, minimum width=5.0cm] (process) at (1.90,-0.45) {Process Card Payment};
+        \node[usecase, minimum width=5.0cm] (access)  at (1.90,-1.65) {Access Purchased Plans};
+        \node[usecase, minimum width=5.4cm] (manage)  at (1.90,-2.85) {Manage Purchases (hide/rate)};
+        \node[usecase, minimum width=5.2cm] (publish) at (1.90,-4.05) {Publish Plans \& View Sales};
+
+        % Links
+        \draw[link] (trainee) -- (browse.west);
+        \draw[link] (trainee) -- (intent.west);
+        \draw[link] (trainee) -- (process.west);
+        \draw[link] (trainee) -- (access.west);
+        \draw[link] (trainee) -- (manage.west);
+
+        \draw[link] (trainer) -- (publish.west);
+
+        \draw[link] (stripe) -- (intent.east);
+        \draw[link] (stripe) -- (process.east);
+    \end{tikzpicture}
+
+    \vspace{3mm}
+    \textit{Payments cover plan purchases (trainee) and revenue/sales visibility (trainer) via Stripe.}
+\end{figure}
+\clearpage
+
+\noindent 5. Administration
+% 5. Administration (TikZ)
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[font=\small]
+        % System boundary
+        \node[system, minimum width=12.8cm, minimum height=7.8cm] (sys) {};
+        \node[anchor=west, font=\bfseries] at ($(sys.north west)+(0.35,-0.35)$) {CoachFlow - Administration};
+
+        % Actors
+        \actor{-7.25}{ 0.10}{Admin}{admin}
+        \actor{ 7.25}{-0.20}{Mailchimp}{mailchimp}
+
+        % Use cases
+        \node[usecase, minimum width=6.0cm] (users)    at (1.95, 2.05) {User Management (add/edit/delete)};
+        \node[usecase, minimum width=5.2cm] (disable)  at (1.95, 0.90) {Disable / Enable Users};
+        \node[usecase, minimum width=4.8cm] (force)    at (1.95,-0.25) {Force Password Reset};
+        \node[usecase, minimum width=4.8cm] (analytics)at (1.95,-1.40) {Platform Analytics};
+        \node[usecase, minimum width=5.2cm] (campaign) at (1.95,-2.55) {Create Email Campaign};
+        \node[usecase, minimum width=4.8cm] (message)  at (1.95,-3.70) {Message Any User};
+
+        % Links
+        \draw[link] (admin) -- (users.west);
+        \draw[link] (admin) -- (disable.west);
+        \draw[link] (admin) -- (force.west);
+        \draw[link] (admin) -- (analytics.west);
+        \draw[link] (admin) -- (campaign.west);
+        \draw[link] (admin) -- (message.west);
+
+        \draw[link] (mailchimp) -- (campaign.east);
+    \end{tikzpicture}
+
+    \vspace{3mm}
+    \textit{Administration includes platform analytics, full user management, messaging, and email marketing campaigns.}
+\end{figure}
+\clearpage
+
+\noindent 6. Nutrition \& USDA
+% 6. Nutrition & USDA (TikZ)
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[font=\small]
+        % System boundary
+        \node[system, minimum width=12.8cm, minimum height=7.8cm] (sys) {};
+        \node[anchor=west, font=\bfseries] at ($(sys.north west)+(0.35,-0.35)$) {CoachFlow - Nutrition \& USDA};
+
+        % Actors
+        \actor{-7.25}{ 1.30}{Trainee}{trainee}
+        \actor{-7.25}{-1.75}{Trainer}{trainer}
+        \actor{ 7.25}{ 0.40}{USDA}{usda}
+
+        % Use cases
+        \node[usecase, minimum width=4.6cm] (search)  at (2.05, 2.05) {Search Foods (USDA)};
+        \node[usecase, minimum width=4.6cm] (log)     at (2.05, 0.85) {Log Food / Meals};
+        \node[usecase, minimum width=4.8cm] (history) at (2.05,-0.35) {View Nutrition History};
+        \node[usecase, minimum width=5.4cm] (goals)   at (2.05,-1.55) {Set Custom Nutrition Goals};
+        \node[usecase, minimum width=4.8cm] (weekly)  at (2.05,-2.75) {Set Weekly Meal Plan};
+        \node[usecase, minimum width=4.6cm] (custom)  at (2.05,-3.95) {Create Custom Foods};
+
+        % Links
+        \draw[link] (trainee) -- (search.west);
+        \draw[link] (trainee) -- (log.west);
+        \draw[link] (trainee) -- (history.west);
+
+        \draw[link] (trainer) -- (goals.west);
+        \draw[link] (trainer) -- (weekly.west);
+        \draw[link] (trainer) -- (custom.west);
+
+        \draw[link] (usda) -- (search.east);
+    \end{tikzpicture}
+
+    \vspace{3mm}
+    \textit{Nutrition includes USDA-based food search plus logging, history, and trainer-assigned goals/meal plans.}
+\end{figure}
+\clearpage
+
+\noindent 7. Analytics \& History
+% 7. Analytics & History (TikZ)
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[font=\small]
+        % System boundary
+        \node[system, minimum width=12.8cm, minimum height=7.6cm] (sys) {};
+        \node[anchor=west, font=\bfseries] at ($(sys.north west)+(0.35,-0.35)$) {CoachFlow - Analytics \& History};
+
+        % Actors
+        \actor{-7.25}{ 2.35}{Trainee}{trainee}
+        \actor{-7.25}{ 0.25}{Trainer}{trainer}
+        \actor{-7.25}{-2.00}{Admin}{admin}
+
+        % Use cases
+        \node[usecase, minimum width=5.2cm] (personal) at (2.05, 1.85) {View Personal Analytics};
+        \node[usecase, minimum width=4.8cm] (filter)   at (2.05, 0.75) {Filter by Date Range};
+        \node[usecase, minimum width=4.8cm] (history)  at (2.05,-0.35) {Workout \& Food History};
+        \node[usecase, minimum width=4.8cm] (log)      at (2.05,-1.45) {Log Weight / Measurements};
+        \node[usecase, minimum width=4.8cm] (traineeA) at (2.05,-2.55) {View Trainee Analytics};
+        \node[usecase, minimum width=4.8cm] (platform) at (2.05,-3.65) {View Platform Analytics};
+
+        % Links
+        \draw[link] (trainee) -- (personal.west);
+        \draw[link] (trainee) -- (filter.west);
+        \draw[link] (trainee) -- (history.west);
+        \draw[link] (trainee) -- (log.west);
+
+        \draw[link] (trainer) -- (filter.west);
+        \draw[link] (trainer) -- (traineeA.west);
+
+        \draw[link] (admin) -- (platform.west);
+    \end{tikzpicture}
+
+    \vspace{3mm}
+    \textit{Users can view analytics and history with date filters; trainers see trainee analytics; admins see platform analytics.}
+\end{figure}
+\clearpage
 
 Η ταυτοποίηση χρηστών (Authentication) πραγματοποιείται με τη βοήθεια του Firebase Auth, παρέχοντας ένα ασφαλές και κρυπτογραφημένο περιβάλλον. Αφού ο χρήστης ταυτοποιηθεί με επιτυχία στο Firebase, το σύστημα επικοινωνεί με το PHP backend του ελέγχοντας τα στοιχεία από τη MySQL βάση δεδομένων και επιστρέφει το αντίστοιχο προφίλ μαζί με το ρόλο του (Authority/Role).
 
